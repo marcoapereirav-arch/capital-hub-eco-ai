@@ -63,3 +63,21 @@ Thumbs.db
 # Supabase
 supabase/.branches
 supabase/.temp
+
+# Local Claude settings (per-user, not shared)
+.claude/settings.local.json
+
+# Playwright MCP cache / artifacts
+.playwright-mcp/
+
+# Screenshots and snapshots (ephemeral, not code)
+/*.png
+/tasks-*.md
+/tasks-snapshot.md
+
+# Backup files
+*.bak
+
+# Local content / personal media
+/Contenidos/
+/transcript_funnel_hub_russel

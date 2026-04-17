@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¡Ya estás dentro! — Adrián Villanueva</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ========================================
+   CAPITAL HUB — THANK YOU PAGE
+   Brandkit V3.0 Monochrome
+   ======================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --bg-primary: #0F0F12;
+  --bg-container: #18181B;
+  --border: #2A2D34;
+  --border-hover: #3F3F46;
+  --text-primary: #F5F6F7;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --accent: #FFFFFF;
+  --font-display: 'Inter Tight', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- LAYOUT --- */
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+/* ========================================
+   HEADER — SOLO LOGO
+   ======================================== */
+.header {
+  border-bottom: 1px solid var(--border);
+}
+
+.header-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  height: 64px;
+}
+
+.header-brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ========================================
+   MAIN CONTENT
+   ======================================== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 24px;
+}
+
+/* Big title */
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 48px;
+  animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Check icon */
+.check-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32px;
+  animation: checkPop 0.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.check-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: #22c55e;
+}
+
+/* Thank you card */
+.thankyou-card {
+  background: var(--bg-container);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  max-width: 640px;
+  width: 100%;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.7s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.thankyou-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 28px;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.card-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.card-text p {
+  margin-bottom: 20px;
+}
+
+.card-text p:last-child {
+  margin-bottom: 0;
+}
+
+.card-text strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Steps */
+.step {
+  padding: 16px 20px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.step-number {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bg-primary);
+  background: var(--accent);
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.step-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Signature */
+.signature {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.signature p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.signature .name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+.footer {
+  padding: 32px 0;
+  border-top: 1px solid var(--border);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-copy {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.footer-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.footer-links a:hover {
+  color: var(--text-primary);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 600px) {
+  .main {
+    padding: 60px 24px;
+  }
+
+  .thankyou-card {
+    padding: 32px 24px;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ========================================
+     HEADER — SOLO LOGO
+     ======================================== -->
+<header class="header">
+  <div class="header-inner">
+    <span class="header-brand">Adrián Villanueva</span>
+  </div>
+</header>
+
+<!-- ========================================
+     MAIN CONTENT
+     ======================================== -->
+<main class="main">
+  <div class="check-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  </div>
+
+  <h1 class="page-title">¡Ya estás dentro!</h1>
+
+  <div class="thankyou-card">
+    <h2 class="card-title">Gracias por suscribirte</h2>
+    <div class="card-text">
+      <p>Para asegurarte de que mis emails lleguen a tu bandeja principal, sigue estos pasos rápidos:</p>
+
+      <div class="step">
+        <span class="step-number">1</span>
+        <span class="step-text">Arrastra el email que estás a punto de recibir a tu <strong>bandeja principal</strong> si lo encuentras en "Promociones", "Social" o "Spam".</span>
+      </div>
+
+      <div class="step">
+        <span class="step-number">2</span>
+        <span class="step-text">Marca el email con una <strong>estrella</strong> para que tu proveedor sepa que quieres recibir mis correos.</span>
+      </div>
+
+      <p>Y eso es todo.</p>
+      <p>A partir de ahora recibirás mis emails cada semana. Gracias por estar aquí.</p>
+    </div>
+
+    <div class="signature">
+      <p>Hablamos pronto,</p>
+      <span class="name">Adrián</span>
+    </div>
+  </div>
+</main>
+
+<!-- ========================================
+     FOOTER
+     ======================================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <p class="footer-copy">Adrián Villanueva &copy; 2025</p>
+      <ul class="footer-links">
+        <li><a href="#">Términos</a></li>
+        <li><a href="#">Privacidad</a></li>
+        <li><a href="#">Login</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

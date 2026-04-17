@@ -1,13 +1,27 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
+import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google"
+import { cn } from "@/lib/utils"
+import { TooltipProvider } from "@/components/ui/tooltip"
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+})
+
+const interTight = Inter_Tight({
+  subsets: ['latin'],
+  variable: '--font-heading',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+})
 
 export const metadata: Metadata = {
-  title: 'SaaS Factory App',
-  description: 'Built with SaaS Factory',
+  title: 'Capital Hub OS',
+  description: 'Sistema operativo interno de Capital Hub',
 }
 
 export default function RootLayout({
@@ -16,8 +30,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>{children}</body>
+    <html
+      lang="es"
+      className={cn(
+        "dark",
+        inter.variable,
+        interTight.variable,
+        jetbrainsMono.variable
+      )}
+    >
+      <body className="antialiased">
+        <TooltipProvider>{children}</TooltipProvider>
+      </body>
     </html>
   )
 }

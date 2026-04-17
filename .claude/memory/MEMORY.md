@@ -7,10 +7,10 @@
 (vacio)
 
 ## project/ — Proyectos y decisiones activas
-(vacio)
+- [Funnels GHL](project/funnels-ghl-workflow.md) — HTML puro para Go High Level, brandeados, en src/funnels/
 
 ## feedback/ — Correcciones y preferencias
-(vacio)
+- [No grid backgrounds](../../.claude/projects/-Users-marcoantonio-Desktop-Marco-Codes-Capital-Hub/memory/feedback_no_grid_background.md) — Prohibido usar fondos de cuadrícula/rejilla en heros o secciones
 
 ## reference/ — Donde encontrar cosas
-(vacio)
+- [Ubicación de reuniones](reference/meetings-location.md) — Resúmenes de llamadas viven en /docs/meetings/[tipo]/YYYY-MM-DD.md, sin plantilla fija

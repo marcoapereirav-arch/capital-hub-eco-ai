@@ -1,12 +1,17 @@
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/features/shell/components/app-sidebar"
+
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen">
-      {/* Nav, Sidebar, etc. */}
-      <main>{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

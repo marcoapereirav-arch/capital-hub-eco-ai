@@ -1,0 +1,288 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Capital Hub - Bloque 1</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@200;300;400;500;600;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"><style>
+
+/* --- VARIABLES & RESET --- */
+#capital-hub-bloque1 {
+    --bg-main: #0F0F12;
+    --bg-card: #18181B;
+    --bg-secondary: #111113;
+    --border-color: #2A2D34;
+    --text-main: #F5F6F7;
+    --text-secondary: #6B7280;
+    --text-muted: #9CA3AF;
+    --accent-white: #FFFFFF;
+    --font-main: 'Inter', sans-serif;
+    --font-serif: 'Inter Tight', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    background-color: var(--bg-main);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply base text styles ONLY to our specific sections to prevent leaking to GHL form */
+#capital-hub-bloque1 .checkout-header,
+#capital-hub-bloque1 .section-title-area {
+    color: var(--text-main);
+    font-family: var(--font-main);
+    line-height: 1.5;
+}
+
+/* Reset box-sizing and margins ONLY for our elements */
+#capital-hub-bloque1 .bg-noise,
+#capital-hub-bloque1 .checkout-header,
+#capital-hub-bloque1 .checkout-header *,
+#capital-hub-bloque1 .section-title-area,
+#capital-hub-bloque1 .section-title-area * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- TYPOGRAPHY --- */
+#capital-hub-bloque1 .checkout-h1,
+#capital-hub-bloque1 .header-logo {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+}
+
+#capital-hub-bloque1 .checkout-header a,
+#capital-hub-bloque1 .section-title-area a {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.2s;
+}
+
+#capital-hub-bloque1 .checkout-header a:hover,
+#capital-hub-bloque1 .section-title-area a:hover {
+    opacity: 0.8;
+}
+
+/* --- UTILITIES --- */
+#capital-hub-bloque1 .container {
+    width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 640px) {
+    #capital-hub-bloque1 .container {
+        max-width: 640px;
+    }
+}
+
+@media (min-width: 768px) {
+    #capital-hub-bloque1 .container {
+        max-width: 768px;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    #capital-hub-bloque1 .container {
+        max-width: 1024px;
+    }
+}
+
+#capital-hub-bloque1 .flex {
+    display: flex;
+}
+
+#capital-hub-bloque1 .flex-col {
+    flex-direction: column;
+}
+
+#capital-hub-bloque1 .items-center {
+    align-items: center;
+}
+
+#capital-hub-bloque1 .justify-center {
+    justify-content: center;
+}
+
+#capital-hub-bloque1 .justify-between {
+    justify-content: space-between;
+}
+
+#capital-hub-bloque1 .gap-2 {
+    gap: 0.5rem;
+}
+
+#capital-hub-bloque1 .gap-4 {
+    gap: 1rem;
+}
+
+#capital-hub-bloque1 .gap-6 {
+    gap: 1.5rem;
+}
+
+#capital-hub-bloque1 .text-center {
+    text-align: center;
+}
+
+#capital-hub-bloque1 .uppercase {
+    text-transform: uppercase;
+}
+
+#capital-hub-bloque1 .w-full {
+    width: 100%;
+}
+
+#capital-hub-bloque1 .relative {
+    position: relative;
+}
+
+#capital-hub-bloque1 .hidden {
+    display: none;
+}
+
+#capital-hub-bloque1 .font-mono {
+    font-family: var(--font-mono) !important;
+}
+
+#capital-hub-bloque1 .text-muted {
+    color: var(--text-muted);
+}
+
+#capital-hub-bloque1 .text-white {
+    color: var(--accent-white);
+}
+
+#capital-hub-bloque1 .text-sm {
+    font-size: 0.875rem;
+}
+
+#capital-hub-bloque1 .text-xs {
+    font-size: 0.75rem;
+}
+
+/* --- BACKGROUND NOISE --- */
+#capital-hub-bloque1 .bg-noise {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url('https://www.orfeoai.com/wp-content/themes/orfeoai/images/noise.png');
+    opacity: 0.02;
+}
+
+/* --- HEADER --- */
+#capital-hub-bloque1 .checkout-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: rgba(15, 15, 18, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+}
+
+#capital-hub-bloque1 .header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    #capital-hub-bloque1 .header-content {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 0;
+    }
+}
+
+#capital-hub-bloque1 .header-logo {
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    color: var(--accent-white);
+}
+
+#capital-hub-bloque1 .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+@media (min-width: 768px) {
+    #capital-hub-bloque1 .header-right {
+        align-items: flex-end;
+    }
+}
+
+#capital-hub-bloque1 .header-trust-text {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+}
+
+#capital-hub-bloque1 .header-icons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+#capital-hub-bloque1 .payment-icon-img {
+    width: auto;
+    opacity: 0.6;
+    display: block;
+    height: 14px;
+}
+
+/* --- TITLE SECTION --- */
+#capital-hub-bloque1 .section-title-area {
+    padding: 3rem 0 2rem;
+    text-align: center;
+}
+
+@media (min-width: 768px) {
+    #capital-hub-bloque1 .section-title-area {
+        padding: 4rem 0 3rem;
+    }
+}
+
+#capital-hub-bloque1 .checkout-h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    color: var(--accent-white);
+    margin-bottom: 1rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 768px) {
+    #capital-hub-bloque1 .checkout-h1 {
+        font-size: 2.5rem;
+    }
+}
+
+#capital-hub-bloque1 .weight-light {
+    font-weight: 300;
+}
+
+#capital-hub-bloque1 .weight-bold {
+    font-weight: 600;
+}
+
+#capital-hub-bloque1 .checkout-subtitle {
+    font-weight: 300;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto;
+    white-space: normal;
+}
+
+@media (min-width: 768px) {
+    #capital-hub-bloque1 .checkout-subtitle {
+        white-space: nowrap;
+    }
+}
+
+</style></head><body><div id="capital-hub-bloque1"><!-- BACKGROUND NOISE --><div class="bg-noise"></div><!-- SECTION 1: HEADER --><header class="checkout-header"><div class="container header-content"><div class="header-logo">CAPITAL HUB </div><div class="header-right"><span class="header-trust-text uppercase">PAGO 100% SEGURO · ACCESO INMEDIATO</span><div class="header-icons"><img src="https://storage.googleapis.com/msgsndr/fPSTvVgtLrLaVpNFx8ix/media/6992d26c6bac243ec6bb5faf.png" alt="Visa" class="payment-icon-img"><img src="https://storage.googleapis.com/msgsndr/fPSTvVgtLrLaVpNFx8ix/media/6992d26ca9efde141b9809e0.png" alt="Mastercard" class="payment-icon-img"><img src="https://storage.googleapis.com/msgsndr/fPSTvVgtLrLaVpNFx8ix/media/6992d26c1d5e044f78440c48.png" alt="Stripe" class="payment-icon-img"></div></div></div></header><!-- SECTION 2: TITLE --><section class="section-title-area bg-main"><div class="container"><h1 class="checkout-h1 uppercase"><span class="weight-light">ESTÁS A UN PASO DE</span><br><span class="weight-bold">EMPEZAR TU CARRERA DIGITAL</span></h1></div></section></div></body></html>
