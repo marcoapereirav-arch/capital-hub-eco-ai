@@ -11,6 +11,7 @@
 
 ## feedback/ — Correcciones y preferencias
 - [No grid backgrounds](../../.claude/projects/-Users-marcoantonio-Desktop-Marco-Codes-Capital-Hub/memory/feedback_no_grid_background.md) — Prohibido usar fondos de cuadrícula/rejilla en heros o secciones
+- [Proyectos externos con nombre coherente](feedback/external-projects-coherent-naming.md) — Verificar siempre que el proyecto Supabase/Vercel/GitHub/etc. corresponda a Capital Hub antes de tocar. Si no coincide, preguntar.
 
 ## reference/ — Donde encontrar cosas
 - [Ubicación de reuniones](reference/meetings-location.md) — Resúmenes de llamadas viven en /docs/meetings/[tipo]/YYYY-MM-DD.md, sin plantilla fija

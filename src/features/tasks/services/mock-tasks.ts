@@ -175,4 +175,16 @@ export const defaultTasks: Task[] = [
     createdAt: "2026-04-18T08:50:00Z",
     completedAt: null,
   },
+  {
+    id: "t_pwa_push_migration",
+    title: "Aplicar migracion 0006_push_notifications en Supabase de Capital Hub",
+    description: "La migracion de push notifications ya esta en supabase/migrations/0006_push_notifications.sql pero aun NO se aplico al proyecto Supabase real de Capital Hub (por error se aplico en otro proyecto; ya revisado). Hay que aplicarla en el Supabase correcto + anadir las VAPID keys en Vercel.\n\nPasos:\n1. Abrir el proyecto Supabase de Capital Hub (cuenta de Adrian u org compartida — NO nvision-saas).\n2. Dashboard > SQL Editor > pegar el contenido de supabase/migrations/0006_push_notifications.sql y ejecutar. Crea tablas push_subscriptions y notifications + RLS.\n3. Verificar en Table Editor que aparecen push_subscriptions (0 rows) y notifications (0 rows) con RLS habilitado.\n4. Anadir 4 env vars en Vercel (Production, Preview, Development):\n   - NEXT_PUBLIC_VAPID_PUBLIC_KEY: BBSaiwqrgZl-LoEC1pjf3Zg1xOWmdXcDRS1xJIN6yN8awAzUh2PEULkPKGhjY9PvUctfz_ifwUWqThSXNDhXxJg\n   - VAPID_PRIVATE_KEY: V_WRmvFs5caKX-VTAIgVPmamOiDEvirDu6khAnou5NM\n   - VAPID_SUBJECT: mailto:marcoapereirav@gmail.com\n   - SUPABASE_SERVICE_ROLE_KEY: copiarla del dashboard Supabase de Capital Hub > Settings > API > service_role (secret).\n5. Redeploy en Vercel (Deployments > ultimo deploy > Redeploy, desmarcar Use existing Build Cache).\n6. Probar: entrar a ecoai.capitalhubapp.com logueado, aparece el prompt 'Activar notificaciones?' a los 3s, aceptar, verificar en Supabase > push_subscriptions que aparece 1 row con el endpoint.\n7. Instalar PWA: en Chrome desktop, barra URL > icono 'Instalar app'. En iPhone Safari, Compartir > Anadir a pantalla de inicio. Verificar que el icono CH monogram aparece correcto.\n\nNotas:\n- Logo CH monogram + favicons + manifest + service worker ya estan commiteados (commit 078ed71).\n- API routes /api/notifications/subscribe y /api/notifications/send ya existen.\n- Para enviar una notificacion manualmente: POST a /api/notifications/send con header Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY> y body { userId, notification: { title, body, data: { url } } }.",
+    status: "next",
+    priority: "high",
+    assignee: "marco",
+    paraId: "a4",
+    dueDate: null,
+    createdAt: "2026-04-11T13:00:00Z",
+    completedAt: null,
+  },
 ]
