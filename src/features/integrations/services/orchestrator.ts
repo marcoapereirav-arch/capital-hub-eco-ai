@@ -94,6 +94,32 @@ export async function syncPlatform(platform: Platform): Promise<AdapterResult> {
     }
   }
 
+  // Persist raw data (GHL opps, pipelines, contacts)
+  if (result.rawData) {
+    const now = new Date().toISOString()
+    const { ghlPipelines, ghlOpportunities, ghlContacts } = result.rawData
+
+    if (ghlPipelines && ghlPipelines.length > 0) {
+      const rows = ghlPipelines.map(p => ({
+        id: p.id,
+        name: p.name,
+        stages: p.stages ?? [],
+        synced_at: now,
+      }))
+      await supabase.from('ghl_pipelines_cache').upsert(rows, { onConflict: 'id' })
+    }
+
+    if (ghlOpportunities && ghlOpportunities.length > 0) {
+      const rows = ghlOpportunities.map(o => ({ ...o, synced_at: now }))
+      await supabase.from('ghl_opportunities_cache').upsert(rows, { onConflict: 'id' })
+    }
+
+    if (ghlContacts && ghlContacts.length > 0) {
+      const rows = ghlContacts.map(c => ({ ...c, synced_at: now }))
+      await supabase.from('ghl_contacts_cache').upsert(rows, { onConflict: 'id' })
+    }
+  }
+
   // Update connection status (compartido entre admins — no filtro por user_id)
   await supabase
     .from('api_connections')

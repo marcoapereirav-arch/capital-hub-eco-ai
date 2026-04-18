@@ -1,4 +1,12 @@
-import type { MetricsAdapter, AdapterResult, PlatformDefinition, MetricValue } from '../types'
+import type {
+  MetricsAdapter,
+  AdapterResult,
+  PlatformDefinition,
+  MetricValue,
+  GhlRawOpportunity,
+  GhlRawPipeline,
+  GhlRawContact,
+} from '../types'
 
 export const ghlDefinition: PlatformDefinition = {
   platform: 'ghl',
@@ -26,6 +34,8 @@ export const ghlDefinition: PlatformDefinition = {
 
 const GHL_BASE = 'https://services.leadconnectorhq.com'
 const GHL_VERSION = '2021-07-28'
+const OPP_PAGE_LIMIT = 100
+const MAX_OPPS_PER_STATUS = 1000
 
 function formatEUR(value: number): string {
   return new Intl.NumberFormat('es-ES', {
@@ -53,9 +63,131 @@ async function ghlFetch(path: string, token: string, init?: RequestInit) {
   })
   if (!res.ok) {
     const body = await res.text().catch(() => '')
-    throw new Error(`GHL ${path} → ${res.status}: ${body.slice(0, 200)}`)
+    throw new Error(`GHL ${path} -> ${res.status}: ${body.slice(0, 200)}`)
   }
   return res.json()
+}
+
+type OppRaw = {
+  id: string
+  pipelineId?: string | null
+  pipelineStageId?: string | null
+  contactId?: string | null
+  name?: string | null
+  status?: string | null
+  monetaryValue?: number | null
+  source?: string | null
+  tags?: string[] | null
+  createdAt?: string | null
+  updatedAt?: string | null
+}
+
+function mapOpp(raw: OppRaw): GhlRawOpportunity {
+  return {
+    id: raw.id,
+    pipeline_id: raw.pipelineId ?? null,
+    pipeline_stage_id: raw.pipelineStageId ?? null,
+    contact_id: raw.contactId ?? null,
+    name: raw.name ?? null,
+    status: raw.status ?? null,
+    monetary_value: Number(raw.monetaryValue) || 0,
+    source: raw.source ?? null,
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    opp_created_at: raw.createdAt ?? null,
+    opp_updated_at: raw.updatedAt ?? null,
+  }
+}
+
+async function fetchAllOppsForStatus(
+  apiKey: string,
+  locationId: string,
+  status: 'open' | 'won' | 'lost' | 'abandoned'
+): Promise<GhlRawOpportunity[]> {
+  const collected: GhlRawOpportunity[] = []
+  let startAfter: string | undefined
+  let startAfterId: string | undefined
+
+  while (collected.length < MAX_OPPS_PER_STATUS) {
+    const params = new URLSearchParams({
+      location_id: locationId,
+      status,
+      limit: String(OPP_PAGE_LIMIT),
+    })
+    if (startAfter) params.set('startAfter', startAfter)
+    if (startAfterId) params.set('startAfterId', startAfterId)
+
+    const res = await ghlFetch(`/opportunities/search?${params.toString()}`, apiKey)
+    const opps: OppRaw[] = res?.opportunities ?? []
+    if (opps.length === 0) break
+
+    collected.push(...opps.map(mapOpp))
+
+    if (opps.length < OPP_PAGE_LIMIT) break
+
+    const last = opps[opps.length - 1]
+    startAfter = last.updatedAt ?? last.createdAt ?? undefined
+    startAfterId = last.id
+    if (!startAfter) break
+  }
+
+  return collected
+}
+
+type PipelineRaw = {
+  id: string
+  name: string
+  stages?: Array<{ id: string; name: string; position?: number }>
+}
+
+async function fetchPipelines(apiKey: string, locationId: string): Promise<GhlRawPipeline[]> {
+  try {
+    const res = await ghlFetch(
+      `/opportunities/pipelines?locationId=${locationId}`,
+      apiKey
+    )
+    const pipelines: PipelineRaw[] = res?.pipelines ?? []
+    return pipelines.map((p) => ({
+      id: p.id,
+      name: p.name,
+      stages: p.stages ?? [],
+    }))
+  } catch {
+    return []
+  }
+}
+
+type ContactRaw = {
+  id: string
+  type?: string | null
+  tags?: string[] | null
+  source?: string | null
+  dateAdded?: string | null
+}
+
+async function fetchLeadContactsSample(
+  apiKey: string,
+  locationId: string
+): Promise<GhlRawContact[]> {
+  // Para leads no paginamos todos — solo muestra reciente (ultimos 500)
+  try {
+    const res = await ghlFetch(`/contacts/search`, apiKey, {
+      method: 'POST',
+      body: JSON.stringify({
+        locationId,
+        pageLimit: 500,
+      }),
+    })
+    const contacts: ContactRaw[] = res?.contacts ?? []
+    return contacts.map((c) => ({
+      id: c.id,
+      type: c.type ?? null,
+      tags: Array.isArray(c.tags) ? c.tags : [],
+      source: c.source ?? null,
+      contact_created_at: c.dateAdded ?? null,
+    }))
+  } catch {
+    return []
+  }
 }
 
 export const ghlAdapter: MetricsAdapter = {
@@ -82,7 +214,16 @@ export const ghlAdapter: MetricsAdapter = {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
     try {
-      const [contactsRes, leadsRes, recentRes, openOppsRes, wonOppsRes] = await Promise.all([
+      const [
+        contactsRes,
+        leadsRes,
+        recentRes,
+        openOpps,
+        wonOpps,
+        lostOpps,
+        pipelines,
+        contactsSample,
+      ] = await Promise.all([
         ghlFetch(`/contacts/?locationId=${locationId}&limit=1`, apiKey),
         ghlFetch(`/contacts/search`, apiKey, {
           method: 'POST',
@@ -100,19 +241,19 @@ export const ghlAdapter: MetricsAdapter = {
             filters: [{ field: 'dateAdded', operator: 'range', value: { gte: sevenDaysAgo } }],
           }),
         }),
-        ghlFetch(`/opportunities/search?location_id=${locationId}&status=open&limit=100`, apiKey),
-        ghlFetch(`/opportunities/search?location_id=${locationId}&status=won&limit=100`, apiKey),
+        fetchAllOppsForStatus(apiKey, locationId, 'open'),
+        fetchAllOppsForStatus(apiKey, locationId, 'won'),
+        fetchAllOppsForStatus(apiKey, locationId, 'lost'),
+        fetchPipelines(apiKey, locationId),
+        fetchLeadContactsSample(apiKey, locationId),
       ])
 
       const contactsTotal: number = contactsRes?.meta?.total ?? 0
       const leadsActive: number = leadsRes?.total ?? 0
       const leadsNew7d: number = recentRes?.total ?? 0
 
-      type Opp = { monetaryValue?: number | null }
-      const openOpps: Opp[] = openOppsRes?.opportunities ?? []
-      const wonOpps: Opp[] = wonOppsRes?.opportunities ?? []
-      const sumValue = (arr: Opp[]) =>
-        arr.reduce((s, o) => s + (Number(o.monetaryValue) || 0), 0)
+      const sumValue = (arr: GhlRawOpportunity[]) =>
+        arr.reduce((s, o) => s + (Number(o.monetary_value) || 0), 0)
       const pipelineValue = sumValue(openOpps)
       const wonValue = sumValue(wonOpps)
 
@@ -159,12 +300,23 @@ export const ghlAdapter: MetricsAdapter = {
           value: wonValue,
           valueText: formatEUR(wonValue),
         },
+        {
+          key: 'pipelines_count',
+          label: 'Pipelines Activos',
+          value: pipelines.length,
+          valueText: formatNumber(pipelines.length),
+        },
       ]
 
       return {
         platform: 'ghl',
         fetchedAt: new Date().toISOString(),
         metrics,
+        rawData: {
+          ghlPipelines: pipelines,
+          ghlOpportunities: [...openOpps, ...wonOpps, ...lostOpps],
+          ghlContacts: contactsSample,
+        },
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error'
