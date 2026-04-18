@@ -596,6 +596,9 @@ export { UpdatePasswordForm } from './UpdatePasswordForm'
 
 ### 11. `src/app/(auth)/login/page.tsx`
 
+> **IMPORTANTE**: `LoginForm` usa `useSearchParams()` para leer el `?error=auth_callback_failed`. En Next.js 16 con prerender estático, esto requiere envolver `<LoginForm />` en `<Suspense>`, o el build falla con: *"useSearchParams() should be wrapped in a suspense boundary at page /login"*.
+
+
 ```tsx
 import Link from 'next/link'
 import { LoginForm } from '@/features/auth/components'

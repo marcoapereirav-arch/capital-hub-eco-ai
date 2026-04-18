@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { LoginForm } from '@/features/auth/components'
 
@@ -10,7 +11,9 @@ export default function LoginPage() {
           <h1 className="font-heading text-2xl font-medium tracking-tight">Bienvenido de vuelta</h1>
         </div>
 
-        <LoginForm />
+        <Suspense>
+          <LoginForm />
+        </Suspense>
 
         <p className="text-center text-xs text-muted-foreground">
           ¿Sin cuenta?{' '}
