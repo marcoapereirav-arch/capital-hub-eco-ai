@@ -163,4 +163,16 @@ export const defaultTasks: Task[] = [
     createdAt: "2026-04-11T12:00:00Z",
     completedAt: null,
   },
+  {
+    id: "t_ghl_oauth_v2",
+    title: "Integrar GHL API v2 (OAuth 2.0) para control total de GoHighLevel",
+    description: "Sustituir la conexion actual de GHL por API Key (v1) por un flujo OAuth 2.0 con v2 para tener acceso total a todos los recursos de GHL (read+write en contactos, pipelines, conversaciones, calendarios, campanas, workflows, tags, custom fields, payments, invoices, productos, funnels y multi-location).\n\nPasos:\n1. Crear cuenta developer en https://marketplace.gohighlevel.com/ (o iniciar sesion si ya existe).\n2. En Developer Portal -> My Apps -> Create App. Datos: APP Name 'Capital Hub OS', Target User 'Sub-account', Distribution 'Both Agency & Sub-account'.\n3. En Advanced Settings -> Auth configurar:\n   - Redirect URI: https://ecoai.capitalhubapp.com/api/auth/ghl/callback (+ http://localhost:3000/api/auth/ghl/callback para desarrollo local).\n   - Scopes: TODOS los disponibles para tener control total (contacts.*, conversations.*, opportunities.*, calendars.*, campaigns.*, workflows.*, locations.*, users.*, custom-fields.*, tags.*, notes.*, tasks.*, payments.*, invoices.*, products.*, funnels.*, medias.*, forms.*, surveys.*).\n4. Guardar Client ID y Client Secret en Vercel (envs: GHL_CLIENT_ID, GHL_CLIENT_SECRET) y en .env.local.\n5. En codigo:\n   - Nueva server action: iniciar flujo OAuth (redirige a https://marketplace.gohighlevel.com/oauth/chooselocation con params).\n   - Nueva route handler: /api/auth/ghl/callback que intercambia code por access_token + refresh_token, guarda en api_connections con credentials jsonb.\n   - Migrar ghl-adapter: quitar API Key v1, usar access_token con auto-refresh (Bearer Authorization). Endpoints base: https://services.leadconnectorhq.com/.\n   - Reemplazar el formulario manual de Connect GHL en /integrations por boton 'Conectar con GHL' que dispara el OAuth.\n6. Validar con Playwright: login, conectar GHL, ver metricas reales en dashboard (CRM tab).\n\nDocs oficiales:\n- Getting started: https://help.gohighlevel.com/support/solutions/articles/155000000136\n- Create app: https://marketplace.gohighlevel.com/docs/oauth/CreateMarketplaceApp\n- OAuth 2.0: https://marketplace.gohighlevel.com/docs/Authorization/OAuth2.0/index.html\n- API Reference: https://marketplace.gohighlevel.com/docs/",
+    status: "someday",
+    priority: "normal",
+    assignee: "equipo",
+    paraId: "a4",
+    dueDate: null,
+    createdAt: "2026-04-18T08:50:00Z",
+    completedAt: null,
+  },
 ]
