@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { syncPlatform } from '@/features/integrations/services/orchestrator'
 import type {
   DashboardData,
   DateRange,
@@ -7,6 +8,9 @@ import type {
   KpiOverview,
   PendingMetrics,
 } from '../types/dashboard'
+
+// Auto-sync interval: si la ultima sync es mas vieja que esto, sincronizamos antes de renderizar.
+const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000 // 5 minutos
 
 type OppRow = {
   id: string
@@ -175,7 +179,7 @@ function pendingMetrics(): PendingMetrics {
 }
 
 export async function getDashboardData(range: DateRange): Promise<DashboardData> {
-  const connection = await getGhlConnection()
+  let connection = await getGhlConnection()
   const hasConnection = connection?.status === 'connected'
 
   if (!hasConnection) {
@@ -195,6 +199,18 @@ export async function getDashboardData(range: DateRange): Promise<DashboardData>
       funnels: [],
       pending: pendingMetrics(),
       lastSyncAt: connection?.last_sync_at ?? null,
+    }
+  }
+
+  // Auto-sync: si hace >5 min o nunca se sincronizo, refrescamos en background antes de leer.
+  const lastSync = connection?.last_sync_at ? new Date(connection.last_sync_at).getTime() : 0
+  const needsSync = Date.now() - lastSync > AUTO_SYNC_INTERVAL_MS
+  if (needsSync) {
+    try {
+      await syncPlatform('ghl')
+      connection = await getGhlConnection()
+    } catch (e) {
+      console.error('[dashboard] auto-sync failed:', e)
     }
   }
 
