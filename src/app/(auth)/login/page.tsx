@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
 import { LoginForm } from '@/features/auth/components'
 
 export default function LoginPage() {
@@ -16,10 +15,7 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="text-center text-xs text-muted-foreground">
-          ¿Sin cuenta?{' '}
-          <Link href="/signup" className="text-foreground underline underline-offset-4">
-            Regístrate
-          </Link>
+          Acceso solo para administradores.
         </p>
       </div>
     </div>
