@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable: safe zone is center 80% (outer 10% may be cropped by OS) -->
+  <rect width="512" height="512" fill="#0F0F12"/>
+  <text
+    x="256"
+    y="256"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="'Inter Tight', 'Helvetica Neue', Arial, sans-serif"
+    font-weight="600"
+    font-size="170"
+    letter-spacing="10"
+    fill="#F5F6F7"
+  >CH</text>
+</svg>
