@@ -1,4 +1,4 @@
-import type { MetricsAdapter, AdapterResult, PlatformDefinition } from '../types'
+import type { MetricsAdapter, AdapterResult, PlatformDefinition, MetricValue } from '../types'
 
 export const ghlDefinition: PlatformDefinition = {
   platform: 'ghl',
@@ -8,20 +8,54 @@ export const ghlDefinition: PlatformDefinition = {
   credentialFields: [
     {
       key: 'apiKey',
-      label: 'API Key',
+      label: 'API Key / Private Integration Token',
       type: 'password',
       required: true,
-      helpText: 'Settings -> Business Profile -> API Key',
+      helpText: 'Settings -> Integrations -> Private Integrations (token empieza por pit-)',
     },
     {
       key: 'locationId',
-      label: 'Location ID (opcional)',
+      label: 'Location ID',
       type: 'text',
-      required: false,
-      placeholder: 'loc_xxxxxxxxxxxx',
-      helpText: 'Opcional. Solo necesario para endpoints v2 de GHL. Se puede anadir despues.',
+      required: true,
+      placeholder: 'fPSTvVgtLrLaVpNFx8ix',
+      helpText: 'Lo ves en la URL de GHL: /v2/location/{locationId}/dashboard',
     },
   ],
+}
+
+const GHL_BASE = 'https://services.leadconnectorhq.com'
+const GHL_VERSION = '2021-07-28'
+
+function formatEUR(value: number): string {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat('es-ES').format(value)
+}
+
+async function ghlFetch(path: string, token: string, init?: RequestInit) {
+  const res = await fetch(`${GHL_BASE}${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Version: GHL_VERSION,
+      Accept: 'application/json',
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init?.headers ?? {}),
+    },
+    cache: 'no-store',
+  })
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`GHL ${path} → ${res.status}: ${body.slice(0, 200)}`)
+  }
+  return res.json()
 }
 
 export const ghlAdapter: MetricsAdapter = {
@@ -29,31 +63,117 @@ export const ghlAdapter: MetricsAdapter = {
   displayName: 'GoHighLevel',
 
   async validateCredentials(credentials) {
-    return Boolean(credentials.apiKey)
+    return Boolean(credentials.apiKey && credentials.locationId)
   },
 
   async fetchMetrics(credentials): Promise<AdapterResult> {
-    // TODO: Reemplazar por llamadas reales a la API de GHL cuando se tengan credenciales.
-    // Endpoint referencia: GET https://services.leadconnectorhq.com/contacts/?locationId=...
-    // Auth: Authorization: Bearer {apiKey}
-    if (!credentials.apiKey) {
+    const apiKey = credentials.apiKey as string | undefined
+    const locationId = credentials.locationId as string | undefined
+
+    if (!apiKey || !locationId) {
       return {
         platform: 'ghl',
         metrics: [],
         fetchedAt: new Date().toISOString(),
-        error: 'Missing apiKey',
+        error: 'Missing apiKey or locationId',
       }
     }
 
-    return {
-      platform: 'ghl',
-      fetchedAt: new Date().toISOString(),
-      metrics: [
-        { key: 'leads_active', label: 'Leads Activos', value: 1284, valueText: '1,284', change: '+8.1%', trend: 'up' },
-        { key: 'leads_new_7d', label: 'Nuevos Leads (7d)', value: 142, valueText: '142', change: '+12.0%', trend: 'up' },
-        { key: 'contacts_total', label: 'Contactos Totales', value: 4820, valueText: '4.8K', change: '+3.4%', trend: 'up' },
-        { key: 'pipeline_value', label: 'Valor Pipeline', value: 48200, valueText: '€48,200', change: '+15.2%', trend: 'up' },
-      ],
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+    try {
+      const [contactsRes, leadsRes, recentRes, openOppsRes, wonOppsRes] = await Promise.all([
+        ghlFetch(`/contacts/?locationId=${locationId}&limit=1`, apiKey),
+        ghlFetch(`/contacts/search`, apiKey, {
+          method: 'POST',
+          body: JSON.stringify({
+            locationId,
+            pageLimit: 1,
+            filters: [{ field: 'type', operator: 'eq', value: 'lead' }],
+          }),
+        }),
+        ghlFetch(`/contacts/search`, apiKey, {
+          method: 'POST',
+          body: JSON.stringify({
+            locationId,
+            pageLimit: 1,
+            filters: [{ field: 'dateAdded', operator: 'range', value: { gte: sevenDaysAgo } }],
+          }),
+        }),
+        ghlFetch(`/opportunities/search?location_id=${locationId}&status=open&limit=100`, apiKey),
+        ghlFetch(`/opportunities/search?location_id=${locationId}&status=won&limit=100`, apiKey),
+      ])
+
+      const contactsTotal: number = contactsRes?.meta?.total ?? 0
+      const leadsActive: number = leadsRes?.total ?? 0
+      const leadsNew7d: number = recentRes?.total ?? 0
+
+      type Opp = { monetaryValue?: number | null }
+      const openOpps: Opp[] = openOppsRes?.opportunities ?? []
+      const wonOpps: Opp[] = wonOppsRes?.opportunities ?? []
+      const sumValue = (arr: Opp[]) =>
+        arr.reduce((s, o) => s + (Number(o.monetaryValue) || 0), 0)
+      const pipelineValue = sumValue(openOpps)
+      const wonValue = sumValue(wonOpps)
+
+      const metrics: MetricValue[] = [
+        {
+          key: 'leads_active',
+          label: 'Leads Activos',
+          value: leadsActive,
+          valueText: formatNumber(leadsActive),
+        },
+        {
+          key: 'leads_new_7d',
+          label: 'Nuevos Leads (7d)',
+          value: leadsNew7d,
+          valueText: formatNumber(leadsNew7d),
+        },
+        {
+          key: 'contacts_total',
+          label: 'Contactos Totales',
+          value: contactsTotal,
+          valueText: formatNumber(contactsTotal),
+        },
+        {
+          key: 'pipeline_value',
+          label: 'Pipeline Abierto',
+          value: pipelineValue,
+          valueText: formatEUR(pipelineValue),
+        },
+        {
+          key: 'open_opps_count',
+          label: 'Oportunidades Abiertas',
+          value: openOpps.length,
+          valueText: formatNumber(openOpps.length),
+        },
+        {
+          key: 'won_count',
+          label: 'Oportunidades Ganadas',
+          value: wonOpps.length,
+          valueText: formatNumber(wonOpps.length),
+        },
+        {
+          key: 'won_value',
+          label: 'Valor Ganado',
+          value: wonValue,
+          valueText: formatEUR(wonValue),
+        },
+      ]
+
+      return {
+        platform: 'ghl',
+        fetchedAt: new Date().toISOString(),
+        metrics,
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error'
+      return {
+        platform: 'ghl',
+        metrics: [],
+        fetchedAt: new Date().toISOString(),
+        error: msg,
+      }
     }
   },
 }
