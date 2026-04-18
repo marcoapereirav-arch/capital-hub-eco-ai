@@ -41,7 +41,7 @@ export async function saveConnection(formData: FormData) {
         last_error: null,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: 'user_id,platform' }
+      { onConflict: 'platform' }
     )
 
   if (error) {
@@ -76,7 +76,6 @@ export async function disconnectPlatform(formData: FormData) {
       credentials: null,
       updated_at: new Date().toISOString(),
     })
-    .eq('user_id', user.id)
     .eq('platform', platform)
 
   if (error) {

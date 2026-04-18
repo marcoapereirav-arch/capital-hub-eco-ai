@@ -73,7 +73,7 @@ export async function syncPlatform(platform: Platform): Promise<AdapterResult> {
 
     await supabase
       .from('metrics_cache')
-      .upsert(cacheRows, { onConflict: 'user_id,platform,metric_key' })
+      .upsert(cacheRows, { onConflict: 'platform,metric_key' })
 
     // Snapshot diario
     const snapshotRows = result.metrics
@@ -90,11 +90,11 @@ export async function syncPlatform(platform: Platform): Promise<AdapterResult> {
     if (snapshotRows.length > 0) {
       await supabase
         .from('metrics_snapshots')
-        .upsert(snapshotRows, { onConflict: 'user_id,platform,metric_key,snapshot_date' })
+        .upsert(snapshotRows, { onConflict: 'platform,metric_key,snapshot_date' })
     }
   }
 
-  // Update connection status
+  // Update connection status (compartido entre admins — no filtro por user_id)
   await supabase
     .from('api_connections')
     .update({
@@ -103,7 +103,6 @@ export async function syncPlatform(platform: Platform): Promise<AdapterResult> {
       status: result.error ? 'error' : 'connected',
       updated_at: now.toISOString(),
     })
-    .eq('user_id', user.id)
     .eq('platform', platform)
 
   return result
