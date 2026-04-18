@@ -15,10 +15,11 @@ export const ghlDefinition: PlatformDefinition = {
     },
     {
       key: 'locationId',
-      label: 'Location ID',
+      label: 'Location ID (opcional)',
       type: 'text',
-      required: true,
+      required: false,
       placeholder: 'loc_xxxxxxxxxxxx',
+      helpText: 'Opcional. Solo necesario para endpoints v2 de GHL. Se puede anadir despues.',
     },
   ],
 }
@@ -28,19 +29,19 @@ export const ghlAdapter: MetricsAdapter = {
   displayName: 'GoHighLevel',
 
   async validateCredentials(credentials) {
-    return Boolean(credentials.apiKey && credentials.locationId)
+    return Boolean(credentials.apiKey)
   },
 
   async fetchMetrics(credentials): Promise<AdapterResult> {
     // TODO: Reemplazar por llamadas reales a la API de GHL cuando se tengan credenciales.
     // Endpoint referencia: GET https://services.leadconnectorhq.com/contacts/?locationId=...
     // Auth: Authorization: Bearer {apiKey}
-    if (!credentials.apiKey || !credentials.locationId) {
+    if (!credentials.apiKey) {
       return {
         platform: 'ghl',
         metrics: [],
         fetchedAt: new Date().toISOString(),
-        error: 'Missing apiKey or locationId',
+        error: 'Missing apiKey',
       }
     }
 
