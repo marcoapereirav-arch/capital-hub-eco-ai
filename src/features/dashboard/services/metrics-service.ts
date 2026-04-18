@@ -1,7 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 import type { MetricCard, PlatformStat, RevenuePoint, LeadSource } from '../types/metrics'
-import { kpiCards as mockKpis, platformStats as mockPlatforms, revenueData as mockRevenue, leadSources as mockLeads, recentActivity as mockActivity } from './mock-data'
 
 type CachedMetricRow = {
   platform: string
@@ -105,29 +104,21 @@ export async function getDashboardData(): Promise<DashboardData> {
     getConnectedPlatforms(),
   ])
 
-  if (metrics.length === 0) {
-    return {
-      kpis: mockKpis,
-      platforms: mockPlatforms,
-      revenue: mockRevenue,
-      leads: mockLeads,
-      activity: mockActivity,
-      connectedPlatforms: connected,
-      hasRealData: false,
-    }
-  }
-
   const kpis = buildKpis(metrics)
   const platforms = buildPlatformStats(metrics)
 
+  // Solo datos reales. Sin fallback a mock. Si no hay datos, arrays vacios.
+  const revenue: RevenuePoint[] = []
+  const leads: LeadSource[] = []
+  const activity: Array<{ action: string; detail: string; time: string }> = []
+
   return {
-    kpis: kpis.length > 0 ? kpis : mockKpis,
-    platforms: platforms.length > 0 ? platforms : mockPlatforms,
-    // Revenue, leads, activity: aún sin fuente real. Placeholder hasta que haya adapter.
-    revenue: mockRevenue,
-    leads: mockLeads,
-    activity: mockActivity,
+    kpis,
+    platforms,
+    revenue,
+    leads,
+    activity,
     connectedPlatforms: connected,
-    hasRealData: kpis.length > 0,
+    hasRealData: kpis.length > 0 || platforms.length > 0,
   }
 }

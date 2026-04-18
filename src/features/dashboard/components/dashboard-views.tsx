@@ -46,23 +46,35 @@ export function DashboardViews({ kpis, platforms, revenue, leads, activity }: Da
       </TabsList>
 
       <TabsContent value="all" className="space-y-6">
-        <KpiGrid cards={kpis} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <RevenueChart data={revenue} />
+        {kpis.length > 0 && <KpiGrid cards={kpis} />}
+        {(revenue.length > 0 || leads.length > 0) && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+            {revenue.length > 0 && (
+              <div className="lg:col-span-3">
+                <RevenueChart data={revenue} />
+              </div>
+            )}
+            {leads.length > 0 && (
+              <div className="lg:col-span-2">
+                <LeadSources sources={leads} />
+              </div>
+            )}
           </div>
-          <div className="lg:col-span-2">
-            <LeadSources sources={leads} />
+        )}
+        {(platforms.length > 0 || activity.length > 0) && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+            {platforms.length > 0 && (
+              <div className="lg:col-span-2">
+                <PlatformTable stats={platforms} />
+              </div>
+            )}
+            {activity.length > 0 && (
+              <div className="lg:col-span-3">
+                <ActivityFeed items={activity} />
+              </div>
+            )}
           </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <PlatformTable stats={platforms} />
-          </div>
-          <div className="lg:col-span-3">
-            <ActivityFeed items={activity} />
-          </div>
-        </div>
+        )}
       </TabsContent>
 
       <TabsContent value="social" className="space-y-6">
@@ -71,7 +83,9 @@ export function DashboardViews({ kpis, platforms, revenue, leads, activity }: Da
         ) : (
           <EmptyState title="Sin datos de redes" href="/integrations" />
         )}
-        <PlatformTable stats={filterPlatforms(platforms, ['Instagram', 'YouTube', 'TikTok'])} />
+        {filterPlatforms(platforms, ['Instagram', 'YouTube', 'TikTok']).length > 0 && (
+          <PlatformTable stats={filterPlatforms(platforms, ['Instagram', 'YouTube', 'TikTok'])} />
+        )}
       </TabsContent>
 
       <TabsContent value="ads" className="space-y-6">
@@ -80,7 +94,7 @@ export function DashboardViews({ kpis, platforms, revenue, leads, activity }: Da
         ) : (
           <EmptyState title="Sin datos de Meta Ads" href="/integrations" />
         )}
-        <RevenueChart data={revenue} />
+        {revenue.length > 0 && <RevenueChart data={revenue} />}
       </TabsContent>
 
       <TabsContent value="crm" className="space-y-6">
@@ -89,7 +103,7 @@ export function DashboardViews({ kpis, platforms, revenue, leads, activity }: Da
         ) : (
           <EmptyState title="Sin datos de GHL" href="/integrations" />
         )}
-        <LeadSources sources={leads} />
+        {leads.length > 0 && <LeadSources sources={leads} />}
       </TabsContent>
     </Tabs>
   )
