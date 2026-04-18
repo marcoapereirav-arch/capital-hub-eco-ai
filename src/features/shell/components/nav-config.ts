@@ -28,7 +28,6 @@ export const navSections: NavSection[] = [
         title: "Integraciones",
         href: "/integrations",
         icon: Link2,
-        badge: "Soon",
       },
     ],
   },

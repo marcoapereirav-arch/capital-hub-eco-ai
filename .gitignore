@@ -81,3 +81,4 @@ supabase/.temp
 # Local content / personal media
 /Contenidos/
 /transcript_funnel_hub_russel
+tsconfig.tsbuildinfo

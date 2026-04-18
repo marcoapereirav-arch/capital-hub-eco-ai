@@ -1,44 +1,37 @@
+import Link from 'next/link'
 import { ShellHeader } from "@/features/shell/components/shell-header"
-import { KpiGrid } from "@/features/dashboard/components/kpi-grid"
-import { PlatformTable } from "@/features/dashboard/components/platform-table"
-import { RevenueChart } from "@/features/dashboard/components/revenue-chart"
-import { LeadSources } from "@/features/dashboard/components/lead-sources"
-import { ActivityFeed } from "@/features/dashboard/components/activity-feed"
-import {
-  kpiCards,
-  platformStats,
-  revenueData,
-  leadSources,
-  recentActivity,
-} from "@/features/dashboard/services/mock-data"
+import { DashboardViews } from "@/features/dashboard/components/dashboard-views"
+import { getDashboardData } from "@/features/dashboard/services/metrics-service"
 
-export default function DashboardPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function DashboardPage() {
+  const data = await getDashboardData()
+
   return (
     <>
       <ShellHeader title="Dashboard" />
       <div className="flex flex-col gap-6 p-6">
-        {/* KPI Cards */}
-        <KpiGrid cards={kpiCards} />
+        {!data.hasRealData && (
+          <div className="rounded-lg border border-dashed bg-muted/40 p-4 text-sm">
+            <p className="font-medium">Mostrando datos de ejemplo.</p>
+            <p className="text-muted-foreground">
+              Conecta tus plataformas en{' '}
+              <Link href="/integrations" className="font-medium underline underline-offset-4">
+                Integraciones
+              </Link>{' '}
+              para ver métricas reales.
+            </p>
+          </div>
+        )}
 
-        {/* Row: Revenue Chart + Lead Sources */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <RevenueChart data={revenueData} />
-          </div>
-          <div className="lg:col-span-2">
-            <LeadSources sources={leadSources} />
-          </div>
-        </div>
-
-        {/* Row: Platforms + Activity */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <PlatformTable stats={platformStats} />
-          </div>
-          <div className="lg:col-span-3">
-            <ActivityFeed items={recentActivity} />
-          </div>
-        </div>
+        <DashboardViews
+          kpis={data.kpis}
+          platforms={data.platforms}
+          revenue={data.revenue}
+          leads={data.leads}
+          activity={data.activity}
+        />
       </div>
     </>
   )

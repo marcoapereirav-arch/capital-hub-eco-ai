@@ -38,7 +38,12 @@ Inyecta autenticacion B2B production-ready con Supabase + Next.js 16.
 
 ## Archivos a Crear
 
-### 1. `proxy.ts` (root)
+### 1. `proxy.ts` (al mismo nivel que `app/`)
+
+> **IMPORTANTE**: Si el proyecto usa `src/app/`, `proxy.ts` va en `src/proxy.ts` (NO en la raíz). Si usa `app/` en raíz, va en la raíz.
+> Next.js 16 ignora silenciosamente `proxy.ts` en la raíz cuando existe `src/app/`. No hay error, simplemente no se ejecuta el middleware.
+> Además: NO añadir `runtime` al `config` — Proxy siempre corre en Node.js, y declararlo causa: *"Route segment config is not allowed in Proxy file"*.
+
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server'
