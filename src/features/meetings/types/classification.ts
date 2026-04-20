@@ -30,7 +30,7 @@ export const ClassificationSchema = z.object({
     .array(
       z.object({
         name: z.string().min(1),
-        email: z.string().email().nullable(),
+        email: z.string().nullable(),
         is_team_member: z.boolean(),
         matched_team_member_name: z.string().nullable(),
         role: z.enum(['primary', 'participant', 'decision_maker', 'gatekeeper']),
