@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { TaskSidebar } from "./task-sidebar"
@@ -12,6 +13,16 @@ import { useTaskStore } from "../store/task-store"
 
 export function TaskPage() {
   const viewMode = useTaskStore((s) => s.viewMode)
+  const init = useTaskStore((s) => s.init)
+  const cleanup = useTaskStore((s) => s.cleanup)
+  const initialized = useTaskStore((s) => s.initialized)
+  const loading = useTaskStore((s) => s.loading)
+  const error = useTaskStore((s) => s.error)
+
+  useEffect(() => {
+    init()
+    return () => cleanup()
+  }, [init, cleanup])
 
   return (
     <div className="absolute inset-0 flex flex-col">
@@ -41,7 +52,20 @@ export function TaskPage() {
 
           {/* Board/List — ONLY this scrolls */}
           <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-4">
-            {viewMode === "board" ? <TaskBoard /> : <TaskList />}
+            {error && (
+              <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            {loading && !initialized ? (
+              <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                Cargando tareas…
+              </div>
+            ) : viewMode === "board" ? (
+              <TaskBoard />
+            ) : (
+              <TaskList />
+            )}
           </div>
         </div>
       </div>

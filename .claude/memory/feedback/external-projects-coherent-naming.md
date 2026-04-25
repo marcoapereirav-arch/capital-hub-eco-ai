@@ -1,12 +1,28 @@
 ---
 name: Proyectos externos — nombres coherentes
-description: Antes de operar sobre cualquier servicio externo (Supabase, Vercel, GitHub, etc.) verificar que el nombre del proyecto remoto coincida con Capital Hub. Nunca asumir.
+description: Antes de operar sobre cualquier servicio externo (Supabase, Vercel, GitHub, etc.) verificar que el nombre del proyecto remoto coincida con Capital Hub. Nunca asumir. Identidades concretas anotadas para no volver a preguntar.
 type: feedback
 ---
 
 # Proyectos externos — nombres coherentes con Capital Hub
 
-**Regla:** Cuando trabajo en Capital Hub, todo proyecto externo (Supabase, Vercel, GitHub, Stripe, Polar, DNS, cualquier servicio) debe tener un nombre coherente con "Capital Hub" (ej: `capital-hub`, `capital-hub-eco-ai`, `ecoai-capitalhub`, `capitalhubapp`).
+**Regla:** Cuando trabajo en Capital Hub, todo proyecto externo (Supabase, Vercel, GitHub, Stripe, Polar, DNS, cualquier servicio) debe tener un nombre coherente con "Capital Hub" o con el fundador (ej: `capital-hub`, `capital-hub-eco-ai`, `ecoai-capitalhub`, `capitalhubapp`, `Adrian Villanueva`).
+
+## Identidades concretas YA confirmadas (no volver a preguntar)
+
+| Servicio | Nombre/ID | Verificacion |
+|---|---|---|
+| **Supabase — Org** | `adrian villanueva` (id `dsnmwdqmxuneqdyjtknf`) | Unica org en el MCP token actual |
+| **Supabase — Project** | `Adrian Villanueva` (ref `aglyoyqtzozdnusltjxe`, region `eu-central-1`) | Coincide con `ref` del JWT en `SUPABASE_SERVICE_ROLE_KEY` de `.env.local` |
+| **Supabase — DB host** | `db.aglyoyqtzozdnusltjxe.supabase.co` | — |
+| **GitHub — Repo** | `github.com/marcoapereirav-arch/capital-hub-eco-ai` | Confirmado 2026-04-25 |
+
+**STOP inmediato** si:
+- Aparece cualquier proyecto Supabase con ref distinto de `aglyoyqtzozdnusltjxe`
+- Aparece **`nvision-saas`** (proyecto ajeno, ya hubo incidente — ver Why)
+- El `NEXT_PUBLIC_SUPABASE_URL` o el JWT del service role apunta a un ref distinto del anclado arriba
+
+**Why anclar IDs concretos:** El usuario me pidio explicitamente (2026-04-25) que no le vuelva a preguntar el proyecto Supabase porque "ya esto debe estar anclado". Ademas el 2026-04-11 aplique migracion al proyecto equivocado (`nvision-saas`) por no haber verificado.
 
 Antes de ejecutar cualquier operacion mutativa o destructiva sobre un servicio externo, DEBO:
 1. Listar los proyectos disponibles via MCP/CLI
