@@ -21,6 +21,7 @@ export async function classifyMeeting(input: ClassifierInput): Promise<Classific
       system: CLASSIFY_SYSTEM_PROMPT,
       prompt: userPrompt,
       temperature: LLM_TEMPERATURE,
+      maxOutputTokens: 4000,
     })
     return object
   } catch (err) {
@@ -33,6 +34,7 @@ export async function classifyMeeting(input: ClassifierInput): Promise<Classific
         err instanceof Error ? err.message : 'unknown'
       }). Asegúrate de devolver exactamente el objeto JSON pedido, nada más.`,
       temperature: 0,
+      maxOutputTokens: 4000,
     })
     return object
   }
