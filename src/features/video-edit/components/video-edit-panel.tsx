@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import * as tus from 'tus-js-client'
 import {
   Upload,
   Loader2,
@@ -17,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/lib/supabase/client'
 import {
   VIDEO_EDIT_STATUS_LABELS,
   FUNNEL_STAGE_LABELS,
@@ -33,9 +35,9 @@ interface UploadUrlResponse {
   ok: boolean
   error?: string
   edit_id?: string
-  upload_url?: string
-  token?: string
+  bucket?: string
   path?: string
+  tus_endpoint?: string
 }
 
 interface ListResponse {
@@ -196,6 +198,7 @@ export function VideoEditPanel() {
     setUploadProgress({ filename: file.name, pct: 0 })
 
     try {
+      // 1) Reservar el slot en BD + obtener path/bucket/endpoint TUS
       const urlRes = await fetch('/api/video-edit/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,28 +214,68 @@ export function VideoEditPanel() {
         }),
       })
       const urlJson = (await urlRes.json()) as UploadUrlResponse
-      if (!urlRes.ok || !urlJson.ok || !urlJson.upload_url || !urlJson.edit_id) {
+      if (
+        !urlRes.ok ||
+        !urlJson.ok ||
+        !urlJson.edit_id ||
+        !urlJson.bucket ||
+        !urlJson.path ||
+        !urlJson.tus_endpoint
+      ) {
         throw new Error(urlJson.error ?? 'No se pudo iniciar el upload')
       }
       const editId = urlJson.edit_id
 
+      // 2) Obtener token JWT de la sesión para autenticar contra Storage
+      const supabase = createClient()
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+      if (sessionErr || !accessToken) {
+        throw new Error('Sesión expirada. Recarga la página y vuelve a intentarlo.')
+      }
+
+      // 3) Upload TUS resumable (chunks de 6 MB, retry automático)
       await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.open('PUT', urlJson.upload_url!)
-        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4')
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress({ filename: file.name, pct: Math.round((e.loaded / e.total) * 100) })
+        const upload = new tus.Upload(file, {
+          endpoint: urlJson.tus_endpoint!,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'x-upsert': 'true',
+          },
+          uploadDataDuringCreation: true,
+          removeFingerprintOnSuccess: true,
+          metadata: {
+            bucketName: urlJson.bucket!,
+            objectName: urlJson.path!,
+            contentType: file.type || 'video/mp4',
+            cacheControl: '3600',
+          },
+          chunkSize: 6 * 1024 * 1024, // 6 MB exactos (requisito Supabase TUS)
+          onError: (err) => {
+            const detail =
+              err instanceof Error ? err.message : 'error desconocido durante el upload'
+            reject(new Error(`Upload falló: ${detail}`))
+          },
+          onProgress: (bytesUploaded, bytesTotal) => {
+            setUploadProgress({
+              filename: file.name,
+              pct: Math.round((bytesUploaded / bytesTotal) * 100),
+            })
+          },
+          onSuccess: () => resolve(),
+        })
+
+        // Retoma uploads incompletos si los hubiera para este mismo archivo
+        upload.findPreviousUploads().then((previous) => {
+          if (previous.length > 0) {
+            upload.resumeFromPreviousUpload(previous[0])
           }
-        }
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve()
-          else reject(new Error(`Upload falló (HTTP ${xhr.status})`))
-        }
-        xhr.onerror = () => reject(new Error('Error de red durante el upload'))
-        xhr.send(file)
+          upload.start()
+        })
       })
 
+      // 4) Disparar el pipeline (transcripción, etc)
       const procRes = await fetch('/api/video-edit/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

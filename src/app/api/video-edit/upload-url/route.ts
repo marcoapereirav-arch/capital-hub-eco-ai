@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { requireAdmin } from '@/features/content-intel/lib/require-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createUploadUrl, rawPath } from '@/features/video-edit/services/storage'
+import { rawPath, VIDEO_EDIT_BUCKET } from '@/features/video-edit/services/storage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -59,15 +59,15 @@ export async function POST(req: NextRequest) {
     })
     if (insertErr) throw new Error(`insert failed: ${insertErr.message}`)
 
-    // Generar URL firmada para que el navegador suba el archivo
-    const upload = await createUploadUrl(path)
-
+    // Devolvemos los datos que necesita el cliente TUS (resumable upload).
+    // El navegador autentica directo contra Supabase Storage usando su JWT
+    // de sesion (RLS sobre storage.objects permite escribir a admins).
     return Response.json({
       ok: true,
       edit_id: editId,
-      upload_url: upload.uploadUrl,
-      token: upload.token,
-      path: upload.path,
+      bucket: VIDEO_EDIT_BUCKET,
+      path,
+      tus_endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`,
     })
   } catch (err) {
     return Response.json(
