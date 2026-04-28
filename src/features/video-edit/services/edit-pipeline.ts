@@ -49,7 +49,7 @@ export async function runEditPipeline(editId: string): Promise<void> {
     const downloadUrl = await createDownloadUrl(row.source_path)
 
     // 3) Transcribir via Replicate
-    const transcript = await transcribeAudioFromUrl(downloadUrl, 'spanish')
+    const transcript = await transcribeAudioFromUrl(downloadUrl, 'es')
 
     if (!transcript.words || transcript.words.length === 0) {
       throw new Error('Whisper no devolvio palabras (audio sin habla?)')
