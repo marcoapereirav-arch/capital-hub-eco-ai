@@ -25,7 +25,7 @@ const StudioChatSchema = z.object({
     .optional()
     .default({}),
   total_limit: z.number().optional().default(50),
-  message: z.string().min(1).max(2000),
+  message: z.string().min(1).max(8000),
   history: z
     .array(
       z.object({

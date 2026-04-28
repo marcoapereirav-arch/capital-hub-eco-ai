@@ -42,7 +42,13 @@ function SidebarLogo() {
   )
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  userEmail: string
+  userName: string | null
+  userRole: string | null
+}
+
+export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
   const pathname = usePathname()
 
   return (
@@ -91,7 +97,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <UserMenu />
+        <UserMenu email={userEmail} name={userName} role={userRole} />
       </SidebarFooter>
 
       <SidebarRail />
