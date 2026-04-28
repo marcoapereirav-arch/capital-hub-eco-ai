@@ -25,18 +25,18 @@ export interface SubtitleStyleTokens {
 }
 
 export const DEFAULT_SUBTITLE_TOKENS: SubtitleStyleTokens = {
-  // SF Pro Display no está disponible cross-platform en Shotstack — usamos Inter
-  // que es un equivalente Apple-style libre. Cuando lleguen capturas y queramos
-  // SF Pro exacto, se sube como custom font asset.
-  fontFamily: 'Inter ExtraBold',
-  fontWeight: 800,
-  fontSize: 64,
+  // Estilo Diego García del Río (referencia 2026-04-28): Inter Medium,
+  // tamaño moderado, sin fondo, stroke fino para legibilidad sin agresividad.
+  // Sentence case heredado del transcript de Whisper (no se fuerza casing).
+  fontFamily: 'Inter',
+  fontWeight: 500,
+  fontSize: 46,
   color: '#FFFFFF',
   backgroundColor: null,
   backgroundOpacity: 0,
   position: 'lower-third',
-  blockWidth: 900,
-  blockHeight: 240,
+  blockWidth: 760,
+  blockHeight: 180,
 }
 
 function positionToShotstack(pos: SubtitleStyleTokens['position']): {
@@ -50,9 +50,10 @@ function positionToShotstack(pos: SubtitleStyleTokens['position']): {
       return { position: 'center', offsetY: 0 }
     case 'lower-third':
     default:
-      // 'bottom' coloca el clip en la zona inferior; offset negativo lo sube
-      // un poco para no quedar pegado al borde absoluto del frame.
-      return { position: 'bottom', offsetY: 0.18 }
+      // Estilo Diego: subs en la zona del pecho/cuello del sujeto, no pegados
+      // al borde inferior. offset 0.28 = ~28% desde el borde inferior hacia
+      // el centro.
+      return { position: 'bottom', offsetY: 0.28 }
   }
 }
 
@@ -125,9 +126,11 @@ export function buildKaraokeSubtitleClips(
               padding: 16,
             }
           : undefined,
-      stroke: { color: '#000000', width: 4 },
-      width: style.blockWidth ?? 900,
-      height: style.blockHeight ?? 240,
+      // Stroke fino estilo Diego: legibilidad sin agresividad. 1.5px en lugar
+      // del 4px tipo MrBeast.
+      stroke: { color: '#000000', width: 1.5 },
+      width: style.blockWidth ?? 760,
+      height: style.blockHeight ?? 180,
     },
     start: frame.start,
     length: frame.length,

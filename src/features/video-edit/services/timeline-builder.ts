@@ -60,9 +60,10 @@ export interface BrandPackTokens {
 }
 
 export const DEFAULT_BRAND_TOKENS: BrandPackTokens = {
-  subtitleFontFamily: 'Inter ExtraBold',
-  subtitleFontWeight: 800,
-  subtitleFontSizeRelative: 'large',
+  // Estilo Diego García del Río (referencia 2026-04-28)
+  subtitleFontFamily: 'Inter',
+  subtitleFontWeight: 500,
+  subtitleFontSizeRelative: 'medium',
   subtitleColor: '#FFFFFF',
   subtitleEmphasisStyle: 'bold-glow',
   subtitleEmphasisColor: null,
@@ -91,10 +92,12 @@ export const DEFAULT_BRAND_TOKENS: BrandPackTokens = {
 }
 
 function brandToSubtitleStyle(brand: BrandPackTokens): SubtitleStyleTokens {
+  // Tamaños calibrados con referencia Diego García del Río (2026-04-28).
+  // 'medium' = 46px es el tamaño por defecto en Variante 1.
   const sizeMap: Record<BrandPackTokens['subtitleFontSizeRelative'], number> = {
-    huge: 80,
-    large: 64,
-    medium: 52,
+    huge: 72,
+    large: 58,
+    medium: 46,
   }
   return {
     fontFamily: brand.subtitleFontFamily,
@@ -104,8 +107,8 @@ function brandToSubtitleStyle(brand: BrandPackTokens): SubtitleStyleTokens {
     backgroundColor: brand.subtitleBackgroundColor,
     backgroundOpacity: brand.subtitleBackgroundOpacity,
     position: brand.subtitlePosition,
-    blockWidth: 900,
-    blockHeight: 240,
+    blockWidth: 760,
+    blockHeight: 180,
   }
 }
 
