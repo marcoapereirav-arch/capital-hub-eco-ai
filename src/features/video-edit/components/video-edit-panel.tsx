@@ -9,6 +9,9 @@ import {
   Film,
   Trash2,
   RefreshCw,
+  Sparkles,
+  Download,
+  RotateCcw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,7 +36,27 @@ interface ListResponse {
   edits?: VideoEditRow[]
 }
 
-const ACTIVE_STATUSES: VideoEditStatus[] = ['pending', 'uploading', 'transcribing', 'cutting', 'subtitling']
+interface RenderGetResponse {
+  ok: boolean
+  error?: string
+  edit?: Partial<VideoEditRow>
+  shotstack_status?: string
+}
+
+interface RenderPostResponse {
+  ok: boolean
+  error?: string
+  render_id?: string
+}
+
+const ACTIVE_STATUSES: VideoEditStatus[] = [
+  'pending',
+  'uploading',
+  'transcribing',
+  'cutting',
+  'subtitling',
+  'rendering',
+]
 
 function formatBytes(bytes: number | null): string {
   if (!bytes) return '—'
@@ -51,9 +74,7 @@ function formatDuration(s: number | null): string {
   return `${mins}m ${secs}s`
 }
 
-function statusVariant(status: VideoEditStatus): {
-  className: string
-} {
+function statusVariant(status: VideoEditStatus): { className: string } {
   switch (status) {
     case 'done':
       return { className: 'border-foreground text-foreground' }
@@ -71,6 +92,7 @@ export function VideoEditPanel() {
   const [uploadProgress, setUploadProgress] = useState<{ filename: string; pct: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
+  const [renderingIds, setRenderingIds] = useState<Set<string>>(new Set())
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadEdits = async () => {
@@ -89,11 +111,33 @@ export function VideoEditPanel() {
     void loadEdits()
   }, [])
 
-  // Polling: si hay edits activos, refrescar cada 4s
+  // Polling 1: si hay edits en estado activo (pending/transcribing/etc), refrescar lista cada 4s
   useEffect(() => {
     const hasActive = edits.some((e) => ACTIVE_STATUSES.includes(e.status))
     if (!hasActive) return
     const t = setInterval(() => void loadEdits(), 4000)
+    return () => clearInterval(t)
+  }, [edits])
+
+  // Polling 2: para cada edit en 'rendering', preguntar a Shotstack via /render GET
+  useEffect(() => {
+    const renderingEdits = edits.filter((e) => e.status === 'rendering')
+    if (renderingEdits.length === 0) return
+    const t = setInterval(async () => {
+      for (const edit of renderingEdits) {
+        try {
+          const res = await fetch(`/api/video-edit/${edit.id}/render`, { cache: 'no-store' })
+          const json = (await res.json()) as RenderGetResponse
+          if (json.ok && json.edit && json.edit.status && json.edit.status !== 'rendering') {
+            // Estado final cambió — recargamos lista
+            void loadEdits()
+            return
+          }
+        } catch {
+          // silent
+        }
+      }
+    }, 5000)
     return () => clearInterval(t)
   }, [edits])
 
@@ -112,7 +156,6 @@ export function VideoEditPanel() {
     setUploadProgress({ filename: file.name, pct: 0 })
 
     try {
-      // 1) Pedir signed URL
       const urlRes = await fetch('/api/video-edit/upload-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,7 +171,6 @@ export function VideoEditPanel() {
       }
       const editId = urlJson.edit_id
 
-      // 2) Upload directo a Supabase Storage con XMLHttpRequest para tener progreso
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
         xhr.open('PUT', urlJson.upload_url!)
@@ -146,7 +188,6 @@ export function VideoEditPanel() {
         xhr.send(file)
       })
 
-      // 3) Disparar el pipeline
       const procRes = await fetch('/api/video-edit/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,6 +203,25 @@ export function VideoEditPanel() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
       setUploadProgress(null)
+    }
+  }
+
+  const handleRender = async (id: string) => {
+    setError(null)
+    setRenderingIds((prev) => new Set(prev).add(id))
+    try {
+      const res = await fetch(`/api/video-edit/${id}/render`, { method: 'POST' })
+      const json = (await res.json()) as RenderPostResponse
+      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      await loadEdits()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al encolar el render')
+    } finally {
+      setRenderingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
     }
   }
 
@@ -187,7 +247,7 @@ export function VideoEditPanel() {
           </h3>
         </div>
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          MVP. Subes el raw, la IA transcribe palabra a palabra. En siguientes sesiones añadiré cortes de silencios y subtítulos estilo Capital Hub.
+          Sube un video, la IA lo transcribe y genera un MP4 con subtítulos quemados estilo Capital Hub. Render vía Shotstack (sandbox tiene marca de agua).
         </p>
       </div>
 
@@ -271,10 +331,15 @@ export function VideoEditPanel() {
           <div className="flex flex-col rounded-xl border border-border bg-card">
             {edits.map((edit) => {
               const variant = statusVariant(edit.status)
+              const isRendering = edit.status === 'rendering'
+              const canRender = edit.status === 'done' && edit.transcript !== null
+              const hasOutput = !!edit.output_url
+              const isQueueing = renderingIds.has(edit.id)
+
               return (
                 <div
                   key={edit.id}
-                  className="flex items-center gap-4 border-b border-border p-4 last:border-b-0"
+                  className="flex flex-wrap items-center gap-4 border-b border-border p-4 last:border-b-0"
                 >
                   <Film className="h-5 w-5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
 
@@ -310,13 +375,73 @@ export function VideoEditPanel() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    {edit.status === 'done' && (
+                  <div className="flex items-center gap-1.5">
+                    {hasOutput && edit.output_url && (
+                      <a
+                        href={edit.output_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        download
+                      >
+                        <Button size="sm" variant="default" className="h-8 text-xs">
+                          <Download className="mr-1 h-3.5 w-3.5" />
+                          Descargar
+                        </Button>
+                      </a>
+                    )}
+
+                    {canRender && !hasOutput && (
+                      <Button
+                        onClick={() => handleRender(edit.id)}
+                        size="sm"
+                        variant="default"
+                        disabled={isQueueing}
+                        className="h-8 text-xs"
+                      >
+                        {isQueueing ? (
+                          <>
+                            <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                            Encolando…
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-1 h-3.5 w-3.5" />
+                            Generar con subtítulos
+                          </>
+                        )}
+                      </Button>
+                    )}
+
+                    {hasOutput && canRender && (
+                      <Button
+                        onClick={() => handleRender(edit.id)}
+                        size="sm"
+                        variant="ghost"
+                        disabled={isQueueing}
+                        className="h-8 text-xs"
+                        title="Re-renderizar"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+
+                    {isRendering && (
+                      <Badge
+                        variant="outline"
+                        className="gap-1 border-foreground/40 text-[10px] text-foreground"
+                      >
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        renderizando
+                      </Badge>
+                    )}
+
+                    {edit.status === 'done' && !hasOutput && (
                       <Badge variant="outline" className="gap-1 text-[10px]">
                         <Check className="h-3 w-3" />
                         transcrito
                       </Badge>
                     )}
+
                     <button
                       onClick={() => handleDelete(edit.id)}
                       className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"

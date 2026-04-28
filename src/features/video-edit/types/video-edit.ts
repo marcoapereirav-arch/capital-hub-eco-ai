@@ -4,6 +4,7 @@ export const VIDEO_EDIT_STATUSES = [
   'transcribing',
   'cutting',
   'subtitling',
+  'rendering',
   'done',
   'error',
   'cancelled',
@@ -17,6 +18,7 @@ export const VIDEO_EDIT_STATUS_LABELS: Record<VideoEditStatus, string> = {
   transcribing: 'Transcribiendo',
   cutting: 'Cortando silencios',
   subtitling: 'Subtitulando',
+  rendering: 'Renderizando',
   done: 'Listo',
   error: 'Error',
   cancelled: 'Cancelado',
@@ -49,6 +51,10 @@ export interface VideoEditRow {
   custom_prompt: string | null
   silence_threshold_ms: number
   cost_usd: number
+  shotstack_render_id: string | null
+  output_url: string | null
+  render_started_at: string | null
+  render_completed_at: string | null
   created_at: string
   updated_at: string
 }
