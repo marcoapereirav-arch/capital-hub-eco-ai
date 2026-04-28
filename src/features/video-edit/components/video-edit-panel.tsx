@@ -12,13 +12,17 @@ import {
   Sparkles,
   Download,
   RotateCcw,
+  Settings2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   VIDEO_EDIT_STATUS_LABELS,
+  PIECE_TYPE_LABELS,
   type VideoEditRow,
   type VideoEditStatus,
+  type VideoPresetOption,
 } from '../types/video-edit'
 
 interface UploadUrlResponse {
@@ -34,6 +38,12 @@ interface ListResponse {
   ok: boolean
   error?: string
   edits?: VideoEditRow[]
+}
+
+interface PresetsResponse {
+  ok: boolean
+  error?: string
+  presets?: VideoPresetOption[]
 }
 
 interface RenderGetResponse {
@@ -88,11 +98,19 @@ function statusVariant(status: VideoEditStatus): { className: string } {
 
 export function VideoEditPanel() {
   const [edits, setEdits] = useState<VideoEditRow[]>([])
+  const [presets, setPresets] = useState<VideoPresetOption[]>([])
   const [loadingList, setLoadingList] = useState(true)
   const [uploadProgress, setUploadProgress] = useState<{ filename: string; pct: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [renderingIds, setRenderingIds] = useState<Set<string>>(new Set())
+
+  // Configuración previa al upload
+  const [presetSlug, setPresetSlug] = useState<string>('vertical-clean')
+  const [pieceType, setPieceType] = useState<'A' | 'B' | 'C' | 'D' | ''>('')
+  const [headlineText, setHeadlineText] = useState<string>('')
+  const [ctaWord, setCtaWord] = useState<string>('')
+
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadEdits = async () => {
@@ -107,11 +125,22 @@ export function VideoEditPanel() {
     }
   }
 
+  const loadPresets = async () => {
+    try {
+      const res = await fetch('/api/video-edit/presets', { cache: 'no-store' })
+      const json = (await res.json()) as PresetsResponse
+      if (json.ok && json.presets) setPresets(json.presets)
+    } catch {
+      // silent
+    }
+  }
+
   useEffect(() => {
     void loadEdits()
+    void loadPresets()
   }, [])
 
-  // Polling 1: si hay edits en estado activo (pending/transcribing/etc), refrescar lista cada 4s
+  // Polling: edits en proceso → recargar lista cada 4s
   useEffect(() => {
     const hasActive = edits.some((e) => ACTIVE_STATUSES.includes(e.status))
     if (!hasActive) return
@@ -119,7 +148,7 @@ export function VideoEditPanel() {
     return () => clearInterval(t)
   }, [edits])
 
-  // Polling 2: para cada edit en 'rendering', preguntar a Shotstack via /render GET
+  // Polling render: para cada edit en 'rendering', preguntar a Shotstack
   useEffect(() => {
     const renderingEdits = edits.filter((e) => e.status === 'rendering')
     if (renderingEdits.length === 0) return
@@ -128,8 +157,7 @@ export function VideoEditPanel() {
         try {
           const res = await fetch(`/api/video-edit/${edit.id}/render`, { cache: 'no-store' })
           const json = (await res.json()) as RenderGetResponse
-          if (json.ok && json.edit && json.edit.status && json.edit.status !== 'rendering') {
-            // Estado final cambió — recargamos lista
+          if (json.ok && json.edit?.status && json.edit.status !== 'rendering') {
             void loadEdits()
             return
           }
@@ -141,6 +169,9 @@ export function VideoEditPanel() {
     return () => clearInterval(t)
   }, [edits])
 
+  const currentPreset = presets.find((p) => p.slug === presetSlug)
+  const requiresHeadline = currentPreset?.expected_inputs?.headline_text === true
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return
     const file = files[0]
@@ -150,6 +181,10 @@ export function VideoEditPanel() {
     }
     if (file.size > 524_288_000) {
       setError('El video supera 500 MB. Comprímelo o usa uno más corto.')
+      return
+    }
+    if (requiresHeadline && headlineText.trim().length === 0) {
+      setError('Esta variante requiere un titular para la franja superior.')
       return
     }
     setError(null)
@@ -163,6 +198,10 @@ export function VideoEditPanel() {
           filename: file.name,
           size_bytes: file.size,
           content_type: file.type,
+          preset_slug: presetSlug,
+          headline_text: requiresHeadline ? headlineText.trim() : null,
+          piece_type: pieceType || null,
+          cta_word: ctaWord.trim() ? ctaWord.trim() : null,
         }),
       })
       const urlJson = (await urlRes.json()) as UploadUrlResponse
@@ -247,8 +286,109 @@ export function VideoEditPanel() {
           </h3>
         </div>
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Sube un video, la IA lo transcribe y genera un MP4 con subtítulos quemados estilo Capital Hub. Render vía Shotstack (sandbox tiene marca de agua).
+          Sube un video, elige variante del playbook, y la IA monta el Reel: corta silencios &gt; 400ms, subtítulos palabra a palabra estilo Capital Hub, render via Shotstack. Sandbox = marca de agua.
         </p>
+      </div>
+
+      {/* CONFIGURACIÓN DEL UPLOAD */}
+      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-foreground">Configuración para el siguiente upload</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* Preset / variante visual */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Variante visual
+            </label>
+            <select
+              value={presetSlug}
+              onChange={(e) => setPresetSlug(e.target.value)}
+              className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm"
+            >
+              {presets.length === 0 ? (
+                <option value="vertical-clean">Vertical Clean (cargando…)</option>
+              ) : (
+                presets.map((p) => {
+                  const pendingRefs = p.implementation_status === 'pending-references'
+                  return (
+                    <option key={p.slug} value={p.slug}>
+                      {p.display_name}
+                      {pendingRefs ? ' · pendiente referencias' : ''}
+                    </option>
+                  )
+                })
+              )}
+            </select>
+            {currentPreset && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {currentPreset.description}
+              </p>
+            )}
+            {currentPreset?.implementation_status === 'pending-references' && (
+              <p className="text-xs text-amber-500">
+                ⚠ Esta variante todavía no renderiza — pendiente de referencias visuales del usuario.
+              </p>
+            )}
+          </div>
+
+          {/* Tipo de pieza */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Tipo de pieza (opcional)
+            </label>
+            <select
+              value={pieceType}
+              onChange={(e) => setPieceType(e.target.value as 'A' | 'B' | 'C' | 'D' | '')}
+              className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm"
+            >
+              <option value="">— Sin clasificar</option>
+              {(Object.keys(PIECE_TYPE_LABELS) as Array<'A' | 'B' | 'C' | 'D'>).map((t) => (
+                <option key={t} value={t}>
+                  {PIECE_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Headline (solo Variante 2) */}
+          {requiresHeadline && (
+            <div className="flex flex-col gap-1.5 md:col-span-2">
+              <label className="text-xs uppercase tracking-wide text-muted-foreground">
+                Titular para la franja superior <span className="text-destructive">*</span>
+              </label>
+              <Input
+                value={headlineText}
+                onChange={(e) => setHeadlineText(e.target.value)}
+                placeholder="Ej: La verdad que nadie te dice sobre la libertad"
+                maxLength={120}
+                className="h-10"
+              />
+              <p className="text-xs text-muted-foreground">
+                Aparece estático desde el frame 0 en la franja negra superior.
+              </p>
+            </div>
+          )}
+
+          {/* CTA word (Tipo B) */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Palabra del CTA (solo si pieza tipo B)
+            </label>
+            <Input
+              value={ctaWord}
+              onChange={(e) => setCtaWord(e.target.value.replace(/\s+/g, '').toUpperCase())}
+              placeholder="Ej: RUTA"
+              maxLength={30}
+              className="h-10 font-mono"
+            />
+            <p className="text-xs text-muted-foreground">
+              Una sola palabra, sin espacios. Se mostrará destacada en los últimos 3-5s.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* UPLOAD ZONE */}
@@ -351,6 +491,21 @@ export function VideoEditPanel() {
                       <Badge variant="outline" className={`text-[10px] ${variant.className}`}>
                         {VIDEO_EDIT_STATUS_LABELS[edit.status]}
                       </Badge>
+                      {edit.preset_slug && (
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {edit.preset_slug.replace(/-/g, ' ')}
+                        </Badge>
+                      )}
+                      {edit.piece_type && (
+                        <Badge variant="outline" className="text-[10px]">
+                          Tipo {edit.piece_type}
+                        </Badge>
+                      )}
+                      {edit.cta_word && (
+                        <Badge variant="outline" className="font-mono text-[10px]">
+                          CTA · {edit.cta_word}
+                        </Badge>
+                      )}
                       <span>{formatBytes(edit.size_bytes)}</span>
                       <span>·</span>
                       <span>{formatDuration(edit.duration_seconds)}</span>
@@ -377,12 +532,7 @@ export function VideoEditPanel() {
 
                   <div className="flex items-center gap-1.5">
                     {hasOutput && edit.output_url && (
-                      <a
-                        href={edit.output_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        download
-                      >
+                      <a href={edit.output_url} target="_blank" rel="noreferrer" download>
                         <Button size="sm" variant="default" className="h-8 text-xs">
                           <Download className="mr-1 h-3.5 w-3.5" />
                           Descargar

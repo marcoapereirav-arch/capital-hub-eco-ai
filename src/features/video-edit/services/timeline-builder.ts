@@ -2,179 +2,302 @@ import type {
   ShotstackClip,
   ShotstackEditPayload,
   ShotstackTimeline,
+  ShotstackTrack,
 } from './shotstack'
-import type { WhisperTranscript, WhisperWord } from '../types/video-edit'
+import type { WhisperTranscript } from '../types/video-edit'
+import { trimSilences, type SpeechSegment } from './silence-trim'
+import {
+  buildKaraokeSubtitleClips,
+  DEFAULT_SUBTITLE_TOKENS,
+  type SubtitleStyleTokens,
+} from './subtitle-builder'
 
 /**
- * Agrupa palabras de Whisper en frases cortas (3-5 palabras) para subtítulos legibles.
- * Cada frase se convierte en un text clip con start/length precisos.
+ * Constructores de timeline Shotstack por variante del Playbook Capital Hub.
+ *
+ * Cada constructor toma:
+ *  - URL firmada del video fuente
+ *  - duración total del video fuente
+ *  - transcript Whisper con words timestamps
+ *  - tokens del brand pack (estilo de subs, color grade, aspect, etc)
+ *
+ * Y devuelve un payload completo listo para `queueRender`.
  */
-export interface SubtitlePhrase {
-  text: string
-  start: number
-  length: number
+
+// ============================================================================
+// Tokens compartidos del Brand Pack
+// ============================================================================
+
+export interface BrandPackTokens {
+  subtitleFontFamily: string
+  subtitleFontWeight: number | string
+  subtitleFontSizeRelative: 'huge' | 'large' | 'medium'
+  subtitleColor: string
+  subtitleEmphasisStyle: 'bold-glow' | 'accent-color' | 'larger-bold'
+  subtitleEmphasisColor: string | null
+  subtitlePosition: 'lower-third' | 'center' | 'upper-third'
+  subtitleAnimation: 'word-by-word' | 'phrase' | 'fade'
+  subtitleMaxVisibleWords: number
+  subtitleBackgroundColor: string | null
+  subtitleBackgroundOpacity: number
+
+  variant2BarHeightPx: number
+  variant2BarColor: string
+  variant2HeadlineFontFamily: string
+  variant2HeadlineColor: string
+
+  variant3KeywordSizeMultiplier: number
+  variant3KeywordAccentColor: string | null
+
+  colorGradeLut: string
+  colorGradeIntensity: number
+
+  aspectRatio: '9:16' | '1:1' | '16:9'
+  resolution: 'sd' | 'hd' | '1080'
+  fps: 24 | 25 | 30 | 50 | 60
+
+  silenceThresholdMs: number
 }
 
-const DEFAULT_WORDS_PER_PHRASE = 4
-const MIN_PHRASE_DURATION = 0.6 // segundos. Frases más cortas se extienden para que se lean
-const MAX_PHRASE_DURATION = 4.0 // segundos. Si una frase dura más, ya no es lectura cómoda
+export const DEFAULT_BRAND_TOKENS: BrandPackTokens = {
+  subtitleFontFamily: 'Inter ExtraBold',
+  subtitleFontWeight: 800,
+  subtitleFontSizeRelative: 'large',
+  subtitleColor: '#FFFFFF',
+  subtitleEmphasisStyle: 'bold-glow',
+  subtitleEmphasisColor: null,
+  subtitlePosition: 'lower-third',
+  subtitleAnimation: 'word-by-word',
+  subtitleMaxVisibleWords: 3,
+  subtitleBackgroundColor: null,
+  subtitleBackgroundOpacity: 0,
 
-export function groupWordsIntoPhrases(
-  words: WhisperWord[],
-  wordsPerPhrase: number = DEFAULT_WORDS_PER_PHRASE,
-): SubtitlePhrase[] {
-  if (words.length === 0) return []
-  const phrases: SubtitlePhrase[] = []
+  variant2BarHeightPx: 425,
+  variant2BarColor: '#000000',
+  variant2HeadlineFontFamily: 'Inter ExtraBold',
+  variant2HeadlineColor: '#FFFFFF',
 
-  for (let i = 0; i < words.length; i += wordsPerPhrase) {
-    const chunk = words.slice(i, i + wordsPerPhrase)
-    if (chunk.length === 0) continue
-    const start = chunk[0].start
-    const rawEnd = chunk[chunk.length - 1].end
-    const length = Math.min(
-      Math.max(rawEnd - start, MIN_PHRASE_DURATION),
-      MAX_PHRASE_DURATION,
-    )
-    const text = chunk
-      .map((w) => w.word.trim())
-      .filter(Boolean)
-      .join(' ')
-      .replace(/\s+([,.!?;:])/g, '$1')
-      .trim()
-    if (!text) continue
-    phrases.push({ text, start, length })
+  variant3KeywordSizeMultiplier: 2.5,
+  variant3KeywordAccentColor: null,
+
+  colorGradeLut: 'cinematic-warm',
+  colorGradeIntensity: 0.7,
+
+  aspectRatio: '9:16',
+  resolution: '1080',
+  fps: 30,
+
+  silenceThresholdMs: 400,
+}
+
+function brandToSubtitleStyle(brand: BrandPackTokens): SubtitleStyleTokens {
+  const sizeMap: Record<BrandPackTokens['subtitleFontSizeRelative'], number> = {
+    huge: 80,
+    large: 64,
+    medium: 52,
   }
-
-  return phrases
-}
-
-// ============================================================================
-// Estilo de subtítulo
-// ============================================================================
-
-export interface SubtitleStyle {
-  fontFamily: string
-  fontSize: number
-  fontColor: string
-  fontWeight?: number | string
-  backgroundColor?: string
-  backgroundOpacity?: number
-  borderRadius?: number
-  padding?: number
-  strokeColor?: string
-  strokeWidth?: number
-  position: 'top' | 'center' | 'bottom'
-  offsetY?: number
-}
-
-/**
- * Estilo Capital Hub por defecto. Provisional — se sustituirá cuando el usuario
- * pase su brand pack. Pensado para vertical 9:16 / Reels.
- */
-export const CAPITAL_HUB_SUBTITLE_STYLE: SubtitleStyle = {
-  fontFamily: 'Montserrat ExtraBold',
-  fontSize: 60,
-  fontColor: '#FFFFFF',
-  fontWeight: 800,
-  backgroundColor: '#000000',
-  backgroundOpacity: 0.55,
-  borderRadius: 12,
-  padding: 24,
-  strokeColor: '#000000',
-  strokeWidth: 4,
-  position: 'center',
-  offsetY: 0.05,
-}
-
-function phraseToTextClip(phrase: SubtitlePhrase, style: SubtitleStyle): ShotstackClip {
   return {
-    asset: {
-      type: 'text',
-      text: phrase.text,
-      font: {
-        family: style.fontFamily,
-        size: style.fontSize,
-        color: style.fontColor,
-        weight: style.fontWeight,
-      },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      background: style.backgroundColor
-        ? {
-            color: style.backgroundColor,
-            opacity: style.backgroundOpacity ?? 0.6,
-            borderRadius: style.borderRadius ?? 12,
-            padding: style.padding ?? 20,
-          }
-        : undefined,
-      stroke: style.strokeColor
-        ? { color: style.strokeColor, width: style.strokeWidth ?? 3 }
-        : undefined,
-      width: 880,
-      height: 220,
-    },
-    start: phrase.start,
-    length: phrase.length,
-    fit: 'none',
-    position: style.position,
-    offset: { y: style.offsetY ?? 0 },
-    transition: { in: 'fadeFast', out: 'fadeFast' },
+    fontFamily: brand.subtitleFontFamily,
+    fontWeight: brand.subtitleFontWeight,
+    fontSize: sizeMap[brand.subtitleFontSizeRelative],
+    color: brand.subtitleColor,
+    backgroundColor: brand.subtitleBackgroundColor,
+    backgroundOpacity: brand.subtitleBackgroundOpacity,
+    position: brand.subtitlePosition,
+    blockWidth: 900,
+    blockHeight: 240,
   }
 }
 
 // ============================================================================
-// Builder principal
+// Utilidades comunes: video con cortes de silencio
 // ============================================================================
 
-export interface BuildSubtitledTimelineInput {
+interface BuildTrimmedVideoTrackInput {
+  sourceVideoUrl: string
+  segments: SpeechSegment[]
+}
+
+/**
+ * Construye una pista de video con N clips, uno por isla de habla,
+ * usando el `trim` de Shotstack para saltar los silencios del original.
+ */
+function buildTrimmedVideoTrack(input: BuildTrimmedVideoTrackInput): ShotstackTrack {
+  const clips: ShotstackClip[] = input.segments.map((seg) => ({
+    asset: {
+      type: 'video' as const,
+      src: input.sourceVideoUrl,
+      trim: seg.sourceStart,
+    },
+    start: seg.outputStart,
+    length: seg.duration,
+    fit: 'cover',
+  }))
+  return { clips }
+}
+
+/**
+ * Pista de subtítulos karaoke a partir de un transcript ya shiftado por silence-trim.
+ */
+function buildKaraokeSubtitleTrack(
+  shiftedWords: { word: string; start: number; end: number }[],
+  brand: BrandPackTokens,
+): ShotstackTrack {
+  const clips = buildKaraokeSubtitleClips(shiftedWords, {
+    maxVisibleWords: brand.subtitleMaxVisibleWords,
+    style: brandToSubtitleStyle(brand),
+  })
+  return { clips }
+}
+
+// ============================================================================
+// VARIANTE 1 — Vertical Clean
+// ============================================================================
+
+export interface BuildVerticalCleanInput {
   sourceVideoUrl: string
   durationSeconds: number
   transcript: WhisperTranscript
-  style?: SubtitleStyle
-  wordsPerPhrase?: number
-  aspectRatio?: '9:16' | '1:1' | '16:9'
-  resolution?: 'sd' | 'hd' | '1080'
+  brand?: Partial<BrandPackTokens>
+  applySilenceTrim?: boolean
 }
 
-/**
- * Construye un payload completo de Shotstack: video original + track de subtítulos.
- * No corta silencios ni añade música — esos van en bloques posteriores.
- */
-export function buildSubtitledTimelinePayload(
-  input: BuildSubtitledTimelineInput,
-): ShotstackEditPayload {
-  const style = input.style ?? CAPITAL_HUB_SUBTITLE_STYLE
-  const phrases = groupWordsIntoPhrases(
-    input.transcript.words,
-    input.wordsPerPhrase ?? DEFAULT_WORDS_PER_PHRASE,
-  )
+export interface BuildResult {
+  payload: ShotstackEditPayload
+  /** Duración del output (post silence-trim) en segundos. */
+  outputDuration: number
+  /** Segundos de silencio recortados. */
+  silenceRemoved: number
+}
 
-  const videoClip: ShotstackClip = {
-    asset: { type: 'video', src: input.sourceVideoUrl },
-    start: 0,
-    length: input.durationSeconds,
-    fit: 'cover',
-  }
+export function buildVerticalCleanPayload(input: BuildVerticalCleanInput): BuildResult {
+  const brand: BrandPackTokens = { ...DEFAULT_BRAND_TOKENS, ...input.brand }
+  const apply = input.applySilenceTrim !== false
 
-  const subtitleClips = phrases.map((p) => phraseToTextClip(p, style))
+  // 1) Detectar islas de habla y shiftar palabras al output timeline
+  const trim = apply
+    ? trimSilences(input.transcript.words, brand.silenceThresholdMs)
+    : {
+        segments: [
+          {
+            sourceStart: 0,
+            duration: input.durationSeconds,
+            outputStart: 0,
+          },
+        ],
+        shiftedWords: input.transcript.words.map((w) => ({
+          word: w.word,
+          start: w.start,
+          end: w.end,
+        })),
+        totalOutputDuration: input.durationSeconds,
+        silenceRemoved: 0,
+      }
 
+  // 2) Construir pista de video con N clips trimmeados
+  const videoTrack = buildTrimmedVideoTrack({
+    sourceVideoUrl: input.sourceVideoUrl,
+    segments: trim.segments,
+  })
+
+  // 3) Construir pista de subtítulos karaoke
+  const subtitleTrack = buildKaraokeSubtitleTrack(trim.shiftedWords, brand)
+
+  // 4) Timeline (orden importa: tracks superiores se renderizan encima)
   const timeline: ShotstackTimeline = {
     background: '#000000',
-    tracks: [
-      // Track superior = subtítulos (se renderizan encima del video)
-      { clips: subtitleClips },
-      // Track inferior = video fuente
-      { clips: [videoClip] },
-    ],
+    tracks: [subtitleTrack, videoTrack],
   }
 
   return {
-    timeline,
-    output: {
-      format: 'mp4',
-      resolution: input.resolution ?? 'hd',
-      aspectRatio: input.aspectRatio ?? '9:16',
-      fps: 30,
-      quality: 'high',
+    payload: {
+      timeline,
+      output: {
+        format: 'mp4',
+        resolution: brand.resolution,
+        aspectRatio: brand.aspectRatio,
+        fps: brand.fps,
+        quality: 'high',
+      },
     },
+    outputDuration: trim.totalOutputDuration,
+    silenceRemoved: trim.silenceRemoved,
   }
+}
+
+// ============================================================================
+// VARIANTE 2 — Horizontal Framed (STUB hasta capturas)
+// ============================================================================
+
+export function buildHorizontalFramedPayload(_input: BuildVerticalCleanInput & {
+  headlineText: string
+}): BuildResult {
+  // TODO: implementar tras recibir capturas que confirmen:
+  //   - altura exacta de las franjas
+  //   - tipografía y tamaño del headline
+  //   - estilo del border/sombra entre franja y video centrado
+  throw new Error('preset_pending_references: horizontal-framed espera referencias visuales')
+}
+
+// ============================================================================
+// VARIANTE 3 — Edit Dinámico (STUB hasta capturas)
+// ============================================================================
+
+export interface BuildEditDinamicoInput extends BuildVerticalCleanInput {
+  brollClips: { url: string; durationSeconds: number }[]
+  hookKeywords?: { word: string; atSecond: number }[]
+}
+
+export function buildEditDinamicoPayload(_input: BuildEditDinamicoInput): BuildResult {
+  // TODO: implementar tras recibir capturas que confirmen:
+  //   - tipografía exacta de palabras destacadas grandes
+  //   - color de acento (si lo hay)
+  //   - tipo de transiciones entre clips de b-roll
+  //   - cadencia exacta de inserción de b-roll
+  throw new Error('preset_pending_references: edit-dinamico espera referencias visuales')
+}
+
+// ============================================================================
+// Selector por preset_slug
+// ============================================================================
+
+export interface BuildByPresetInput extends BuildVerticalCleanInput {
+  presetSlug: string
+  headlineText?: string
+  brollClips?: { url: string; durationSeconds: number }[]
+}
+
+export function buildPayloadByPreset(input: BuildByPresetInput): BuildResult {
+  switch (input.presetSlug) {
+    case 'vertical-clean':
+      return buildVerticalCleanPayload(input)
+    case 'horizontal-framed':
+      return buildHorizontalFramedPayload({
+        ...input,
+        headlineText: input.headlineText ?? '',
+      })
+    case 'edit-dinamico':
+      return buildEditDinamicoPayload({
+        ...input,
+        brollClips: input.brollClips ?? [],
+      })
+    case 'podcast-clip':
+      // Mismo pipeline que vertical-clean por defecto. El usuario elegirá
+      // variante visual real más adelante.
+      return buildVerticalCleanPayload(input)
+    default:
+      throw new Error(`preset_unknown: ${input.presetSlug}`)
+  }
+}
+
+// ============================================================================
+// Backwards compat con el render endpoint actual.
+// ============================================================================
+
+export function buildSubtitledTimelinePayload(input: {
+  sourceVideoUrl: string
+  durationSeconds: number
+  transcript: WhisperTranscript
+}): ShotstackEditPayload {
+  return buildVerticalCleanPayload(input).payload
 }

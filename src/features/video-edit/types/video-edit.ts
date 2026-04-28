@@ -55,6 +55,27 @@ export interface VideoEditRow {
   output_url: string | null
   render_started_at: string | null
   render_completed_at: string | null
+  preset_slug: string | null
+  headline_text: string | null
+  piece_type: 'A' | 'B' | 'C' | 'D' | null
+  cta_word: string | null
   created_at: string
   updated_at: string
+}
+
+export interface VideoPresetOption {
+  slug: string
+  display_name: string
+  description: string | null
+  expected_inputs: Record<string, unknown>
+  recommended_piece_types: string[]
+  enabled: boolean
+  implementation_status: 'ready' | 'wip' | 'pending-references' | string
+}
+
+export const PIECE_TYPE_LABELS: Record<'A' | 'B' | 'C' | 'D', string> = {
+  A: 'A — Conexión / historia personal',
+  B: 'B — CTA / conversión',
+  C: 'C — Valor / enseñanza',
+  D: 'D — Declaración fuerte / contrarian',
 }

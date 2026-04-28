@@ -3,7 +3,8 @@ import { requireAdmin } from '@/features/content-intel/lib/require-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createDownloadUrl } from '@/features/video-edit/services/storage'
 import { queueRender, getRender } from '@/features/video-edit/services/shotstack'
-import { buildSubtitledTimelinePayload } from '@/features/video-edit/services/timeline-builder'
+import { buildPayloadByPreset } from '@/features/video-edit/services/timeline-builder'
+import { loadBrandPackTokens } from '@/features/video-edit/services/brand-pack-repo'
 import type { WhisperTranscript } from '@/features/video-edit/types/video-edit'
 
 export const runtime = 'nodejs'
@@ -56,18 +57,31 @@ export async function POST(_req: NextRequest, { params }: Params) {
   }
 
   try {
-    // 1) URL firmada del video fuente que Shotstack pueda descargar
+    // 1) Cargar brand pack desde BD (cae a defaults si no existe)
+    const brand = await loadBrandPackTokens(supabase)
+
+    // 2) URL firmada del video fuente que Shotstack pueda descargar
     const sourceUrl = await createDownloadUrl(edit.source_path)
 
-    // 2) Construir payload Shotstack con subtítulos quemados
-    const payload = buildSubtitledTimelinePayload({
+    // 3) Resolver preset_slug. Default = 'vertical-clean' (Variante 1 del playbook).
+    const presetSlug = edit.preset_slug ?? 'vertical-clean'
+
+    // 4) Construir payload Shotstack según la variante elegida
+    const { payload, outputDuration, silenceRemoved } = buildPayloadByPreset({
+      presetSlug,
       sourceVideoUrl: sourceUrl,
       durationSeconds: edit.duration_seconds,
       transcript,
+      brand,
+      headlineText: edit.headline_text ?? undefined,
     })
 
-    // 3) Encolar en Shotstack
+    // 5) Encolar en Shotstack
     const renderId = await queueRender(payload)
+    console.log(
+      `[video-edit] ${id} render encolado · preset=${presetSlug} · ` +
+        `output=${outputDuration.toFixed(1)}s · silencio_recortado=${silenceRemoved.toFixed(1)}s`,
+    )
 
     // 4) Persistir estado
     const { error: updErr } = await supabase

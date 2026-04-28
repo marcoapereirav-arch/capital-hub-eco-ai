@@ -12,6 +12,10 @@ const Schema = z.object({
   filename: z.string().min(1).max(255),
   size_bytes: z.number().min(1).max(524_288_000), // 500 MB
   content_type: z.string().optional(),
+  preset_slug: z.string().min(1).max(64).optional(),
+  headline_text: z.string().max(200).nullable().optional(),
+  piece_type: z.enum(['A', 'B', 'C', 'D']).nullable().optional(),
+  cta_word: z.string().max(40).nullable().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -46,6 +50,10 @@ export async function POST(req: NextRequest) {
       source_filename: parsed.data.filename,
       size_bytes: parsed.data.size_bytes,
       status: 'uploading',
+      preset_slug: parsed.data.preset_slug ?? 'vertical-clean',
+      headline_text: parsed.data.headline_text ?? null,
+      piece_type: parsed.data.piece_type ?? null,
+      cta_word: parsed.data.cta_word ?? null,
     })
     if (insertErr) throw new Error(`insert failed: ${insertErr.message}`)
 
