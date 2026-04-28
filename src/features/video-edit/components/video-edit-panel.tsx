@@ -184,8 +184,8 @@ export function VideoEditPanel() {
       setError('Tiene que ser un archivo de video (mp4, mov).')
       return
     }
-    if (file.size > 524_288_000) {
-      setError('El video supera 500 MB. Comprímelo o usa uno más corto.')
+    if (file.size > 5_368_709_120) {
+      setError('El video supera 5 GB. Comprímelo o usa uno más corto.')
       return
     }
     if (requiresHeadline && headlineText.trim().length === 0) {
@@ -464,7 +464,7 @@ export function VideoEditPanel() {
               className="hidden"
               onChange={(e) => void handleFiles(e.target.files)}
             />
-            <p className="text-xs text-muted-foreground">MP4 / MOV · máx 500 MB</p>
+            <p className="text-xs text-muted-foreground">MP4 / MOV · máx 5 GB</p>
           </>
         )}
       </div>

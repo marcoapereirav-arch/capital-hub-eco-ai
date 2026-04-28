@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 const Schema = z.object({
   filename: z.string().min(1).max(255),
-  size_bytes: z.number().min(1).max(524_288_000), // 500 MB
+  size_bytes: z.number().min(1).max(5_368_709_120), // 5 GB (cubre raw 4K hasta ~90s)
   content_type: z.string().optional(),
   preset_slug: z.string().min(1).max(64).optional(),
   headline_text: z.string().max(200).nullable().optional(),
