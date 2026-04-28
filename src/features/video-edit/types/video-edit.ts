@@ -36,6 +36,9 @@ export interface WhisperTranscript {
   words: WhisperWord[]
 }
 
+export type FunnelStage = 'tofu' | 'mofu' | 'bofu'
+export type CtaType = 'follow' | 'freebie' | 'paid_offer'
+
 export interface VideoEditRow {
   id: string
   user_id: string
@@ -57,7 +60,8 @@ export interface VideoEditRow {
   render_completed_at: string | null
   preset_slug: string | null
   headline_text: string | null
-  piece_type: 'A' | 'B' | 'C' | 'D' | null
+  funnel_stage: FunnelStage | null
+  cta_type: CtaType | null
   cta_word: string | null
   created_at: string
   updated_at: string
@@ -68,14 +72,29 @@ export interface VideoPresetOption {
   display_name: string
   description: string | null
   expected_inputs: Record<string, unknown>
-  recommended_piece_types: string[]
+  recommended_funnel_stages: string[]
   enabled: boolean
   implementation_status: 'ready' | 'wip' | 'pending-references' | string
 }
 
-export const PIECE_TYPE_LABELS: Record<'A' | 'B' | 'C' | 'D', string> = {
-  A: 'A — Conexión / historia personal',
-  B: 'B — CTA / conversión',
-  C: 'C — Valor / enseñanza',
-  D: 'D — Declaración fuerte / contrarian',
+/**
+ * Framework TOFU/MOFU/BOFU — toda pieza cae en una posición del embudo.
+ * Cada stage trae implícito un goal + tipo de CTA + profundidad de contenido.
+ */
+export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
+  tofu: 'TOFU — Top of funnel · views (broad)',
+  mofu: 'MOFU — Middle of funnel · followers (connection)',
+  bofu: 'BOFU — Bottom of funnel · leads (authority)',
+}
+
+export const FUNNEL_STAGE_DESCRIPTIONS: Record<FunnelStage, string> = {
+  tofu: 'Educativo broad, fácil, repetible. Rankings, comparativas, hooks contrarian. Goal: views. CTA: follow o freebie.',
+  mofu: 'Historia personal, founder story, day in the life, retos, lecciones. Goal: followers. CTA: follow.',
+  bofu: 'Educativo profundo, tutoriales paso a paso, transformaciones, casos de éxito. Goal: leads. CTA: freebie o paid_offer.',
+}
+
+export const CTA_TYPE_LABELS: Record<CtaType, string> = {
+  follow: 'Follow — sigue para más',
+  freebie: 'Freebie — comenta palabra y te envío recurso',
+  paid_offer: 'Paid offer — link a oferta de pago',
 }

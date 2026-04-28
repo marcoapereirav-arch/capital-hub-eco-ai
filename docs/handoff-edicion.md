@@ -1,6 +1,18 @@
 # Handoff — Sistema de Edición de Video (Capital Hub)
 
 > Última actualización: 2026-04-28
+
+## Framework de clasificación de contenido — TOFU / MOFU / BOFU
+
+Toda pieza que se edite cae en una **posición del embudo**. La posición determina goal, profundidad y CTA:
+
+| Stage | Goal | Profundidad | CTA típico |
+|---|---|---|---|
+| **TOFU** (top) | Views | Broad, fácil, repetible. Rankings, comparativas, hooks contrarian. | follow / freebie |
+| **MOFU** (middle) | Followers | Story personal, founder, day in the life, retos, lecciones. | follow |
+| **BOFU** (bottom) | Leads | Educativo profundo, tutoriales paso a paso, transformaciones, casos de éxito. | freebie / paid_offer |
+
+Reemplaza al sistema A/B/C/D anterior. El UI fuerza esta clasificación por video subido (campo opcional, recomendado).
 >
 > Este documento es el handoff entre lo que está construido técnicamente y lo
 > que falta de inputs creativos del usuario para terminar de cerrar el sistema.

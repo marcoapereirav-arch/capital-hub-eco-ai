@@ -47,14 +47,14 @@ insert into public.ci_brand_pack (
   notes = excluded.notes;
 
 -- Presets de las variantes del Playbook
-insert into public.ci_video_presets (slug, display_name, description, expected_inputs, pipeline_config, recommended_piece_types, enabled, implementation_status, notes) values
+insert into public.ci_video_presets (slug, display_name, description, expected_inputs, pipeline_config, recommended_funnel_stages, enabled, implementation_status, notes) values
 (
   'vertical-clean',
   'Vertical Clean',
   'Reel 9:16 puro. Adrian habla a camara. Subtitulos palabra a palabra, silencios cortados, color cinematic warm. Formato base, mayor frecuencia.',
   '{"main_video": true, "broll_count_min": 0, "broll_count_max": 2, "headline_text": false, "music_required": false, "cta_word": "optional"}'::jsonb,
   '{"silence_trim": true, "subtitles": "word-by-word", "subtitle_position": "lower-third", "broll_strategy": "manual-optional", "transitions": "hard-cuts", "color_grade": "cinematic-warm", "music_strategy": "manual"}'::jsonb,
-  array['A','C'],
+  array['tofu','mofu','bofu'],
   true,
   'wip',
   'Variante 1. En construccion: silence trim + word-by-word karaoke + lower third subs. Sin b-roll por defecto.'
@@ -65,7 +65,7 @@ insert into public.ci_video_presets (slug, display_name, description, expected_i
   'Reel 9:16 con video horizontal centrado y franjas negras arriba/abajo. Headline retentivo en la franja superior.',
   '{"main_video": true, "broll_count_min": 0, "broll_count_max": 2, "headline_text": true, "music_required": false, "cta_word": "optional"}'::jsonb,
   '{"silence_trim": true, "subtitles": "word-by-word", "subtitle_position": "lower-third-of-video-zone", "broll_strategy": "manual-optional", "transitions": "hard-cuts", "color_grade": "cinematic-warm", "music_strategy": "manual", "frame_layout": "horizontal-centered-with-bars"}'::jsonb,
-  array['A','C','D'],
+  array['tofu','mofu','bofu'],
   false,
   'pending-references',
   'Descartada por usuario 2026-04-28: las referencias visuales (Diego Garcia del Rio) confirman que el formato 9:16 puro con cara a camara funciona sin franjas. Mantenida en BD por si se reactiva en el futuro.'
@@ -76,7 +76,7 @@ insert into public.ci_video_presets (slug, display_name, description, expected_i
   'Mismo Vertical Clean + b-roll automatico de Pexels + motion graphics simples (palabras destacadas grandes con animacion + 2-3 transiciones marcadas). Para piezas Tipo D contrarian o Tipo B con CTA fuerte.',
   '{"main_video": true, "broll_count_min": 0, "broll_count_max": 5, "headline_text": false, "music_required": false, "cta_word": "optional", "auto_broll_from_pexels": true}'::jsonb,
   '{"silence_trim": true, "subtitles": "word-by-word", "subtitle_position": "lower-third", "broll_strategy": "ai-pexels", "transitions": "marked-light", "color_grade": "cinematic-warm", "music_strategy": "manual", "key_word_emphasis": true, "motion_graphics": "simple"}'::jsonb,
-  array['B','D'],
+  array['tofu','bofu'],
   true,
   'pending-references',
   'Variante 2 final (renombrada). B-roll automatico via Pexels API + motion graphics simples (palabras destacadas con zoom, transiciones whoosh). Pendiente: integrar Pexels y construir el orquestador.'
@@ -87,7 +87,7 @@ insert into public.ci_video_presets (slug, display_name, description, expected_i
   'Contenedor para clips extraidos de podcasts, entrevistas o long-form. Aplica las reglas de Variante 1, 2 o 3 segun el caso.',
   '{"main_video": true, "broll_count_min": 0, "broll_count_max": 8, "headline_text": false, "music_required": false, "cta_word": "optional", "trim_in_out": true}'::jsonb,
   '{"silence_trim": true, "subtitles": "word-by-word", "broll_strategy": "manual-optional", "transitions": "hard-cuts", "color_grade": "cinematic-warm", "music_strategy": "manual", "container_for_variant": true}'::jsonb,
-  array['A','B','C','D'],
+  array['tofu','mofu','bofu'],
   true,
   'pending-references',
   'Variante 4 contenedor. Aplica reglas de la variante visual elegida.'
@@ -97,6 +97,6 @@ on conflict (slug) do update set
   description = excluded.description,
   expected_inputs = excluded.expected_inputs,
   pipeline_config = excluded.pipeline_config,
-  recommended_piece_types = excluded.recommended_piece_types,
+  recommended_funnel_stages = excluded.recommended_funnel_stages,
   enabled = excluded.enabled,
   notes = excluded.notes;

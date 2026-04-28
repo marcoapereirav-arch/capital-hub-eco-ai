@@ -19,7 +19,11 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import {
   VIDEO_EDIT_STATUS_LABELS,
-  PIECE_TYPE_LABELS,
+  FUNNEL_STAGE_LABELS,
+  FUNNEL_STAGE_DESCRIPTIONS,
+  CTA_TYPE_LABELS,
+  type CtaType,
+  type FunnelStage,
   type VideoEditRow,
   type VideoEditStatus,
   type VideoPresetOption,
@@ -107,7 +111,8 @@ export function VideoEditPanel() {
 
   // Configuración previa al upload
   const [presetSlug, setPresetSlug] = useState<string>('vertical-clean')
-  const [pieceType, setPieceType] = useState<'A' | 'B' | 'C' | 'D' | ''>('')
+  const [funnelStage, setFunnelStage] = useState<FunnelStage | ''>('')
+  const [ctaType, setCtaType] = useState<CtaType | ''>('')
   const [headlineText, setHeadlineText] = useState<string>('')
   const [ctaWord, setCtaWord] = useState<string>('')
 
@@ -200,7 +205,8 @@ export function VideoEditPanel() {
           content_type: file.type,
           preset_slug: presetSlug,
           headline_text: requiresHeadline ? headlineText.trim() : null,
-          piece_type: pieceType || null,
+          funnel_stage: funnelStage || null,
+          cta_type: ctaType || null,
           cta_word: ctaWord.trim() ? ctaWord.trim() : null,
         }),
       })
@@ -334,20 +340,44 @@ export function VideoEditPanel() {
             )}
           </div>
 
-          {/* Tipo de pieza */}
+          {/* Funnel stage */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Tipo de pieza (opcional)
+              Posición en el embudo
             </label>
             <select
-              value={pieceType}
-              onChange={(e) => setPieceType(e.target.value as 'A' | 'B' | 'C' | 'D' | '')}
+              value={funnelStage}
+              onChange={(e) => setFunnelStage(e.target.value as FunnelStage | '')}
               className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm"
             >
               <option value="">— Sin clasificar</option>
-              {(Object.keys(PIECE_TYPE_LABELS) as Array<'A' | 'B' | 'C' | 'D'>).map((t) => (
+              {(Object.keys(FUNNEL_STAGE_LABELS) as FunnelStage[]).map((t) => (
                 <option key={t} value={t}>
-                  {PIECE_TYPE_LABELS[t]}
+                  {FUNNEL_STAGE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+            {funnelStage && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {FUNNEL_STAGE_DESCRIPTIONS[funnelStage]}
+              </p>
+            )}
+          </div>
+
+          {/* CTA type */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Tipo de CTA
+            </label>
+            <select
+              value={ctaType}
+              onChange={(e) => setCtaType(e.target.value as CtaType | '')}
+              className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm"
+            >
+              <option value="">— Sin CTA</option>
+              {(Object.keys(CTA_TYPE_LABELS) as CtaType[]).map((t) => (
+                <option key={t} value={t}>
+                  {CTA_TYPE_LABELS[t]}
                 </option>
               ))}
             </select>
@@ -496,14 +526,19 @@ export function VideoEditPanel() {
                           {edit.preset_slug.replace(/-/g, ' ')}
                         </Badge>
                       )}
-                      {edit.piece_type && (
+                      {edit.funnel_stage && (
+                        <Badge variant="outline" className="text-[10px] uppercase">
+                          {edit.funnel_stage}
+                        </Badge>
+                      )}
+                      {edit.cta_type && (
                         <Badge variant="outline" className="text-[10px]">
-                          Tipo {edit.piece_type}
+                          CTA: {edit.cta_type.replace('_', ' ')}
                         </Badge>
                       )}
                       {edit.cta_word && (
                         <Badge variant="outline" className="font-mono text-[10px]">
-                          CTA · {edit.cta_word}
+                          {edit.cta_word}
                         </Badge>
                       )}
                       <span>{formatBytes(edit.size_bytes)}</span>

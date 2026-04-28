@@ -14,7 +14,8 @@ const Schema = z.object({
   content_type: z.string().optional(),
   preset_slug: z.string().min(1).max(64).optional(),
   headline_text: z.string().max(200).nullable().optional(),
-  piece_type: z.enum(['A', 'B', 'C', 'D']).nullable().optional(),
+  funnel_stage: z.enum(['tofu', 'mofu', 'bofu']).nullable().optional(),
+  cta_type: z.enum(['follow', 'freebie', 'paid_offer']).nullable().optional(),
   cta_word: z.string().max(40).nullable().optional(),
 })
 
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
       status: 'uploading',
       preset_slug: parsed.data.preset_slug ?? 'vertical-clean',
       headline_text: parsed.data.headline_text ?? null,
-      piece_type: parsed.data.piece_type ?? null,
+      funnel_stage: parsed.data.funnel_stage ?? null,
+      cta_type: parsed.data.cta_type ?? null,
       cta_word: parsed.data.cta_word ?? null,
     })
     if (insertErr) throw new Error(`insert failed: ${insertErr.message}`)
