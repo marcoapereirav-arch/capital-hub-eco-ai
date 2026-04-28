@@ -63,6 +63,7 @@ export interface VideoEditRow {
   funnel_stage: FunnelStage | null
   cta_type: CtaType | null
   cta_word: string | null
+  rotation_degrees: 0 | 90 | 180 | 270
   created_at: string
   updated_at: string
 }

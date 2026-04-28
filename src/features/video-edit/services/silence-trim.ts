@@ -65,11 +65,19 @@ export function trimSilences(
   let outputOffset = 0
   let originalEnd = 0
 
+  // Mínima duración de un segmento de video. Shotstack rechaza length <= 0.
+  // Whisper a veces devuelve start === end para palabras tipo numeros/siglas.
+  const MIN_SEGMENT_DURATION = 0.2
+
   for (const island of islands) {
     const rawStart = island[0].start
-    const rawEnd = island[island.length - 1].end
+    const rawEndOriginal = island[island.length - 1].end
+    // Si la última palabra tiene start === end, ampliamos el rawEnd hacia
+    // el end real de la palabra anterior o sumamos un fallback.
+    const rawEnd = Math.max(rawEndOriginal, rawStart + 0.1)
     const srcStart = Math.max(0, rawStart - HEAD_PADDING_SECONDS)
-    const srcEnd = rawEnd + TAIL_PADDING_SECONDS
+    const srcEndCandidate = rawEnd + TAIL_PADDING_SECONDS
+    const srcEnd = Math.max(srcEndCandidate, srcStart + MIN_SEGMENT_DURATION)
     const duration = srcEnd - srcStart
 
     segments.push({ sourceStart: srcStart, duration, outputStart: outputOffset })
@@ -78,7 +86,7 @@ export function trimSilences(
       shiftedWords.push({
         word: w.word,
         start: w.start - srcStart + outputOffset,
-        end: w.end - srcStart + outputOffset,
+        end: Math.max(w.end, w.start + 0.05) - srcStart + outputOffset,
       })
     }
 

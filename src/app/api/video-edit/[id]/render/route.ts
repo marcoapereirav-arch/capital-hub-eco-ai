@@ -74,6 +74,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
       transcript,
       brand,
       headlineText: edit.headline_text ?? undefined,
+      rotationDegrees: edit.rotation_degrees ?? 0,
     })
 
     // 5) Encolar en Shotstack

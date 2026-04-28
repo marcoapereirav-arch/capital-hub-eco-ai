@@ -25,18 +25,18 @@ export interface SubtitleStyleTokens {
 }
 
 export const DEFAULT_SUBTITLE_TOKENS: SubtitleStyleTokens = {
-  // Estilo Diego García del Río (referencia 2026-04-28): Inter Medium,
-  // tamaño moderado, sin fondo, stroke fino para legibilidad sin agresividad.
-  // Sentence case heredado del transcript de Whisper (no se fuerza casing).
-  fontFamily: 'Inter',
-  fontWeight: 500,
-  fontSize: 46,
+  // Iteración tras primer render real: Inter 500 quedó demasiado fino,
+  // se veía a tipografía del sistema. Subimos a Montserrat 700 (Bold) +
+  // tamaño mayor + stroke negro 3px para que destaquen sobre cualquier fondo.
+  fontFamily: 'Montserrat',
+  fontWeight: 700,
+  fontSize: 58,
   color: '#FFFFFF',
   backgroundColor: null,
   backgroundOpacity: 0,
   position: 'lower-third',
-  blockWidth: 760,
-  blockHeight: 180,
+  blockWidth: 880,
+  blockHeight: 200,
 }
 
 function positionToShotstack(pos: SubtitleStyleTokens['position']): {
@@ -126,9 +126,9 @@ export function buildKaraokeSubtitleClips(
               padding: 16,
             }
           : undefined,
-      // Stroke fino estilo Diego: legibilidad sin agresividad. 1.5px en lugar
-      // del 4px tipo MrBeast.
-      stroke: { color: '#000000', width: 1.5 },
+      // Stroke negro 3px para legibilidad sobre cualquier fondo
+      // (sin llegar al 4px tipo MrBeast).
+      stroke: { color: '#000000', width: 3 },
       width: style.blockWidth ?? 760,
       height: style.blockHeight ?? 180,
     },

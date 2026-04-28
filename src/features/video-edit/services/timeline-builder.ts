@@ -119,6 +119,11 @@ function brandToSubtitleStyle(brand: BrandPackTokens): SubtitleStyleTokens {
 interface BuildTrimmedVideoTrackInput {
   sourceVideoUrl: string
   segments: SpeechSegment[]
+  /**
+   * Grados a rotar el video (0/90/180/270). Resuelve el problema de iPhone
+   * que graba portrait con metadata de rotacion que Shotstack ignora.
+   */
+  rotationDegrees?: number
 }
 
 /**
@@ -126,16 +131,26 @@ interface BuildTrimmedVideoTrackInput {
  * usando el `trim` de Shotstack para saltar los silencios del original.
  */
 function buildTrimmedVideoTrack(input: BuildTrimmedVideoTrackInput): ShotstackTrack {
-  const clips: ShotstackClip[] = input.segments.map((seg) => ({
-    asset: {
-      type: 'video' as const,
-      src: input.sourceVideoUrl,
-      trim: seg.sourceStart,
-    },
-    start: seg.outputStart,
-    length: seg.duration,
-    fit: 'cover',
-  }))
+  const rotation = input.rotationDegrees ?? 0
+  const clips: ShotstackClip[] = input.segments.map((seg) => {
+    const clip: ShotstackClip = {
+      asset: {
+        type: 'video' as const,
+        src: input.sourceVideoUrl,
+        trim: seg.sourceStart,
+      },
+      start: seg.outputStart,
+      length: seg.duration,
+      fit: 'cover',
+    }
+    if (rotation !== 0) {
+      // Shotstack acepta transform.rotate.angle (grados, sentido horario)
+      ;(clip as ShotstackClip & { transform?: { rotate?: { angle: number } } }).transform = {
+        rotate: { angle: rotation },
+      }
+    }
+    return clip
+  })
   return { clips }
 }
 
@@ -163,6 +178,8 @@ export interface BuildVerticalCleanInput {
   transcript: WhisperTranscript
   brand?: Partial<BrandPackTokens>
   applySilenceTrim?: boolean
+  /** Rotacion 0/90/180/270. Default 0. */
+  rotationDegrees?: number
 }
 
 export interface BuildResult {
@@ -201,6 +218,7 @@ export function buildVerticalCleanPayload(input: BuildVerticalCleanInput): Build
   const videoTrack = buildTrimmedVideoTrack({
     sourceVideoUrl: input.sourceVideoUrl,
     segments: trim.segments,
+    rotationDegrees: input.rotationDegrees ?? 0,
   })
 
   // 3) Construir pista de subtítulos karaoke
@@ -268,6 +286,7 @@ export interface BuildByPresetInput extends BuildVerticalCleanInput {
   presetSlug: string
   headlineText?: string
   brollClips?: { url: string; durationSeconds: number }[]
+  rotationDegrees?: number
 }
 
 export function buildPayloadByPreset(input: BuildByPresetInput): BuildResult {
