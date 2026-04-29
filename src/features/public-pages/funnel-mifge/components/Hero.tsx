@@ -29,8 +29,25 @@ export default function Hero() {
             <div className="inline-flex items-center gap-2 md:gap-3 border border-[#2A2D34] bg-[#18181B] px-3 md:px-4 py-2 rounded-[2px] mb-6 md:mb-8 max-w-full z-20">
                 <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white animate-pulse flex-shrink-0"></span>
                 <span className="text-[8px] sm:text-[9px] md:text-xs text-[#9CA3AF] uppercase tracking-wide whitespace-normal text-center leading-tight md:leading-normal">
-                    PARA CUALQUIER QUE QUIERA CONSEGUIR UN TRABAJO REMOTO (1.800€/MES-2.500€/MES) Y NO SEPA POR DÓNDE EMPEZAR
+                    PARA CUALQUIERA QUE QUIERA CONSEGUIR UN TRABAJO REMOTO (1.800€-2.500€/MES) Y NO SEPA POR DÓNDE EMPEZAR
                 </span>
+            </div>
+
+            {/* Framework JP — 3 etapas */}
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 mb-6 md:mb-8 z-20">
+                {[
+                  { num: "01", label: "Análisis" },
+                  { num: "02", label: "Formación" },
+                  { num: "03", label: "Empleo" },
+                ].map((step, i) => (
+                  <React.Fragment key={step.num}>
+                    <div className="flex items-center gap-1.5 md:gap-2 border border-[#2A2D34] bg-[#0F0F12]/60 px-2.5 md:px-3 py-1 md:py-1.5 rounded-[2px]">
+                      <span className="font-mono text-[8px] md:text-[10px] text-[#6B7280]">{step.num}</span>
+                      <span className="text-[10px] md:text-xs text-[#F5F6F7] uppercase tracking-wide font-medium">{step.label}</span>
+                    </div>
+                    {i < 2 && <span className="text-[#4B5563] text-xs">→</span>}
+                  </React.Fragment>
+                ))}
             </div>
 
             {/* Headline */}

@@ -95,7 +95,7 @@ export default function MifgeCheckoutPage() {
               <input type="text" className="form-input" placeholder="CVC" />
             </div>
 
-            {/* ORDER BUMP — placeholder */}
+            {/* ORDER BUMP — Bonus Bundle Express */}
             <label
               className={`mt-4 flex gap-3 p-4 border-2 cursor-pointer transition-colors rounded-[2px] ${
                 orderBumpAdded ? "border-[#37ca37] bg-[#37ca37]/5" : "border-dashed border-[#2A2D34] bg-[#0F0F12]"
@@ -108,14 +108,21 @@ export default function MifgeCheckoutPage() {
                 className="mt-1 h-4 w-4 accent-[#37ca37]"
               />
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   <Gift size={14} className="text-[#37ca37]" />
-                  <span className="font-mono text-xs uppercase text-[#37ca37] tracking-wide">SOLO 20€ · ÚNICA OFERTA</span>
+                  <span className="font-mono text-xs uppercase text-[#37ca37] tracking-wide">SOLO 20€ · NO SE VENDE POR SEPARADO</span>
                 </div>
-                <p className="text-white font-semibold text-sm mb-1">Bonus Bundle Express</p>
-                <p className="text-[#9CA3AF] text-xs leading-relaxed">
-                  Añade el bonus bundle por solo 20€ a tu prueba gratuita. <span className="text-white">[Placeholder — pendiente definir contenido real]</span>
+                <p className="text-white font-semibold text-sm mb-2">Bonus Bundle Express — Acelerador 7 días</p>
+                <p className="text-[#9CA3AF] text-xs leading-relaxed mb-3">
+                  Empieza más rápido y con más herramientas. Incluye:
                 </p>
+                <ul className="space-y-1.5 text-[11px] text-[#D1D5DB]">
+                  <li className="flex items-start gap-2"><Check size={11} className="text-[#37ca37] mt-0.5 flex-shrink-0" /><span>3 masterclasses VIP (no en el catálogo público)</span></li>
+                  <li className="flex items-start gap-2"><Check size={11} className="text-[#37ca37] mt-0.5 flex-shrink-0" /><span>Plantilla CV optimizada para trabajo remoto</span></li>
+                  <li className="flex items-start gap-2"><Check size={11} className="text-[#37ca37] mt-0.5 flex-shrink-0" /><span>Plan personalizado acelerado de 7 días</span></li>
+                  <li className="flex items-start gap-2"><Check size={11} className="text-[#37ca37] mt-0.5 flex-shrink-0" /><span>Acceso a la sesión Q&A semanal de pago</span></li>
+                </ul>
+                <p className="text-[#6B7280] text-[10px] mt-3 font-mono uppercase">Se cobran los 20€ HOY (única vez). Independiente del free trial.</p>
               </div>
             </label>
 
