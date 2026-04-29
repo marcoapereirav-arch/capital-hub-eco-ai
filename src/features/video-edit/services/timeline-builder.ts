@@ -190,14 +190,16 @@ function buildWarmCinematicOverlayTrack(
   if (brand.colorGradeLut !== 'cinematic-warm') return { clips: [] }
 
   const intensity = Math.min(1, Math.max(0, brand.colorGradeIntensity ?? 0.7))
-  // Opacidad capada a 0.10 max — más de eso saturando demasiado.
-  const opacity = 0.06 + 0.05 * intensity // entre 0.06 y 0.11
+  // v6: subir opacidad a 0.12-0.20 (antes 0.06-0.11). Usuario pidió "más anaranjado".
+  // También cambio el tinte hacia naranja más puro (menos peach).
+  const opacity = 0.12 + 0.08 * intensity // entre 0.12 y 0.20
 
   const clip: ShotstackClip = {
     asset: {
       type: 'html' as const,
       html: '<div style="width:100%;height:100%;"></div>',
-      css: `div { background: linear-gradient(180deg, rgba(255, 175, 105, ${opacity}) 0%, rgba(255, 145, 80, ${opacity * 0.9}) 50%, rgba(120, 80, 50, ${opacity * 0.7}) 100%); }`,
+      // Naranja más puro arriba, ámbar al medio, sombra cálida abajo.
+      css: `div { background: linear-gradient(180deg, rgba(255, 140, 60, ${opacity}) 0%, rgba(255, 120, 50, ${opacity * 0.95}) 50%, rgba(140, 70, 30, ${opacity * 0.75}) 100%); }`,
       width: 1080,
       height: 1920,
     },
