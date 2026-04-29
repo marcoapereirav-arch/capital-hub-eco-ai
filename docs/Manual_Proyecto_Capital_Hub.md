@@ -319,75 +319,76 @@ Y eso, hoy, es diferencial.
 
 ## **9. OFERTA**
 
-Capital Hub se estructura en tres niveles, diseñados para acompañar a una persona desde el inicio hasta un posicionamiento profesional avanzado dentro del mercado digital.
+Capital Hub se estructura en dos niveles, diseñados para acompañar desde el primer paso en el mundo digital hasta la certificación profesional y la colocación laboral.
 
-**Nivel Base — Acceso Mensual**
+### **NIVEL 1 — START**
 
-Orientado a personas que quieren aprender una profesión digital real, entender cómo funciona el mercado y empezar a formarse con criterio.
+**Precio:** 97 € / mes o 990 € / año
 
-Incluye acceso a varias formaciones en profesiones digitales demandadas, clases en directo semanales impartidas por profesionales en activo, comunidad y acceso garantizado por contrato a una bolsa de trabajo con oportunidades reales.
+**Promesa:** Fórmate en una profesión digital y da tu primer paso hacia el mundo digital profesional.
 
-Precio: **44 € / mes** (7 días de prueba gratuita). Para certificarte en este nivel debes de completar una ruta entera, para asegurarnos que la persona sea full stack, en este nivel no hay certificaciones especificas.
+**Cómo funciona:** El alumno elige una profesión al entrar. Completa esa formación primero. Al terminarla se desbloquean las demás y recibe oferta de ascensión al PRO.
 
-**Promesa**
+**Incluye:**
+- Fundamentos de la Profesión Digital
+- Formación completa de la profesión elegida
+- Resto de formaciones desbloqueadas al terminar la primera
+- Módulo de mentalidad básico
+- Comunidad activa
+- Plantillas y recursos básicos
+- Bolsa de trabajo visible pero bloqueada sin certificación
+- Soporte por chat grupal
 
-Por 44 € al mes, tienes formación profesional, entorno y acceso a oportunidades para aprender una profesión digital que el mercado paga. Si no te aporta valor, te vas. Riesgo cero.
+**No incluye:**
+- Llamadas grupales
+- Certificación oficial
+- Bolsa de trabajo activa
+- Módulos avanzados de mentalidad
+- Acompañamiento
 
-Acceso completo a todas las formaciones activas
+**Si cancela y vuelve:** 150 € de matrícula. Progreso mantenido.
 
-(Profesiones digitales: closer, setter, tech, IA, marketing, PM, etc.)
+🥋 **Cinturón blanco:** Primera formación completada
 
-Nuevas formaciones desbloqueadas mes a mes
+**GARANTÍA 1 — Membresía 97 €/mes:** *"Prueba Capital Hub 14 días gratis. Si no es para ti, cancelas y no te cobramos nada. Sin preguntas."*
 
-(Se añaden nuevas rutas según la demanda real del mercado)
+---
 
-Acceso a 2 sesiones grupales en directo por semana
+### **NIVEL 2 — PRO**
 
-(Tutor experto en cada formación. Resolución de dudas y avance guiado)
+**Precio:** 2.990 € / año (o financiado con SeQura)
 
-Acceso a la certificación oficial de Capital Hub
+**Especialidades:** Comercial Digital / Tech Specialist / Marketing Digital / IA Specialist
 
-(Validación profesional al superar los módulos y evaluación final)
+**Promesa:** Certifícate en 12 meses, accede a las mejores oportunidades del mercado y genera tus primeros ingresos digitales reales. Garantizado.
 
-Acceso a la bolsa de empleo
+**Cómo funciona:** Acceso a todas las formaciones. El alumno se especializa en una para certificarse. Acompañamiento completo durante 12 meses.
 
-(Ofertas reales de trabajo online, empresas y proyectos digitales)
+**Incluye:**
+- Todo lo del Nivel 1
+- 2 llamadas grupales semanales con tutor durante 12 meses
+- Viernes grupales con Adrián durante 12 meses
+- Módulos avanzados de mentalidad
+- Plantillas premium completas
+- Certificación oficial FPD por especialidad
+- Bolsa de trabajo PRO activa
+- Capital Hub te presenta activamente a empresas
+- Eventos y masterminds trimestrales
+- Acceso a trabajar en Sales Capital para los mejores
 
-Acceso a la comunidad privada de estudiantes
+**Garantía condicional:** Completar las formaciones + asistir al 80% de las llamadas + obtener certificación + no rechazar ninguna oferta válida → te colocamos o te devolvemos el dinero.
 
-(Networking, colaboración, accountability y comunidad de crecimiento)
+**Al terminar los 12 meses:** Ascensión al Nivel 3. Los que no estén listos pasan a 97 €/mes del Nivel 1.
 
-Acceso a plantillas, recursos y herramientas premium
+🥋 **Cinturón azul:** Primer trabajo o cliente
+🥋 **Cinturón lila:** 3.000 €/mes consistentes
 
-(SOPs, CRM, dashboards, automatizaciones, guiones, prompts, etc.)
+**GARANTÍA 2 — PRO 2.990 €:** *"Si completas la formación, consigues tu certificación y aplicas activamente a nuestra bolsa de trabajo, seguimos contigo con soporte y asesoramiento gratuito hasta que consigues tu primer trabajo en remoto. Sin límite de tiempo."*
 
-**Nivel Anual — Acceso Completo**
+---
 
-Dirigido a personas que ya han decidido apostar por una carrera profesional digital y quieren continuidad, foco y mejor precio.
-
-Incluye todo lo del nivel mensual con acceso anual, mayor estabilidad en el proceso de aprendizaje y prioridad en nuevos contenidos y profesiones.
-
-Precio: 440 € / año.
-
-**Promesa**
-
-Por el equivalente a poco más de 1 € al día, aseguras un año completo de formación profesional digital y acceso a oportunidades reales dentro del ecosistema.
-
-**Nivel Profesional Avanzado**
-
-Pensado para personas que quieren acelerar su posicionamiento profesional, elevar su nivel y aumentar sus opciones reales dentro del mercado.
-
-Incluye todo lo anterior, acceso a rutas profesionales avanzadas, sesiones de mayor profundidad y mayor visibilidad dentro del ecosistema para oportunidades profesionales.
-
-Precio: 1.900 € / año. en ete nivel si hay certificaciones especificas como “appointment setter” aunque sean formaciones dentro de una misma ruta pues es personalizado y aunque no sea aun full stack es muy bueno en lo suyo, pasan un examen.
-
-**Promesa**
-
-Si tu objetivo es vivir de una profesión digital, este nivel te coloca en el entorno, el estándar y la visibilidad correctos para multiplicar tus opciones. No prometemos resultados, prometemos estructura y acceso.
-
-Capital Hub no promete empleo ni ingresos.
-
-Promete formación real, acceso a oportunidades y un sistema claro.
+Capital Hub no promete empleo ni ingresos de la noche a la mañana.
+Promete formación real, acompañamiento serio, certificación oficial y un sistema claro con garantía condicional.
 
 El resultado depende de la persona. La infraestructura es constante.
 
