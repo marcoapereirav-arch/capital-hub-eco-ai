@@ -113,15 +113,14 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
                       <Copy className="h-3.5 w-3.5" />
                     )}
                   </button>
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
                     className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    title="Abrir en nueva pestaña"
+                    title="Abrir en navegador (fuera de la app)"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
+                  </button>
                 </div>
               </li>
             )
@@ -131,11 +130,14 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
 
       {/* Footer actions */}
       <footer className="flex items-center gap-2 border-t border-border/50 pt-3">
-        <Button asChild size="sm" variant="secondary" className="flex-1 font-mono text-xs">
-          <a href={urlForStep(entryStep?.slug)} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-            Abrir funnel
-          </a>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="flex-1 font-mono text-xs"
+          onClick={() => window.open(urlForStep(entryStep?.slug), "_blank", "noopener,noreferrer")}
+        >
+          <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+          Abrir funnel
         </Button>
         <Button
           size="sm"

@@ -1,5 +1,6 @@
 /* Estilos scoped al funnel-lt8 (route group public).
-   Replica EXACTA del CSS del funnel original (start.thecapitalhub.io/accede). */
+   Replica EXACTA del CSS del funnel original (start.thecapitalhub.io).
+   Cubre: landing (lt8), checkout, thank-you, agenda-thank-you. */
 
 .funnel-lt8-root {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -75,7 +76,7 @@
   vertical-align: middle;
 }
 
-/* ===== HERO H1 con gradiente animado ===== */
+/* ===== HERO H1 con gradiente animado (landing) ===== */
 .funnel-lt8-root .hero-title {
   font-family: var(--font-heading), "Inter Tight", sans-serif !important;
   background: linear-gradient(90deg, #FFFFFF 0%, #9CA3AF 20%, #FFFFFF 40%, #FFFFFF 100%);
@@ -167,7 +168,6 @@
     gap: 5rem;
   }
 }
-
 .funnel-lt8-root .bio-collage-container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -189,11 +189,9 @@
   display: block;
   border-radius: 2px;
 }
-
 .funnel-lt8-root .casual-label {
   position: absolute;
   bottom: 6px;
-  font-family: var(--font-sans), "Inter", sans-serif;
   font-style: italic;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.85);
@@ -221,38 +219,18 @@
   margin-bottom: 2rem;
   font-weight: 500;
 }
-@media (min-width: 768px) {
-  .funnel-lt8-root .bio-text-large {
-    font-size: 1.75rem;
-    margin-bottom: 3rem;
-  }
-}
-@media (min-width: 1024px) {
-  .funnel-lt8-root .bio-text-large {
-    font-size: 1.5rem;
-    margin-bottom: 1.25rem;
-  }
-}
+@media (min-width: 768px) { .funnel-lt8-root .bio-text-large { font-size: 1.75rem; margin-bottom: 3rem; } }
+@media (min-width: 1024px) { .funnel-lt8-root .bio-text-large { font-size: 1.5rem; margin-bottom: 1.25rem; } }
 
 .funnel-lt8-root .bio-text-normal {
-  font-family: var(--font-sans), "Inter", sans-serif;
   font-size: 1rem;
   line-height: 1.8;
   color: #9CA3AF;
   font-weight: 300;
   margin-bottom: 2rem;
 }
-@media (min-width: 768px) {
-  .funnel-lt8-root .bio-text-normal {
-    font-size: 1.125rem;
-    margin-bottom: 2.5rem;
-  }
-}
-@media (min-width: 1024px) {
-  .funnel-lt8-root .bio-text-normal {
-    margin-bottom: 1rem;
-  }
-}
+@media (min-width: 768px) { .funnel-lt8-root .bio-text-normal { font-size: 1.125rem; margin-bottom: 2.5rem; } }
+@media (min-width: 1024px) { .funnel-lt8-root .bio-text-normal { margin-bottom: 1rem; } }
 
 .funnel-lt8-root .bio-divider {
   border: 0;
@@ -273,7 +251,6 @@
   gap: 1.5rem;
 }
 @media (min-width: 1024px) { .funnel-lt8-root .bio-list { gap: 1rem; } }
-
 .funnel-lt8-root .bio-list-item {
   display: flex;
   gap: 1rem;
@@ -283,13 +260,181 @@
   font-size: 1.125rem;
   line-height: 1.5;
 }
-.funnel-lt8-root .bio-arrow {
-  color: #FFFFFF;
-  font-weight: 500;
-}
-
+.funnel-lt8-root .bio-arrow { color: #FFFFFF; font-weight: 500; }
 .funnel-lt8-root .bio-btn-container { margin-top: 4rem; }
 @media (min-width: 1024px) { .funnel-lt8-root .bio-btn-container { margin-top: 2rem; } }
 
-/* No-scroll cuando modal abierto */
 body.lt8-no-scroll { overflow: hidden; }
+
+/* =====================================================
+   ===== CHECKOUT STEP =====
+   ===================================================== */
+.funnel-lt8-root .checkout-h1 {
+  font-family: var(--font-heading), "Inter Tight", sans-serif !important;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 768px) { .funnel-lt8-root .checkout-h1 { font-size: 2.5rem; } }
+.funnel-lt8-root .weight-light { font-weight: 300; }
+.funnel-lt8-root .weight-bold { font-weight: 600; }
+
+.funnel-lt8-root .checkout-card {
+  background-color: #18181B;
+  border: 1px solid #2A2D34;
+  padding: 1.5rem;
+  max-width: 560px;
+  margin: 0 auto 4rem;
+  border-radius: 2px;
+}
+@media (min-width: 768px) { .funnel-lt8-root .checkout-card { padding: 2.5rem; } }
+
+.funnel-lt8-root .form-input {
+  width: 100%;
+  background-color: #0F0F12;
+  border: 1px solid #2A2D34;
+  padding: 0.875rem 1rem;
+  color: white;
+  font-size: 0.875rem;
+  border-radius: 2px;
+}
+.funnel-lt8-root .form-input::placeholder { color: #4B5563; }
+
+.funnel-lt8-root .btn-paypal {
+  background-color: #FFC439;
+  color: black;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.funnel-lt8-root .check-box-square {
+  width: 1.25rem; height: 1.25rem;
+  background-color: #2A2D34;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+}
+
+.funnel-lt8-root .mini-card {
+  background-color: #18181B;
+  border: 1px solid #2A2D34;
+  padding: 1.5rem;
+  border-radius: 2px;
+}
+.funnel-lt8-root .mini-card h4 {
+  font-family: var(--font-heading), "Inter Tight", sans-serif !important;
+  font-weight: 500;
+  color: white;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+.funnel-lt8-root .mini-card p {
+  font-size: 0.875rem;
+  color: #9CA3AF;
+  line-height: 1.5;
+}
+
+/* =====================================================
+   ===== THANK YOU + AGENDA STEP =====
+   ===================================================== */
+.funnel-lt8-root .highlight-box {
+  border: 1px solid #2A2D34;
+  background-color: #18181B;
+  padding: 1rem 1.5rem;
+  border-radius: 2px;
+  margin: 2rem auto 0;
+  display: inline-block;
+}
+
+.funnel-lt8-root .card-bordered {
+  background-color: #18181B;
+  border: 1px solid #2A2D34;
+  padding: 2rem;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.funnel-lt8-root .card-bordered .glow-effect {
+  position: absolute;
+  top: 0; right: 0;
+  width: 8rem; height: 8rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  filter: blur(50px);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.funnel-lt8-root .card-bordered:hover .glow-effect { opacity: 1; }
+
+.funnel-lt8-root .investment-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono), "JetBrains Mono", monospace !important;
+  font-size: 0.875rem;
+}
+.funnel-lt8-root .investment-table tr { border-bottom: 1px solid #2A2D34; }
+.funnel-lt8-root .investment-table td { padding: 1rem 0; }
+.funnel-lt8-root .investment-table td:last-child { text-align: right; }
+
+.funnel-lt8-root .sticky-bar {
+  position: fixed;
+  bottom: 0; left: 0; width: 100%;
+  z-index: 50;
+  background-color: rgba(15, 15, 18, 0.95);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid #2A2D34;
+  padding: 16px 24px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+}
+.funnel-lt8-root .btn-sticky {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-mono), "JetBrains Mono", monospace !important;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #FFFFFF;
+  color: #000000;
+  border: none;
+  border-radius: 2px;
+  padding: 16px 32px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.funnel-lt8-root .btn-sticky:hover {
+  background-color: #F3F4F6;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 255, 255, 0.3);
+}
+@media (min-width: 768px) { .funnel-lt8-root .btn-sticky { width: auto; } }
+
+/* Confetti canvas */
+.funnel-lt8-root #lt8-confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: opacity 1s ease;
+}

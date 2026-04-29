@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import Button from './Button';
 
-const CHECKOUT_URL = "https://start.thecapitalhub.io/checkout";
+const CHECKOUT_URL = "/lt8/checkout";
 
 export default function Hero() {
   return (

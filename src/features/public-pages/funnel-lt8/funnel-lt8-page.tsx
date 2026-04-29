@@ -13,7 +13,7 @@ import { Check, Plus, Minus, ArrowUpRight, ShieldCheck, Lock } from 'lucide-reac
 import Button from './components/Button';
 import './styles.css';
 
-const CHECKOUT_URL = "https://start.thecapitalhub.io/checkout";
+const CHECKOUT_URL = "/lt8/checkout";
 const CONTACT_EMAIL = "mailto:hola@capitalhub.com";
 
 // FAQ Item Component

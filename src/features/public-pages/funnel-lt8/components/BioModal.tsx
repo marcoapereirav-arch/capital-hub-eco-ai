@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Button from './Button';
 
-const CHECKOUT_URL = "https://start.thecapitalhub.io/checkout";
+const CHECKOUT_URL = "/lt8/checkout";
 
 const COLLAGE_PHOTOS = [
   { src: "https://storage.googleapis.com/msgsndr/fPSTvVgtLrLaVpNFx8ix/media/6992fed51d5e04810f4b1096.jpg", alt: "Italia" },
