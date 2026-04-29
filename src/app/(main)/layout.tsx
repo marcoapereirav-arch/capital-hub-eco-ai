@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/features/shell/components/app-sidebar"
 import { PushNotificationPrompt } from "@/features/notifications/components/PushNotificationPrompt"
+import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function MainLayout({
@@ -33,6 +34,7 @@ export default async function MainLayout({
         {children}
       </SidebarInset>
       <PushNotificationPrompt userId={user.id} />
+      <UpdateNotifier />
     </SidebarProvider>
   )
 }
