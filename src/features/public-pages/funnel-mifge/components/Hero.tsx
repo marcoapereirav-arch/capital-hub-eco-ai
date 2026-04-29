@@ -22,7 +22,7 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F12] via-transparent to-[#0F0F12]/60"></div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-6 h-screen flex flex-col justify-center pt-20 pb-8 md:pt-24 md:pb-12">
+      <div className="relative z-10 container mx-auto px-6 min-h-screen flex flex-col justify-center pt-20 pb-20 md:pt-24 md:pb-24">
         <div className="max-w-4xl mx-auto w-full flex flex-col items-center">
 
             {/* Top Badge */}
@@ -45,7 +45,7 @@ export default function Hero() {
                 INCLUSO SI PARTES DE CERO, SIN EXPERIENCIA PREVIA
             </p>
 
-            {/* VSL Panda — más compacto: max-w más pequeño y altura controlada */}
+            {/* VSL Panda — compacto */}
             <div className="w-full max-w-[560px] md:max-w-[620px] mx-auto mb-4 md:mb-5 border border-[#2A2D34] rounded-[4px] overflow-hidden bg-black">
               <div className="relative pt-[56.25%]">
                 <iframe
@@ -58,7 +58,7 @@ export default function Hero() {
               </div>
             </div>
 
-            {/* Promesa + CTA juntos, sin grandes huecos */}
+            {/* Promesa + CTA juntos */}
             <p className="text-base md:text-lg text-white font-medium text-center leading-tight mb-1 px-4">
                 Empieza GRATIS. 14 días sin pagar nada.
             </p>
@@ -77,6 +77,14 @@ export default function Hero() {
             <p className="text-[10px] text-[#4B5563] font-mono mt-2.5 text-center leading-relaxed whitespace-nowrap">
                 Sin compromiso. Garantía 30 días desde el primer cobro.
             </p>
+
+            {/* Social proof — RESTAURADO. Dato InfoJobs/Esade. Da contexto del mercado. */}
+            <div className="mt-10 md:mt-12 pt-6 md:pt-8 border-t border-[#2A2D34] w-full max-w-2xl px-4">
+                <p className="text-xs md:text-sm text-[#6B7280] leading-relaxed text-center">
+                    <span className="text-white font-semibold block mb-1 md:mb-0 md:inline">+ de 500.000 puestos de trabajo online publicados al año en España</span>
+                    <span className="block md:inline"> — Informe Estado del Mercado Laboral en España 2024, InfoJobs y Esade</span>
+                </p>
+            </div>
 
         </div>
       </div>
