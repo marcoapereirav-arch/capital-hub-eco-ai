@@ -64,8 +64,15 @@ export default function FunnelMifgePage() {
       <main className="w-full overflow-x-hidden">
         <Hero />
 
+        {/* Divisor visual entre Hero y Método — línea con marcador central */}
+        <div className="relative h-px bg-[#2A2D34]">
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-4 bg-[#0F0F12] font-mono text-[9px] uppercase tracking-[0.3em] text-[#4B5563]">
+            ↓
+          </span>
+        </div>
+
         {/* MÉTODO — 3 etapas, copy directo al avatar, cero invenciones */}
-        <Section id="metodo" className="py-16 md:py-24 bg-[#0B0B0E]">
+        <Section id="metodo" className="py-24 md:py-32 bg-[#0B0B0E]">
           <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-10 md:mb-12">
               <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-5 inline-block">

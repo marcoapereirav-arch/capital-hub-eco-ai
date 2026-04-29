@@ -74,7 +74,7 @@ export default function Hero() {
                 icon={<ArrowUpRight size={16} />}
                 className="w-full md:w-auto md:min-w-[300px] text-xs"
             />
-            <p className="text-[10px] text-[#4B5563] font-mono mt-2.5 text-center max-w-[300px] leading-relaxed">
+            <p className="text-[10px] text-[#4B5563] font-mono mt-2.5 text-center leading-relaxed whitespace-nowrap">
                 Sin compromiso. Garantía 30 días desde el primer cobro.
             </p>
 
