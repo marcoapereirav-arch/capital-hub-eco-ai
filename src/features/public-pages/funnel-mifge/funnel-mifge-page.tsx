@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/features/public-pages/funnel-lt8/components/Header';
 import Section from '@/features/public-pages/funnel-lt8/components/Section';
 import Footer from '@/features/public-pages/funnel-lt8/components/Footer';
@@ -35,26 +35,6 @@ const FAQItem = ({ question, answer }: { question: string; answer: string }) => 
 };
 
 export default function FunnelMifgePage() {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="funnel-lt8-root fixed inset-0 bg-[#0F0F12] z-50 flex items-center justify-center text-white px-6 text-center">
-        <div className="flex flex-col items-center gap-4 max-w-full">
-          <h2 className="font-serif text-2xl md:text-4xl tracking-widest animate-pulse break-words">CAPITAL HUB</h2>
-          <div className="w-32 md:w-48 h-[1px] bg-[#2A2D34] overflow-hidden">
-            <div className="h-full bg-white w-full origin-left animate-grow"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="funnel-lt8-root relative min-h-screen bg-[#0F0F12] text-white overflow-x-hidden">
       <CustomCursor />

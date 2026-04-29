@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Check, Lock, Zap, ShieldCheck, Gift } from "lucide-react"
 import CustomCursor from "@/features/public-pages/funnel-lt8/components/CustomCursor"
@@ -11,31 +11,12 @@ const NEXT_STEP = "/mifge/upsell-anual"
 
 export default function MifgeCheckoutPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
   const [orderBumpAdded, setOrderBumpAdded] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1000)
-    return () => clearTimeout(t)
-  }, [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: Stripe. Por ahora simulamos -> upsell-anual
+    // TODO: Whop. Por ahora simulamos -> upsell-anual
     router.push(NEXT_STEP)
-  }
-
-  if (loading) {
-    return (
-      <div className="funnel-lt8-root fixed inset-0 bg-[#0F0F12] z-50 flex items-center justify-center text-white px-6 text-center">
-        <div className="flex flex-col items-center gap-4 max-w-full">
-          <h2 className="font-serif text-2xl md:text-4xl tracking-widest animate-pulse break-words">CAPITAL HUB</h2>
-          <div className="w-32 md:w-48 h-[1px] bg-[#2A2D34] overflow-hidden">
-            <div className="h-full bg-white w-full origin-left animate-grow"></div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
