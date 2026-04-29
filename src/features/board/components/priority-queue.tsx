@@ -16,7 +16,7 @@ const ASSIGNEE_INITIALS: Record<string, string> = { marco: "MA", adrian: "AV", e
 const PRIORITY_RANK: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
 
 export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const { fitView, setCenter, getNode } = useReactFlow()
 
   const groups = useMemo(() => {
@@ -55,11 +55,11 @@ export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="flex items-center gap-1 rounded-md border border-border bg-card/95 backdrop-blur px-2 py-1.5 text-xs shadow-md hover:bg-secondary"
-        title="Mostrar queue"
+        className="flex items-center gap-1.5 rounded-md border border-border bg-card/95 backdrop-blur px-2.5 py-1.5 text-xs shadow-md hover:bg-secondary"
+        title="Abrir lista de tareas por prioridad"
       >
         <ChevronRight className="h-3.5 w-3.5" />
-        <span>Queue</span>
+        <span>Lista de tareas</span>
         {groups.live.length > 0 && (
           <span className="flex items-center gap-0.5 rounded-full bg-cyan-500 text-cyan-950 px-1.5 py-0.5 font-mono text-[9px] font-bold">
             <Zap className="h-2.5 w-2.5 fill-cyan-950" />
@@ -73,19 +73,19 @@ export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
   return (
     <div className="w-72 max-h-[calc(100vh-9rem)] overflow-y-auto rounded-md border border-border bg-card/95 backdrop-blur shadow-2xl">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-3 py-2">
-        <span className="font-heading text-xs font-semibold">Tu queue ahora</span>
+        <span className="font-heading text-xs font-semibold">Lista de tareas por prioridad</span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => fitView({ padding: 0.15, duration: 600 })}
             className="rounded-sm border border-border bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-            title="Centrar todo"
+            title="Centrar todo el board"
           >
-            Reset zoom
+            Centrar
           </button>
           <button
             onClick={() => setCollapsed(true)}
             className="rounded-sm p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
-            title="Colapsar"
+            title="Cerrar lista"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </button>

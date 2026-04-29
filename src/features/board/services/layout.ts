@@ -1,6 +1,7 @@
 import type { Node, Edge } from "@xyflow/react"
 import type { ParaItem } from "@/features/tasks/types/task"
 import type { TaskWithDeps } from "../types/board"
+import type { SavedPositions } from "./board-persist"
 
 // Paleta de colores por proyecto (cíclica). Cada PARA item recibe un color estable.
 const PROJECT_PALETTE = [
@@ -33,15 +34,23 @@ export type LayoutData = {
  *
  * Espaciado generoso para evitar solapamientos.
  */
-export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): LayoutData {
+export function buildLayout(
+  tasks: TaskWithDeps[],
+  paraItems: ParaItem[],
+  savedPositions: SavedPositions = {}
+): LayoutData {
   const nodes: Node[] = []
   const edges: Edge[] = []
+
+  function pos(id: string, fallback: { x: number; y: number }) {
+    return savedPositions[id] ?? fallback
+  }
 
   // 1) NODO CENTRAL: MISIÓN
   nodes.push({
     id: "mission",
     type: "mission",
-    position: { x: -160, y: -100 }, // -160 = -width/2; -100 = -height/2 aprox
+    position: pos("mission", { x: -180, y: -110 }),
     data: {},
     draggable: true,
     selectable: false,
@@ -53,18 +62,19 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
   const visibleParas = projectsAndAreas.filter((p) => usedParaIds.has(p.id))
 
   // Radio amplio para que los proyectos no se choquen con la misión ni entre ellos
-  const projectRadius = Math.max(550, visibleParas.length * 130)
+  const projectRadius = Math.max(750, visibleParas.length * 170)
 
   visibleParas.forEach((para, i) => {
     const angle = (i / visibleParas.length) * 2 * Math.PI - Math.PI / 2 // empieza arriba
     const px = projectRadius * Math.cos(angle)
     const py = projectRadius * Math.sin(angle)
     const color = colorForProject(i)
+    const projectId = `project-${para.id}`
 
     nodes.push({
-      id: `project-${para.id}`,
+      id: projectId,
       type: "project",
-      position: { x: px - 50, y: py - 50 }, // centrado (radio del project node ~50)
+      position: pos(projectId, { x: px - 50, y: py - 50 }),
       data: {
         label: para.name,
         color,
@@ -89,8 +99,8 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
 
     // 3) TASKS de este proyecto orbitando alrededor
     const myTasks = tasks.filter((t) => t.paraId === para.id)
-    // Radio mayor cuanto más tasks, para evitar solapes
-    const orbitRadius = Math.max(240, myTasks.length * 40)
+    // Radio mayor cuanto más tasks, para evitar solapes (más generoso)
+    const orbitRadius = Math.max(330, myTasks.length * 60)
 
     myTasks.forEach((task, j) => {
       // Distribuir en círculo alrededor del proyecto
@@ -101,7 +111,7 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
       nodes.push({
         id: task.id,
         type: "task",
-        position: { x: tx - 100, y: ty - 25 }, // centrado aprox
+        position: pos(task.id, { x: tx - 100, y: ty - 25 }),
         data: {
           task,
           projectColor: color,
@@ -126,13 +136,16 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
   // Tasks sin PARA → cluster orphan abajo
   const orphans = tasks.filter((t) => !t.paraId || !visibleParas.find((p) => p.id === t.paraId))
   if (orphans.length > 0) {
-    const orphanRadius = projectRadius + 250
+    const orphanRadius = projectRadius + 350
     orphans.forEach((task, i) => {
       const angle = (i / Math.max(orphans.length, 1)) * 2 * Math.PI
       nodes.push({
         id: task.id,
         type: "task",
-        position: { x: orphanRadius * Math.cos(angle) - 100, y: orphanRadius * Math.sin(angle) - 25 },
+        position: pos(task.id, {
+          x: orphanRadius * Math.cos(angle) - 100,
+          y: orphanRadius * Math.sin(angle) - 25,
+        }),
         data: {
           task,
           projectColor: "#6b7280",

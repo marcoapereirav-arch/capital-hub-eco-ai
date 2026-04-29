@@ -5,7 +5,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   Background,
-  Controls,
   MiniMap,
   Panel,
   applyNodeChanges,
@@ -15,10 +14,11 @@ import {
   type NodeMouseHandler,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import { Compass, HelpCircle, SlidersHorizontal, RotateCcw, Zap, Maximize } from "lucide-react"
+import { Compass, HelpCircle, SlidersHorizontal, RotateCcw, Zap, Plus, Minus, Maximize } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { boardService } from "../services/board-service"
 import { buildLayout } from "../services/layout"
+import { loadPositions, savePosition, loadFilters, saveFilters } from "../services/board-persist"
 import type { TaskWithDeps } from "../types/board"
 import type { ParaItem } from "@/features/tasks/types/task"
 import { TaskNode } from "./task-node"
@@ -71,18 +71,47 @@ export function BoardPage() {
   )
 }
 
-function FitButton() {
-  const { fitView } = useReactFlow()
+function BoardControls() {
+  const { zoomIn, zoomOut, fitView } = useReactFlow()
+  const cls =
+    "flex h-8 w-8 items-center justify-center rounded-sm border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary"
   return (
-    <button
-      onClick={() => fitView({ padding: 0.15, duration: 600 })}
-      className="flex items-center gap-1.5 rounded-md border border-border bg-card/95 backdrop-blur px-3 py-1.5 text-xs font-medium shadow-md hover:bg-secondary"
-      title="Ver todo el board centrado"
-    >
-      <Maximize className="h-3.5 w-3.5" />
-      Centrar todo
-    </button>
+    <div className="flex flex-col gap-1 rounded-md border border-border bg-card/95 backdrop-blur p-1.5 shadow-lg">
+      <button onClick={() => zoomIn({ duration: 200 })} className={cls} title="Acercar zoom">
+        <Plus className="h-4 w-4" />
+      </button>
+      <button onClick={() => zoomOut({ duration: 200 })} className={cls} title="Alejar zoom">
+        <Minus className="h-4 w-4" />
+      </button>
+      <button
+        onClick={() => fitView({ padding: 0.15, duration: 600 })}
+        className={cls}
+        title="Centrar todo el board"
+      >
+        <Maximize className="h-4 w-4" />
+      </button>
+    </div>
   )
+}
+
+// Refit cuando cambia el set de nodos visibles. Sin esto, el board carga con la cámara
+// en una posición arbitraria (la del último estado del provider) y a menudo encima de la MISIÓN.
+function AutoFitOnMount({ nodeCount }: { nodeCount: number }) {
+  const { fitView } = useReactFlow()
+  useEffect(() => {
+    if (nodeCount === 0) return
+    // Doble RAF para esperar a que xyflow mida los nodos antes de fitView
+    const r1 = requestAnimationFrame(() => {
+      const r2 = requestAnimationFrame(() => {
+        fitView({ padding: 0.15, duration: 0 })
+      })
+      return () => cancelAnimationFrame(r2)
+    })
+    return () => cancelAnimationFrame(r1)
+    // Solo cuando aparece el primer nodo (carga inicial). No re-disparamos en cada filter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeCount > 0])
+  return null
 }
 
 function BoardPageInner() {
@@ -100,9 +129,21 @@ function BoardPageInner() {
     [paraItems]
   )
 
-  const [filters, setFilters] = useState<Filters>(() => emptyFilters([]))
+  // Filtros: cargados de localStorage si existían, si no defaults
+  const [filters, setFilters] = useState<Filters>(() => {
+    const saved = loadFilters()
+    if (!saved) return emptyFilters([])
+    return {
+      status: new Set(saved.status as StatusKey[]),
+      assignee: new Set(saved.assignee as AssigneeKey[]),
+      priority: new Set(saved.priority as PriorityKey[]),
+      projects: new Set(saved.projects),
+      onlyInProgress: saved.onlyInProgress,
+      onlyWithDate: saved.onlyWithDate,
+    }
+  })
 
-  // Re-init filtros cuando cambian los proyectos disponibles
+  // Cuando aparecen proyectos nuevos en BD, los añadimos al filtro (sin desactivar nada).
   useEffect(() => {
     setFilters((f) => {
       const merged = new Set(f.projects)
@@ -112,6 +153,18 @@ function BoardPageInner() {
       return { ...f, projects: merged }
     })
   }, [projectIds])
+
+  // Persistir filtros cada vez que cambien
+  useEffect(() => {
+    saveFilters({
+      status: Array.from(filters.status),
+      assignee: Array.from(filters.assignee),
+      priority: Array.from(filters.priority),
+      projects: Array.from(filters.projects),
+      onlyInProgress: filters.onlyInProgress,
+      onlyWithDate: filters.onlyWithDate,
+    })
+  }, [filters])
 
   // Carga inicial + realtime
   useEffect(() => {
@@ -156,10 +209,16 @@ function BoardPageInner() {
     })
   }, [tasks, filters])
 
-  // Layout calculado
+  // Posiciones manuales guardadas. Se carga 1 vez del localStorage.
+  const [savedPositions, setSavedPositions] = useState<Record<string, { x: number; y: number }>>({})
+  useEffect(() => {
+    setSavedPositions(loadPositions())
+  }, [])
+
+  // Layout calculado: parte del cálculo galáctico, sobreescribe con posiciones manuales si existen.
   const { nodes: initialNodes, edges } = useMemo(
-    () => buildLayout(filteredTasks, paraItems),
-    [filteredTasks, paraItems]
+    () => buildLayout(filteredTasks, paraItems, savedPositions),
+    [filteredTasks, paraItems, savedPositions]
   )
 
   // Estado local de nodos para que se puedan arrastrar
@@ -168,8 +227,21 @@ function BoardPageInner() {
     setNodes(initialNodes)
   }, [initialNodes])
 
+  // Aplicar cambios + persistir posiciones cuando termina un drag.
+  // También actualiza el state local de savedPositions para que un realtime update
+  // no resetee la posición que el usuario acaba de mover.
   const onNodesChange = useCallback((changes: NodeChange[]) => {
     setNodes((nds) => applyNodeChanges(changes, nds))
+    let dirty = false
+    const next: Record<string, { x: number; y: number }> = {}
+    for (const c of changes) {
+      if (c.type === "position" && c.dragging === false && c.position) {
+        savePosition(c.id, c.position)
+        next[c.id] = c.position
+        dirty = true
+      }
+    }
+    if (dirty) setSavedPositions((p) => ({ ...p, ...next }))
   }, [])
 
   // Click en nodo task → abrir drawer
@@ -393,19 +465,20 @@ function BoardPageInner() {
             onNodeClick={onNodeClick}
             fitView
             fitViewOptions={{ padding: 0.15 }}
-            minZoom={0.15}
+            minZoom={0.1}
             maxZoom={2.5}
             defaultEdgeOptions={{ type: "default" }}
             proOptions={{ hideAttribution: true }}
+            nodesDraggable
           >
+            <AutoFitOnMount nodeCount={nodes.length} />
             <Background gap={20} size={1} color="#2a2d34" />
-            <Panel position="top-center">
-              <FitButton />
-            </Panel>
-            <Panel position="top-left" className="!m-0 !left-0 !top-0">
+            <Panel position="top-left" className="!m-2">
               <PriorityQueue tasks={tasks} onSelectTask={setSelectedTask} />
             </Panel>
-            <Controls className="!bg-card !border-border" />
+            <Panel position="bottom-left" className="!m-3">
+              <BoardControls />
+            </Panel>
             <MiniMap
               className="!bg-card !border-border"
               nodeColor={(n) => {
