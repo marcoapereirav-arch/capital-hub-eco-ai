@@ -1,8 +1,9 @@
 "use client"
 
 import { Handle, Position, type NodeProps } from "@xyflow/react"
-import { Flame, Circle, CheckCircle2, Hourglass, Moon, Inbox } from "lucide-react"
+import { Flame, Circle, CheckCircle2, Hourglass, Moon, Inbox, Calendar, Zap } from "lucide-react"
 import type { TaskWithDeps } from "../types/board"
+import { doneOpacity } from "../services/done-opacity"
 import { cn } from "@/lib/utils"
 
 type TaskNodeData = {
@@ -29,13 +30,12 @@ const PRIORITY_SIZE = {
   low: { w: 160, py: "py-1.5" },
 }
 
-// Colores por status. El INTERIOR del nodo. El borde sigue el color del proyecto.
 const STATUS_BG: Record<string, string> = {
-  done: "bg-green-600/40",        // verde — listo
-  next: "bg-blue-600/40",          // azul — en progreso/activo
-  waiting: "bg-yellow-600/35",     // amarillo — parado, esperando
-  someday: "bg-zinc-600/30",       // gris claro — no encendido (backlog)
-  inbox: "bg-zinc-700/40",         // gris oscuro — sin clasificar
+  done: "bg-green-600/40",
+  next: "bg-blue-600/40",
+  waiting: "bg-yellow-600/35",
+  someday: "bg-zinc-600/30",
+  inbox: "bg-zinc-700/40",
 }
 
 const STATUS_ICON = {
@@ -60,21 +60,31 @@ export function TaskNode({ data }: NodeProps) {
   const isNext = task.status === "next"
   const isWaiting = task.status === "waiting"
   const isUrgent = task.priority === "urgent"
+  const isInProgress = task.isInProgress
   const sizeCfg = PRIORITY_SIZE[task.priority]
+
+  // Opacidad de dones por antigüedad
+  const opacity = isDone ? doneOpacity(task.completedAt) : 1
 
   return (
     <div
       style={{
         width: sizeCfg.w,
         borderColor: projectColor,
+        opacity,
+        ...(isInProgress && {
+          boxShadow:
+            "0 0 0 2px rgba(34, 211, 238, 0.6), 0 0 20px rgba(34, 211, 238, 0.4), 0 0 40px rgba(34, 211, 238, 0.2)",
+        }),
       }}
       className={cn(
         "rounded-md border-2 shadow-md transition-all hover:shadow-lg hover:scale-[1.03] cursor-pointer",
         STATUS_BG[task.status],
         sizeCfg.py,
         "px-3",
-        isNext && "ring-1 ring-blue-300/40",
-        isUrgent && !isDone && "shadow-orange-500/30 shadow-lg",
+        isNext && !isInProgress && "ring-1 ring-blue-300/40",
+        isInProgress && "animate-pulse",
+        isUrgent && !isDone && !isInProgress && "shadow-orange-500/30 shadow-lg",
         isWaiting && "border-dashed"
       )}
     >
@@ -82,7 +92,9 @@ export function TaskNode({ data }: NodeProps) {
       <Handle type="source" position={Position.Bottom} className="!opacity-0" />
 
       <div className="flex items-start gap-2">
-        <div className="mt-0.5 flex-shrink-0">{STATUS_ICON[task.status]}</div>
+        <div className="mt-0.5 flex-shrink-0">
+          {isInProgress ? <Zap className="h-3 w-3 text-cyan-300" /> : STATUS_ICON[task.status]}
+        </div>
 
         <div className="min-w-0 flex-1">
           <p
@@ -105,12 +117,13 @@ export function TaskNode({ data }: NodeProps) {
               >
                 {ASSIGNEE_INITIALS[task.assignee] ?? task.assignee.slice(0, 2).toUpperCase()}
               </span>
-              <span className="font-mono text-[8px] uppercase tracking-wide text-white/50">
-                {STATUS_TEXT_LABEL[task.status]}
+              <span className="font-mono text-[8px] uppercase tracking-wide text-white/60">
+                {isInProgress ? "⚡ EN VIVO" : STATUS_TEXT_LABEL[task.status]}
               </span>
             </div>
             {task.dueDate && (
-              <span className="font-mono text-[8px] text-white/60">
+              <span className="flex items-center gap-1 font-mono text-[8px] text-white/70 bg-white/10 px-1 py-0.5 rounded-sm">
+                <Calendar className="h-2.5 w-2.5" />
                 {new Date(task.dueDate).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
               </span>
             )}

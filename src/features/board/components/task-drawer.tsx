@@ -1,8 +1,9 @@
 "use client"
 
-import { X, ExternalLink, CheckCircle2, Trash2 } from "lucide-react"
+import { X, ExternalLink, CheckCircle2, Trash2, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTaskStore } from "@/features/tasks/store/task-store"
+import { setTaskInProgress } from "../services/board-service"
 import type { TaskWithDeps } from "../types/board"
 
 interface TaskDrawerProps {
@@ -35,6 +36,11 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
     if (!confirm("¿Borrar esta tarea?")) return
     await deleteTask(task.id)
     onClose()
+  }
+
+  async function toggleInProgress() {
+    if (!task) return
+    await setTaskInProgress(task.id, !task.isInProgress)
   }
 
   return (
@@ -89,6 +95,17 @@ export function TaskDrawer({ task, onClose }: TaskDrawerProps) {
         )}
 
         <div className="flex flex-col gap-2 pt-4 border-t border-border">
+          {task.status !== "done" && (
+            <Button
+              onClick={toggleInProgress}
+              variant={task.isInProgress ? "default" : "outline"}
+              size="sm"
+              className={task.isInProgress ? "bg-cyan-500 text-cyan-950 hover:bg-cyan-400" : ""}
+            >
+              <Zap className="mr-2 h-3.5 w-3.5" />
+              {task.isInProgress ? "Trabajando AHORA — desactivar" : "Marcar: trabajando AHORA"}
+            </Button>
+          )}
           {task.status !== "done" && (
             <Button onClick={markDone} variant="secondary" size="sm">
               <CheckCircle2 className="mr-2 h-3.5 w-3.5" />

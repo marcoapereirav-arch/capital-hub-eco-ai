@@ -15,6 +15,7 @@ type TaskRow = {
   updated_at: string
   completed_at: string | null
   depends_on: string[] | null
+  is_in_progress: boolean | null
 }
 
 type ParaRow = { id: string; name: string; type: ParaType }
@@ -32,7 +33,14 @@ function rowToTask(r: TaskRow): TaskWithDeps {
     createdAt: r.created_at,
     completedAt: r.completed_at,
     dependsOn: r.depends_on ?? [],
+    isInProgress: r.is_in_progress ?? false,
   }
+}
+
+export async function setTaskInProgress(id: string, value: boolean): Promise<void> {
+  const supabase = createClient()
+  const { error } = await supabase.from("tasks").update({ is_in_progress: value }).eq("id", id)
+  if (error) throw error
 }
 
 export const boardService = {

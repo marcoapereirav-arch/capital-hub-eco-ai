@@ -8,11 +8,11 @@ import {
   MiniMap,
   applyNodeChanges,
   type Node,
-  type Edge,
   type NodeChange,
   type NodeMouseHandler,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
+import { Compass, HelpCircle, SlidersHorizontal, RotateCcw, Zap } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { boardService } from "../services/board-service"
 import { buildLayout } from "../services/layout"
@@ -22,6 +22,8 @@ import { TaskNode } from "./task-node"
 import { ProjectNode } from "./project-node"
 import { MissionNode } from "./mission-node"
 import { TaskDrawer } from "./task-drawer"
+import { LegendModal } from "./legend-modal"
+import { StrategyDrawer } from "./strategy-drawer"
 
 const nodeTypes = {
   task: TaskNode,
@@ -29,10 +31,32 @@ const nodeTypes = {
   mission: MissionNode,
 }
 
+type StatusKey = "next" | "waiting" | "someday" | "done" | "inbox"
+type AssigneeKey = "marco" | "adrian" | "equipo"
+type PriorityKey = "urgent" | "high" | "normal" | "low"
+
 type Filters = {
-  hideDone: boolean
-  status: "all" | "next" | "waiting" | "someday" | "done"
-  assignee: "all" | "marco" | "adrian" | "equipo"
+  status: Set<StatusKey>
+  assignee: Set<AssigneeKey>
+  priority: Set<PriorityKey>
+  projects: Set<string>
+  onlyInProgress: boolean
+  onlyWithDate: boolean
+}
+
+const ALL_STATUS: StatusKey[] = ["next", "waiting", "someday", "done", "inbox"]
+const ALL_ASSIGNEE: AssigneeKey[] = ["marco", "adrian", "equipo"]
+const ALL_PRIORITY: PriorityKey[] = ["urgent", "high", "normal", "low"]
+
+function emptyFilters(projects: string[]): Filters {
+  return {
+    status: new Set(ALL_STATUS),
+    assignee: new Set(ALL_ASSIGNEE),
+    priority: new Set(ALL_PRIORITY),
+    projects: new Set(projects),
+    onlyInProgress: false,
+    onlyWithDate: false,
+  }
 }
 
 export function BoardPage() {
@@ -41,11 +65,27 @@ export function BoardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskWithDeps | null>(null)
-  const [filters, setFilters] = useState<Filters>({
-    hideDone: false,
-    status: "all",
-    assignee: "all",
-  })
+  const [showLegend, setShowLegend] = useState(false)
+  const [showStrategy, setShowStrategy] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+
+  const projectIds = useMemo(
+    () => paraItems.filter((p) => p.type === "project" || p.type === "area").map((p) => p.id),
+    [paraItems]
+  )
+
+  const [filters, setFilters] = useState<Filters>(() => emptyFilters([]))
+
+  // Re-init filtros cuando cambian los proyectos disponibles
+  useEffect(() => {
+    setFilters((f) => {
+      const merged = new Set(f.projects)
+      projectIds.forEach((id) => {
+        if (!merged.has(id)) merged.add(id)
+      })
+      return { ...f, projects: merged }
+    })
+  }, [projectIds])
 
   // Carga inicial + realtime
   useEffect(() => {
@@ -80,9 +120,12 @@ export function BoardPage() {
   // Filtrado
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
-      if (filters.hideDone && t.status === "done") return false
-      if (filters.status !== "all" && t.status !== filters.status) return false
-      if (filters.assignee !== "all" && t.assignee !== filters.assignee) return false
+      if (!filters.status.has(t.status as StatusKey)) return false
+      if (!filters.assignee.has(t.assignee as AssigneeKey)) return false
+      if (!filters.priority.has(t.priority as PriorityKey)) return false
+      if (t.paraId && !filters.projects.has(t.paraId)) return false
+      if (filters.onlyInProgress && !t.isInProgress) return false
+      if (filters.onlyWithDate && !t.dueDate) return false
       return true
     })
   }, [tasks, filters])
@@ -120,8 +163,21 @@ export function BoardPage() {
     const done = tasks.filter((t) => t.status === "done").length
     const next = tasks.filter((t) => t.status === "next").length
     const waiting = tasks.filter((t) => t.status === "waiting").length
-    return { total, done, next, waiting, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
+    const live = tasks.filter((t) => t.isInProgress).length
+    return { total, done, next, waiting, live, pct: total > 0 ? Math.round((done / total) * 100) : 0 }
   }, [tasks])
+
+  // Toggle helpers
+  function toggleSet<T>(set: Set<T>, value: T): Set<T> {
+    const next = new Set(set)
+    if (next.has(value)) next.delete(value)
+    else next.add(value)
+    return next
+  }
+
+  function resetFilters() {
+    setFilters(emptyFilters(projectIds))
+  }
 
   return (
     <>
@@ -143,42 +199,153 @@ export function BoardPage() {
             <span className="font-mono text-muted-foreground">
               <span className="text-green-400 font-semibold">{stats.done}</span> done ({stats.pct}%)
             </span>
+            {stats.live > 0 && (
+              <span className="flex items-center gap-1 font-mono text-cyan-400">
+                <Zap className="h-3 w-3 animate-pulse" />
+                <span className="font-semibold">{stats.live}</span> en vivo
+              </span>
+            )}
           </div>
 
-          {/* Filtros */}
-          <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value as Filters["status"] })}
-              className="rounded-sm border border-border bg-secondary px-2 py-1 text-xs"
+          {/* Botones acción */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowStrategy(true)}
+              className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/70"
             >
-              <option value="all">Todos los status</option>
-              <option value="next">Solo next</option>
-              <option value="waiting">Solo waiting</option>
-              <option value="someday">Solo someday</option>
-              <option value="done">Solo done</option>
-            </select>
-            <select
-              value={filters.assignee}
-              onChange={(e) => setFilters({ ...filters, assignee: e.target.value as Filters["assignee"] })}
-              className="rounded-sm border border-border bg-secondary px-2 py-1 text-xs"
+              <Compass className="h-3.5 w-3.5" />
+              Estrategia
+            </button>
+            <button
+              onClick={() => setShowLegend(true)}
+              className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/70"
             >
-              <option value="all">Todos</option>
-              <option value="marco">Marco</option>
-              <option value="adrian">Adrián</option>
-              <option value="equipo">Equipo</option>
-            </select>
-            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={filters.hideDone}
-                onChange={(e) => setFilters({ ...filters, hideDone: e.target.checked })}
-                className="h-3 w-3"
-              />
-              Ocultar done
-            </label>
+              <HelpCircle className="h-3.5 w-3.5" />
+              Leyenda
+            </button>
+            <button
+              onClick={() => setShowFilters((v) => !v)}
+              className={`flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs ${
+                showFilters
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-secondary hover:bg-secondary/70"
+              }`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filtros
+            </button>
           </div>
         </div>
+
+        {/* Panel filtros desplegable */}
+        {showFilters && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-border bg-card/30 px-4 py-3 text-xs">
+            <div>
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Status</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                {ALL_STATUS.map((s) => (
+                  <label key={s} className="flex cursor-pointer items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={filters.status.has(s)}
+                      onChange={() => setFilters({ ...filters, status: toggleSet(filters.status, s) })}
+                      className="h-3 w-3"
+                    />
+                    <span className="capitalize">{s}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Assignee</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                {ALL_ASSIGNEE.map((a) => (
+                  <label key={a} className="flex cursor-pointer items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={filters.assignee.has(a)}
+                      onChange={() => setFilters({ ...filters, assignee: toggleSet(filters.assignee, a) })}
+                      className="h-3 w-3"
+                    />
+                    <span className="capitalize">{a}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Prioridad</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1">
+                {ALL_PRIORITY.map((p) => (
+                  <label key={p} className="flex cursor-pointer items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={filters.priority.has(p)}
+                      onChange={() => setFilters({ ...filters, priority: toggleSet(filters.priority, p) })}
+                      className="h-3 w-3"
+                    />
+                    <span className="capitalize">{p}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Otros</p>
+              <div className="flex flex-col gap-1.5">
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={filters.onlyInProgress}
+                    onChange={(e) => setFilters({ ...filters, onlyInProgress: e.target.checked })}
+                    className="h-3 w-3"
+                  />
+                  <span>Solo en vivo (⚡)</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={filters.onlyWithDate}
+                    onChange={(e) => setFilters({ ...filters, onlyWithDate: e.target.checked })}
+                    className="h-3 w-3"
+                  />
+                  <span>Solo con fecha (📅)</span>
+                </label>
+                <button
+                  onClick={resetFilters}
+                  className="mt-1 flex items-center gap-1.5 self-start text-muted-foreground hover:text-foreground"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            {projectIds.length > 0 && (
+              <div className="col-span-2 md:col-span-4">
+                <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Proyectos / Áreas
+                </p>
+                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                  {paraItems
+                    .filter((p) => p.type === "project" || p.type === "area")
+                    .map((p) => (
+                      <label key={p.id} className="flex cursor-pointer items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={filters.projects.has(p.id)}
+                          onChange={() => setFilters({ ...filters, projects: toggleSet(filters.projects, p.id) })}
+                          className="h-3 w-3"
+                        />
+                        <span>{p.name}</span>
+                      </label>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Canvas */}
         <div className="flex-1 relative">
@@ -199,8 +366,8 @@ export function BoardPage() {
             onNodesChange={onNodesChange}
             onNodeClick={onNodeClick}
             fitView
-            fitViewOptions={{ padding: 0.2 }}
-            minZoom={0.2}
+            fitViewOptions={{ padding: 0.15 }}
+            minZoom={0.15}
             maxZoom={2.5}
             defaultEdgeOptions={{ type: "default" }}
             proOptions={{ hideAttribution: true }}
@@ -214,6 +381,7 @@ export function BoardPage() {
                 if (n.type === "project") return (n.data as { color: string }).color
                 const data = n.data as { projectColor: string; task: TaskWithDeps }
                 if (!data.task) return "#6b7280"
+                if (data.task.isInProgress) return "#06b6d4"
                 switch (data.task.status) {
                   case "done": return "#16a34a"
                   case "next": return "#2563eb"
@@ -227,7 +395,9 @@ export function BoardPage() {
           </ReactFlow>
         </div>
 
-        {/* Drawer */}
+        {/* Modales y drawers */}
+        <LegendModal open={showLegend} onClose={() => setShowLegend(false)} />
+        <StrategyDrawer open={showStrategy} onClose={() => setShowStrategy(false)} />
         <TaskDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
       </div>
     </>
