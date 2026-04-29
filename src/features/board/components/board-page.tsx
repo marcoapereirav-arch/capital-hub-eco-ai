@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -9,6 +9,7 @@ import {
   Panel,
   applyNodeChanges,
   useReactFlow,
+  useNodesInitialized,
   type Node,
   type NodeChange,
   type NodeMouseHandler,
@@ -94,23 +95,21 @@ function BoardControls() {
   )
 }
 
-// Refit cuando cambia el set de nodos visibles. Sin esto, el board carga con la cámara
-// en una posición arbitraria (la del último estado del provider) y a menudo encima de la MISIÓN.
-function AutoFitOnMount({ nodeCount }: { nodeCount: number }) {
+// Centra el board cuando los nodos custom están medidos por xyflow.
+// useNodesInitialized se vuelve true cuando todos los nodos tienen width/height reales.
+// Sin esperar esto, fitView dispara con dimensiones 0 y la cámara aterriza en cualquier sitio.
+function AutoFitOnMount() {
+  const initialized = useNodesInitialized()
   const { fitView } = useReactFlow()
+  const didFit = useRef(false)
   useEffect(() => {
-    if (nodeCount === 0) return
-    // Doble RAF para esperar a que xyflow mida los nodos antes de fitView
-    const r1 = requestAnimationFrame(() => {
-      const r2 = requestAnimationFrame(() => {
-        fitView({ padding: 0.15, duration: 0 })
-      })
-      return () => cancelAnimationFrame(r2)
+    if (!initialized || didFit.current) return
+    didFit.current = true
+    // Una RAF más para garantizar que el DOM ha pintado los tamaños
+    requestAnimationFrame(() => {
+      fitView({ padding: 0.18, duration: 0, maxZoom: 0.9 })
     })
-    return () => cancelAnimationFrame(r1)
-    // Solo cuando aparece el primer nodo (carga inicial). No re-disparamos en cada filter.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodeCount > 0])
+  }, [initialized, fitView])
   return null
 }
 
@@ -463,15 +462,13 @@ function BoardPageInner() {
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onNodeClick={onNodeClick}
-            fitView
-            fitViewOptions={{ padding: 0.15 }}
-            minZoom={0.1}
+            minZoom={0.05}
             maxZoom={2.5}
             defaultEdgeOptions={{ type: "default" }}
             proOptions={{ hideAttribution: true }}
             nodesDraggable
           >
-            <AutoFitOnMount nodeCount={nodes.length} />
+            <AutoFitOnMount />
             <Background gap={20} size={1} color="#2a2d34" />
             <Panel position="top-left" className="!m-2">
               <PriorityQueue tasks={tasks} onSelectTask={setSelectedTask} />
