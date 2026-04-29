@@ -20,11 +20,13 @@ import type { TaskWithDeps } from "../types/board"
 import type { ParaItem } from "@/features/tasks/types/task"
 import { TaskNode } from "./task-node"
 import { ProjectNode } from "./project-node"
+import { MissionNode } from "./mission-node"
 import { TaskDrawer } from "./task-drawer"
 
 const nodeTypes = {
   task: TaskNode,
   project: ProjectNode,
+  mission: MissionNode,
 }
 
 type Filters = {
@@ -208,9 +210,17 @@ export function BoardPage() {
             <MiniMap
               className="!bg-card !border-border"
               nodeColor={(n) => {
+                if (n.type === "mission") return "#fbbf24"
                 if (n.type === "project") return (n.data as { color: string }).color
                 const data = n.data as { projectColor: string; task: TaskWithDeps }
-                return data.task?.status === "done" ? "#374151" : data.projectColor
+                if (!data.task) return "#6b7280"
+                switch (data.task.status) {
+                  case "done": return "#16a34a"
+                  case "next": return "#2563eb"
+                  case "waiting": return "#ca8a04"
+                  case "someday": return "#71717a"
+                  default: return "#52525b"
+                }
               }}
               maskColor="rgba(15, 15, 18, 0.7)"
             />

@@ -2,8 +2,8 @@ import type { Node, Edge } from "@xyflow/react"
 import type { ParaItem } from "@/features/tasks/types/task"
 import type { TaskWithDeps } from "../types/board"
 
-// Paleta para proyectos (cíclica). Cada PARA item recibe un color estable.
-const PALETTE = [
+// Paleta de colores por proyecto (cíclica). Cada PARA item recibe un color estable.
+const PROJECT_PALETTE = [
   "#3b82f6", // blue
   "#a78bfa", // violet
   "#10b981", // emerald
@@ -16,9 +16,8 @@ const PALETTE = [
   "#14b8a6", // teal
 ]
 
-export function colorForPara(paraId: string | null, paraIndex: number): string {
-  if (!paraId) return "#6b7280" // gray for orphans
-  return PALETTE[paraIndex % PALETTE.length]
+export function colorForProject(paraIndex: number): string {
+  return PROJECT_PALETTE[paraIndex % PROJECT_PALETTE.length]
 }
 
 export type LayoutData = {
@@ -27,36 +26,45 @@ export type LayoutData = {
 }
 
 /**
- * Layout estilo "constellation" — cada proyecto es un sol, sus tasks son planetas
- * orbitando alrededor en círculo. Tasks sin proyecto van al centro como cluster orphan.
+ * Layout galáctico con MISIÓN al centro:
+ *   Nivel 0 (centro): MISIÓN — los 5 KPIs y el goal 1.000€/día
+ *   Nivel 1 (órbita amplia): PROYECTOS (PARA items con tasks)
+ *   Nivel 2 (orbitan cada proyecto): TASKS de ese proyecto
+ *
+ * Espaciado generoso para evitar solapamientos.
  */
 export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): LayoutData {
   const nodes: Node[] = []
   const edges: Edge[] = []
 
-  // Solo proyectos (type=project) reciben nodo central destacado.
-  // Áreas/recursos también pero más pequeños.
-  const projectsAndAreas = paraItems.filter((p) => p.type === "project" || p.type === "area")
+  // 1) NODO CENTRAL: MISIÓN
+  nodes.push({
+    id: "mission",
+    type: "mission",
+    position: { x: -160, y: -100 }, // -160 = -width/2; -100 = -height/2 aprox
+    data: {},
+    draggable: true,
+    selectable: false,
+  })
 
-  // Filtramos PARA items que tienen al menos una task asociada (para no llenar de nodos vacíos)
+  // 2) PROYECTOS (solo project + area con tasks asociadas)
+  const projectsAndAreas = paraItems.filter((p) => p.type === "project" || p.type === "area")
   const usedParaIds = new Set(tasks.map((t) => t.paraId).filter(Boolean) as string[])
   const visibleParas = projectsAndAreas.filter((p) => usedParaIds.has(p.id))
 
-  // Layout circular global: cada proyecto en un punto del círculo grande
-  const galaxyRadius = Math.max(300, visibleParas.length * 90)
-  const centerX = 0
-  const centerY = 0
+  // Radio amplio para que los proyectos no se choquen con la misión ni entre ellos
+  const projectRadius = Math.max(550, visibleParas.length * 130)
 
   visibleParas.forEach((para, i) => {
     const angle = (i / visibleParas.length) * 2 * Math.PI - Math.PI / 2 // empieza arriba
-    const px = centerX + galaxyRadius * Math.cos(angle)
-    const py = centerY + galaxyRadius * Math.sin(angle)
-    const color = colorForPara(para.id, i)
+    const px = projectRadius * Math.cos(angle)
+    const py = projectRadius * Math.sin(angle)
+    const color = colorForProject(i)
 
     nodes.push({
       id: `project-${para.id}`,
       type: "project",
-      position: { x: px, y: py },
+      position: { x: px - 50, y: py - 50 }, // centrado (radio del project node ~50)
       data: {
         label: para.name,
         color,
@@ -64,11 +72,28 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
       },
     })
 
-    // Tasks asociadas a este PARA: orbitan alrededor
+    // Edge sutil proyecto → misión
+    edges.push({
+      id: `edge-mission-${para.id}`,
+      source: `project-${para.id}`,
+      target: "mission",
+      type: "default",
+      style: {
+        stroke: "#fbbf24",
+        strokeOpacity: 0.15,
+        strokeWidth: 1,
+        strokeDasharray: "3 6",
+      },
+      animated: false,
+    })
+
+    // 3) TASKS de este proyecto orbitando alrededor
     const myTasks = tasks.filter((t) => t.paraId === para.id)
-    const orbitRadius = Math.max(180, myTasks.length * 25)
+    // Radio mayor cuanto más tasks, para evitar solapes
+    const orbitRadius = Math.max(240, myTasks.length * 40)
 
     myTasks.forEach((task, j) => {
+      // Distribuir en círculo alrededor del proyecto
       const tAngle = (j / Math.max(myTasks.length, 1)) * 2 * Math.PI
       const tx = px + orbitRadius * Math.cos(tAngle)
       const ty = py + orbitRadius * Math.sin(tAngle)
@@ -76,14 +101,14 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
       nodes.push({
         id: task.id,
         type: "task",
-        position: { x: tx, y: ty },
+        position: { x: tx - 100, y: ty - 25 }, // centrado aprox
         data: {
           task,
           projectColor: color,
         },
       })
 
-      // Edge task → project (sutil)
+      // Edge task → proyecto (sutil, color del proyecto)
       edges.push({
         id: `edge-${task.id}-${para.id}`,
         source: task.id,
@@ -91,56 +116,57 @@ export function buildLayout(tasks: TaskWithDeps[], paraItems: ParaItem[]): Layou
         type: "default",
         style: {
           stroke: color,
-          strokeOpacity: task.status === "done" ? 0.15 : 0.35,
+          strokeOpacity: 0.3,
           strokeWidth: 1,
         },
-        animated: false,
       })
     })
   })
 
-  // Tasks sin PARA → cluster orphan al centro
+  // Tasks sin PARA → cluster orphan abajo
   const orphans = tasks.filter((t) => !t.paraId || !visibleParas.find((p) => p.id === t.paraId))
-  orphans.forEach((task, i) => {
-    const angle = (i / Math.max(orphans.length, 1)) * 2 * Math.PI
-    const r = 80
-    nodes.push({
-      id: task.id,
-      type: "task",
-      position: { x: r * Math.cos(angle), y: r * Math.sin(angle) },
-      data: {
-        task,
-        projectColor: "#6b7280",
-      },
+  if (orphans.length > 0) {
+    const orphanRadius = projectRadius + 250
+    orphans.forEach((task, i) => {
+      const angle = (i / Math.max(orphans.length, 1)) * 2 * Math.PI
+      nodes.push({
+        id: task.id,
+        type: "task",
+        position: { x: orphanRadius * Math.cos(angle) - 100, y: orphanRadius * Math.sin(angle) - 25 },
+        data: {
+          task,
+          projectColor: "#6b7280",
+        },
+      })
     })
-  })
+  }
 
-  // Edges de dependencias (task → task) — animadas y más visibles
+  // 4) EDGES de dependencias (task → task) — animadas y visibles
   for (const task of tasks) {
     for (const depId of task.dependsOn) {
       const depExists = tasks.find((t) => t.id === depId)
       if (!depExists) continue
-      // edge va FROM la dependencia TO la task que la necesita
+      const bothActive = depExists.status !== "done" && task.status !== "done"
       edges.push({
         id: `dep-${depId}-${task.id}`,
         source: depId,
         target: task.id,
         type: "default",
         style: {
-          stroke: task.status === "done" || depExists.status === "done" ? "#374151" : "#f59e0b",
+          stroke: bothActive ? "#fb923c" : "#3f3f46",
           strokeWidth: 2,
           strokeDasharray: "5 5",
         },
-        animated: depExists.status !== "done" && task.status !== "done",
-        label: "depends",
+        animated: bothActive,
+        label: "depende",
         labelStyle: {
-          fill: "#9ca3af",
+          fill: "#fbbf24",
           fontSize: 9,
           fontFamily: "var(--font-mono), monospace",
         },
         labelBgStyle: {
           fill: "#0F0F12",
-          fillOpacity: 0.8,
+          fillOpacity: 0.85,
         },
         labelBgPadding: [4, 4],
       })
