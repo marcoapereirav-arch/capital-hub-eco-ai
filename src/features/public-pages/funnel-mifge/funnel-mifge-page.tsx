@@ -65,7 +65,7 @@ export default function FunnelMifgePage() {
         <Hero />
 
         {/* MÉTODO — 3 etapas, copy directo al avatar, cero invenciones */}
-        <Section id="metodo" className="py-16 md:py-24 border-y border-[#2A2D34] bg-[#111113]">
+        <Section id="metodo" className="py-16 md:py-24 bg-[#0B0B0E]">
           <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-10 md:mb-12">
               <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-5 inline-block">
@@ -114,7 +114,7 @@ export default function FunnelMifgePage() {
         </Section>
 
         {/* OFFER — adaptado a Free Trial */}
-        <Section id="offer" className="py-16 md:py-24 border-y border-[#2A2D34]">
+        <Section id="offer" className="py-16 md:py-24 bg-[#0F0F12]">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-0 px-0 md:px-6 max-w-[1400px] mx-auto border-t border-b md:border border-[#2A2D34] bg-[#18181B]">
             <div className="md:col-span-7 p-6 py-10 md:p-16 border-b md:border-b-0 md:border-r border-[#2A2D34]">
                <h3 className="font-serif text-2xl md:text-4xl mb-2 uppercase leading-tight">Empieza tu carrera digital sin pagar nada</h3>
@@ -188,7 +188,7 @@ export default function FunnelMifgePage() {
         </Section>
 
         {/* PROCESO MIFGE — 4 pasos coherentes con free trial, sin "8€", sin flechas */}
-        <Section id="proceso" className="py-16 md:py-24 border-y border-[#2A2D34] bg-[#0F0F12]">
+        <Section id="proceso" className="py-16 md:py-24 bg-[#0B0B0E]">
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-12 md:mb-14">
               <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-6 inline-block">
@@ -239,7 +239,7 @@ export default function FunnelMifgePage() {
         <BioModal checkoutUrl={CHECKOUT_URL} />
 
         {/* FAQ */}
-        <Section id="faq" className="py-16 md:py-24 border-t border-[#2A2D34] bg-[#111113]">
+        <Section id="faq" className="py-16 md:py-24 bg-[#0F0F12]">
           <div className="max-w-3xl mx-auto px-6">
             <h3 className="font-serif text-2xl md:text-4xl mb-12 text-center uppercase">Preguntas Frecuentes</h3>
             <div className="space-y-2">
