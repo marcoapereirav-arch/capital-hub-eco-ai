@@ -3,12 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/features/public-pages/funnel-lt8/components/Header';
 import Section from '@/features/public-pages/funnel-lt8/components/Section';
-import Services from '@/features/public-pages/funnel-lt8/components/Services';
 import Footer from '@/features/public-pages/funnel-lt8/components/Footer';
 import CustomCursor from '@/features/public-pages/funnel-lt8/components/CustomCursor';
 import BioModal from '@/features/public-pages/funnel-lt8/components/BioModal';
 import Button from '@/features/public-pages/funnel-lt8/components/Button';
-import { Check, Plus, Minus, ArrowUpRight, ShieldCheck, Lock, Target, GraduationCap, Briefcase, Sparkles } from 'lucide-react';
+import { Check, Plus, Minus, ArrowUpRight, ShieldCheck, Lock, Target, GraduationCap, Briefcase } from 'lucide-react';
 import Hero from './components/Hero';
 import '@/features/public-pages/funnel-lt8/styles.css';
 
@@ -65,74 +64,52 @@ export default function FunnelMifgePage() {
       <main className="w-full overflow-x-hidden">
         <Hero />
 
-        {/* MÉTODO JP — análisis · formación · empleo */}
+        {/* MÉTODO — 3 etapas, copy directo al avatar, cero invenciones */}
         <Section id="metodo" className="py-16 md:py-24 border-y border-[#2A2D34] bg-[#111113]">
           <div className="max-w-5xl mx-auto px-6">
-            <div className="text-center mb-12 md:mb-16">
-              <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-6 inline-block">
-                EL MÉTODO
+            <div className="text-center mb-10 md:mb-12">
+              <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-5 inline-block">
+                CÓMO FUNCIONA
               </span>
               <h2 className="font-serif text-2xl md:text-4xl lg:text-5xl leading-tight uppercase max-w-3xl mx-auto">
-                <span className="text-[#9CA3AF]">No es magia.</span> Es un sistema de <span className="text-white">3 etapas.</span>
+                Te ayudamos en <span className="text-white">3 pasos</span>
               </h2>
-              <p className="text-[#9CA3AF] text-sm md:text-base mt-6 max-w-2xl mx-auto leading-relaxed">
-                El mismo sistema que usaron las +800 personas que ya consiguieron su primer trabajo remoto con nosotros.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border border-[#2A2D34] bg-[#0F0F12]">
               {[
                 {
                   num: "01",
-                  icon: <Target size={24} />,
-                  title: "ANÁLISIS",
-                  subtitle: "Test vocacional · 10 min",
-                  desc: "Descubrimos exactamente en qué eres bueno, qué profesión digital encaja contigo y cuánto puedes facturar. Sin adivinar. Con datos.",
-                  bullets: ["Test de aptitudes", "Mapa de profesiones", "Estimación de salario real"]
+                  icon: <Target size={22} />,
+                  title: "TE DECIMOS EN QUÉ ERES BUENO",
+                  desc: "Haces un test corto y descubrimos qué profesión digital encaja contigo: IA, marketing o comercial digital.",
                 },
                 {
                   num: "02",
-                  icon: <GraduationCap size={24} />,
-                  title: "FORMACIÓN",
-                  subtitle: "Plan 30 días personalizado",
-                  desc: "Te asignamos las masterclasses específicas para tu camino. Aprendes solo lo que necesitas para empezar a trabajar. Sin paja.",
-                  bullets: ["Masterclasses on-demand", "Mentoría semanal", "Proyectos reales"]
+                  icon: <GraduationCap size={22} />,
+                  title: "TE FORMAS EN ESA RAMA",
+                  desc: "Te asignamos la formación de tu rama. Aprendes solo lo que necesitas para trabajar en ese campo concreto.",
                 },
                 {
                   num: "03",
-                  icon: <Briefcase size={24} />,
-                  title: "EMPLEO",
-                  subtitle: "Bolsa con ofertas reales",
-                  desc: "Empresas nos contactan cada semana buscando perfiles. Te postulamos con tu CV optimizado y te preparamos para la entrevista.",
-                  bullets: ["Bolsa de empleo activa", "CV + portfolio review", "Acompañamiento entrevista"]
+                  icon: <Briefcase size={22} />,
+                  title: "TE AYUDAMOS A CONSEGUIR TRABAJO",
+                  desc: "Tenemos empresas que nos piden perfiles cada semana. Te postulamos y te preparamos para la entrevista.",
                 }
               ].map((step, i, arr) => (
                 <div
                   key={step.num}
-                  className={`p-6 md:p-10 ${i < arr.length - 1 ? 'border-b md:border-b-0 md:border-r border-[#2A2D34]' : ''}`}
+                  className={`p-6 md:p-8 ${i < arr.length - 1 ? 'border-b md:border-b-0 md:border-r border-[#2A2D34]' : ''}`}
                 >
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center gap-3 mb-4">
                     <span className="font-mono text-2xl md:text-3xl text-[#37ca37] font-light">{step.num}</span>
-                    <div className="text-white opacity-80">{step.icon}</div>
+                    <div className="text-white opacity-70">{step.icon}</div>
                   </div>
-                  <h3 className="font-serif text-xl md:text-2xl text-white uppercase tracking-wide mb-1">{step.title}</h3>
-                  <p className="font-mono text-[10px] md:text-xs text-[#6B7280] uppercase tracking-widest mb-4">{step.subtitle}</p>
-                  <p className="text-[#9CA3AF] text-sm leading-relaxed mb-6">{step.desc}</p>
-                  <ul className="space-y-2">
-                    {step.bullets.map((b, j) => (
-                      <li key={j} className="flex items-center gap-2 text-xs text-[#D1D5DB]">
-                        <Check size={12} className="text-[#37ca37] flex-shrink-0" />
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <h3 className="font-serif text-base md:text-lg text-white uppercase tracking-wide leading-tight mb-2">{step.title}</h3>
+                  <p className="text-[#9CA3AF] text-sm leading-relaxed">{step.desc}</p>
                 </div>
               ))}
             </div>
-
-            <p className="text-center mt-8 text-[#6B7280] text-xs md:text-sm font-mono uppercase tracking-wider">
-              → 90 días o menos. O te devolvemos hasta el último euro.
-            </p>
           </div>
         </Section>
 
@@ -210,106 +187,52 @@ export default function FunnelMifgePage() {
           </div>
         </Section>
 
-        {/* PLANES — qué pasa cuando se acaba el trial */}
-        <Section id="planes" className="py-16 md:py-24 border-y border-[#2A2D34] bg-[#111113]">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="text-center mb-10 md:mb-14">
+        {/* PROCESO MIFGE — 4 pasos coherentes con free trial, sin "8€", sin flechas */}
+        <Section id="proceso" className="py-16 md:py-24 border-y border-[#2A2D34] bg-[#0F0F12]">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-12 md:mb-14">
               <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-6 inline-block">
-                CUANDO ACABE LA PRUEBA
+                EL PROCESO
               </span>
-              <h2 className="font-serif text-2xl md:text-4xl leading-tight uppercase">
-                Si te quedas, <span className="text-[#9CA3AF]">elige tu plan</span>
+              <h2 className="font-serif text-2xl md:text-4xl lg:text-5xl leading-tight uppercase max-w-3xl mx-auto">
+                Tu primer sueldo online <span className="text-white">en 4 pasos</span>
               </h2>
-              <p className="text-[#9CA3AF] text-sm md:text-base mt-4 max-w-2xl mx-auto">
-                Hoy no eliges. Lo eliges el día 14, cuando ya sepas si esto es para ti.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-[#2A2D34]">
-              {/* Plan Mensual */}
-              <div className="p-8 md:p-10 bg-[#0F0F12] border-b md:border-b-0 md:border-r border-[#2A2D34]">
-                <div className="flex items-baseline justify-between mb-6">
-                  <h3 className="font-serif text-lg md:text-xl uppercase text-white">Plan Mensual</h3>
-                  <span className="font-mono text-[10px] text-[#6B7280] uppercase">Flexible</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border border-[#2A2D34]">
+              {[
+                {
+                  num: "01",
+                  title: "Activas tu prueba gratis",
+                  desc: "Te registras hoy. 14 días con acceso completo. Sin pagar nada hoy.",
+                },
+                {
+                  num: "02",
+                  title: "Eliges tu rama",
+                  desc: "Hacemos el test contigo y eliges una rama: IA, marketing digital o comercial digital.",
+                },
+                {
+                  num: "03",
+                  title: "Te formamos para esa rama",
+                  desc: "Aprendes solo lo necesario para trabajar en ese campo. Plan paso a paso.",
+                },
+                {
+                  num: "04",
+                  title: "Cobras tu primer sueldo",
+                  desc: "Te conectamos con empresas que buscan tu perfil. Cobras desde casa, con tu horario.",
+                },
+              ].map((s, i, arr) => (
+                <div
+                  key={s.num}
+                  className={`p-6 md:p-8 bg-[#18181B] ${i < arr.length - 1 ? 'border-b lg:border-b-0 lg:border-r border-[#2A2D34]' : ''}`}
+                >
+                  <div className="font-mono text-2xl md:text-3xl text-[#37ca37] mb-3">{s.num}</div>
+                  <h4 className="font-serif text-base md:text-lg text-white leading-tight mb-2">{s.title}</h4>
+                  <p className="text-[#9CA3AF] text-sm leading-relaxed">{s.desc}</p>
                 </div>
-                <div className="flex items-baseline gap-2 mb-3">
-                  <span className="text-5xl md:text-6xl font-serif text-white">97€</span>
-                  <span className="text-[#6B7280] text-sm">/mes</span>
-                </div>
-                <p className="text-[#9CA3AF] text-sm mb-6">Cancela cuando quieras. 1 click. Sin preguntas.</p>
-                <ul className="space-y-3">
-                  {[
-                    "Acceso completo a todas las formaciones",
-                    "Bolsa de empleo + ofertas reales",
-                    "Mentoría semanal en grupo",
-                    "Comunidad privada de profesionales digitales",
-                    "Cancela 1-click cuando quieras",
-                  ].map((b, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-[#D1D5DB]">
-                      <Check size={14} className="text-[#9CA3AF] mt-0.5 flex-shrink-0" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Plan Anual — RECOMENDADO */}
-              <div className="p-8 md:p-10 bg-[#0F0F12] relative">
-                <div className="absolute top-0 right-0 bg-[#37ca37] text-[#0F0F12] font-mono text-[10px] uppercase tracking-widest px-3 py-1.5">
-                  AHORRA 194€
-                </div>
-                <div className="flex items-baseline justify-between mb-6">
-                  <h3 className="font-serif text-lg md:text-xl uppercase text-white">Plan Anual</h3>
-                  <span className="font-mono text-[10px] text-[#37ca37] uppercase">Recomendado</span>
-                </div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-5xl md:text-6xl font-serif text-white">970€</span>
-                  <span className="text-[#6B7280] text-sm">/año</span>
-                </div>
-                <p className="text-[#9CA3AF] text-sm mb-6">
-                  Equivale a <span className="text-white font-medium">81€/mes</span> · 2 meses gratis vs mensual.
-                </p>
-                <ul className="space-y-3">
-                  {[
-                    "Todo lo del plan mensual",
-                    "+ Sesión 1:1 onboarding (vale 200€)",
-                    "+ Acceso anticipado a nuevas masterclasses",
-                    "+ Plantillas portfolio premium",
-                    "Garantía de devolución 30 días",
-                  ].map((b, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-[#D1D5DB]">
-                      <Check size={14} className="text-[#37ca37] mt-0.5 flex-shrink-0" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Order bump preview */}
-            <div className="mt-6 border border-dashed border-[#37ca37]/40 bg-[#37ca37]/5 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4">
-              <Sparkles size={24} className="text-[#37ca37] flex-shrink-0" />
-              <div className="flex-1">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-[#37ca37] mb-1">BONUS BUNDLE · SOLO HOY · 20€</p>
-                <p className="text-[#F5F6F7] text-sm md:text-base leading-relaxed">
-                  En el checkout puedes añadir el <span className="font-semibold">Bonus Bundle Express</span>:
-                  acceso a las 3 masterclasses VIP + plantilla CV optimizada para remoto + plan acelerado 7 días.
-                  <span className="text-[#9CA3AF]"> No se vende por separado.</span>
-                </p>
-              </div>
+              ))}
             </div>
           </div>
-        </Section>
-
-        {/* STEPS */}
-        <Section id="steps" className="py-16 md:py-24 border-y border-[#2A2D34] bg-[#0F0F12]">
-          <div className="max-w-4xl mx-auto text-center px-6">
-            <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-8 inline-block">El Proceso</span>
-            <h2 className="font-serif text-2xl md:text-5xl leading-tight mb-8 uppercase break-words px-2">
-              Cómo vas a conseguir tu sueldo online en 4 simples pasos
-            </h2>
-          </div>
-          <Services />
         </Section>
 
         {/* BIO con MODAL — reutilizado, con CTA al checkout de mifge */}
