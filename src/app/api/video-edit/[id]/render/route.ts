@@ -5,6 +5,7 @@ import { createDownloadUrl } from '@/features/video-edit/services/storage'
 import { queueRender, getRender } from '@/features/video-edit/services/shotstack'
 import { buildPayloadByPreset } from '@/features/video-edit/services/timeline-builder'
 import { loadBrandPackTokens } from '@/features/video-edit/services/brand-pack-repo'
+import { applyLlmCutsToWords, type LlmCut } from '@/features/video-edit/services/llm-edit'
 import type { WhisperTranscript } from '@/features/video-edit/types/video-edit'
 
 export const runtime = 'nodejs'
@@ -66,22 +67,33 @@ export async function POST(_req: NextRequest, { params }: Params) {
     // 3) Resolver preset_slug. Default = 'vertical-clean' (Variante 1 del playbook).
     const presetSlug = edit.preset_slug ?? 'vertical-clean'
 
-    // 4) Construir payload Shotstack según la variante elegida
+    // 4) Aplicar LLM-cuts al transcript (si hubo): filtra palabras dentro
+    //    de los tramos marcados por Claude. Lo que queda lo procesa silence-trim.
+    const llmCuts = (edit.llm_cuts as LlmCut[] | null) ?? []
+    const filteredWords = applyLlmCutsToWords(transcript.words, llmCuts)
+    const transcriptForRender: WhisperTranscript = {
+      ...transcript,
+      words: filteredWords,
+    }
+
+    // 5) Construir payload Shotstack según la variante elegida
     const { payload, outputDuration, silenceRemoved } = buildPayloadByPreset({
       presetSlug,
       sourceVideoUrl: sourceUrl,
       durationSeconds: edit.duration_seconds,
-      transcript,
+      transcript: transcriptForRender,
       brand,
       headlineText: edit.headline_text ?? undefined,
       rotationDegrees: edit.rotation_degrees ?? 0,
     })
 
-    // 5) Encolar en Shotstack
+    // 6) Encolar en Shotstack
     const renderId = await queueRender(payload)
     console.log(
       `[video-edit] ${id} render encolado · preset=${presetSlug} · ` +
-        `output=${outputDuration.toFixed(1)}s · silencio_recortado=${silenceRemoved.toFixed(1)}s`,
+        `output=${outputDuration.toFixed(1)}s · ` +
+        `silencio_recortado=${silenceRemoved.toFixed(1)}s · ` +
+        `llm_cuts=${llmCuts.length}`,
     )
 
     // 4) Persistir estado

@@ -25,18 +25,19 @@ export interface SubtitleStyleTokens {
 }
 
 export const DEFAULT_SUBTITLE_TOKENS: SubtitleStyleTokens = {
-  // Iteración tras primer render real: Inter 500 quedó demasiado fino,
-  // se veía a tipografía del sistema. Subimos a Montserrat 700 (Bold) +
-  // tamaño mayor + stroke negro 3px para que destaquen sobre cualquier fondo.
-  fontFamily: 'Montserrat',
-  fontWeight: 700,
-  fontSize: 58,
+  // v5 — Spec confirmado por usuario tras analizar 3 capturas reales de Diego:
+  //   subs sutiles, peso semibold, SIN outline, blanco limpio, ~42px sobre 1080.
+  //   v2/v3/v4 fallaron porque metí stroke (todo me salió hueco/negro).
+  //   v5 va sin stroke. Punto.
+  fontFamily: 'Inter',
+  fontWeight: 600,
+  fontSize: 42,
   color: '#FFFFFF',
   backgroundColor: null,
   backgroundOpacity: 0,
   position: 'lower-third',
-  blockWidth: 880,
-  blockHeight: 200,
+  blockWidth: 760,
+  blockHeight: 140,
 }
 
 function positionToShotstack(pos: SubtitleStyleTokens['position']): {
@@ -126,9 +127,10 @@ export function buildKaraokeSubtitleClips(
               padding: 16,
             }
           : undefined,
-      // Stroke negro 3px para legibilidad sobre cualquier fondo
-      // (sin llegar al 4px tipo MrBeast).
-      stroke: { color: '#000000', width: 3 },
+      // v5: SIN stroke. Diego usa subs blancos limpios sin outline visible.
+      // Cualquier stroke en este tamaño hace que se vea hueco/contorneado.
+      // Si es ilegible sobre un fondo claro, es decisión del usuario al grabar
+      // (background con contraste suficiente).
       width: style.blockWidth ?? 760,
       height: style.blockHeight ?? 180,
     },

@@ -141,7 +141,11 @@ function buildTrimmedVideoTrack(input: BuildTrimmedVideoTrackInput): ShotstackTr
       },
       start: seg.outputStart,
       length: seg.duration,
-      fit: 'cover',
+      // 'contain' preserva el aspect ratio. Si el source no encaja con el canvas
+      // se ven barras negras (preferible a cropping/zoom agresivo).
+      // Spec v5 confirmado por usuario: "que no se distorsione, vertical entra
+      // como vertical, NO zoom".
+      fit: 'contain',
     }
     if (rotation !== 0) {
       // Shotstack acepta transform.rotate.angle (grados, sentido horario)
@@ -166,6 +170,43 @@ function buildKaraokeSubtitleTrack(
     style: brandToSubtitleStyle(brand),
   })
   return { clips }
+}
+
+/**
+ * Overlay de color grading "warm cinematic" — aproximación al look Diego.
+ *
+ * Diego usa LUT real (.cube) que no tenemos. Esta es la mejor aproximación sin
+ * pre-procesar via ffmpeg: un HTML overlay con color cálido (peach/orange) a
+ * baja opacidad sobre todo el video. Da pieles más doradas y sensación de
+ * golden hour. Realismo: ~75-85% Diego.
+ *
+ * Para 95% Diego: integrar ffmpeg + LUT cinemática (siguiente bloque).
+ */
+function buildWarmCinematicOverlayTrack(
+  totalDurationSeconds: number,
+  brand: BrandPackTokens,
+): ShotstackTrack {
+  // Solo aplicamos el overlay si el LUT del brand pack es 'cinematic-warm'.
+  if (brand.colorGradeLut !== 'cinematic-warm') return { clips: [] }
+
+  const intensity = Math.min(1, Math.max(0, brand.colorGradeIntensity ?? 0.7))
+  // Opacidad capada a 0.10 max — más de eso saturando demasiado.
+  const opacity = 0.06 + 0.05 * intensity // entre 0.06 y 0.11
+
+  const clip: ShotstackClip = {
+    asset: {
+      type: 'html' as const,
+      html: '<div style="width:100%;height:100%;"></div>',
+      css: `div { background: linear-gradient(180deg, rgba(255, 175, 105, ${opacity}) 0%, rgba(255, 145, 80, ${opacity * 0.9}) 50%, rgba(120, 80, 50, ${opacity * 0.7}) 100%); }`,
+      width: 1080,
+      height: 1920,
+    },
+    start: 0,
+    length: totalDurationSeconds,
+    fit: 'cover',
+    position: 'center',
+  }
+  return { clips: [clip] }
 }
 
 // ============================================================================
@@ -224,10 +265,14 @@ export function buildVerticalCleanPayload(input: BuildVerticalCleanInput): Build
   // 3) Construir pista de subtítulos karaoke
   const subtitleTrack = buildKaraokeSubtitleTrack(trim.shiftedWords, brand)
 
-  // 4) Timeline (orden importa: tracks superiores se renderizan encima)
+  // 4) Overlay warm cinematic (color grading aproximación Diego)
+  const colorGradeTrack = buildWarmCinematicOverlayTrack(trim.totalOutputDuration, brand)
+
+  // 5) Timeline (orden importa: tracks superiores se renderizan encima)
+  //    Subs sobre overlay warm sobre video.
   const timeline: ShotstackTimeline = {
     background: '#000000',
-    tracks: [subtitleTrack, videoTrack],
+    tracks: [subtitleTrack, colorGradeTrack, videoTrack],
   }
 
   return {

@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { transcribeAudioFromUrl } from './replicate-whisper'
 import { createDownloadUrl } from './storage'
+import { detectLlmCuts, type LlmEditMode } from './llm-edit'
 import type { VideoEditStatus } from '../types/video-edit'
 
 interface UpdatePatch {
@@ -11,6 +12,8 @@ interface UpdatePatch {
   duration_seconds?: number | null
   size_bytes?: number | null
   cost_usd?: number
+  llm_cuts?: unknown
+  llm_seconds_removed?: number
 }
 
 async function updateEdit(id: string, patch: UpdatePatch): Promise<void> {
@@ -69,6 +72,27 @@ export async function runEditPipeline(editId: string): Promise<void> {
     console.log(
       `[video-edit] ${editId} transcrito · ${transcript.words.length} palabras · ${lastWordEnd.toFixed(1)}s`,
     )
+
+    // 5) LLM-edit: detectar cortes semánticos (muletillas, repeticiones, falsos arranques)
+    //    Se ejecuta DESPUÉS de marcar 'done' para que la UI no se bloquee.
+    //    Si falla, no rompe el pipeline — el video se puede renderizar sin LLM-cuts.
+    const mode: LlmEditMode = (row.llm_edit_mode as LlmEditMode | null) ?? 'aggressive'
+    if (mode !== 'off') {
+      try {
+        const llmResult = await detectLlmCuts(transcript, mode)
+        await updateEdit(editId, {
+          llm_cuts: llmResult.cuts,
+          llm_seconds_removed: llmResult.total_seconds_removed,
+        })
+        console.log(
+          `[video-edit] ${editId} LLM-cuts · ${llmResult.cuts.length} tramos · ` +
+            `${llmResult.total_seconds_removed.toFixed(1)}s recortados (${mode})`,
+        )
+      } catch (llmErr) {
+        const llmMsg = llmErr instanceof Error ? llmErr.message : 'unknown'
+        console.error(`[video-edit] ${editId} LLM-edit FAIL (continuamos sin):`, llmMsg)
+      }
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown'
     console.error(`[video-edit] ${editId} failed:`, message)
