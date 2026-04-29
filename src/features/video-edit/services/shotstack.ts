@@ -103,10 +103,21 @@ export interface ShotstackAudioAsset {
   effect?: 'fadeIn' | 'fadeOut' | 'fadeInFadeOut'
 }
 
+export interface ShotstackHtmlAsset {
+  type: 'html'
+  html: string
+  css?: string
+  width?: number
+  height?: number
+  background?: string
+  position?: 'top' | 'topRight' | 'right' | 'bottomRight' | 'bottom' | 'bottomLeft' | 'left' | 'topLeft' | 'center'
+}
+
 export type ShotstackAsset =
   | ShotstackTextAsset
   | ShotstackVideoAsset
   | ShotstackAudioAsset
+  | ShotstackHtmlAsset
 
 export interface ShotstackClip {
   asset: ShotstackAsset
