@@ -3,7 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import Button from './Button';
 
-const CHECKOUT_URL = "/lt8/checkout";
+interface BioModalProps {
+  checkoutUrl?: string;
+}
+
+const DEFAULT_CHECKOUT_URL = "/lt8/checkout";
 
 const COLLAGE_PHOTOS = [
   { src: "https://storage.googleapis.com/msgsndr/fPSTvVgtLrLaVpNFx8ix/media/6992fed51d5e04810f4b1096.jpg", alt: "Italia" },
@@ -16,7 +20,7 @@ const COLLAGE_PHOTOS = [
   { src: "https://storage.googleapis.com/msgsndr/fPSTvVgtLrLaVpNFx8ix/media/6992fed51d5e045bd14b1078.jpg", alt: "Desde pequeño" },
 ];
 
-export default function BioModal() {
+export default function BioModal({ checkoutUrl = DEFAULT_CHECKOUT_URL }: BioModalProps = {}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -143,7 +147,7 @@ export default function BioModal() {
                 </ul>
 
                 <div className="bio-btn-container">
-                  <Button text="EMPEZAR AHORA" href={CHECKOUT_URL} variant="green" size="md" className="w-full md:w-auto" />
+                  <Button text="EMPEZAR AHORA" href={checkoutUrl} variant="green" size="md" className="w-full md:w-auto" />
                 </div>
               </div>
             </div>

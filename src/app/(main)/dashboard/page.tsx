@@ -1,97 +1,46 @@
-import Link from 'next/link'
 import { ShellHeader } from "@/features/shell/components/shell-header"
-import { DateFilter } from "@/features/dashboard/components/date-filter"
-import { KpiOverviewGrid } from "@/features/dashboard/components/kpi-overview"
-import { FunnelCards } from "@/features/dashboard/components/funnel-cards"
-import { PendingMetricsGrid } from "@/features/dashboard/components/pending-metrics"
+import { BusinessStatus } from "@/features/dashboard/components/business-status"
+import { FunnelPerformance } from "@/features/dashboard/components/funnel-performance"
 import { Separator } from "@/components/ui/separator"
-import { parseDateRangeFromParams } from "@/features/dashboard/services/date-ranges"
-import { getDashboardData } from "@/features/dashboard/services/dashboard-service"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-interface DashboardPageProps {
-  searchParams: Promise<{
-    range?: string
-    start?: string
-    end?: string
-  }>
-}
-
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
-  const params = await searchParams
-  const range = parseDateRangeFromParams(params)
-  const data = await getDashboardData(range)
-
-  const lastSync = data.lastSyncAt
-    ? new Date(data.lastSyncAt).toLocaleString('es-ES', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : null
-
+export default function DashboardPage() {
   return (
     <>
       <ShellHeader title="Dashboard" />
-      <div className="flex flex-col gap-6 p-6">
-        {/* Top bar: filtro de fechas + last sync */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <DateFilter
-            currentPreset={range.preset}
-            currentStart={range.start}
-            currentEnd={range.end}
-          />
-          {lastSync && (
-            <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground/60">
-              Ultima sync: {lastSync}
-            </span>
-          )}
+      <div className="flex flex-col gap-8 p-6">
+        {/* Tabs placeholder — futuro: Meta · Instagram · Negocio */}
+        <div className="flex items-center gap-2 border-b border-border">
+          <div className="flex items-center gap-2 border-b-2 border-foreground px-3 py-2 text-sm font-medium text-foreground">
+            Negocio
+          </div>
+          <div className="flex items-center gap-2 border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground/60">
+            Meta <span className="ml-1 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px]">soon</span>
+          </div>
+          <div className="flex items-center gap-2 border-b-2 border-transparent px-3 py-2 text-sm text-muted-foreground/60">
+            Instagram <span className="ml-1 rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px]">soon</span>
+          </div>
         </div>
 
-        {/* Sin conexion */}
-        {!data.hasConnection && (
-          <div className="rounded-sm border border-dashed border-border bg-card p-6 text-sm">
-            <p className="font-medium text-foreground">Sin metricas conectadas.</p>
-            <p className="mt-1 text-muted-foreground">
-              Conecta GHL en{' '}
-              <Link href="/integrations" className="font-medium text-foreground underline underline-offset-4">
-                Integraciones
-              </Link>{' '}
-              para empezar a ver datos reales aqui.
-            </p>
-          </div>
-        )}
+        {/* Aviso de placeholders */}
+        <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm">
+          <p className="text-amber-400">
+            <span className="font-semibold">Modo placeholder.</span>{" "}
+            <span className="text-muted-foreground">
+              Los KPIs muestran &mdash; hasta que se conecten Stripe + Meta CAPI + tracking events del funnel.
+              Las metas y objetivos sí están configurados según el daily 27-abr.
+            </span>
+          </p>
+        </div>
 
-        {data.hasConnection && (
-          <>
-            {/* Panel General */}
-            <section className="space-y-3">
-              <h2 className="font-heading text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                Panel General
-              </h2>
-              <KpiOverviewGrid kpis={data.kpis} />
-            </section>
+        {/* SECCIÓN 1 — Estado actual */}
+        <BusinessStatus />
 
-            <Separator />
+        <Separator />
 
-            {/* Metricas avanzadas (CAC, LTV, MRR) */}
-            <section className="space-y-3">
-              <PendingMetricsGrid pending={data.pending} />
-            </section>
-
-            <Separator />
-
-            {/* Panel por Funnel */}
-            <section className="space-y-3">
-              <h2 className="font-heading text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                Por Funnel
-              </h2>
-              <FunnelCards funnels={data.funnels} />
-            </section>
-          </>
-        )}
+        {/* SECCIÓN 2 — Performance del funnel */}
+        <FunnelPerformance />
       </div>
     </>
   )
