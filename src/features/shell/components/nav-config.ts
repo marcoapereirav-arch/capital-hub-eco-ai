@@ -5,6 +5,7 @@ import {
   Globe,
   Users,
   Radar,
+  Network,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -21,6 +22,11 @@ export const navSections: NavSection[] = [
         title: "Tareas",
         href: "/tasks",
         icon: CheckSquare,
+      },
+      {
+        title: "Board",
+        href: "/board",
+        icon: Network,
       },
       {
         title: "Webs",
