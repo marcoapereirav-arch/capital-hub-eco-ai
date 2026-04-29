@@ -36,8 +36,8 @@ export const navSections: NavSection[] = [
         icon: Compass,
       },
       {
-        title: "SOPs",
-        href: "/sops",
+        title: "Knowledge",
+        href: "/knowledge",
         icon: BookOpen,
       },
       {
