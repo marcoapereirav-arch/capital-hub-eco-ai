@@ -8,7 +8,7 @@ import { VIRAL_INTENTS } from '@/features/content-intel/types/viral-lab'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 800
+export const maxDuration = 300
 
 const ViralLabSchema = z.object({
   platform: z.enum(PLATFORMS).optional().default('instagram'),

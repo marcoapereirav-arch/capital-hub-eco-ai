@@ -6,7 +6,7 @@ import { runEditPipeline } from '@/features/video-edit/services/edit-pipeline'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 800
+export const maxDuration = 300
 
 const Schema = z.object({
   edit_id: z.string().uuid(),

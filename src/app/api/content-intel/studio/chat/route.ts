@@ -7,7 +7,7 @@ import { PLATFORMS } from '@/features/content-intel/types/platform'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 800
+export const maxDuration = 300
 
 const StudioChatSchema = z.object({
   platform: z.enum(PLATFORMS).optional().default('instagram'),

@@ -7,7 +7,7 @@ import { DEFAULT_TRANSCRIBE_TOP_X } from '@/features/content-intel/constants'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 800
+export const maxDuration = 300
 
 const TranscribeSchema = z
   .object({

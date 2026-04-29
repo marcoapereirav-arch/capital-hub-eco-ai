@@ -7,7 +7,7 @@ import type { SeedAccountRow } from '@/features/content-intel/types/account'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 // Tope amplio para permitir 20+ cuentas en paralelo limitado.
-export const maxDuration = 800
+export const maxDuration = 300
 
 const PARALLELISM = 4 // 4 cuentas a la vez para no saturar Apify
 
