@@ -3,16 +3,19 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
 import {
   ReactFlow,
+  ReactFlowProvider,
   Background,
   Controls,
   MiniMap,
+  Panel,
   applyNodeChanges,
+  useReactFlow,
   type Node,
   type NodeChange,
   type NodeMouseHandler,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import { Compass, HelpCircle, SlidersHorizontal, RotateCcw, Zap } from "lucide-react"
+import { Compass, HelpCircle, SlidersHorizontal, RotateCcw, Zap, Maximize } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { boardService } from "../services/board-service"
 import { buildLayout } from "../services/layout"
@@ -24,6 +27,7 @@ import { MissionNode } from "./mission-node"
 import { TaskDrawer } from "./task-drawer"
 import { LegendModal } from "./legend-modal"
 import { StrategyDrawer } from "./strategy-drawer"
+import { PriorityQueue } from "./priority-queue"
 
 const nodeTypes = {
   task: TaskNode,
@@ -60,6 +64,28 @@ function emptyFilters(projects: string[]): Filters {
 }
 
 export function BoardPage() {
+  return (
+    <ReactFlowProvider>
+      <BoardPageInner />
+    </ReactFlowProvider>
+  )
+}
+
+function FitButton() {
+  const { fitView } = useReactFlow()
+  return (
+    <button
+      onClick={() => fitView({ padding: 0.15, duration: 600 })}
+      className="flex items-center gap-1.5 rounded-md border border-border bg-card/95 backdrop-blur px-3 py-1.5 text-xs font-medium shadow-md hover:bg-secondary"
+      title="Ver todo el board centrado"
+    >
+      <Maximize className="h-3.5 w-3.5" />
+      Centrar todo
+    </button>
+  )
+}
+
+function BoardPageInner() {
   const [tasks, setTasks] = useState<TaskWithDeps[]>([])
   const [paraItems, setParaItems] = useState<ParaItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -373,6 +399,12 @@ export function BoardPage() {
             proOptions={{ hideAttribution: true }}
           >
             <Background gap={20} size={1} color="#2a2d34" />
+            <Panel position="top-center">
+              <FitButton />
+            </Panel>
+            <Panel position="top-left" className="!m-0 !left-0 !top-0">
+              <PriorityQueue tasks={tasks} onSelectTask={setSelectedTask} />
+            </Panel>
             <Controls className="!bg-card !border-border" />
             <MiniMap
               className="!bg-card !border-border"

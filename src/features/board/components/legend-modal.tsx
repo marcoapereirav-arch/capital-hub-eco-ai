@@ -1,6 +1,7 @@
 "use client"
 
-import { X } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { X, GripHorizontal, Minimize2, Maximize2 } from "lucide-react"
 
 interface LegendModalProps {
   open: boolean
@@ -8,146 +9,172 @@ interface LegendModalProps {
 }
 
 export function LegendModal({ open, onClose }: LegendModalProps) {
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [minimized, setMinimized] = useState(false)
+  const [initialized, setInitialized] = useState(false)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const dragState = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null)
+
+  // Posición inicial: top-right del viewport
+  useEffect(() => {
+    if (open && !initialized && typeof window !== "undefined") {
+      setPos({ x: window.innerWidth - 460, y: 80 })
+      setInitialized(true)
+    }
+  }, [open, initialized])
+
+  function onPointerDown(e: React.PointerEvent) {
+    if (!panelRef.current) return
+    const rect = panelRef.current.getBoundingClientRect()
+    dragState.current = { x: e.clientX, y: e.clientY, ox: rect.left, oy: rect.top }
+    ;(e.target as Element).setPointerCapture(e.pointerId)
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!dragState.current) return
+    const dx = e.clientX - dragState.current.x
+    const dy = e.clientY - dragState.current.y
+    setPos({
+      x: Math.max(0, Math.min(window.innerWidth - 200, dragState.current.ox + dx)),
+      y: Math.max(0, Math.min(window.innerHeight - 60, dragState.current.oy + dy)),
+    })
+  }
+
+  function onPointerUp(e: React.PointerEvent) {
+    dragState.current = null
+    ;(e.target as Element).releasePointerCapture(e.pointerId)
+  }
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-lg border border-border bg-card shadow-2xl">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-5 py-3">
-          <h2 className="font-heading text-base font-semibold">📖 Cómo leer el Board</h2>
+    <div
+      ref={panelRef}
+      className="fixed z-[90] w-[440px] max-w-[95vw] rounded-lg border border-border bg-card/95 backdrop-blur shadow-2xl"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      {/* Header con drag handle */}
+      <div
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        className="flex items-center justify-between border-b border-border px-3 py-2 cursor-move select-none"
+      >
+        <div className="flex items-center gap-2">
+          <GripHorizontal className="h-4 w-4 text-muted-foreground" />
+          <span className="font-heading text-sm font-semibold">Cómo leer el Board</span>
+        </div>
+        <div className="flex items-center gap-1">
           <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => setMinimized((v) => !v)}
+            className="rounded-sm p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            title={minimized ? "Expandir" : "Minimizar"}
+          >
+            {minimized ? <Maximize2 className="h-3.5 w-3.5" /> : <Minimize2 className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={onClose}
             className="rounded-sm p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
-        </header>
+        </div>
+      </div>
 
-        <div className="space-y-5 p-5 text-sm">
-          {/* COLORES POR STATUS */}
+      {!minimized && (
+        <div className="space-y-4 p-4 text-xs max-h-[70vh] overflow-y-auto">
           <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              🎨 Color del FONDO = status de la tarea
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Color del fondo = status
             </h3>
-            <ul className="space-y-1.5">
-              <li className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded bg-green-600/40 border border-green-500" />
-                <span className="text-foreground">Verde — <strong>done</strong> (completada)</span>
+            <ul className="space-y-1">
+              <li className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-blue-600/40 border border-blue-500" />
+                <span><strong>next</strong> — lista para accionar</span>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded bg-blue-600/40 border border-blue-500" />
-                <span className="text-foreground">Azul — <strong>next</strong> (lista para accionar)</span>
+              <li className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-yellow-600/35 border border-dashed border-yellow-500" />
+                <span><strong>waiting</strong> — bloqueada esperando algo</span>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded bg-yellow-600/35 border border-dashed border-yellow-500" />
-                <span className="text-foreground">Amarillo + dashed — <strong>waiting</strong> (parada esperando)</span>
+              <li className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-purple-600/35 border border-purple-500" />
+                <span><strong>someday</strong> — backlog no priorizado</span>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded bg-zinc-600/30 border border-zinc-500" />
-                <span className="text-foreground">Gris claro — <strong>someday</strong> (backlog)</span>
+              <li className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-zinc-700/40 border border-zinc-600" />
+                <span><strong>inbox</strong> — sin clasificar</span>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="h-5 w-5 rounded bg-zinc-700/40 border border-zinc-600" />
-                <span className="text-foreground">Gris oscuro — <strong>inbox</strong> (sin clasificar)</span>
+              <li className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-green-600/40 border border-green-500" />
+                <span><strong>done</strong> — completada (se atenúa con el tiempo)</span>
               </li>
             </ul>
           </section>
 
-          {/* BORDE */}
           <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              🖌 Color del BORDE = proyecto al que pertenece
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Tamaño + badge P0/P1/P2/P3 = prioridad
+            </h3>
+            <ul className="space-y-1">
+              <li><span className="rounded-sm border border-red-400/60 bg-red-500/40 px-1.5 py-0.5 font-mono text-[9px] font-bold">P0</span> + 🔥 = <strong>urgent</strong> · 24h</li>
+              <li><span className="rounded-sm border border-orange-400/50 bg-orange-500/30 px-1.5 py-0.5 font-mono text-[9px] font-bold">P1</span> = <strong>high</strong> · esta semana</li>
+              <li><span className="rounded-sm border border-zinc-400/40 bg-zinc-500/30 px-1.5 py-0.5 font-mono text-[9px] font-bold">P2</span> = <strong>normal</strong> · 2-3 semanas</li>
+              <li><span className="rounded-sm border border-zinc-600/40 bg-zinc-700/30 px-1.5 py-0.5 font-mono text-[9px] font-bold">P3</span> = <strong>low</strong> · cuando haya tiempo</li>
+            </ul>
+            <p className="mt-1 text-muted-foreground text-[10px]">El nodo P0 mide ~260px, el P3 ~145px — la diferencia se ve a simple vista.</p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Badges en cada tarjeta
+            </h3>
+            <ul className="space-y-1">
+              <li>↖️ <strong>P0/P1/P2/P3</strong> + 🔥 si urgent — esquina sup. izquierda</li>
+              <li>↗️ <strong>📅 fecha</strong> — esquina sup. derecha (solo si tiene)</li>
+              <li>↘️ <strong>⚡ EN VIVO</strong> cyan parpadeante — esquina inf. derecha (lo que se está haciendo AHORA)</li>
+              <li>👤 <strong>MA / AV / EQ</strong> — assignee (Marco / Adrián / Equipo)</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Borde de color = proyecto / área
+            </h3>
+            <p className="text-muted-foreground">Cada proyecto tiene un color único. El borde de la tarea es ese color → se ve a qué proyecto pertenece.</p>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Done atenuado por antigüedad
+            </h3>
+            <ul className="space-y-1">
+              <li>Hoy → 90% · ~7d → 70% · ~30d → 50% · 90+d → 25%</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Líneas (edges)
+            </h3>
+            <ul className="space-y-1">
+              <li>· Sutil del color del proyecto → tarea ↔ proyecto</li>
+              <li>· Naranja dashed animada → "depende de"</li>
+              <li>· Dorada sutil hacia centro → contribución a la MISIÓN</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="mb-1.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              Tip
             </h3>
             <p className="text-muted-foreground">
-              Cada proyecto (Webs+CRM, Marketing, Operaciones, etc.) tiene un color único asignado.
-              El borde de la tarea es ese color.
-            </p>
-          </section>
-
-          {/* TAMAÑO */}
-          <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              📏 Tamaño = prioridad
-            </h3>
-            <ul className="space-y-1 text-foreground">
-              <li>• <strong>Más grande</strong> → urgent</li>
-              <li>• Mediano-grande → high</li>
-              <li>• Mediano → normal</li>
-              <li>• Pequeño → low</li>
-            </ul>
-          </section>
-
-          {/* IN PROGRESS */}
-          <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              ⚡ Parpadeo cyan + ícono Zap = EN VIVO ahora
-            </h3>
-            <p className="text-muted-foreground">
-              Las tareas que se están trabajando AHORA AHORA AHORA tienen un glow cyan parpadeante.
-              Es la señal de "esto se está moviendo en este momento".
-            </p>
-          </section>
-
-          {/* DONE ATENUADO */}
-          <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              🌗 Done se atenúa con el tiempo
-            </h3>
-            <ul className="space-y-1 text-foreground">
-              <li>• Done <strong>de hoy</strong> → 90% opacidad (visible)</li>
-              <li>• Done de hace <strong>~7 días</strong> → 70%</li>
-              <li>• Done de hace <strong>~30 días</strong> → 50%</li>
-              <li>• Done de hace <strong>90+ días</strong> → 25% (mínimo, queda como historial)</li>
-            </ul>
-          </section>
-
-          {/* ÍCONOS */}
-          <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              🔥 Otros símbolos
-            </h3>
-            <ul className="space-y-1 text-foreground">
-              <li>🔥 Llama naranja → tarea <strong>urgent</strong></li>
-              <li>📅 Calendar badge → tarea con <strong>fecha límite</strong></li>
-              <li>👤 MA / AV / EQ → assignee (Marco / Adrián / Equipo)</li>
-              <li>⚡ Zap cyan → la task está <strong>en vivo ahora mismo</strong></li>
-            </ul>
-          </section>
-
-          {/* EDGES */}
-          <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              ➰ Líneas (edges)
-            </h3>
-            <ul className="space-y-2 text-foreground">
-              <li>
-                <strong>Línea sutil del color del proyecto</strong> → conecta cada task con su proyecto.
-              </li>
-              <li>
-                <strong>Línea naranja DASHED ANIMADA "depende"</strong> → la task de origen DEPENDE de la otra.
-                No se puede empezar hasta que la dependencia esté done. Cuando ambas son done, la línea se vuelve gris.
-              </li>
-              <li>
-                <strong>Línea dorada sutil hacia la MISIÓN</strong> → cada proyecto contribuye al goal central.
-              </li>
-            </ul>
-          </section>
-
-          {/* MISIÓN */}
-          <section>
-            <h3 className="mb-2 font-heading text-xs uppercase tracking-wide text-muted-foreground">
-              🎯 Nodo central MISIÓN
-            </h3>
-            <p className="text-muted-foreground">
-              Es el goal transversal del proyecto: <strong>1.000€/día en publi alcanzando los 5 KPIs</strong>.
-              Todos los proyectos orbitan a su alrededor porque todo lo que hacemos existe para llegar a esa misión.
-              Para entender los KPIs y su flujo en detalle, abre <strong>📖 Estrategia</strong> arriba.
+              Este panel se puede arrastrar (header) y minimizar (icono). Mantenlo abierto mientras navegas.
             </p>
           </section>
         </div>
-      </div>
+      )}
     </div>
   )
 }
