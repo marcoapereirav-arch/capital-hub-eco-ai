@@ -3,7 +3,7 @@ import React from 'react';
 interface ButtonProps {
   text: string;
   href: string;
-  variant?: 'solid' | 'outline';
+  variant?: 'solid' | 'outline' | 'green';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   className?: string;
@@ -20,12 +20,15 @@ export default function Button({ text, href, variant = 'solid', size = 'md', ico
 
   const variantClasses = {
     solid: "bg-white text-black hover:bg-[#E5E5E5] border-transparent",
-    outline: "bg-transparent text-white border-[#2A2D34] hover:border-white hover:bg-[#2A2D34]"
+    outline: "bg-transparent text-white border-[#2A2D34] hover:border-white hover:bg-[#2A2D34]",
+    green: "btn-green border-transparent"
   };
 
   return (
     <a
       href={href}
+      target={href.startsWith('http') ? '_blank' : undefined}
+      rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
     >
       <span className="relative z-10 flex items-center gap-3">

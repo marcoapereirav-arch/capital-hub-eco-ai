@@ -1,15 +1,17 @@
 /* Estilos scoped al funnel-lt8 (route group public).
-   Mapean font-serif y font-mono de los componentes originales a las
-   variables CSS de next/font cargadas en el RootLayout (Inter, Inter Tight, JetBrains Mono).
-   Solo afectan dentro de .funnel-lt8-root para no contaminar el resto del OS. */
+   Replica EXACTA del CSS del funnel original (start.thecapitalhub.io/accede). */
 
 .funnel-lt8-root {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #0F0F12;
+  color: #F5F6F7;
+  line-height: 1.5;
 }
 
-.funnel-lt8-root .font-serif {
+.funnel-lt8-root .font-serif,
+.funnel-lt8-root .title-font {
   font-family: var(--font-heading), "Inter Tight", sans-serif !important;
   letter-spacing: -0.02em;
 }
@@ -23,22 +25,271 @@
   color: #0F0F12;
 }
 
-/* Loader del App.tsx — la animacion `grow` no estaba definida en el HTML original. */
-@keyframes grow {
+/* Loader */
+@keyframes lt8-grow {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
+.funnel-lt8-root .animate-grow {
+  animation: lt8-grow 1.5s ease-in-out;
+}
 
-/* Cursor: oculto en desktop porque CustomCursor lo reemplaza. */
+/* ===== BOTON VERDE (CTA principal) con shimmer ===== */
+.funnel-lt8-root .btn-green {
+  background-color: #37ca37;
+  color: #000000;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  transition: background-color 0.3s ease;
+}
+.funnel-lt8-root .btn-green:hover { background-color: #2db82d; }
+.funnel-lt8-root .btn-green::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  animation: lt8-shimmer 3.5s infinite;
+}
+@keyframes lt8-shimmer {
+  0% { left: -100%; }
+  20% { left: 200%; }
+  100% { left: 200%; }
+}
+
+/* ===== BADGE GRATIS (verde inline) ===== */
+.funnel-lt8-root .badge-gratis {
+  background-color: #37ca37;
+  color: #000000;
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 2px;
+  margin-left: 8px;
+  font-weight: 600;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ===== HERO H1 con gradiente animado ===== */
+.funnel-lt8-root .hero-title {
+  font-family: var(--font-heading), "Inter Tight", sans-serif !important;
+  background: linear-gradient(90deg, #FFFFFF 0%, #9CA3AF 20%, #FFFFFF 40%, #FFFFFF 100%);
+  background-size: 200% auto;
+  color: #FFFFFF;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: lt8-text-shine 6s linear infinite;
+}
+@keyframes lt8-text-shine {
+  to { background-position: 200% center; }
+}
+.funnel-lt8-root .h1-light { font-weight: 300; }
+.funnel-lt8-root .h1-bold { font-weight: 600; }
+
+/* ===== BIO MODAL ===== */
+.funnel-lt8-root .lt8-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.funnel-lt8-root .lt8-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.funnel-lt8-root .lt8-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+}
+.funnel-lt8-root .lt8-modal-window {
+  position: relative;
+  background-color: #0F0F12;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  border: 1px solid #2A2D34;
+  padding: 2rem 1.5rem;
+  z-index: 10;
+}
+@media (min-width: 768px) {
+  .funnel-lt8-root .lt8-modal-window {
+    width: 95%;
+    height: 90%;
+    border-radius: 8px;
+    padding: 4rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+}
+.funnel-lt8-root .lt8-modal-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  margin-bottom: 1rem;
+  color: white;
+  background-color: rgba(42, 45, 52, 0.8);
+  border: 1px solid #2A2D34;
+  padding: 0.5rem 0.75rem;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  cursor: pointer;
+  z-index: 11;
+  transition: background-color 0.2s ease;
+}
+.funnel-lt8-root .lt8-modal-close:hover {
+  background-color: #2A2D34;
+}
+
+/* ===== BIO Container & Collage ===== */
+.funnel-lt8-root .bio-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  width: 100%;
+  margin: 0 auto;
+  align-items: start;
+}
 @media (min-width: 1024px) {
-  .funnel-lt8-root,
-  .funnel-lt8-root * {
-    cursor: none;
+  .funnel-lt8-root .bio-container {
+    grid-template-columns: 0.35fr 0.65fr;
+    gap: 5rem;
   }
 }
-@media (hover: none) and (pointer: coarse) {
-  .funnel-lt8-root,
-  .funnel-lt8-root * {
-    cursor: auto !important;
+
+.funnel-lt8-root .bio-collage-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.funnel-lt8-root .collage-item {
+  position: relative;
+  border-radius: 2px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 3/4;
+}
+.funnel-lt8-root .collage-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 1px solid #2A2D34;
+  display: block;
+  border-radius: 2px;
+}
+
+.funnel-lt8-root .casual-label {
+  position: absolute;
+  bottom: 6px;
+  font-family: var(--font-sans), "Inter", sans-serif;
+  font-style: italic;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  z-index: 10;
+}
+.funnel-lt8-root .label-left { left: 6px; }
+.funnel-lt8-root .label-right { right: 6px; }
+@media (min-width: 768px) {
+  .funnel-lt8-root .casual-label { font-size: 12px; bottom: 8px; }
+  .funnel-lt8-root .label-left { left: 8px; }
+  .funnel-lt8-root .label-right { right: 8px; }
+}
+
+/* ===== BIO Typography ===== */
+.funnel-lt8-root .bio-text-large {
+  font-family: var(--font-heading), "Inter Tight", sans-serif !important;
+  font-size: 1.375rem;
+  line-height: 1.4;
+  color: #FFFFFF;
+  margin-bottom: 2rem;
+  font-weight: 500;
+}
+@media (min-width: 768px) {
+  .funnel-lt8-root .bio-text-large {
+    font-size: 1.75rem;
+    margin-bottom: 3rem;
   }
 }
+@media (min-width: 1024px) {
+  .funnel-lt8-root .bio-text-large {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.funnel-lt8-root .bio-text-normal {
+  font-family: var(--font-sans), "Inter", sans-serif;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #9CA3AF;
+  font-weight: 300;
+  margin-bottom: 2rem;
+}
+@media (min-width: 768px) {
+  .funnel-lt8-root .bio-text-normal {
+    font-size: 1.125rem;
+    margin-bottom: 2.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .funnel-lt8-root .bio-text-normal {
+    margin-bottom: 1rem;
+  }
+}
+
+.funnel-lt8-root .bio-divider {
+  border: 0;
+  border-top: 1px solid #2A2D34;
+  margin: 2rem 0;
+  width: 100%;
+  opacity: 0.5;
+}
+@media (min-width: 768px) { .funnel-lt8-root .bio-divider { margin: 4rem 0; } }
+@media (min-width: 1024px) { .funnel-lt8-root .bio-divider { margin: 1.5rem 0; } }
+
+.funnel-lt8-root .bio-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+@media (min-width: 1024px) { .funnel-lt8-root .bio-list { gap: 1rem; } }
+
+.funnel-lt8-root .bio-list-item {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+.funnel-lt8-root .bio-arrow {
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.funnel-lt8-root .bio-btn-container { margin-top: 4rem; }
+@media (min-width: 1024px) { .funnel-lt8-root .bio-btn-container { margin-top: 2rem; } }
+
+/* No-scroll cuando modal abierto */
+body.lt8-no-scroll { overflow: hidden; }
