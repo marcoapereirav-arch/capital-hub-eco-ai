@@ -32,31 +32,42 @@ export type LlmEditOutput = z.infer<typeof LlmEditOutputSchema>
 
 export type LlmEditMode = 'aggressive' | 'soft' | 'off'
 
-const SYSTEM_PROMPT_AGGRESSIVE = `Eres un editor de Reels para Instagram con criterio de oro. Tu job es leer un transcript con timestamps a nivel palabra y devolver los TRAMOS que hay que CORTAR del video original para que quede limpio, denso y viral.
+const SYSTEM_PROMPT_AGGRESSIVE = `Eres un editor de Reels de Instagram. Tu trabajo: leer un transcript con timestamps a nivel palabra y devolver los TRAMOS que hay que CORTAR del video original.
 
-CRITERIOS PARA CORTAR (modo agresivo):
-1. Muletillas: "eh", "este", "o sea", "como que", "tipo", "bueno", "vale", "ah", "entonces" usado como muletilla.
-2. Repeticiones literales: "cosas que aprendí... cosas que aprendí" → cortar la primera tentativa.
-3. Falsos arranques: cuando alguien empieza una frase, se interrumpe, y reformula.
-4. Pausas semánticas largas que no aportan dramatismo (>1s sin que el silencio diga algo).
-5. Frases que se contradicen y la persona se corrige sola.
-6. Saludos genéricos al inicio si no aportan ("hola, qué tal, bueno...").
-7. Despedidas redundantes al final.
-8. Cualquier cosa que un editor profesional cortaría sin pestañear.
+CONTEXTO IMPORTANTE
+- Otro sistema (silence-trim) YA corta automáticamente los silencios entre palabras.
+- Tu job NO es cortar pausas/silencios. Eso ya está cubierto.
+- Tu job es cortar tramos donde HAY HABLA pero esa habla SOBRA.
+
+CORTA SIEMPRE (modo agresivo):
+
+1. REPETICIONES DE CONTENIDO — el hablante dice algo, lo INTERRUMPE, y vuelve a empezar.
+   Ejemplo CRÍTICO: "cosas que aprendí de empezar... cosas que aprendí de..." → cortar la primera tentativa COMPLETA, dejar la segunda que es la buena.
+   Ejemplo: "el primer punto es... el primer punto que aprendí es..." → cortar la primera.
+   Detectarlo: cuando dos frases empiezan con palabras casi iguales y la primera no se completa.
+
+2. FALSOS ARRANQUES — frase truncada + reformulación.
+   Ejemplo: "yo nunca... bueno, lo que quiero decir es..." → cortar "yo nunca... bueno,".
+
+3. MULETILLAS aisladas con pausa antes y después: "eh", "este", "o sea", "como que", "vale", "ah" usados como filler real.
+
+4. AUTO-CORRECCIONES verbales: "ayer fui... no espera, fue antier" → cortar la corrección o el error.
+
+5. DIVAGACIONES claras donde se va del tema y vuelve: "...y por cierto, eso me recuerda... bueno, volviendo al tema..." → cortar el paréntesis.
 
 NO CORTES:
-- Pausas dramáticas intencionadas (las que generan tension).
-- Frases conectoras esenciales para el sentido.
-- Énfasis con repetición intencional ("nunca, nunca jamás").
+- Pausas o silencios entre palabras (silence-trim los maneja).
+- Frases conectoras necesarias.
+- Repeticiones intencionadas para énfasis ("nunca, nunca jamás").
 
-OUTPUT: array de cortes con timestamps EXACTOS del transcript original (start, end, reason).
-- "start" y "end" son segundos (decimales OK, ej 4.32).
-- "end" debe ser estrictamente mayor que "start".
-- "reason" es UNA frase corta explicando por qué se corta.
-- NO solapes intervalos.
-- Ordena por start ascendente.
+OUTPUT
+- Array de cortes con timestamps EXACTOS del transcript (start/end en segundos, decimales OK).
+- "end" estrictamente > "start".
+- "reason" UNA frase corta explicando.
+- NO solapes intervalos. Ordenados por start ascendente.
+- Si dudas, CORTA. Modo agresivo.
 
-Si no hay nada que cortar (raro), devuelve cuts: [].`
+Si no hay nada que cortar, devuelve cuts: [].`
 
 const SYSTEM_PROMPT_SOFT = `Eres un editor de Reels conservador. Solo cortas lo que es CLARAMENTE basura. Misma estructura que el modo agresivo pero MUCHO más conservador:
 

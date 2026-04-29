@@ -25,19 +25,20 @@ export interface SubtitleStyleTokens {
 }
 
 export const DEFAULT_SUBTITLE_TOKENS: SubtitleStyleTokens = {
-  // v5 — Spec confirmado por usuario tras analizar 3 capturas reales de Diego:
-  //   subs sutiles, peso semibold, SIN outline, blanco limpio, ~42px sobre 1080.
-  //   v2/v3/v4 fallaron porque metí stroke (todo me salió hueco/negro).
-  //   v5 va sin stroke. Punto.
+  // v6 — Comparativa lado a lado Diego vs v5 (screenshot 2026-04-29):
+  //   weight 500 (Medium) — Semibold quedaba ligeramente más pesado.
+  //   40px (era 42px) — un poquito más pequeño.
+  //   blanco limpio, sin stroke.
+  //   blockWidth/Height más estrechos para text centrado tipo Diego.
   fontFamily: 'Inter',
-  fontWeight: 600,
-  fontSize: 42,
+  fontWeight: 500,
+  fontSize: 40,
   color: '#FFFFFF',
   backgroundColor: null,
   backgroundOpacity: 0,
   position: 'lower-third',
-  blockWidth: 760,
-  blockHeight: 140,
+  blockWidth: 720,
+  blockHeight: 120,
 }
 
 function positionToShotstack(pos: SubtitleStyleTokens['position']): {
@@ -51,10 +52,10 @@ function positionToShotstack(pos: SubtitleStyleTokens['position']): {
       return { position: 'center', offsetY: 0 }
     case 'lower-third':
     default:
-      // Estilo Diego: subs en la zona del pecho/cuello del sujeto, no pegados
-      // al borde inferior. offset 0.28 = ~28% desde el borde inferior hacia
-      // el centro.
-      return { position: 'bottom', offsetY: 0.28 }
+      // v6: subir offsetY a 0.42 (era 0.28) — antes los subs caían sobre el
+      // black bar del letterbox cuando el video no llenaba el canvas. Ahora
+      // están en torno al pecho/torso del sujeto, dentro de la zona visible.
+      return { position: 'bottom', offsetY: 0.42 }
   }
 }
 
