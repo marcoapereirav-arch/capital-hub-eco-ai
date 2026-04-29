@@ -1,0 +1,44 @@
+/* Estilos scoped al funnel-lt8 (route group public).
+   Mapean font-serif y font-mono de los componentes originales a las
+   variables CSS de next/font cargadas en el RootLayout (Inter, Inter Tight, JetBrains Mono).
+   Solo afectan dentro de .funnel-lt8-root para no contaminar el resto del OS. */
+
+.funnel-lt8-root {
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.funnel-lt8-root .font-serif {
+  font-family: var(--font-heading), "Inter Tight", sans-serif !important;
+  letter-spacing: -0.02em;
+}
+
+.funnel-lt8-root .font-mono {
+  font-family: var(--font-mono), "JetBrains Mono", monospace !important;
+}
+
+.funnel-lt8-root ::selection {
+  background-color: #ffffff;
+  color: #0F0F12;
+}
+
+/* Loader del App.tsx — la animacion `grow` no estaba definida en el HTML original. */
+@keyframes grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Cursor: oculto en desktop porque CustomCursor lo reemplaza. */
+@media (min-width: 1024px) {
+  .funnel-lt8-root,
+  .funnel-lt8-root * {
+    cursor: none;
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  .funnel-lt8-root,
+  .funnel-lt8-root * {
+    cursor: auto !important;
+  }
+}
