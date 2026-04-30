@@ -2,21 +2,83 @@
 
 import React, { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check, Lock, Zap, ShieldCheck, Gift } from "lucide-react"
+import { Check, Lock, Zap, ShieldCheck, Gift, Loader2 } from "lucide-react"
 import CustomCursor from "@/features/public-pages/funnel-lt8/components/CustomCursor"
 import Footer from "@/features/public-pages/funnel-lt8/components/Footer"
 import "@/features/public-pages/funnel-lt8/styles.css"
 
 const NEXT_STEP = "/mifge/upsell-anual"
 
+type FormErrors = Partial<Record<"full_name" | "email" | "phone" | "rgpd" | "general", string>>
+
 export default function MifgeCheckoutPage() {
   const router = useRouter()
   const [orderBumpAdded, setOrderBumpAdded] = useState(false)
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
+  const [rgpdAccepted, setRgpdAccepted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: Whop. Por ahora simulamos -> upsell-anual
-    router.push(NEXT_STEP)
+    setErrors({})
+
+    // Validación cliente
+    const newErrors: FormErrors = {}
+    if (fullName.trim().length < 2) newErrors.full_name = "Introduce tu nombre completo"
+    if (!/^\S+@\S+\.\S+$/.test(email)) newErrors.email = "Email inválido"
+    if (phone.trim().length < 6) newErrors.phone = "Teléfono inválido"
+    if (!rgpdAccepted) newErrors.rgpd = "Debes aceptar la política de privacidad"
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const res = await fetch("/api/mifge/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: fullName.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone.trim(),
+          order_bump_added: orderBumpAdded,
+          rgpd_accepted: rgpdAccepted,
+          source: "mifge_checkout",
+        }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok) {
+        if (json.issues) {
+          setErrors({
+            full_name: json.issues.full_name?.[0],
+            email: json.issues.email?.[0],
+            phone: json.issues.phone?.[0],
+            rgpd: json.issues.rgpd_accepted?.[0],
+            general: "Revisa los campos marcados",
+          })
+        } else {
+          setErrors({ general: json.error ?? "No se pudo procesar el formulario" })
+        }
+        setSubmitting(false)
+        return
+      }
+
+      // TODO: cuando Whop esté integrado, en lugar de router.push directo:
+      //   redirigir a Whop hosted checkout con lead_id en metadata.
+      // Por ahora seguimos al siguiente step del funnel (upsell-anual).
+      router.push(`${NEXT_STEP}?lead_id=${json.lead_id}`)
+    } catch (e) {
+      console.error(e)
+      setErrors({ general: "Error de red. Inténtalo de nuevo." })
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -59,21 +121,44 @@ export default function MifgeCheckoutPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <input type="text" className="form-input" placeholder="Nombre completo" required />
-            <input type="email" className="form-input" placeholder="Correo electrónico" required />
-            <input type="tel" className="form-input" placeholder="Número de teléfono" required />
-
-            <div className="flex items-center text-center text-[#6B7280] text-xs my-2">
-              <div className="flex-1 border-b border-[#2A2D34]"></div>
-              <span className="mx-4">datos de tarjeta (no se cobra hoy)</span>
-              <div className="flex-1 border-b border-[#2A2D34]"></div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
+            <div>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="Nombre completo"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={submitting}
+                required
+              />
+              {errors.full_name && <p className="text-red-400 text-xs mt-1 px-1">{errors.full_name}</p>}
             </div>
 
-            <input type="text" className="form-input" placeholder="Número de tarjeta" />
-            <div className="grid grid-cols-2 gap-4">
-              <input type="text" className="form-input" placeholder="MM / AA" />
-              <input type="text" className="form-input" placeholder="CVC" />
+            <div>
+              <input
+                type="email"
+                className="form-input"
+                placeholder="Correo electrónico"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={submitting}
+                required
+              />
+              {errors.email && <p className="text-red-400 text-xs mt-1 px-1">{errors.email}</p>}
+            </div>
+
+            <div>
+              <input
+                type="tel"
+                className="form-input"
+                placeholder="Número de teléfono"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={submitting}
+                required
+              />
+              {errors.phone && <p className="text-red-400 text-xs mt-1 px-1">{errors.phone}</p>}
             </div>
 
             {/* ORDER BUMP — Bonus Bundle Express */}
@@ -86,6 +171,7 @@ export default function MifgeCheckoutPage() {
                 type="checkbox"
                 checked={orderBumpAdded}
                 onChange={(e) => setOrderBumpAdded(e.target.checked)}
+                disabled={submitting}
                 className="mt-1 h-4 w-4 accent-[#37ca37]"
               />
               <div className="flex-1">
@@ -107,14 +193,46 @@ export default function MifgeCheckoutPage() {
               </div>
             </label>
 
+            {/* RGPD */}
+            <label className="flex gap-2 mt-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rgpdAccepted}
+                onChange={(e) => setRgpdAccepted(e.target.checked)}
+                disabled={submitting}
+                className="mt-1 h-3.5 w-3.5 accent-[#37ca37] flex-shrink-0"
+              />
+              <span className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                Acepto la política de privacidad y el tratamiento de mis datos para activar la prueba.
+                Consulta nuestra <a href="/legal/privacidad" target="_blank" rel="noopener" className="underline hover:text-white">política de privacidad</a>.
+              </span>
+            </label>
+            {errors.rgpd && <p className="text-red-400 text-xs px-1">{errors.rgpd}</p>}
+
+            {errors.general && (
+              <div className="mt-2 p-3 border border-red-500/40 bg-red-500/10 rounded-[2px]">
+                <p className="text-red-300 text-xs">{errors.general}</p>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="btn-green mt-6 w-full py-4 font-mono uppercase text-xs tracking-wider rounded-[2px] flex items-center justify-center gap-3"
+              disabled={submitting}
+              className="btn-green mt-4 w-full py-4 font-mono uppercase text-xs tracking-wider rounded-[2px] flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              EMPEZAR MI PRUEBA GRATUITA {orderBumpAdded && "(+ BONUS 20€)"}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 7h10v10" /><path d="M7 17 17 7" />
-              </svg>
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  PROCESANDO...
+                </>
+              ) : (
+                <>
+                  EMPEZAR MI PRUEBA GRATUITA {orderBumpAdded && "(+ BONUS 20€)"}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 7h10v10" /><path d="M7 17 17 7" />
+                  </svg>
+                </>
+              )}
             </button>
           </form>
 
