@@ -6,7 +6,19 @@ const CHECKOUT_URL = "/mifge/checkout";
 
 export default function Hero() {
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#0F0F12]">
+    <>
+      {/* Resource hints del VSL Panda — React 19 los hoist al <head> automáticamente.
+          Resultado: cuando el iframe se monta, CSS+config+playlist ya están en cache. */}
+      <link rel="preload" href="https://player-vz-e95b06bb-77e.tv.pandavideo.com.br/embed/css/plyr.css" as="style" />
+      <link rel="preload" href="https://player-vz-e95b06bb-77e.tv.pandavideo.com.br/embed/css/styles.css" as="style" />
+      <link rel="preload" href="https://player-vz-e95b06bb-77e.tv.pandavideo.com.br/embed/css/pb.css" as="style" />
+      <link rel="preload" href="https://config.tv.pandavideo.com.br/vz-e95b06bb-77e/6de0d9ab-d755-49c7-9e4e-ca6530119215.json" as="fetch" crossOrigin="anonymous" />
+      <link rel="preload" href="https://config.tv.pandavideo.com.br/vz-e95b06bb-77e/config.json" as="fetch" crossOrigin="anonymous" />
+      <link rel="dns-prefetch" href="https://b-vz-e95b06bb-77e.tv.pandavideo.com.br" />
+      <link rel="preload" href="https://b-vz-e95b06bb-77e.tv.pandavideo.com.br/6de0d9ab-d755-49c7-9e4e-ca6530119215/playlist.m3u8" as="fetch" crossOrigin="anonymous" />
+      <link rel="dns-prefetch" href="https://player-vz-e95b06bb-77e.tv.pandavideo.com" />
+
+      <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#0F0F12]">
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full z-0">
         <video
@@ -54,6 +66,7 @@ export default function Hero() {
                   className="border-0 absolute top-0 left-0 w-full h-full"
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
+                  {...({ fetchpriority: "high" } as Record<string, string>)}
                 />
               </div>
             </div>
@@ -89,5 +102,6 @@ export default function Hero() {
         </div>
       </div>
     </div>
+    </>
   );
 }
