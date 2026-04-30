@@ -17,7 +17,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import { navSections } from "./nav-config"
 import { UserMenu } from "./user-menu"
 
@@ -26,7 +25,7 @@ function SidebarLogo() {
   const isCollapsed = state === "collapsed"
 
   return (
-    <SidebarHeader className="p-4">
+    <SidebarHeader className="h-14 flex-row items-center justify-start px-4 py-0 border-b border-border">
       <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
         {isCollapsed ? (
           <span className="font-heading text-base font-semibold text-foreground">
@@ -54,8 +53,6 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarLogo />
-
-      <Separator className="mx-4 w-auto" />
 
       <SidebarContent className="pt-2">
         {navSections.map((section) => (
