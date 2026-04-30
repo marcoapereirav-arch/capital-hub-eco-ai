@@ -2,7 +2,9 @@ import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import Button from '@/features/public-pages/funnel-lt8/components/Button';
 
-const CHECKOUT_URL = "/mifge/checkout";
+// Si la env Whop directa está configurada, va a Whop. Si no, pasa por /mifge/checkout
+// (que es un loader que redirige a Whop también, o sirve como fallback).
+const CHECKOUT_URL = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_MES || "/mifge/checkout";
 
 export default function Hero() {
   return (

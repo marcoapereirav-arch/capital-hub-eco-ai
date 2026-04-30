@@ -6,7 +6,6 @@ import {
   Users,
   Radar,
   Network,
-  Compass,
   BookOpen,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
@@ -29,11 +28,6 @@ export const navSections: NavSection[] = [
         title: "Board",
         href: "/board",
         icon: Network,
-      },
-      {
-        title: "Estrategia",
-        href: "/strategy",
-        icon: Compass,
       },
       {
         title: "Knowledge",

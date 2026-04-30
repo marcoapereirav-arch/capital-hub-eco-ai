@@ -15,7 +15,8 @@ import {
   type NodeMouseHandler,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
-import { Compass, HelpCircle, SlidersHorizontal, RotateCcw, Zap, Plus, Minus, Maximize } from "lucide-react"
+import { BookOpen, HelpCircle, SlidersHorizontal, RotateCcw, Zap, Plus, Minus, Maximize } from "lucide-react"
+import Link from "next/link"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { boardService } from "../services/board-service"
 import { buildLayout } from "../services/layout"
@@ -27,7 +28,6 @@ import { ProjectNode } from "./project-node"
 import { MissionNode } from "./mission-node"
 import { TaskDrawer } from "./task-drawer"
 import { LegendModal } from "./legend-modal"
-import { StrategyDrawer } from "./strategy-drawer"
 import { PriorityQueue } from "./priority-queue"
 
 const nodeTypes = {
@@ -120,7 +120,6 @@ function BoardPageInner() {
   const [error, setError] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskWithDeps | null>(null)
   const [showLegend, setShowLegend] = useState(false)
-  const [showStrategy, setShowStrategy] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
   const projectIds = useMemo(
@@ -306,13 +305,13 @@ function BoardPageInner() {
 
           {/* Botones acción */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowStrategy(true)}
+            <Link
+              href="/knowledge"
               className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/70"
             >
-              <Compass className="h-3.5 w-3.5" />
-              Estrategia
-            </button>
+              <BookOpen className="h-3.5 w-3.5" />
+              Knowledge
+            </Link>
             <button
               onClick={() => setShowLegend(true)}
               className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/70"
@@ -499,7 +498,6 @@ function BoardPageInner() {
 
         {/* Modales y drawers */}
         <LegendModal open={showLegend} onClose={() => setShowLegend(false)} />
-        <StrategyDrawer open={showStrategy} onClose={() => setShowStrategy(false)} />
         <TaskDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
       </div>
     </>

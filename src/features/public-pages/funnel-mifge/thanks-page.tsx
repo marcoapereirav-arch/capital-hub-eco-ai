@@ -1,9 +1,10 @@
 "use client"
 
 import React from "react"
-import { Check, ShieldCheck } from "lucide-react"
+import { Check, ShieldCheck, Calendar, ArrowUpRight } from "lucide-react"
 import CustomCursor from "@/features/public-pages/funnel-lt8/components/CustomCursor"
 import Confetti from "@/features/public-pages/funnel-lt8/components/Confetti"
+import Button from "@/features/public-pages/funnel-lt8/components/Button"
 import "@/features/public-pages/funnel-lt8/styles.css"
 
 export default function MifgeThanksPage() {
@@ -37,9 +38,35 @@ export default function MifgeThanksPage() {
         </div>
       </div>
 
-      <section className="py-16 border-t border-b border-[#2A2D34]">
+      {/* CTA PRINCIPAL: agendar llamada */}
+      <section className="py-12 md:py-16 bg-[#0B0B0E] border-y border-[#2A2D34]">
+        <div className="container mx-auto px-6 max-w-2xl text-center">
+          <div className="inline-flex items-center gap-2 mb-4 text-amber-400">
+            <Calendar className="h-4 w-4" />
+            <span className="font-mono text-xs uppercase tracking-widest">PASO 1 — AGENDA TU LLAMADA AHORA</span>
+          </div>
+          <h2 className="font-serif text-2xl md:text-3xl text-white uppercase mb-4 leading-tight">
+            Reserva tu llamada de diagnóstico de 20 min con Adrián
+          </h2>
+          <p className="text-[#9CA3AF] mb-6 text-sm md:text-base">
+            Definimos contigo tu camino: qué profesión digital encaja, qué formación necesitas y cómo conseguir el primer trabajo.
+            Slots limitados — agéndala antes de que se llenen.
+          </p>
+          <Button
+            text="AGENDAR MI LLAMADA AHORA"
+            href="/mifge/agenda"
+            variant="green"
+            size="lg"
+            icon={<ArrowUpRight size={18} />}
+            className="w-full md:w-auto md:min-w-[320px] text-xs md:text-sm"
+          />
+          <p className="text-[10px] text-[#6B7280] mt-4 font-mono uppercase">Sin coste · 20 min · Vía videollamada</p>
+        </div>
+      </section>
+
+      <section className="py-16">
         <div className="container mx-auto px-6 text-center">
-          <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-6 inline-block">SIGUIENTE PASO</span>
+          <span className="font-mono text-xs text-[#6B7280] uppercase tracking-widest border border-[#2A2D34] px-3 py-1 rounded-[2px] mb-6 inline-block">PASO 2 — ACCESO A TU CUENTA</span>
           <h2 className="font-serif text-2xl md:text-4xl text-white uppercase mb-4">Tu acceso está listo</h2>
           <p className="text-[#9CA3AF] mb-8">En los próximos 60 segundos recibirás un email con:</p>
 

@@ -12,8 +12,13 @@ export default function MifgeUpsellAnualPage() {
   const router = useRouter()
 
   function handleAccept() {
-    // TODO: cargar plan anual via Whop
-    router.push(NEXT_STEP)
+    // Whop AÑO checkout. Si no está configurada la env, fallback al siguiente step.
+    const url = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO
+    if (url) {
+      window.location.href = url
+    } else {
+      router.push(NEXT_STEP)
+    }
   }
 
   function handleDecline() {
@@ -56,7 +61,7 @@ export default function MifgeUpsellAnualPage() {
           {/* CARD CON PRECIO */}
           <div className="border border-[#37ca37]/40 bg-gradient-to-br from-[#0F0F12] to-[#37ca37]/5 rounded-[4px] p-8 md:p-12 mb-10">
             <div className="text-center mb-8">
-              <p className="font-mono text-[#6B7280] text-sm uppercase mb-4">PLAN ANUAL CAPITAL HUB PRO · PLACEHOLDER</p>
+              <p className="font-mono text-[#6B7280] text-sm uppercase mb-4">PLAN ANUAL CAPITAL HUB</p>
               <div className="flex items-baseline justify-center gap-3 mb-2">
                 <span className="text-[#6B7280] text-2xl line-through font-mono">1.164€</span>
                 <span className="font-serif text-6xl md:text-7xl text-white">970€</span>
@@ -67,12 +72,12 @@ export default function MifgeUpsellAnualPage() {
 
             <ul className="space-y-3 mb-8 max-w-md mx-auto">
               {[
-                "Todo lo del plan mensual",
-                "2 meses gratis (sale ~80€/mes)",
+                "Todo el acceso del plan mensual",
+                "2 meses gratis (sale a 81€/mes)",
                 "Sesiones grupales en directo cada semana",
                 "Acceso prioritario a las nuevas formaciones",
                 "Comunidad anual privada",
-                "[Placeholder — pendiente definir features finales]",
+                "Garantía de devolución 30 días",
               ].map((line, i) => (
                 <li key={i} className="flex gap-3 items-start">
                   <Check size={16} className="text-[#37ca37] mt-0.5 flex-shrink-0" />

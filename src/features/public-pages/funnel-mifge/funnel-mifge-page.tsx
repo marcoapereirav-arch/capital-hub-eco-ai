@@ -11,7 +11,8 @@ import { Check, Plus, Minus, ArrowUpRight, ShieldCheck, Lock, Target, Graduation
 import Hero from './components/Hero';
 import '@/features/public-pages/funnel-lt8/styles.css';
 
-const CHECKOUT_URL = "/mifge/checkout";
+// Whop directo si la env está, fallback a /mifge/checkout (que también redirige)
+const CHECKOUT_URL = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_MES || "/mifge/checkout";
 const CONTACT_EMAIL = "mailto:hola@capitalhub.com";
 
 const FAQItem = ({ question, answer }: { question: string; answer: string }) => {
