@@ -2,15 +2,16 @@ import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/features/content-intel/lib/require-admin'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createDownloadUrl } from '@/features/video-edit/services/storage'
-import { queueRender, getRender } from '@/features/video-edit/services/shotstack'
-import { buildPayloadByPreset } from '@/features/video-edit/services/timeline-builder'
-import { loadBrandPackTokens } from '@/features/video-edit/services/brand-pack-repo'
+import { renderRemotionAndUpload } from '@/features/video-edit/services/remotion-render'
+import { trimSilences } from '@/features/video-edit/services/silence-trim'
 import { applyLlmCutsToWords, type LlmCut } from '@/features/video-edit/services/llm-edit'
+import { probeVideo } from '@/features/video-edit/services/video-metadata'
+import { loadBrandPackTokens } from '@/features/video-edit/services/brand-pack-repo'
 import type { WhisperTranscript } from '@/features/video-edit/types/video-edit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
+export const maxDuration = 800
 
 interface Params {
   params: Promise<{ id: string }>
@@ -18,8 +19,8 @@ interface Params {
 
 /**
  * POST /api/video-edit/[id]/render
- * Encola un render en Shotstack a partir del video transcrito.
- * Requiere status='done' o 'rendering' (re-encolar) y transcript disponible.
+ * Renderiza el video con Remotion (local). Bloquea hasta que termina.
+ * Para videos cortos (<2min) tarda ~30-90s.
  */
 export async function POST(_req: NextRequest, { params }: Params) {
   const auth = await requireAdmin()
@@ -57,64 +58,90 @@ export async function POST(_req: NextRequest, { params }: Params) {
     )
   }
 
+  // Marcar como rendering
+  await supabase
+    .from('ci_video_edits')
+    .update({
+      status: 'rendering',
+      render_started_at: new Date().toISOString(),
+      render_completed_at: null,
+      output_url: null,
+      error: null,
+    })
+    .eq('id', id)
+
   try {
-    // 1) Cargar brand pack desde BD (cae a defaults si no existe)
+    // 1) Cargar brand pack
     const brand = await loadBrandPackTokens(supabase)
 
-    // 2) URL firmada del video fuente que Shotstack pueda descargar
+    // 2) URL firmada del video fuente
     const sourceUrl = await createDownloadUrl(edit.source_path)
 
-    // 3) Resolver preset_slug. Default = 'vertical-clean' (Variante 1 del playbook).
-    const presetSlug = edit.preset_slug ?? 'vertical-clean'
-
-    // 4) Aplicar LLM-cuts al transcript (si hubo): filtra palabras dentro
-    //    de los tramos marcados por Claude. Lo que queda lo procesa silence-trim.
-    const llmCuts = (edit.llm_cuts as LlmCut[] | null) ?? []
-    const filteredWords = applyLlmCutsToWords(transcript.words, llmCuts)
-    const transcriptForRender: WhisperTranscript = {
-      ...transcript,
-      words: filteredWords,
+    // 3) Auto-detectar rotación si no está explícita en BD
+    let rotationDegrees = edit.rotation_degrees ?? 0
+    if (rotationDegrees === 0) {
+      try {
+        const metadata = await probeVideo(sourceUrl)
+        rotationDegrees = metadata.rotationDegrees
+        if (rotationDegrees !== 0) {
+          console.log(`[render] ${id} auto-rotation detected: ${rotationDegrees}°`)
+          await supabase
+            .from('ci_video_edits')
+            .update({ rotation_degrees: rotationDegrees })
+            .eq('id', id)
+        }
+      } catch (probeErr) {
+        console.warn(`[render] ${id} ffprobe failed (continuing with rotation=0):`, probeErr)
+      }
     }
 
-    // 5) Construir payload Shotstack según la variante elegida
-    const { payload, outputDuration, silenceRemoved } = buildPayloadByPreset({
-      presetSlug,
-      sourceVideoUrl: sourceUrl,
-      durationSeconds: edit.duration_seconds,
-      transcript: transcriptForRender,
-      brand,
-      headlineText: edit.headline_text ?? undefined,
-      rotationDegrees: edit.rotation_degrees ?? 0,
-    })
+    // 4) Aplicar LLM-cuts al transcript
+    const llmCuts = (edit.llm_cuts as LlmCut[] | null) ?? []
+    const filteredWords = applyLlmCutsToWords(transcript.words, llmCuts)
 
-    // 6) Encolar en Shotstack
-    const renderId = await queueRender(payload)
+    // 5) Silence-trim sobre las palabras filtradas → segmentos para Remotion
+    const trim = trimSilences(filteredWords, brand.silenceThresholdMs)
+
+    if (trim.segments.length === 0) {
+      throw new Error('Tras LLM-cuts y silence-trim no quedan segmentos para renderizar')
+    }
+
     console.log(
-      `[video-edit] ${id} render encolado · preset=${presetSlug} · ` +
-        `output=${outputDuration.toFixed(1)}s · ` +
-        `silencio_recortado=${silenceRemoved.toFixed(1)}s · ` +
-        `llm_cuts=${llmCuts.length}`,
+      `[render] ${id} · llm_cuts=${llmCuts.length} · segments=${trim.segments.length} · ` +
+        `output_dur=${trim.totalOutputDuration.toFixed(1)}s · ` +
+        `silence_removed=${trim.silenceRemoved.toFixed(1)}s · ` +
+        `rotation=${rotationDegrees}`,
     )
 
-    // 4) Persistir estado
-    const { error: updErr } = await supabase
+    // 6) Renderizar con Remotion
+    const result = await renderRemotionAndUpload({
+      editId: id,
+      compositionId: 'vertical-clean',
+      inputProps: {
+        sourceVideoUrl: sourceUrl,
+        segments: trim.segments,
+        words: trim.shiftedWords,
+        rotationDegrees,
+        colorGradeIntensity: brand.colorGradeIntensity,
+      },
+    })
+
+    // 7) Persistir output
+    await supabase
       .from('ci_video_edits')
       .update({
-        status: 'rendering',
-        shotstack_render_id: renderId,
-        render_started_at: new Date().toISOString(),
-        render_completed_at: null,
-        output_url: null,
+        status: 'done',
+        output_url: result.outputUrl,
+        edited_path: result.bucketPath,
+        render_completed_at: new Date().toISOString(),
         error: null,
       })
       .eq('id', id)
-    if (updErr) {
-      return Response.json({ ok: false, error: updErr.message }, { status: 500 })
-    }
 
-    return Response.json({ ok: true, render_id: renderId })
+    return Response.json({ ok: true, output_url: result.outputUrl })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown'
+    console.error(`[render] ${id} failed:`, message)
     await supabase
       .from('ci_video_edits')
       .update({ status: 'error', error: message.slice(0, 1000) })
@@ -125,8 +152,7 @@ export async function POST(_req: NextRequest, { params }: Params) {
 
 /**
  * GET /api/video-edit/[id]/render
- * Consulta Shotstack por el estado del render y sincroniza la BD.
- * El UI polea este endpoint cada N segundos cuando status='rendering'.
+ * Devuelve el estado actual. Polling-friendly.
  */
 export async function GET(_req: NextRequest, { params }: Params) {
   const auth = await requireAdmin()
@@ -137,57 +163,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   const { data: edit, error: loadErr } = await supabase
     .from('ci_video_edits')
-    .select('id, status, shotstack_render_id, output_url, error, render_started_at, render_completed_at')
+    .select('id, status, output_url, error, render_started_at, render_completed_at')
     .eq('id', id)
     .maybeSingle()
 
   if (loadErr) return Response.json({ ok: false, error: loadErr.message }, { status: 500 })
   if (!edit) return Response.json({ ok: false, error: 'not_found' }, { status: 404 })
 
-  // Si ya terminó (done/error/cancelled) o nunca se encoló, devolvemos lo que hay
-  if (edit.status !== 'rendering' || !edit.shotstack_render_id) {
-    return Response.json({ ok: true, edit })
-  }
-
-  // Hay render activo — preguntamos a Shotstack
-  try {
-    const info = await getRender(edit.shotstack_render_id)
-
-    if (info.status === 'done' && info.url) {
-      const { data: updated } = await supabase
-        .from('ci_video_edits')
-        .update({
-          status: 'done',
-          output_url: info.url,
-          render_completed_at: new Date().toISOString(),
-          error: null,
-        })
-        .eq('id', id)
-        .select('id, status, shotstack_render_id, output_url, error, render_started_at, render_completed_at')
-        .maybeSingle()
-      return Response.json({ ok: true, edit: updated ?? edit, shotstack_status: info.status })
-    }
-
-    if (info.status === 'failed') {
-      const { data: updated } = await supabase
-        .from('ci_video_edits')
-        .update({
-          status: 'error',
-          error: info.error?.slice(0, 1000) ?? 'shotstack_failed',
-          render_completed_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select('id, status, shotstack_render_id, output_url, error, render_started_at, render_completed_at')
-        .maybeSingle()
-      return Response.json({ ok: true, edit: updated ?? edit, shotstack_status: info.status })
-    }
-
-    // Sigue en cola/render — devolvemos el sub-estado para que el UI lo muestre
-    return Response.json({ ok: true, edit, shotstack_status: info.status })
-  } catch (err) {
-    return Response.json(
-      { ok: false, error: err instanceof Error ? err.message : 'unknown' },
-      { status: 500 },
-    )
-  }
+  return Response.json({ ok: true, edit })
 }

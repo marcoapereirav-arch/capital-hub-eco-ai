@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
     'web-push',
     'gray-matter',
     'tus-js-client',
+    // Remotion: bundler/renderer + binarios compositor platform-specific.
+    // Sin esto Next.js intenta bundlear .node binaries para todas las arch.
+    '@remotion/bundler',
+    '@remotion/renderer',
+    'remotion',
+    'ffprobe-static',
+    'ffmpeg-static',
+    '@ffmpeg-installer/ffmpeg',
   ],
 }
 
