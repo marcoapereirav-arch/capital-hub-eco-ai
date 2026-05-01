@@ -54,6 +54,10 @@ Landing /mifge
            dentro de NUESTRO dominio (no Whop). Desde ahí seguimos el flow.
 ```
 
+## URL del webhook (productivo)
+
+`https://ecoai.capitalhubapp.com/api/whop/webhook` — confirmado 2026-05-01. Vercel actual está en cuenta de Marco; cuando se migre a cuenta de Adrián/Capital Hub el dominio sigue siendo el mismo.
+
 ## Refinamientos post-MVP
 
 - Personalizar el checkout: usar el widget embebido de Whop dentro de `/mifge/checkout` para mantener al cliente en nuestro dominio (mejor branding, menos drop-off).

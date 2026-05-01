@@ -21,8 +21,8 @@ Este documento clarifica qué es qué para no volver a confundirlos.
   - **`/mifge/*`** (las landings públicas del funnel — son las únicas páginas públicas del OS; el resto requiere auth)
 - **Stack**: Next.js 16, Supabase, Vercel.
 - **Supabase**: proyecto `aglyoyqtzozdnusltjxe` (cuenta personal de Adrián Villanueva).
-- **Vercel**: actualmente cuenta de Marco. **Pendiente migrar a cuenta de Adrián** (tarea creada).
-- **Dominio**: pendiente confirmar dominio definitivo. Actualmente Vercel default.
+- **Vercel**: actualmente cuenta de **Marco Antonio**. **Pendiente migrar a cuenta de Adrián / Capital Hub** (tarea `t_migrar_vercel_marco_adrian` en someday — se hace presencialmente).
+- **Dominio**: `ecoai.capitalhubapp.com` (confirmado 2026-05-01). Apunta al deploy actual de Vercel en cuenta de Marco. Tras migrar Vercel, el dominio sigue siendo el mismo (solo cambia owner del proyecto).
 
 ## Capital Hub App (otro proyecto)
 
