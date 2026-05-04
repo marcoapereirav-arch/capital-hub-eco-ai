@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { sendAgendaConfirmed } from "@/lib/email/senders"
+import { sendCapiEvent } from "@/lib/meta/capi-client"
 
 export const dynamic = "force-dynamic"
 
@@ -109,7 +110,14 @@ export async function POST(req: NextRequest) {
       leadId: data.lead_id,
     }).catch((e) => console.error("[mifge/calls/book] email confirm error", e))
 
-    // TODO (MIFGE 11 — Meta CAPI): disparar evento mifge_call_booked
+    // Meta CAPI server-side: mifge_call_booked
+    sendCapiEvent({
+      eventName: "mifge_call_booked",
+      userData: { email: data.email, phone: data.phone },
+      customData: { value: 0, currency: "EUR", contentName: "Llamada agendada 20 min" },
+      leadId: data.lead_id,
+      triggeredBy: "api_calls_book",
+    }).catch((e) => console.error("[mifge/calls/book] CAPI call_booked", e))
 
     return NextResponse.json({ ok: true, call: inserted }, { status: 201 })
   } catch (e) {

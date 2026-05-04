@@ -7,9 +7,10 @@ interface ButtonProps {
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
-export default function Button({ text, href, variant = 'solid', size = 'md', icon, className = '' }: ButtonProps) {
+export default function Button({ text, href, variant = 'solid', size = 'md', icon, className = '', onClick }: ButtonProps) {
   const baseClasses = "group relative inline-flex items-center justify-center rounded-[2px] transition-all duration-300 font-medium tracking-wider uppercase font-mono border";
 
   const sizeClasses = {
@@ -29,6 +30,7 @@ export default function Button({ text, href, variant = 'solid', size = 'md', ico
       href={href}
       target={href.startsWith('http') ? '_blank' : undefined}
       rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+      onClick={onClick}
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
     >
       <span className="relative z-10 flex items-center gap-3">

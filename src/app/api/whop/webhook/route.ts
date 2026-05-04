@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "crypto"
 import { sendWelcomeTrial, sendPaymentFailed } from "@/lib/email/senders"
+import { sendCapiEvent } from "@/lib/meta/capi-client"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -109,8 +110,25 @@ export async function POST(req: NextRequest) {
             email,
             leadId: lead?.id,
           })
+          // Meta CAPI: free trial activado (MES) o anual comprado (AÑO)
+          if (newStage === "free_trial") {
+            sendCapiEvent({
+              eventName: "mifge_free_trial_started",
+              userData: { email, phone: data.user?.phone },
+              customData: { value: 0, currency: "EUR", contentName: "CAPITAL HUB MES — Free Trial 14d" },
+              leadId: lead?.id,
+              triggeredBy: "webhook_whop_membership_activated_mes",
+            }).catch((e) => console.error("[whop/webhook] CAPI free_trial_started", e))
+          } else if (newStage === "won_ano") {
+            sendCapiEvent({
+              eventName: "mifge_anual_purchased",
+              userData: { email, phone: data.user?.phone },
+              customData: { value: 970, currency: "EUR", contentName: "CAPITAL HUB AÑO" },
+              leadId: lead?.id,
+              triggeredBy: "webhook_whop_membership_activated_ano",
+            }).catch((e) => console.error("[whop/webhook] CAPI anual_purchased", e))
+          }
         }
-        // TODO MIFGE 11: disparar evento Meta CAPI mifge_free_trial_started o mifge_anual_purchased
         // TODO provisión App Capital Hub: HTTP call con magic link
         break
       }
@@ -120,13 +138,23 @@ export async function POST(req: NextRequest) {
         if (!email) break
         if (productId === PRODUCT_BUMP) {
           await markBumpPurchased(supabase, email)
+          sendCapiEvent({
+            eventName: "mifge_order_bump",
+            userData: { email, phone: data.user?.phone },
+            customData: { value: 19, currency: "EUR", contentName: "CAPITAL HUB BONUS" },
+            triggeredBy: "webhook_whop_payment_bonus",
+          }).catch((e) => console.error("[whop/webhook] CAPI order_bump", e))
           // TODO MIFGE 10: email #2 confirmación bump
-          // TODO MIFGE 11: evento mifge_order_bump
         } else if (productId === PRODUCT_MES) {
           // Si era free_trial, día 15 cobrado → WON Mes
           await transitionToWonMesIfTrial(supabase, email)
+          sendCapiEvent({
+            eventName: "mifge_monthly_purchased",
+            userData: { email, phone: data.user?.phone },
+            customData: { value: 97, currency: "EUR", contentName: "CAPITAL HUB MES recurrente" },
+            triggeredBy: "webhook_whop_payment_mes_recurrente",
+          }).catch((e) => console.error("[whop/webhook] CAPI monthly_purchased", e))
           // TODO MIFGE 10: email #9
-          // TODO MIFGE 11: evento mifge_monthly_purchased
         }
         break
       }

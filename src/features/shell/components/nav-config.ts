@@ -7,6 +7,7 @@ import {
   Radar,
   Network,
   BookOpen,
+  Megaphone,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -20,6 +21,7 @@ export const navSections: NavSection[] = [
       { title: "Knowledge", href: "/knowledge", icon: BookOpen, mobilePrimary: true },
       { title: "Webs", href: "/webs", icon: Globe },
       { title: "CRM", href: "/crm", icon: Users },
+      { title: "Ads", href: "/ads", icon: Megaphone },
       { title: "Content Intel", href: "/content-intel", icon: Radar },
       { title: "Integraciones", href: "/integrations", icon: Link2 },
     ],

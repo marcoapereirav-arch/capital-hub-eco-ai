@@ -1,10 +1,19 @@
+"use client";
+
 import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import Button from '@/features/public-pages/funnel-lt8/components/Button';
+import { track } from '@/lib/meta/pixel-client';
 
 // Si la env Whop directa está configurada, va a Whop. Si no, pasa por /mifge/checkout
 // (que es un loader que redirige a Whop también, o sirve como fallback).
 const CHECKOUT_URL = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_MES || "/mifge/checkout";
+
+function handleLeadClick() {
+  // mifge_lead — disparado cuando el usuario clica el CTA principal de la landing.
+  // No bloqueante: track() se ejecuta en paralelo al window.location y no espera response.
+  track({ event: "mifge_lead", contentName: "MIFGE landing CTA" }).catch(() => {});
+}
 
 export default function Hero() {
   return (
@@ -88,6 +97,7 @@ export default function Hero() {
                 size="lg"
                 icon={<ArrowUpRight size={16} />}
                 className="w-full md:w-auto md:min-w-[300px] text-xs"
+                onClick={handleLeadClick}
             />
             <p className="text-[10px] text-[#4B5563] font-mono mt-2.5 text-center leading-relaxed whitespace-nowrap">
                 Sin compromiso. Garantía 30 días desde el primer cobro.
