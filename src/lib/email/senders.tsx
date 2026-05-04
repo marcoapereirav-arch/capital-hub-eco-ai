@@ -14,6 +14,7 @@ import { BumpConfirmedEmail } from "./templates/bump-confirmed"
 import { NoShowEmail } from "./templates/no-show"
 import { PostCallFollowupEmail } from "./templates/post-call-followup"
 import { BetaRetargetingEmail } from "./templates/beta-retargeting"
+import { InternalErrorAlert, type ErrorAlertItem } from "./templates/internal-error-alert"
 
 const ADRIAN_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_ADRIAN ?? "adrianvillanuevarios@gmail.com"
 const MARCO_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_MARCO ?? "marcoapereirav@gmail.com"
@@ -265,6 +266,23 @@ export async function notifyAdrianBooking(input: {
     html,
     callId: input.callId,
     leadId: input.leadId,
+  })
+}
+
+export async function notifyMarcoErrors(input: {
+  windowMinutes: number
+  emailFails: number
+  capiFails: number
+  items: ErrorAlertItem[]
+}) {
+  const total = input.emailFails + input.capiFails
+  const html = await render(InternalErrorAlert(input))
+  return sendEmail({
+    template: "internal_error_alert",
+    to: MARCO_EMAIL,
+    toName: "Marco",
+    subject: `⚠️ ${total} fallo${total === 1 ? "" : "s"} en MIFGE — últimos ${input.windowMinutes}min`,
+    html,
   })
 }
 
