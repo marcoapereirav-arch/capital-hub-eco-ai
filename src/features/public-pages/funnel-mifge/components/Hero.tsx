@@ -4,6 +4,9 @@ import React from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import Button from '@/features/public-pages/funnel-lt8/components/Button';
 import { track } from '@/lib/meta/pixel-client';
+import { VslTracker } from '@/lib/vsl/VslTracker';
+
+const MIFGE_VSL_VIDEO_ID = "6de0d9ab-d755-49c7-9e4e-ca6530119215";
 
 // Si la env Whop directa está configurada, va a Whop. Si no, pasa por /mifge/checkout
 // (que es un loader que redirige a Whop también, o sirve como fallback).
@@ -78,12 +81,13 @@ export default function Hero() {
               <div className="relative pt-[56.25%]">
                 <iframe
                   id="panda-mifge-vsl"
-                  src="https://player-vz-e95b06bb-77e.tv.pandavideo.com/embed/?v=6de0d9ab-d755-49c7-9e4e-ca6530119215"
+                  src={`https://player-vz-e95b06bb-77e.tv.pandavideo.com/embed/?v=${MIFGE_VSL_VIDEO_ID}`}
                   className="border-0 absolute top-0 left-0 w-full h-full"
                   allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen
                   {...({ fetchpriority: "high" } as Record<string, string>)}
                 />
+                <VslTracker videoId={MIFGE_VSL_VIDEO_ID} contentName="MIFGE VSL" />
               </div>
             </div>
 
