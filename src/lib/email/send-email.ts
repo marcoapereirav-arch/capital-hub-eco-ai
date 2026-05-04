@@ -19,6 +19,7 @@ export type SendEmailInput = {
   leadId?: string
   callId?: string
   metadata?: Record<string, unknown>
+  attachments?: { filename: string; content: string; contentType?: string }[]
 }
 
 /**
@@ -41,6 +42,13 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; r
       html: input.html,
       text: input.text,
       tags: [{ name: "template", value: input.template }],
+      ...(input.attachments && input.attachments.length > 0 && {
+        attachments: input.attachments.map((a) => ({
+          filename: a.filename,
+          content: a.content,
+          contentType: a.contentType,
+        })),
+      }),
     })
 
     if (sendError) {

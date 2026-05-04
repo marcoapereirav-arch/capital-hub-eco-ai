@@ -42,15 +42,43 @@ export async function sendAgendaConfirmed(input: {
   fullName: string
   email: string
   slotStartIso: string
+  slotEndIso: string
   meetingUrl?: string | null
   callId?: string
+  publicToken?: string
   leadId?: string
 }) {
+  const { generateIcs } = await import("@/lib/calendar/ics")
+  const cancelUrl = input.publicToken
+    ? `${APP_URL}/api/mifge/calls/cancel/${input.publicToken}`
+    : null
+  const rescheduleUrl = input.publicToken
+    ? `${APP_URL}/api/mifge/calls/reschedule/${input.publicToken}`
+    : null
   const html = await render(AgendaConfirmedEmail({
     fullName: input.fullName,
     slotStartIso: input.slotStartIso,
     meetingUrl: input.meetingUrl,
+    cancelUrl,
+    rescheduleUrl,
   }))
+
+  // .ics adjunto para que el cliente añada a Google/Apple/Outlook con un click
+  const ics = generateIcs({
+    uid: `${input.callId ?? input.publicToken ?? "call"}@capitalhubapp.com`,
+    title: "Llamada con Adrián · Capital Hub",
+    description: input.meetingUrl
+      ? `Tu llamada de diagnóstico de 20 min.\n\nLink: ${input.meetingUrl}`
+      : "Tu llamada de diagnóstico de 20 min.",
+    location: input.meetingUrl ?? "Videollamada",
+    startIso: input.slotStartIso,
+    endIso: input.slotEndIso,
+    organizerEmail: process.env.RESEND_FROM_EMAIL ?? "adrian@mail.capitalhubapp.com",
+    organizerName: process.env.RESEND_FROM_NAME ?? "Adrián Villanueva",
+    attendeeEmail: input.email,
+    attendeeName: input.fullName,
+  })
+
   return sendEmail({
     template: "agenda_confirmed",
     to: input.email,
@@ -59,6 +87,9 @@ export async function sendAgendaConfirmed(input: {
     html,
     callId: input.callId,
     leadId: input.leadId,
+    attachments: [
+      { filename: "llamada-capital-hub.ics", content: Buffer.from(ics).toString("base64"), contentType: "text/calendar" },
+    ],
   })
 }
 

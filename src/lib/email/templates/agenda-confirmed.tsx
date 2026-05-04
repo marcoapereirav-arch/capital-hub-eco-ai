@@ -6,9 +6,11 @@ interface Props {
   fullName: string
   slotStartIso: string
   meetingUrl?: string | null
+  cancelUrl?: string | null
+  rescheduleUrl?: string | null
 }
 
-export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl }: Props) {
+export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cancelUrl, rescheduleUrl }: Props) {
   const firstName = fullName.split(" ")[0] || ""
   const date = new Date(slotStartIso)
   const dateStr = date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
@@ -49,9 +51,24 @@ export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl }: Pro
         · 2-3 dudas concretas que tengas
       </P>
 
-      <P dim>
-        Si necesitas reagendar, responde a este email.
-      </P>
+      {(rescheduleUrl || cancelUrl) ? (
+        <P dim>
+          ¿Necesitas cambios?{" "}
+          {rescheduleUrl && (
+            <>
+              <a href={rescheduleUrl} style={{ color: emailColors.text }}>Reagendar</a>
+              {cancelUrl && " · "}
+            </>
+          )}
+          {cancelUrl && (
+            <a href={cancelUrl} style={{ color: emailColors.text }}>Cancelar</a>
+          )}
+        </P>
+      ) : (
+        <P dim>
+          Si necesitas reagendar, responde a este email.
+        </P>
+      )}
 
       <Text style={{ fontSize: 14, color: emailColors.text, margin: "24px 0 4px" }}>Adrián Villanueva</Text>
       <Text style={{ fontSize: 12, color: emailColors.textDim, margin: 0 }}>Fundador, Capital Hub</Text>

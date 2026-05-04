@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         status: "booked",
         source: "mifge_agenda",
       })
-      .select("id, slot_start, slot_end, meeting_url")
+      .select("id, slot_start, slot_end, meeting_url, public_token")
       .single()
 
     if (insertError) {
@@ -105,8 +105,10 @@ export async function POST(req: NextRequest) {
       fullName: data.full_name,
       email: data.email,
       slotStartIso: inserted.slot_start,
+      slotEndIso: inserted.slot_end,
       meetingUrl: inserted.meeting_url,
       callId: inserted.id,
+      publicToken: inserted.public_token,
       leadId: data.lead_id,
     }).catch((e) => console.error("[mifge/calls/book] email confirm error", e))
 
