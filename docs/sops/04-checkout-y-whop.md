@@ -69,7 +69,26 @@ Whop hosted checkout (free trial 14d producto MES, opcional order bump 19€)
 - `/mifge/gracias` existe pero NO está en el flow principal. Sirve como fallback para casos donde no hay upsell que ofrecer (ej: cliente que ya compró anual va directo a /mifge/agenda).
 - El cliente NUNCA debe ver `whop.com` salvo durante la pasarela de pago en sí. Después siempre rebota a nuestro dominio.
 
-## URL del webhook (productivo)
+## URLs de checkout — usar SIEMPRE el `direct_link`
+
+Whop tiene 2 tipos de URLs por producto y son DISTINTAS:
+
+| Tipo | Formato | Para qué sirve |
+|---|---|---|
+| **Página de presentación** | `https://whop.com/<company-slug>/<product-slug>` (ej: `https://whop.com/capitalhub/capital-hub-mes`) | Pantalla de marketing del producto. Tiene un botón "Comenzar prueba gratuita" que después lleva al checkout. **NO usar como link de checkout — añade un click extra.** |
+| **Direct checkout** ✅ | `https://whop.com/checkout/<plan_id>` (ej: `https://whop.com/checkout/plan_HjUAhKnn79rIu`) | Va DIRECTO al formulario de pago. **Esta es la que se usa en `NEXT_PUBLIC_WHOP_CHECKOUT_URL_*`.** |
+
+Cómo conseguir el `direct_link` de un plan:
+
+```bash
+curl -H "Authorization: Bearer $WHOP_API_KEY" \
+  "https://api.whop.com/v2/plans/<plan_id>" | jq .direct_link
+```
+
+Plan IDs (2026-05-04):
+- MES → `plan_HjUAhKnn79rIu`
+- AÑO → `plan_Y4AWfTlfEqexT`
+- BONUS → `plan_1dcgC5O9NfW4f`
 
 ## URL del webhook (productivo)
 
