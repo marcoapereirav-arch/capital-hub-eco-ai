@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "crypto"
-import { sendWelcomeTrial, sendPaymentFailed } from "@/lib/email/senders"
+import { sendWelcomeTrial, sendPaymentFailed, notifyMarcoPurchase } from "@/lib/email/senders"
 import { sendCapiEvent } from "@/lib/meta/capi-client"
 
 export const dynamic = "force-dynamic"
@@ -119,6 +119,13 @@ export async function POST(req: NextRequest) {
               leadId: lead?.id,
               triggeredBy: "webhook_whop_membership_activated_mes",
             }).catch((e) => console.error("[whop/webhook] CAPI free_trial_started", e))
+            notifyMarcoPurchase({
+              eventLabel: "Free Trial activado",
+              fullName: data.user?.name ?? email,
+              email,
+              productName: "CAPITAL HUB MES (14d gratis)",
+              leadId: lead?.id,
+            }).catch((e) => console.error("[whop/webhook] notif Marco trial", e))
           } else if (newStage === "won_ano") {
             sendCapiEvent({
               eventName: "mifge_anual_purchased",
@@ -127,6 +134,15 @@ export async function POST(req: NextRequest) {
               leadId: lead?.id,
               triggeredBy: "webhook_whop_membership_activated_ano",
             }).catch((e) => console.error("[whop/webhook] CAPI anual_purchased", e))
+            notifyMarcoPurchase({
+              eventLabel: "Compra Plan Anual",
+              fullName: data.user?.name ?? email,
+              email,
+              amount: 970,
+              currency: "EUR",
+              productName: "CAPITAL HUB AÑO",
+              leadId: lead?.id,
+            }).catch((e) => console.error("[whop/webhook] notif Marco anual", e))
           }
         }
         // TODO provisión App Capital Hub: HTTP call con magic link
@@ -144,7 +160,14 @@ export async function POST(req: NextRequest) {
             customData: { value: 19, currency: "EUR", contentName: "CAPITAL HUB BONUS" },
             triggeredBy: "webhook_whop_payment_bonus",
           }).catch((e) => console.error("[whop/webhook] CAPI order_bump", e))
-          // TODO MIFGE 10: email #2 confirmación bump
+          notifyMarcoPurchase({
+            eventLabel: "Order Bump comprado",
+            fullName: data.user?.name ?? email,
+            email,
+            amount: 19,
+            currency: "EUR",
+            productName: "CAPITAL HUB BONUS",
+          }).catch((e) => console.error("[whop/webhook] notif Marco bump", e))
         } else if (productId === PRODUCT_MES) {
           // Si era free_trial, día 15 cobrado → WON Mes
           await transitionToWonMesIfTrial(supabase, email)
@@ -154,7 +177,14 @@ export async function POST(req: NextRequest) {
             customData: { value: 97, currency: "EUR", contentName: "CAPITAL HUB MES recurrente" },
             triggeredBy: "webhook_whop_payment_mes_recurrente",
           }).catch((e) => console.error("[whop/webhook] CAPI monthly_purchased", e))
-          // TODO MIFGE 10: email #9
+          notifyMarcoPurchase({
+            eventLabel: "Cobro mensual recurrente",
+            fullName: data.user?.name ?? email,
+            email,
+            amount: 97,
+            currency: "EUR",
+            productName: "CAPITAL HUB MES",
+          }).catch((e) => console.error("[whop/webhook] notif Marco mes", e))
         }
         break
       }
@@ -169,6 +199,12 @@ export async function POST(req: NextRequest) {
           email,
           leadId: lead?.id,
         })
+        notifyMarcoPurchase({
+          eventLabel: "⚠️ Pago Fallido",
+          fullName: data.user?.name ?? email,
+          email,
+          leadId: lead?.id,
+        }).catch((e) => console.error("[whop/webhook] notif Marco fail", e))
         break
       }
 

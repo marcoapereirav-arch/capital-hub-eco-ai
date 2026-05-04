@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
-import { sendAgendaConfirmed } from "@/lib/email/senders"
+import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
 import { sendCapiEvent } from "@/lib/meta/capi-client"
 
 export const dynamic = "force-dynamic"
@@ -109,6 +109,17 @@ export async function POST(req: NextRequest) {
       callId: inserted.id,
       leadId: data.lead_id,
     }).catch((e) => console.error("[mifge/calls/book] email confirm error", e))
+
+    // Notificación interna a Adrián
+    notifyAdrianBooking({
+      fullName: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      slotStartIso: inserted.slot_start,
+      notes: data.notes,
+      callId: inserted.id,
+      leadId: data.lead_id,
+    }).catch((e) => console.error("[mifge/calls/book] notif Adrián error", e))
 
     // Meta CAPI server-side: mifge_call_booked
     sendCapiEvent({
