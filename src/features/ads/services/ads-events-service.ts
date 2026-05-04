@@ -88,12 +88,20 @@ export async function triggerManualEvent(input: {
   email: string
   value?: number
   currency?: string
-}): Promise<{ ok: boolean; eventId?: string; error?: string }> {
+}): Promise<{ ok: boolean; eventId?: string; fbtraceId?: string; eventsReceived?: number; metaMessages?: unknown[]; error?: string }> {
   const res = await fetch("/api/meta/capi/manual", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   })
   const json = await res.json()
-  return res.ok ? { ok: true, eventId: json.eventId } : { ok: false, error: json.error }
+  return res.ok
+    ? {
+        ok: true,
+        eventId: json.eventId,
+        fbtraceId: json.fbtraceId,
+        eventsReceived: json.eventsReceived,
+        metaMessages: json.metaMessages,
+      }
+    : { ok: false, error: json.error }
 }

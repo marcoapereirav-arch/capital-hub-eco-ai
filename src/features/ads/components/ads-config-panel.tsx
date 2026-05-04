@@ -15,13 +15,22 @@ interface Props {
 export function AdsConfigPanel({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEventCode }: Props) {
   const [showPixel, setShowPixel] = useState(false)
   const [testStatus, setTestStatus] = useState<"idle" | "loading" | "ok" | "error">("idle")
-  const [testMessage, setTestMessage] = useState<string | null>(null)
+  const [testResult, setTestResult] = useState<{
+    eventId?: string
+    fbtraceId?: string
+    eventsReceived?: number
+    error?: string
+  } | null>(null)
 
   const allConfigured = !!pixelIdMasked && !!capiTokenMasked && !!adAccountId
+  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID
+  const metaTestEventsUrl = pixelId
+    ? `https://business.facebook.com/events_manager2/list/dataset/${pixelId}/test_events`
+    : "https://business.facebook.com/events_manager2"
 
   async function handleTestEvent() {
     setTestStatus("loading")
-    setTestMessage(null)
+    setTestResult(null)
     const result = await triggerManualEvent({
       event_name: "mifge_lead",
       email: "test+capi@capitalhub.app",
@@ -30,10 +39,14 @@ export function AdsConfigPanel({ pixelIdMasked, capiTokenMasked, adAccountId, ha
     })
     if (result.ok) {
       setTestStatus("ok")
-      setTestMessage(`Evento de prueba enviado. event_id: ${result.eventId}. Revisa Meta Events Manager → Test Events.`)
+      setTestResult({
+        eventId: result.eventId,
+        fbtraceId: result.fbtraceId,
+        eventsReceived: result.eventsReceived,
+      })
     } else {
       setTestStatus("error")
-      setTestMessage(result.error ?? "Falló el envío")
+      setTestResult({ error: result.error ?? "Falló el envío" })
     }
   }
 
@@ -103,16 +116,45 @@ export function AdsConfigPanel({ pixelIdMasked, capiTokenMasked, adAccountId, ha
             Enviar test event
           </button>
         </div>
-        {testMessage && (
-          <div
-            className={cn(
-              "mt-3 rounded-sm border px-3 py-2 text-xs font-mono",
-              testStatus === "ok"
-                ? "border-green-500/40 bg-green-500/5 text-green-300"
-                : "border-red-500/40 bg-red-500/5 text-red-300"
-            )}
-          >
-            {testMessage}
+        {testStatus === "error" && testResult?.error && (
+          <div className="mt-3 rounded-sm border border-red-500/40 bg-red-500/5 px-3 py-2 text-xs text-red-300">
+            ⨯ {testResult.error}
+          </div>
+        )}
+
+        {testStatus === "ok" && testResult && (
+          <div className="mt-3 rounded-sm border border-green-500/40 bg-green-500/5 p-3 space-y-3">
+            <div className="flex items-center gap-2 text-green-300">
+              <Check className="h-4 w-4" />
+              <p className="font-mono text-xs uppercase tracking-wider">
+                ✓ Meta confirmó · events_received: {testResult.eventsReceived ?? "?"}
+              </p>
+            </div>
+            <div className="space-y-1.5 text-[11px] font-mono text-foreground/80">
+              {testResult.eventId && (
+                <div><span className="text-muted-foreground">event_id:</span> <span className="break-all">{testResult.eventId}</span></div>
+              )}
+              {testResult.fbtraceId && (
+                <div><span className="text-muted-foreground">fbtrace_id:</span> <span className="break-all">{testResult.fbtraceId}</span></div>
+              )}
+            </div>
+            <div className="border-t border-green-500/30 pt-3">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-green-300 mb-1.5">Cómo verificarlo en Meta</p>
+              <ol className="text-[11px] text-foreground/80 space-y-1 list-decimal list-inside">
+                <li>
+                  Abre{" "}
+                  <a href={metaTestEventsUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-300 underline">
+                    Meta Events Manager → Probar eventos
+                  </a>
+                </li>
+                <li>
+                  Si tienes <code className="text-amber-300">META_TEST_EVENT_CODE</code> en .env, verás el evento ahí en segundos
+                </li>
+                <li>
+                  Si no, va a producción real (tarda ~30 min en aparecer en &quot;Resumen&quot; — pestaña principal del Pixel)
+                </li>
+              </ol>
+            </div>
           </div>
         )}
       </div>

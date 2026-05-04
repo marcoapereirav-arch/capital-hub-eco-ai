@@ -65,5 +65,18 @@ export async function POST(req: NextRequest) {
     source: "manual",
   })
 
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 })
+  // Devolver respuesta enriquecida para que el modal muestre confirmación útil
+  // (eventId + fbtrace_id + events_received + messages de Meta) y el usuario
+  // pueda verificar sin tener que ir a la BD.
+  return NextResponse.json(
+    {
+      ok: result.ok,
+      eventId: result.eventId,
+      fbtraceId: result.fbtraceId ?? null,
+      eventsReceived: result.eventsReceived ?? null,
+      metaMessages: result.metaMessages ?? [],
+      error: result.error ?? null,
+    },
+    { status: result.ok ? 200 : 500 }
+  )
 }

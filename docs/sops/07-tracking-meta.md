@@ -146,7 +146,50 @@ Sistema reactivo:
 - `t_ads_health_alerts` — Tab 5 (someday)
 - `t_ads_section_nav` — entrada sidebar
 
+## Cómo verificar eventos en Meta Events Manager (UI real en español)
+
+Las pestañas reales del Events Manager para nuestro Pixel `678018340712657`:
+
+| Pestaña real | Para qué sirve | Cuándo usarla |
+|---|---|---|
+| **Resumen** | Gráfico agregado de actividad histórica | Verificar volumen acumulado. Tarda hasta **30 min** en mostrar eventos. Eventos custom (`mifge_*`) pueden no contar como "actividad" principal aquí. |
+| **Probar eventos** | Live stream de eventos que llegan ahora mismo | **El método correcto para verificar setup**. Te da un `test_event_code` (formato `TEST12345`). Pegas ese código en `META_TEST_EVENT_CODE` del `.env.local` + Vercel + redeploy. Cualquier evento disparado con ese code aparece en segundos en esa pantalla. |
+| **Diagnóstico** | Errores/warnings de implementación detectados por Meta | Cuando Meta detecta eventos sin params críticos (sin email hasheado, sin fbp, etc.). Útil para optimizar match rate. |
+| **Historial** | Cambios de configuración del pixel | Auditoría de quién cambió qué setting. NO muestra eventos. |
+| **Configuración** | Setup técnico del pixel | Editar nombre, integraciones, etc. |
+
+**No existen pestañas "Test Events" ni "Activity"** (son nombres en inglés que no aparecen en la UI en español de Meta — los inventé en una versión anterior y rompí la confianza del usuario).
+
+### Procedimiento real para verificar un evento manual
+
+1. Click pestaña **"Probar eventos"** (la 2ª en el Pixel)
+2. Copia el código que Meta muestra ahí (ej: `TEST12345`)
+3. Añade a `.env.local` y a Vercel:
+   ```
+   META_TEST_EVENT_CODE=TEST12345
+   ```
+4. Trigger redeploy: `npx vercel deploy --prod --yes`
+5. Vuelve a `/ads → Configuración → "Enviar test event"` (o usa el modal manual del Tracker)
+6. **Inmediatamente** vuelve a la pestaña "Probar eventos" en Meta — verás el evento llegar con todos los datos hasheados, value, currency
+
+Sin `META_TEST_EVENT_CODE`: el evento va a producción (cuenta real, pero tarda 30+ min en aparecer en "Resumen" y los custom events pueden no salir nunca como métrica principal).
+
+### Cómo el OS confirma internamente
+
+Cuando se dispara un evento (manual o auto), la respuesta del modal/panel ya muestra:
+- `events_received: 1` ← Meta confirmó recepción
+- `fbtrace_id: <id>` ← ID con el que Meta lo registró internamente (para soporte/debug)
+- `messages: []` ← cero warnings/errores
+- Link directo a "Probar eventos" del Pixel
+
+Si los 3 datos están: el evento llegó OK al servidor de Meta, sin importar lo que muestre el "Resumen" después.
+
+### Regla operativa derivada
+
+**NO inventar nombres de UI de servicios externos** (Meta, Whop, Resend, Vercel, etc.) sin verificarlos en la documentación oficial o en una captura del usuario. Cuando le digo a Marco "ve a la pestaña X" y esa pestaña no existe → pierde tiempo + pierde confianza. Si no estoy 100% seguro del nombre exacto, pido screenshot o digo "busca la pestaña que tenga `<funcionalidad>`" en lugar de inventar un nombre.
+
 ## Cambios versionados
 
 - **2026-04-30 (v1)**: documento inicial. Pendiente: ejecutar implementación (tarea `t_mifge_11_meta_tracking` bloqueada por credenciales).
-- **2026-05-04 (v2)**: añadida estructura del módulo `/ads` en el OS (5 tabs: Dashboard / Tracker / Atribución / Configuración / Health). 7 tareas creadas en el board para construirlo. Pendiente validación de Marco antes de implementar.
+- **2026-05-04 (v2)**: añadida estructura del módulo `/ads` en el OS (5 tabs: Dashboard / Tracker / Atribución / Configuración / Health). 7 tareas creadas en el board para construirlo.
+- **2026-05-04 (v3)**: implementación MIFGE 11 completa (Pixel + CAPI + 7 eventos wirados). Sección /ads con Tab Tracker + Config funcionales. Test event probado y confirmado por Meta (`events_received: 1`, `fbtrace_id: Au6GRITMGqL3NOkTCcoFnJV`). Modal manual + Config "Enviar test event" mejorados con respuesta enriquecida (eventId + fbtrace_id + events_received + link directo "Probar eventos"). Pestañas reales de Meta UI documentadas (en español). Regla nueva: NO inventar nombres de UI de servicios externos.

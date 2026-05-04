@@ -68,7 +68,14 @@ export type SendCapiInput = {
   source?: "server" | "manual"
 }
 
-export async function sendCapiEvent(input: SendCapiInput): Promise<{ ok: boolean; eventId: string; error?: string }> {
+export async function sendCapiEvent(input: SendCapiInput): Promise<{
+  ok: boolean
+  eventId: string
+  error?: string
+  fbtraceId?: string
+  eventsReceived?: number
+  metaMessages?: unknown[]
+}> {
   const eventId = input.eventId ?? crypto.randomUUID()
   const supabase = getAdminClient()
   const source = input.source ?? "server"
@@ -183,7 +190,13 @@ export async function sendCapiEvent(input: SendCapiInput): Promise<{ ok: boolean
       })
       .eq("id", logRow?.id)
 
-    return { ok: true, eventId }
+    return {
+      ok: true,
+      eventId,
+      fbtraceId: (json.fbtrace_id as string) ?? undefined,
+      eventsReceived: typeof json.events_received === "number" ? (json.events_received as number) : undefined,
+      metaMessages: Array.isArray(json.messages) ? (json.messages as unknown[]) : undefined,
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown error"
     await supabase

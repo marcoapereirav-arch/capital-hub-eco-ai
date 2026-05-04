@@ -248,39 +248,45 @@ function ManualEventModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("")
   const [value, setValue] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<{
+    ok: boolean
+    eventId?: string
+    fbtraceId?: string
+    eventsReceived?: number
+    metaMessages?: unknown[]
+    error?: string
+  } | null>(null)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
-    setSuccess(null)
+    setValidationError(null)
+    setResult(null)
     if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("Email inválido")
+      setValidationError("Email inválido")
       return
     }
     setSubmitting(true)
-    const result = await triggerManualEvent({
+    const r = await triggerManualEvent({
       event_name: eventName,
       email: email.trim().toLowerCase(),
       value: value ? Number(value) : undefined,
       currency: "EUR",
     })
     setSubmitting(false)
-    if (result.ok) {
-      setSuccess(`Evento disparado: ${result.eventId}`)
-      setEmail("")
-      setValue("")
-    } else {
-      setError(result.error ?? "Falló el envío")
-    }
+    setResult(r)
   }
+
+  const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID
+  const metaTestEventsUrl = pixelId
+    ? `https://business.facebook.com/events_manager2/list/dataset/${pixelId}/test_events`
+    : "https://business.facebook.com/events_manager2"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md border border-border bg-card rounded-sm shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Disparar evento manual</p>
+      <div className="w-full max-w-lg border border-border bg-card rounded-sm shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3 sticky top-0 bg-card z-10">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Disparar evento manual a Meta CAPI</p>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-4 w-4" />
           </button>
@@ -322,17 +328,59 @@ function ManualEventModal({ onClose }: { onClose: () => void }) {
               className="w-full rounded-sm border border-border bg-secondary px-3 py-2 text-sm text-foreground"
             />
           </div>
-          {error && (
+
+          {validationError && (
             <div className="border border-red-500/40 bg-red-500/10 rounded-sm p-2.5">
-              <p className="text-red-300 text-xs">{error}</p>
+              <p className="text-red-300 text-xs">{validationError}</p>
             </div>
           )}
-          {success && (
-            <div className="border border-green-500/40 bg-green-500/10 rounded-sm p-2.5 flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-green-400" />
-              <p className="text-green-300 text-xs font-mono">{success}</p>
+
+          {result && !result.ok && (
+            <div className="border border-red-500/40 bg-red-500/10 rounded-sm p-3">
+              <p className="text-red-300 text-xs font-mono uppercase tracking-wider mb-1">⨯ Falló el envío</p>
+              <p className="text-red-200 text-xs">{result.error}</p>
             </div>
           )}
+
+          {result && result.ok && (
+            <div className="border border-green-500/40 bg-green-500/10 rounded-sm p-3 space-y-3">
+              <div className="flex items-center gap-2 text-green-300">
+                <Check className="h-4 w-4" />
+                <p className="font-mono text-xs uppercase tracking-wider">
+                  Meta confirmó recepción · events_received: {result.eventsReceived ?? "?"}
+                </p>
+              </div>
+              <div className="space-y-1.5 text-[11px] font-mono text-foreground/80">
+                <div>
+                  <span className="text-muted-foreground">event_id:</span> <span className="break-all">{result.eventId}</span>
+                </div>
+                {result.fbtraceId && (
+                  <div>
+                    <span className="text-muted-foreground">meta fbtrace_id:</span> <span className="break-all">{result.fbtraceId}</span>
+                  </div>
+                )}
+                {result.metaMessages && result.metaMessages.length > 0 && (
+                  <div className="border-l-2 border-amber-500 pl-2 mt-2">
+                    <span className="text-amber-300">Meta messages:</span>
+                    <pre className="text-[10px] text-amber-200 mt-1 whitespace-pre-wrap">{JSON.stringify(result.metaMessages, null, 2)}</pre>
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-green-500/30 pt-3 space-y-2">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-green-300">Cómo verificar en Meta</p>
+                <ol className="text-[11px] text-foreground/80 space-y-1 list-decimal list-inside">
+                  <li>Abre <a href={metaTestEventsUrl} target="_blank" rel="noopener noreferrer" className="text-cyan-300 underline">Meta Events Manager → Probar eventos</a></li>
+                  <li>Si tienes un test event code activo, verás el evento llegar en segundos</li>
+                  <li>Sin test code: el evento va a producción real (tarda ~30 min en aparecer en Resumen)</li>
+                </ol>
+                <p className="font-mono text-[10px] uppercase tracking-wider text-green-300 pt-2">Cómo verificar en el OS</p>
+                <p className="text-[11px] text-foreground/80">
+                  Cierra este modal → la fila aparece arriba en el Tracker con badge verde &quot;Enviado&quot; · click para expandir y ver request/response completo.
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={submitting}
