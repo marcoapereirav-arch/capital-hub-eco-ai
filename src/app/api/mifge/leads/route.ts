@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { rateLimit, getClientIp } from "@/lib/rate-limit/supabase-rate-limit"
 
 export const dynamic = "force-dynamic"
 
@@ -22,6 +23,15 @@ function getAdminClient() {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    const rl = await rateLimit({ key: `mifge_leads:${ip}`, limit: 10, windowSeconds: 60 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Demasiadas peticiones. Intenta de nuevo en un momento." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt.getTime() - Date.now()) / 1000)) } }
+      )
+    }
+
     const body = await req.json()
     const parsed = LeadSchema.safeParse(body)
 

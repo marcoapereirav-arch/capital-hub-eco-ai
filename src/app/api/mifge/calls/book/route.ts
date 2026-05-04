@@ -4,6 +4,7 @@ import { z } from "zod"
 import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
 import { sendCapiEvent } from "@/lib/meta/capi-client"
 import { createCalendarEventWithMeet, loadGoogleConnection } from "@/lib/google/calendar-client"
+import { rateLimit, getClientIp } from "@/lib/rate-limit/supabase-rate-limit"
 
 export const dynamic = "force-dynamic"
 
@@ -30,6 +31,15 @@ function getAdminClient() {
  */
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    const rl = await rateLimit({ key: `calls_book:${ip}`, limit: 5, windowSeconds: 60 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Demasiadas peticiones. Intenta de nuevo en un momento." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt.getTime() - Date.now()) / 1000)) } }
+      )
+    }
+
     const body = await req.json()
     const parsed = BookSchema.safeParse(body)
 
