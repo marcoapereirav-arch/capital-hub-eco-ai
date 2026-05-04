@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "crypto"
+import { sendWelcomeTrial, sendPaymentFailed } from "@/lib/email/senders"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -96,14 +97,19 @@ export async function POST(req: NextRequest) {
           null
 
         if (newStage) {
-          await upsertLeadStage(supabase, email, newStage, {
+          const lead = await upsertLeadStage(supabase, email, newStage, {
             full_name: data.user?.name,
             phone: data.user?.phone,
             whop_membership_id: data.membership_id ?? data.id ?? null,
             whop_user_id: data.user_id ?? null,
           })
+          // Email bienvenida (mismo template para trial y anual por ahora; refinar #3 distinto luego)
+          await sendWelcomeTrial({
+            fullName: data.user?.name ?? "",
+            email,
+            leadId: lead?.id,
+          })
         }
-        // TODO MIFGE 10: enviar email bienvenida #1 (trial) o #3 (anual)
         // TODO MIFGE 11: disparar evento Meta CAPI mifge_free_trial_started o mifge_anual_purchased
         // TODO provisión App Capital Hub: HTTP call con magic link
         break
@@ -129,8 +135,12 @@ export async function POST(req: NextRequest) {
       case "membership.experience_changed": {
         // Cobro fallido → Pago Fallido
         if (!email) break
-        await upsertLeadStage(supabase, email, "pago_fallido")
-        // TODO MIFGE 10: email #11
+        const lead = await upsertLeadStage(supabase, email, "pago_fallido")
+        await sendPaymentFailed({
+          fullName: data.user?.name ?? "",
+          email,
+          leadId: lead?.id,
+        })
         break
       }
 
@@ -161,7 +171,7 @@ async function upsertLeadStage(
   email: string,
   pipelineStage: string,
   extra?: { full_name?: string; phone?: string; whop_membership_id?: string | null; whop_user_id?: string | null }
-) {
+): Promise<{ id: string } | null> {
   const { data: existing } = await supabase
     .from("mifge_leads")
     .select("id")
@@ -178,19 +188,22 @@ async function upsertLeadStage(
         ...(extra?.whop_user_id && { whop_user_id: extra.whop_user_id }),
       })
       .eq("id", existing.id)
-  } else {
-    // Lead que llegó via Whop sin pasar por nuestro form (ej: link directo desde anuncio)
-    await supabase.from("mifge_leads").insert({
-      email,
-      full_name: extra?.full_name ?? "",
-      phone: extra?.phone ?? "",
-      pipeline_stage: pipelineStage,
-      rgpd_accepted: true, // Whop ya lo recoge en su checkout
-      source: "whop_webhook",
-      whop_membership_id: extra?.whop_membership_id,
-      whop_user_id: extra?.whop_user_id,
-    })
+    return { id: existing.id }
   }
+
+  // Lead que llegó via Whop sin pasar por nuestro form (ej: link directo desde anuncio)
+  const { data: inserted } = await supabase.from("mifge_leads").insert({
+    email,
+    full_name: extra?.full_name ?? "",
+    phone: extra?.phone ?? "",
+    pipeline_stage: pipelineStage,
+    rgpd_accepted: true,
+    source: "whop_webhook",
+    whop_membership_id: extra?.whop_membership_id,
+    whop_user_id: extra?.whop_user_id,
+  }).select("id").single()
+
+  return inserted ?? null
 }
 
 async function markBumpPurchased(

@@ -162,7 +162,7 @@ export function TaskPage() {
   )
 
   return (
-    <div className="absolute inset-0 flex flex-col">
+    <div className="flex min-h-mobile-content flex-col md:absolute md:inset-0 md:min-h-0">
       <PageNavHeader
         title="Tareas"
         groups={groups}
@@ -177,7 +177,7 @@ export function TaskPage() {
           <TaskFilters />
         </div>
 
-        <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-4">
+        <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-3 pb-mobile-nav md:p-4">
           {error && (
             <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
               {error}

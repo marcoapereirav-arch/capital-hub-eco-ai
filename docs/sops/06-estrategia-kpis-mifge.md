@@ -20,7 +20,7 @@ Esto es el GOL central. Todo lo que hacemos sirve a esto.
 | Free trial | 14 días |
 | Plan mensual | 97€/mes (auto-renovable) |
 | Plan anual | 970€/año (= 81€/mes equivalente, 2 meses gratis vs mensual) |
-| Order bump | 20€ one-time |
+| Order bump | 19€ one-time |
 | Llamada de venta | 20 min con Adrián |
 
 ## Los 5 KPIs del funnel
@@ -58,3 +58,4 @@ Estos KPIs salieron de la conversación Marco + Adrián + JP el 27-abr-2026. El 
 ## Cambios versionados
 
 - **2026-04-30** (v1): trasladada de la página `/strategy` (que se elimina) al knowledge para que viva con el resto de documentación operativa.
+- **2026-05-04** (v2): order bump cambiado de 20€ → 19€ tras configuración real en Whop.

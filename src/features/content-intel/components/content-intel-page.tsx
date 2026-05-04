@@ -16,9 +16,9 @@ export function ContentIntelPage() {
   return (
     <>
       <ShellHeader title="Content Intel" />
-      <div className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col gap-4 p-4 pb-mobile-nav md:p-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-          <TabsList>
+          <TabsList className="-mx-4 w-auto justify-start overflow-x-auto px-4 md:mx-0 md:px-0">
             <TabsTrigger value="accounts">Cuentas</TabsTrigger>
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="queries">Consultas & Guiones</TabsTrigger>

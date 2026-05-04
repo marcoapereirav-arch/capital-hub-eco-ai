@@ -41,9 +41,12 @@ Los 8 restantes se añaden iterando sin bloquear el lanzamiento.
 
 ## Reglas
 
-- Todos los emails se envían desde el dominio verificado en Resend (pendiente: confirmar `from` con Adrián, propuesta `hola@capitalhub.com`).
-- Todos llevan link de baja en footer (RGPD).
-- Templates en React Email para que sean responsive y se rendericen bien en Gmail/Outlook/Apple Mail.
+- **Sender (FROM)**: `adrian@mail.capitalhubapp.com` con nombre `Adrián Villanueva`. Confirmado 2026-05-01.
+- **PROHIBIDO** usar emails genéricos como `hola@`, `info@`, `contacto@`, `noreply@`, `admin@`, `support@`, `team@`, `mail@` — los filtros antispam los marcan automáticamente. Cada email en spam = lead perdido.
+- **Dominio Resend verificado**: `mail.capitalhubapp.com` (DNS records SPF + DKIM ya configurados).
+- **API key Resend** en `.env.local` como `RESEND_API_KEY`.
+- Todos los emails llevan link de baja en footer (RGPD).
+- Templates en **React Email** para que sean responsive y se rendericen bien en Gmail/Outlook/Apple Mail.
 - El `lead_id` se incluye en query de cada CTA para tracking interno.
 
 ## Cambios versionados

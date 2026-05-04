@@ -37,7 +37,7 @@ const nodeTypes = {
 }
 
 type StatusKey = "next" | "waiting" | "someday" | "done" | "inbox"
-type AssigneeKey = "marco" | "adrian" | "equipo"
+type AssigneeKey = "marco" | "adrian" | "equipo" | "ai"
 type PriorityKey = "urgent" | "high" | "normal" | "low"
 
 type Filters = {
@@ -50,7 +50,7 @@ type Filters = {
 }
 
 const ALL_STATUS: StatusKey[] = ["next", "waiting", "someday", "done", "inbox"]
-const ALL_ASSIGNEE: AssigneeKey[] = ["marco", "adrian", "equipo"]
+const ALL_ASSIGNEE: AssigneeKey[] = ["marco", "adrian", "equipo", "ai"]
 const ALL_PRIORITY: PriorityKey[] = ["urgent", "high", "normal", "low"]
 
 function emptyFilters(projects: string[]): Filters {
@@ -278,9 +278,9 @@ function BoardPageInner() {
   return (
     <>
       <ShellHeader title="Board" />
-      <div className="relative flex h-[calc(100vh-3.5rem)] flex-col">
+      <div className="relative flex h-mobile-content flex-col md:h-[calc(100vh-3.5rem)]">
         {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card/40 px-4 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card/40 px-3 py-2 md:gap-3 md:px-4 md:py-2.5">
           {/* Stats */}
           <div className="flex items-center gap-4 text-xs">
             <span className="font-mono text-muted-foreground">
@@ -476,7 +476,7 @@ function BoardPageInner() {
               <BoardControls />
             </Panel>
             <MiniMap
-              className="!bg-card !border-border"
+              className="!bg-card !border-border hidden md:block"
               nodeColor={(n) => {
                 if (n.type === "mission") return "#fbbf24"
                 if (n.type === "project") return (n.data as { color: string }).color

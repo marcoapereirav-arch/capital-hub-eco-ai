@@ -15,12 +15,15 @@ const ASSIGNEE_INITIALS: Record<string, string> = {
   marco: "MA",
   adrian: "AV",
   equipo: "EQ",
+  ai: "AI",
 }
 
 const ASSIGNEE_BG: Record<string, string> = {
   marco: "bg-blue-500/30 text-blue-100 border-blue-400/50",
   adrian: "bg-amber-500/30 text-amber-100 border-amber-400/50",
   equipo: "bg-purple-500/30 text-purple-100 border-purple-400/50",
+  // AI: cyan brillante con anillo extra para destacar visualmente que NO es humano
+  ai: "bg-cyan-500/40 text-cyan-50 border-cyan-300/70 ring-1 ring-cyan-400/40",
 }
 
 const PRIORITY_SIZE = {

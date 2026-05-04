@@ -28,7 +28,7 @@ Pipeline DEFINITIVO del funnel MIFGE. Sirve para construir el CRM `/crm` (kanban
 
 | Badge | Significa | Detección automática |
 |---|---|---|
-| 🎁 **Bump 20€** | Compró el order bump en checkout | Webhook Whop bonus product |
+| 🎁 **Bump 19€** | Compró el order bump en checkout | Webhook Whop bonus product |
 | 📞 **Convirtió post-llamada** | Atribución: la llamada cerró la venta | Fathom grabó la call y luego pasó a WON |
 
 ## Por qué este pipeline (decisiones)

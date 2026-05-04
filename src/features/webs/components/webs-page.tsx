@@ -40,9 +40,9 @@ export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
   return (
     <>
       <ShellHeader title="Webs" />
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-5 p-4 pb-mobile-nav md:gap-6 md:p-6">
         {/* Tabs */}
-        <div className="flex items-center gap-2 border-b border-border">
+        <div className="-mx-4 flex items-center gap-2 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
           {TABS.map((t) => {
             const Icon = t.icon
             const isActive = tab === t.id
@@ -53,7 +53,7 @@ export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                  "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
                   isActive
                     ? "border-foreground text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -97,7 +97,7 @@ export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-3">
             {filtered.map((web) => (
               <WebCard key={web.id} web={web} publicBaseUrl={publicBaseUrl} />
             ))}

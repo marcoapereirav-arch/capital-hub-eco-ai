@@ -27,7 +27,7 @@ Reglas que no se rompen.
 |---|---|---|---|---|
 | MES | CAPITAL HUB MES | 97€/mes | 14 días gratis | Mensual auto-renovable |
 | AÑO | CAPITAL HUB AÑO | 970€/año | Sin trial | Anual auto-renovable (2 meses gratis vs mes) |
-| BUMP | CAPITAL HUB BONUS | 20€ | — | One-time (order bump) |
+| BUMP | CAPITAL HUB BONUS | 19€ | — | One-time (order bump) |
 
 Nombres definitivos pendientes — se actualizan post-MVP.
 

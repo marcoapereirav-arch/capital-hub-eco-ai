@@ -5,6 +5,8 @@ export type NavItem = {
   href: string
   icon: LucideIcon
   badge?: string
+  /** Si true, aparece en el bottom tab bar movil. Maximo 4 con esta marca. */
+  mobilePrimary?: boolean
 }
 
 export type NavSection = {

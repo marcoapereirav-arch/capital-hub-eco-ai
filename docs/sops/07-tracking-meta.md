@@ -24,7 +24,7 @@ Doble disparo (browser + server-side) para deduplicación con `event_id`.
 |---|---|---|---|
 | `mifge_lead` | Browser onClick CTA "QUIERO MI PRUEBA GRATUITA" + insert lead BD | Al hacer click en el CTA principal | 0 |
 | `mifge_free_trial_started` | Webhook Whop `membership_activated` MES | Activación del trial 14d | 0 |
-| `mifge_order_bump` | Webhook Whop bonus product | Compra del bump 20€ en checkout | 20 EUR |
+| `mifge_order_bump` | Webhook Whop bonus product | Compra del bump 19€ en checkout | 19 EUR |
 | `mifge_call_booked` | POST `/api/mifge/calls/book` | Reserva de llamada | 0 |
 | `mifge_anual_purchased` | Webhook Whop `membership_activated` AÑO | Compra del plan anual | 970 EUR |
 | `mifge_monthly_purchased` | Webhook Whop `invoice_paid` recurrente MES (día 15+) | Cobro mensual exitoso | 97 EUR |

@@ -45,9 +45,9 @@ export function PageNavHeader({
     .find((i) => i.id === activeId)
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border px-4">
-      <SidebarTrigger className="-ml-1 h-7 w-7 text-muted-foreground hover:text-foreground" />
-      <h1 className="font-heading text-sm font-semibold tracking-wide uppercase text-foreground">
+    <header className="flex h-12 md:h-14 shrink-0 items-center gap-3 border-b border-border px-4">
+      <SidebarTrigger className="-ml-1 hidden h-7 w-7 text-muted-foreground hover:text-foreground md:inline-flex" />
+      <h1 className="hidden font-heading text-sm font-semibold tracking-wide uppercase text-foreground md:block">
         {title}
       </h1>
 

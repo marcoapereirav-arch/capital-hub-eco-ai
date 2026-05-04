@@ -340,4 +340,35 @@ npm run lint         # ESLint
 
 ---
 
+## PROTOCOLO MOBILE/DESKTOP (CRITICO)
+
+> Capital Hub OS es **mobile-first**. La app se distribuye como PWA instalable y en el teléfono se debe sentir como una **aplicación nativa**. Documento canónico: [`docs/sops/08-mobile-first-os.md`](docs/sops/08-mobile-first-os.md).
+
+**Regla principal:** Cualquier cambio en `src/app/(main)/*` se diseña primero para móvil (≤767px) y solo después se valida que el desktop (≥768px) sigue intacto.
+
+**No tocar el desktop** salvo que el cambio lo requiera explícitamente. La versión desktop con `AppSidebar` queda como está.
+
+**Patrones nativos obligatorios en móvil:**
+- Bottom tab bar fijo (4 destinos + "Más" → Sheet) — `MobileShell`
+- Top header móvil 56px con título + avatar — sin SidebarTrigger
+- `h-dvh` / `min-h-dvh` (no `100vh`)
+- `viewportFit: "cover"` y `env(safe-area-inset-*)` en toda chrome fija
+- Tap targets ≥ 44px, inputs `font-size ≥ 16px`
+- Sheets > dropdowns, listas > tablas, scroll vertical único
+
+**Clases Tailwind canónicas:**
+- `md:hidden` → solo móvil
+- `hidden md:block` → solo desktop
+- `pt-safe` / `pb-safe` / `px-safe` → utilidades safe-area definidas en `globals.css`
+
+**Estructura de componentes:**
+- Diferencia trivial → un solo componente con clases `md:*` y `useIsMobile()` cuando hace falta lógica
+- Diferencia estructural → `xxx-mobile.tsx` + `xxx-desktop.tsx`, el padre elige con `md:hidden` / `hidden md:block`
+
+**Hook canónico:** `useIsMobile()` en `src/hooks/use-mobile.ts` (breakpoint 768px, SSR-safe).
+
+**Anti-patrones prohibidos:** mostrar `AppSidebar` en móvil, tablas con scroll horizontal como solución móvil, modales centrados (usar `Sheet side="bottom"`), `100vh` sin `dvh`, tipografías < 16px en inputs, esconder bottom tab al hacer scroll, diseñar primero desktop.
+
+---
+
 *V4: Todo es un Skill. Agent-First. El usuario habla, tu construyes.*

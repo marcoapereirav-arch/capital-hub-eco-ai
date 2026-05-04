@@ -14,13 +14,13 @@ export default async function IntegrationsPage() {
   return (
     <>
       <ShellHeader title="Integraciones" />
-      <div className="flex flex-col gap-6 p-6">
+      <div className="flex flex-col gap-5 p-4 pb-mobile-nav md:gap-6 md:p-6">
         <div className="space-y-1">
           <h2 className="text-sm font-medium text-muted-foreground">
             Conecta las APIs de las plataformas que alimentan el dashboard.
           </h2>
         </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
           {platformList.map(platform => (
             <PlatformCard
               key={platform}

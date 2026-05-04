@@ -57,9 +57,9 @@ export function MifgeKanban() {
   const conversionRate = total > 0 ? Math.round((totalWon / total) * 100) : 0
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className="flex h-mobile-content flex-col md:h-[calc(100vh-3.5rem)]">
       {/* Top bar con stats */}
-      <div className="flex items-center justify-between gap-4 border-b border-border bg-card/40 px-4 py-2.5">
+      <div className="flex flex-col items-start justify-between gap-2 border-b border-border bg-card/40 px-3 py-2 md:flex-row md:items-center md:gap-4 md:px-4 md:py-2.5">
         <div className="flex items-center gap-4 text-xs">
           <span className="font-mono text-muted-foreground">
             <span className="text-foreground font-semibold">{total}</span> leads totales
@@ -80,12 +80,12 @@ export function MifgeKanban() {
       </div>
 
       {/* Kanban scroll horizontal */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden">
+      <div className="flex-1 overflow-x-auto overflow-y-hidden snap-x snap-mandatory md:snap-none">
         <div className="flex h-full gap-3 p-3 min-w-max">
           {STAGES.map((stage) => {
             const stageLeads = groups.get(stage.id) ?? []
             return (
-              <div key={stage.id} className="flex w-72 flex-shrink-0 flex-col">
+              <div key={stage.id} className="flex w-[88vw] max-w-[19rem] flex-shrink-0 snap-center flex-col md:w-72 md:snap-align-none">
                 {/* Header de columna */}
                 <div className={cn("flex items-center justify-between rounded-t-md border border-b-0 px-3 py-2", stage.color)}>
                   <span className="font-heading text-xs font-semibold uppercase tracking-wide">{stage.label}</span>

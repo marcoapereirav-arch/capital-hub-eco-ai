@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { sendAgendaConfirmed } from "@/lib/email/senders"
 
 export const dynamic = "force-dynamic"
 
@@ -93,7 +94,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No se pudo reservar el slot" }, { status: 500 })
     }
 
-    // TODO (MIFGE 10 — Resend): disparar email de confirmación de agenda
+    // Si tenemos lead_id, también marcamos pipeline_stage = agendados
+    if (data.lead_id) {
+      await supabase.from("mifge_leads").update({ pipeline_stage: "agendados" }).eq("id", data.lead_id)
+    }
+
+    // Email de confirmación de agenda (no bloquea el response al cliente)
+    sendAgendaConfirmed({
+      fullName: data.full_name,
+      email: data.email,
+      slotStartIso: inserted.slot_start,
+      meetingUrl: inserted.meeting_url,
+      callId: inserted.id,
+      leadId: data.lead_id,
+    }).catch((e) => console.error("[mifge/calls/book] email confirm error", e))
+
     // TODO (MIFGE 11 — Meta CAPI): disparar evento mifge_call_booked
 
     return NextResponse.json({ ok: true, call: inserted }, { status: 201 })

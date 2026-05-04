@@ -23,7 +23,7 @@ const KPIS: KPI[] = [
     proyeccion: 15,
     objetivo: 30,
     actual: null,
-    notas: "% que añade el bonus 20€",
+    notas: "% que añade el bonus 19€",
   },
   {
     label: "Free Trial → Plan Anual (970€)",

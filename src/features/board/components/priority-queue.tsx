@@ -11,7 +11,7 @@ interface PriorityQueueProps {
   onSelectTask: (task: TaskWithDeps) => void
 }
 
-const ASSIGNEE_INITIALS: Record<string, string> = { marco: "MA", adrian: "AV", equipo: "EQ" }
+const ASSIGNEE_INITIALS: Record<string, string> = { marco: "MA", adrian: "AV", equipo: "EQ", ai: "AI" }
 
 const PRIORITY_RANK: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
 

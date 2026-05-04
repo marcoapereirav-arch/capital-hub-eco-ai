@@ -27,6 +27,7 @@ Si una decisión no está aquí, **no existe**. Si está aquí, es la versión v
 | 05 | [Arquitectura OS vs App](05-arquitectura-os-app.md) | Capital Hub OS (admin) vs Capital Hub App (portal cliente) — proyectos separados |
 | 06 | [Estrategia + KPIs MIFGE](06-estrategia-kpis-mifge.md) | Misión 1.000€/día + 5 KPIs (proyección/objetivo) + pricing |
 | 07 | [Tracking Meta](07-tracking-meta.md) | Pixel + CAPI server-side + 7 eventos + Ads Insights API |
+| 08 | [Mobile-First OS](08-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints, anti-patrones |
 
 ## Cómo se actualiza
 

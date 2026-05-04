@@ -76,7 +76,7 @@ export function KnowledgePage({ sops }: KnowledgePageProps) {
       : null
 
   return (
-    <div className="absolute inset-0 flex flex-col">
+    <div className="flex min-h-mobile-content flex-col md:absolute md:inset-0 md:min-h-0">
       <PageNavHeader
         title="Knowledge"
         groups={groups}
@@ -141,9 +141,9 @@ function FolderGrid({
   onOpen: (folderId: string) => void
 }) {
   return (
-    <div className="h-full overflow-y-auto p-8">
+    <div className="h-full overflow-y-auto p-4 pb-mobile-nav md:p-8">
       <div className="mx-auto max-w-5xl">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
           {folders.map((folder) => (
             <button
               key={folder.id}
@@ -188,7 +188,7 @@ function ItemGrid({
   }
 
   return (
-    <div className="h-full overflow-y-auto p-8">
+    <div className="h-full overflow-y-auto p-4 pb-mobile-nav md:p-8">
       <div className="mx-auto max-w-5xl">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {folder.items.map((item) => {
@@ -226,7 +226,7 @@ function ContentView({ itemId, sops }: { itemId: string; sops: Sop[] }) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <article className="prose prose-invert max-w-3xl mx-auto p-8 prose-headings:font-heading prose-h1:text-2xl prose-h2:text-lg prose-h3:text-base prose-table:text-sm prose-code:text-xs prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:before:content-none prose-code:after:content-none">
+      <article className="prose prose-invert max-w-3xl mx-auto p-4 pb-mobile-nav md:p-8 prose-headings:font-heading prose-h1:text-xl md:prose-h1:text-2xl prose-h2:text-lg prose-h3:text-base prose-table:text-sm prose-code:text-xs prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded-sm prose-code:before:content-none prose-code:after:content-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{sop.content}</ReactMarkdown>
       </article>
     </div>
