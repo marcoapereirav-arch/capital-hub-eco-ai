@@ -6,6 +6,19 @@
 
 ---
 
+## REGLA #0 — KNOWLEDGE FIRST
+
+**Antes de ejecutar cualquier tarea, lee `docs/sops/`. Eso es el Knowledge del proyecto. Es ley.**
+
+- `docs/sops/00-readme.md` es el índice. Cada `.md` numerado es un SOP versionado.
+- Toda regla operativa, decisión arquitectónica, protocolo del proyecto y protocolo del agente vive ahí.
+- Si una regla NO está en el Knowledge, **no es regla**.
+- Si surge una decisión nueva en chat: primero al Knowledge (commit + push), después se aplica.
+
+CLAUDE.md solo contiene: filosofía, ruteo de skills, stack, arquitectura. **Las reglas operativas viven en el Knowledge, no aquí.**
+
+---
+
 ## Filosofia: Agent-First
 
 El usuario habla en lenguaje natural. Tu traduces a codigo.
@@ -315,59 +328,6 @@ npm run lint         # ESLint
 3. **GESTION PROACTIVA:** Si se recibe informacion nueva, es tu responsabilidad actualizar el documento correspondiente dentro de `/docs/` o crear uno nuevo si la informacion es distinta.
 4. **JERARQUIA:** La informacion en `/docs/` prevalece sobre cualquier suposicion. Si una tarea contradice lo que esta en estos archivos, detente y pregunta.
 5. **BRANDKIT ES LEY DE DISENO:** El archivo `Brandkit_Capital_Hub.html` es el nucleo de diseno de TODO el proyecto. Colores, tipografia, espaciado, componentes, estilo visual — todo se deriva del brandkit. No se disena nada sin consultarlo primero.
-
----
-
-## PROTOCOLO DE PROYECTOS EXTERNOS (CRITICO)
-
-> Este proyecto local se llama **Capital Hub**. Toda plataforma externa usada aqui debe tener un nombre coherente con "Capital Hub" (ej: `capital-hub`, `capital-hub-eco-ai`, `ecoai-capitalhub`, `capitalhubapp`).
-
-**Regla principal:** Antes de ejecutar cualquier operacion sobre un servicio externo (Supabase, Vercel, GitHub, Stripe, Polar, DNS, cualquier cosa), SIEMPRE debo **verificar que el nombre del proyecto externo corresponda a Capital Hub**.
-
-### Protocolo obligatorio:
-
-1. **Antes de tocar cualquier proyecto externo, listar los proyectos disponibles** (via MCP o CLI) y localizar el que tenga un nombre coherente con Capital Hub.
-2. **Si el unico proyecto que aparece NO se llama coherente con Capital Hub (ej. aparece `nvision-saas`, `other-app`, etc.), PARAR inmediatamente.** No asumir que es el correcto "por descarte". El usuario puede tener multiples cuentas/organizaciones y el MCP/CLI puede estar conectado a la equivocada.
-3. **Preguntar explicitamente al usuario** por el nombre/URL del proyecto correcto antes de ejecutar cualquier accion destructiva o mutativa (migraciones SQL, env vars, deploys, etc.).
-4. **Para verificar coincidencia**, cotejar al menos uno de estos signos:
-   - Nombre del proyecto externo incluye "capital" o "hub" o "ch" o "ecoai"
-   - URL del servicio externo coincide con la que esta en `.env.local` o Vercel env vars del proyecto local
-   - El usuario confirma explicitamente por chat
-
-**Aplica a:** Supabase (migraciones, tablas, RLS, SQL), Vercel (env vars, deploys, projects), GitHub (commits, pushes, force-push), Stripe/Polar (webhooks, productos), dominios, DNS, y cualquier servicio externo.
-
-**No excepciones.** Mejor perder 30 segundos preguntando que tocar un proyecto ajeno.
-
----
-
-## PROTOCOLO MOBILE/DESKTOP (CRITICO)
-
-> Capital Hub OS es **mobile-first**. La app se distribuye como PWA instalable y en el teléfono se debe sentir como una **aplicación nativa**. Documento canónico: [`docs/sops/08-mobile-first-os.md`](docs/sops/08-mobile-first-os.md).
-
-**Regla principal:** Cualquier cambio en `src/app/(main)/*` se diseña primero para móvil (≤767px) y solo después se valida que el desktop (≥768px) sigue intacto.
-
-**No tocar el desktop** salvo que el cambio lo requiera explícitamente. La versión desktop con `AppSidebar` queda como está.
-
-**Patrones nativos obligatorios en móvil:**
-- Bottom tab bar fijo (4 destinos + "Más" → Sheet) — `MobileShell`
-- Top header móvil 56px con título + avatar — sin SidebarTrigger
-- `h-dvh` / `min-h-dvh` (no `100vh`)
-- `viewportFit: "cover"` y `env(safe-area-inset-*)` en toda chrome fija
-- Tap targets ≥ 44px, inputs `font-size ≥ 16px`
-- Sheets > dropdowns, listas > tablas, scroll vertical único
-
-**Clases Tailwind canónicas:**
-- `md:hidden` → solo móvil
-- `hidden md:block` → solo desktop
-- `pt-safe` / `pb-safe` / `px-safe` → utilidades safe-area definidas en `globals.css`
-
-**Estructura de componentes:**
-- Diferencia trivial → un solo componente con clases `md:*` y `useIsMobile()` cuando hace falta lógica
-- Diferencia estructural → `xxx-mobile.tsx` + `xxx-desktop.tsx`, el padre elige con `md:hidden` / `hidden md:block`
-
-**Hook canónico:** `useIsMobile()` en `src/hooks/use-mobile.ts` (breakpoint 768px, SSR-safe).
-
-**Anti-patrones prohibidos:** mostrar `AppSidebar` en móvil, tablas con scroll horizontal como solución móvil, modales centrados (usar `Sheet side="bottom"`), `100vh` sin `dvh`, tipografías < 16px en inputs, esconder bottom tab al hacer scroll, diseñar primero desktop.
 
 ---
 

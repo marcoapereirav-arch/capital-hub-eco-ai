@@ -28,6 +28,8 @@ Si una decisión no está aquí, **no existe**. Si está aquí, es la versión v
 | 06 | [Estrategia + KPIs MIFGE](06-estrategia-kpis-mifge.md) | Misión 1.000€/día + 5 KPIs (proyección/objetivo) + pricing |
 | 07 | [Tracking Meta](07-tracking-meta.md) | Pixel + CAPI server-side + 7 eventos + Ads Insights API |
 | 08 | [Mobile-First OS](08-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints, anti-patrones |
+| 09 | [Protocolo de trabajo del agente](09-protocolo-trabajo-agente.md) | REGLA #1 auto-board, REGLA #2 auto-knowledge, REGLA #3 auto-commit+push |
+| 10 | [Protocolo de proyectos externos](10-proyectos-externos.md) | Verificar siempre nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / Polar / DNS |
 
 ## Cómo se actualiza
 
