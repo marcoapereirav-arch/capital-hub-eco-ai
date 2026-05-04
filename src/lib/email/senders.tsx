@@ -9,6 +9,11 @@ import { TrialEnds48hEmail } from "./templates/trial-ends-48h"
 import { PaymentFailedEmail } from "./templates/payment-failed"
 import { InternalBookingAlert } from "./templates/internal-booking-alert"
 import { InternalPurchaseAlert } from "./templates/internal-purchase-alert"
+import { WelcomeAnualEmail } from "./templates/welcome-anual"
+import { BumpConfirmedEmail } from "./templates/bump-confirmed"
+import { NoShowEmail } from "./templates/no-show"
+import { PostCallFollowupEmail } from "./templates/post-call-followup"
+import { BetaRetargetingEmail } from "./templates/beta-retargeting"
 
 const ADRIAN_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_ADRIAN ?? "adrianvillanuevarios@gmail.com"
 const MARCO_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_MARCO ?? "marcoapereirav@gmail.com"
@@ -107,6 +112,95 @@ export async function sendPaymentFailed(input: { fullName: string; email: string
     to: input.email,
     toName: input.fullName,
     subject: "Problema con tu pago — actualiza tu método",
+    html,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendWelcomeAnual(input: { fullName: string; email: string; leadId?: string }) {
+  const html = await render(WelcomeAnualEmail({
+    fullName: input.fullName,
+    appUrl: APP_LOGIN_URL,
+    agendaUrl: AGENDA_URL,
+  }))
+  return sendEmail({
+    template: "welcome_anual",
+    to: input.email,
+    toName: input.fullName,
+    subject: "Bienvenido al plan anual de Capital Hub",
+    html,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendBumpConfirmed(input: { fullName: string; email: string; leadId?: string }) {
+  const html = await render(BumpConfirmedEmail({
+    fullName: input.fullName,
+    appUrl: APP_LOGIN_URL,
+  }))
+  return sendEmail({
+    template: "bump_confirmed",
+    to: input.email,
+    toName: input.fullName,
+    subject: "Bonus Bundle Express activado",
+    html,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendNoShow(input: { fullName: string; email: string; callId?: string; leadId?: string }) {
+  const html = await render(NoShowEmail({
+    fullName: input.fullName,
+    agendaUrl: AGENDA_URL,
+  }))
+  return sendEmail({
+    template: "no_show",
+    to: input.email,
+    toName: input.fullName,
+    subject: "No te vi hoy — reagenda en 1 click",
+    html,
+    callId: input.callId,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendPostCallFollowup(input: { fullName: string; email: string; callId?: string; leadId?: string }) {
+  const html = await render(PostCallFollowupEmail({
+    fullName: input.fullName,
+    upgradeUrl: process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO ?? "https://ecoai.capitalhubapp.com/mifge/upsell-anual",
+    appUrl: APP_LOGIN_URL,
+  }))
+  return sendEmail({
+    template: "post_call_followup",
+    to: input.email,
+    toName: input.fullName,
+    subject: "Resumen de tu plan personalizado",
+    html,
+    callId: input.callId,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendBetaRetargeting(input: {
+  fullName: string
+  email: string
+  cancelOrigin: "trial" | "monthly" | "annual"
+  leadId?: string
+}) {
+  const html = await render(BetaRetargetingEmail({
+    fullName: input.fullName,
+    rejoinUrl: "https://ecoai.capitalhubapp.com/mifge",
+    cancelOrigin: input.cancelOrigin,
+  }))
+  return sendEmail({
+    template: `beta_retargeting_${input.cancelOrigin}`,
+    to: input.email,
+    toName: input.fullName,
+    subject: input.cancelOrigin === "trial"
+      ? "¿Qué te frenó?"
+      : input.cancelOrigin === "monthly"
+        ? "Hasta luego — la puerta queda abierta"
+        : "Tu plan anual se acabó — la puerta queda abierta",
     html,
     leadId: input.leadId,
   })

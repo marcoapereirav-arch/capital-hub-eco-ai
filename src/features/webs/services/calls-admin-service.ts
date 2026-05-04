@@ -48,9 +48,17 @@ export function subscribeAllCalls(onChange: () => void): () => void {
 }
 
 export async function updateCallStatus(callId: string, status: CallStatus): Promise<void> {
-  const supabase = createClient()
-  const { error } = await supabase.from("calls").update({ status }).eq("id", callId)
-  if (error) console.error("[webs/calls] update status", error)
+  // Llama al endpoint admin para que dispare side-effects (email post-call si attended,
+  // CAPI mifge_call_attended, marca converted_post_call en lead, etc.)
+  const res = await fetch("/api/mifge/calls/mark-status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ call_id: callId, status }),
+  })
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}))
+    console.error("[webs/calls] update status", json)
+  }
 }
 
 export const STATUS_META: Record<CallStatus, { label: string; color: string; dot: string }> = {

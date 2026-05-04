@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import crypto from "crypto"
-import { sendWelcomeTrial, sendPaymentFailed, notifyMarcoPurchase } from "@/lib/email/senders"
+import { sendWelcomeTrial, sendWelcomeAnual, sendBumpConfirmed, sendPaymentFailed, sendBetaRetargeting, notifyMarcoPurchase } from "@/lib/email/senders"
 import { sendCapiEvent } from "@/lib/meta/capi-client"
 
 export const dynamic = "force-dynamic"
@@ -104,12 +104,12 @@ export async function POST(req: NextRequest) {
             whop_membership_id: data.membership_id ?? data.id ?? null,
             whop_user_id: data.user_id ?? null,
           })
-          // Email bienvenida (mismo template para trial y anual por ahora; refinar #3 distinto luego)
-          await sendWelcomeTrial({
-            fullName: data.user?.name ?? "",
-            email,
-            leadId: lead?.id,
-          })
+          // Email bienvenida — template dedicado según plan
+          if (newStage === "free_trial") {
+            await sendWelcomeTrial({ fullName: data.user?.name ?? "", email, leadId: lead?.id })
+          } else if (newStage === "won_ano") {
+            await sendWelcomeAnual({ fullName: data.user?.name ?? "", email, leadId: lead?.id })
+          }
           // Meta CAPI: free trial activado (MES) o anual comprado (AÑO)
           if (newStage === "free_trial") {
             sendCapiEvent({
@@ -170,6 +170,10 @@ export async function POST(req: NextRequest) {
         if (!email) break
         if (productId === PRODUCT_BUMP) {
           await markBumpPurchased(supabase, email)
+          sendBumpConfirmed({
+            fullName: data.user?.name ?? "",
+            email,
+          }).catch((e) => console.error("[whop/webhook] email bump", e))
           sendCapiEvent({
             eventName: "mifge_order_bump",
             userData: { email, phone: data.user?.phone },
@@ -234,10 +238,26 @@ export async function POST(req: NextRequest) {
       case "membership.cancel_at_period_end":
       case "membership.went_invalid":
       case "membership.expired": {
-        // Cancelación → Beta
+        // Cancelación → Beta + email retargeting según origen
         if (!email) break
-        await upsertLeadStage(supabase, email, "beta")
-        // TODO MIFGE 10: email #10 (puerta abierta)
+        const lead = await upsertLeadStage(supabase, email, "beta")
+        // Determinar de qué cancela (si conocemos el producto)
+        const cancelOrigin: "trial" | "monthly" | "annual" =
+          productId === PRODUCT_ANO ? "annual" :
+          productId === PRODUCT_MES ? "monthly" :
+          "trial"
+        sendBetaRetargeting({
+          fullName: data.user?.name ?? "",
+          email,
+          cancelOrigin,
+          leadId: lead?.id,
+        }).catch((e) => console.error("[whop/webhook] beta retargeting", e))
+        notifyMarcoPurchase({
+          eventLabel: `Cancelación (${cancelOrigin})`,
+          fullName: data.user?.name ?? email,
+          email,
+          leadId: lead?.id,
+        }).catch(() => {})
         break
       }
 
