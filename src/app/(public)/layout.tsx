@@ -9,6 +9,7 @@
 
 import { MetaPixel } from "@/lib/meta/MetaPixel"
 import { CookieConsent } from "@/lib/cookies/CookieConsent"
+import { UtmCapture } from "@/lib/utm/UtmCapture"
 
 export default function PublicLayout({
   children,
@@ -17,6 +18,7 @@ export default function PublicLayout({
 }) {
   return (
     <>
+      <UtmCapture />
       <MetaPixel />
       {children}
       <CookieConsent />

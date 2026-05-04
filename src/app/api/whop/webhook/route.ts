@@ -119,6 +119,14 @@ export async function POST(req: NextRequest) {
               leadId: lead?.id,
               triggeredBy: "webhook_whop_membership_activated_mes",
             }).catch((e) => console.error("[whop/webhook] CAPI free_trial_started", e))
+            // Estándar Meta StartTrial paralelo (mejora optimización campañas)
+            sendCapiEvent({
+              eventName: "StartTrial",
+              userData: { email, phone: data.user?.phone },
+              customData: { value: 0, currency: "EUR", contentName: "CAPITAL HUB MES" },
+              leadId: lead?.id,
+              triggeredBy: "webhook_whop_membership_activated_mes_standard",
+            }).catch(() => {})
             notifyMarcoPurchase({
               eventLabel: "Free Trial activado",
               fullName: data.user?.name ?? email,
@@ -134,6 +142,14 @@ export async function POST(req: NextRequest) {
               leadId: lead?.id,
               triggeredBy: "webhook_whop_membership_activated_ano",
             }).catch((e) => console.error("[whop/webhook] CAPI anual_purchased", e))
+            // Estándar Meta Purchase paralelo
+            sendCapiEvent({
+              eventName: "Purchase",
+              userData: { email, phone: data.user?.phone },
+              customData: { value: 970, currency: "EUR", contentName: "CAPITAL HUB AÑO" },
+              leadId: lead?.id,
+              triggeredBy: "webhook_whop_membership_activated_ano_standard",
+            }).catch(() => {})
             notifyMarcoPurchase({
               eventLabel: "Compra Plan Anual",
               fullName: data.user?.name ?? email,
@@ -177,6 +193,13 @@ export async function POST(req: NextRequest) {
             customData: { value: 97, currency: "EUR", contentName: "CAPITAL HUB MES recurrente" },
             triggeredBy: "webhook_whop_payment_mes_recurrente",
           }).catch((e) => console.error("[whop/webhook] CAPI monthly_purchased", e))
+          // Estándar Meta Subscribe paralelo
+          sendCapiEvent({
+            eventName: "Subscribe",
+            userData: { email, phone: data.user?.phone },
+            customData: { value: 97, currency: "EUR", contentName: "CAPITAL HUB MES" },
+            triggeredBy: "webhook_whop_payment_mes_recurrente_standard",
+          }).catch(() => {})
           notifyMarcoPurchase({
             eventLabel: "Cobro mensual recurrente",
             fullName: data.user?.name ?? email,

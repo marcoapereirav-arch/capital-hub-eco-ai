@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       leadId: data.lead_id,
     }).catch((e) => console.error("[mifge/calls/book] notif Adrián error", e))
 
-    // Meta CAPI server-side: mifge_call_booked
+    // Meta CAPI server-side: mifge_call_booked + Schedule estándar
     sendCapiEvent({
       eventName: "mifge_call_booked",
       userData: { email: data.email, phone: data.phone },
@@ -129,6 +129,13 @@ export async function POST(req: NextRequest) {
       leadId: data.lead_id,
       triggeredBy: "api_calls_book",
     }).catch((e) => console.error("[mifge/calls/book] CAPI call_booked", e))
+    sendCapiEvent({
+      eventName: "Schedule",
+      userData: { email: data.email, phone: data.phone },
+      customData: { value: 0, currency: "EUR", contentName: "Llamada de diagnóstico 20 min" },
+      leadId: data.lead_id,
+      triggeredBy: "api_calls_book_standard",
+    }).catch(() => {})
 
     return NextResponse.json({ ok: true, call: inserted }, { status: 201 })
   } catch (e) {

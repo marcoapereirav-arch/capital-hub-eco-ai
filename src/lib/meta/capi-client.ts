@@ -34,6 +34,13 @@ export type CapiEventName =
   | "mifge_anual_purchased"
   | "mifge_monthly_purchased"
   | "mifge_call_attended"
+  // Eventos estándar de Meta (mejor optimización de campañas)
+  | "InitiateCheckout"
+  | "Purchase"
+  | "Lead"
+  | "Schedule"
+  | "StartTrial"
+  | "Subscribe"
 
 export type CapiUserData = {
   email?: string

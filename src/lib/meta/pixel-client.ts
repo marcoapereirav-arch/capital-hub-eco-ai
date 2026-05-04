@@ -1,11 +1,16 @@
 "use client"
 
+import { getStoredUtms } from "@/lib/utm/utm-capture"
+
 /**
  * Helpers Pixel browser-side. Llaman a fbq() global expuesto por el script
  * de inicialización en MetaPixel (componente que se monta en layout público).
  *
  * Cada evento se dispara también server-side via /api/meta/capi/track con el
  * MISMO event_id para deduplicación de Meta.
+ *
+ * Cada track() incluye automáticamente las UTMs almacenadas (first-touch
+ * attribution) para que Meta tenga la atribución completa de la campaña.
  */
 
 declare global {
@@ -45,22 +50,37 @@ export type TrackInput = {
 
 /**
  * Dispara el evento en browser (Pixel) + server (CAPI) con event_id compartido.
- * Devuelve la promesa del POST server-side; el browser-side se dispara síncrono.
+ * Incluye UTMs almacenadas (first-touch) en custom_data automáticamente.
+ *
+ * Si standardEvent está presente, también dispara el evento ESTÁNDAR de Meta
+ * (InitiateCheckout, Purchase, etc) además del custom — Meta optimiza mejor
+ * campañas con eventos estándar que con custom puros.
  */
-export async function track(input: TrackInput): Promise<{ ok: boolean; eventId: string }> {
+export async function track(input: TrackInput & { standardEvent?: string }): Promise<{ ok: boolean; eventId: string }> {
   const eventId = generateEventId()
   const { fbp, fbc } = readFbCookies()
+  const utms = getStoredUtms() ?? {}
 
-  // Browser-side fbq
+  const baseCustom: Record<string, unknown> = {}
+  if (input.value != null) baseCustom.value = input.value
+  if (input.currency) baseCustom.currency = input.currency
+  if (input.contentName) baseCustom.content_name = input.contentName
+  if (input.contentIds) baseCustom.content_ids = input.contentIds
+  if (input.custom) Object.assign(baseCustom, input.custom)
+  // Añade UTMs como custom_data (Meta los acepta como atributos arbitrarios)
+  if (utms.utm_source) baseCustom.utm_source = utms.utm_source
+  if (utms.utm_medium) baseCustom.utm_medium = utms.utm_medium
+  if (utms.utm_campaign) baseCustom.utm_campaign = utms.utm_campaign
+  if (utms.utm_content) baseCustom.utm_content = utms.utm_content
+  if (utms.utm_term) baseCustom.utm_term = utms.utm_term
+
+  // Browser-side fbq (custom + opcional estándar con MISMO eventID)
   if (typeof window !== "undefined" && typeof window.fbq === "function") {
-    const customData: Record<string, unknown> = {}
-    if (input.value != null) customData.value = input.value
-    if (input.currency) customData.currency = input.currency
-    if (input.contentName) customData.content_name = input.contentName
-    if (input.contentIds) customData.content_ids = input.contentIds
-    if (input.custom) Object.assign(customData, input.custom)
     try {
-      window.fbq("trackCustom", input.event, customData, { eventID: eventId })
+      window.fbq("trackCustom", input.event, baseCustom, { eventID: eventId })
+      if (input.standardEvent) {
+        window.fbq("track", input.standardEvent, baseCustom, { eventID: eventId })
+      }
     } catch (e) {
       console.warn("[meta/pixel] fbq error", e)
     }
@@ -81,6 +101,11 @@ export async function track(input: TrackInput): Promise<{ ok: boolean; eventId: 
           currency: input.currency,
           contentName: input.contentName,
           contentIds: input.contentIds,
+          utm_source: utms.utm_source,
+          utm_medium: utms.utm_medium,
+          utm_campaign: utms.utm_campaign,
+          utm_content: utms.utm_content,
+          utm_term: utms.utm_term,
           ...(input.custom ?? {}),
         },
       }),

@@ -10,9 +10,14 @@ import { track } from '@/lib/meta/pixel-client';
 const CHECKOUT_URL = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_MES || "/mifge/checkout";
 
 function handleLeadClick() {
-  // mifge_lead — disparado cuando el usuario clica el CTA principal de la landing.
-  // No bloqueante: track() se ejecuta en paralelo al window.location y no espera response.
-  track({ event: "mifge_lead", contentName: "MIFGE landing CTA" }).catch(() => {});
+  // mifge_lead (custom) + InitiateCheckout (estándar Meta) — disparados al click CTA.
+  // Estándar mejora la optimización de campañas Meta vs solo evento custom.
+  // No bloqueante: track() se ejecuta en paralelo al redirect.
+  track({
+    event: "mifge_lead",
+    standardEvent: "InitiateCheckout",
+    contentName: "MIFGE landing CTA",
+  }).catch(() => {});
 }
 
 export default function Hero() {
