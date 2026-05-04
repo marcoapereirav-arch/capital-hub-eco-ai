@@ -56,6 +56,17 @@ function MifgeAgendaInner() {
           {/* CALENDAR PROPIO */}
           <CalendarBooker leadId={leadId} successUrl="/mifge/llamada-confirmada" />
 
+          {/* Salida suave: si no quiere/no puede agendar ahora → /mifge/gracias.
+              No es destacado para no distraer del CTA principal (agendar). */}
+          <div className="mt-10 text-center">
+            <a
+              href="/mifge/gracias"
+              className="text-[#6B7280] text-xs font-mono uppercase tracking-wider hover:text-[#9CA3AF] underline underline-offset-4"
+            >
+              No puedo agendar ahora — saltar este paso
+            </a>
+          </div>
+
         </div>
       </main>
     </div>
