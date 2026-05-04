@@ -74,6 +74,33 @@ En el `.env.local` del App (lo gestionará Marco/Adrián):
 - **Permisos**: el código del OS contiene panel interno; el código del App es producto cliente. Mejor no mezclar.
 - **Equipos**: si en el futuro hay un dev del producto y otro del panel, cada uno trabaja en su repo.
 
+## Variables de entorno y deploy
+
+**Regla crítica**: las env vars de `.env.local` (en mi máquina) **NO viajan automáticamente a Vercel**. Cada vez que añado una variable nueva al `.env.local`, **DEBO** subirla también a Vercel production usando:
+
+```bash
+printf "%s" "$VALOR" | npx vercel env add NOMBRE production --force
+```
+
+Si no lo hago: el código en producción ve la variable como `undefined` y los endpoints que la usan fallan silenciosamente (ej: el botón "Disparar evento manual" del panel /ads devuelve "Meta credentials no configuradas" porque `META_CAPI_TOKEN` no está en runtime).
+
+**Síntomas típicos** del problema:
+- Webhook Whop responde 401 (porque `WHOP_WEBHOOK_SECRET` falta y la firma falla)
+- Emails Resend no se envían (porque `RESEND_API_KEY` falta)
+- Tracking Meta CAPI falla con "Meta credentials no configuradas"
+- Botón landing va a `/mifge/checkout` en vez de Whop directo (porque `NEXT_PUBLIC_WHOP_CHECKOUT_URL_MES` está vacía y se usa el fallback)
+
+**Verificación rápida de qué está en Vercel**:
+```bash
+npx vercel env ls production
+```
+
+**Trigger redeploy** con nuevas envs (sin esto, las envs nuevas no aplican):
+```bash
+npx vercel deploy --prod --yes
+```
+
 ## Cambios versionados
 
 - **2026-04-30** (v1): definida arquitectura OS ↔ App con HTTP + secret. Pendiente: dominio del OS, migración Vercel a Adrián.
+- **2026-05-04** (v2): regla añadida sobre env vars y Vercel. Subidas a Vercel production: WHOP_*, RESEND_*, META_*, NEXT_PUBLIC_WHOP_CHECKOUT_URL_*, NEXT_PUBLIC_META_PIXEL_ID. Triggered redeploy `capital-hub-eco-f738cokki`.
