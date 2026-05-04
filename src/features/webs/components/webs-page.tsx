@@ -1,16 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Globe, FileDown, Plus } from "lucide-react"
+import { Globe, FileDown, Plus, Calendar } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { WebCard } from "./web-card"
+import { CallsAdminPanel } from "./calls-admin-panel"
 import type { WebWithSteps, WebType } from "../types/web"
 
-type WebsTab = "funnels" | "lead_magnets"
+type WebsTab = "funnels" | "lead_magnets" | "calls"
 
-const TABS: { id: WebsTab; type: WebType; label: string; icon: typeof Globe; description: string }[] = [
+const TABS: { id: WebsTab; type?: WebType; label: string; icon: typeof Globe; description: string }[] = [
   {
     id: "funnels",
     type: "funnel",
@@ -25,6 +26,12 @@ const TABS: { id: WebsTab; type: WebType; label: string; icon: typeof Globe; des
     icon: FileDown,
     description: "Recursos descargables o accesos a contenido a cambio del email",
   },
+  {
+    id: "calls",
+    label: "Llamadas",
+    icon: Calendar,
+    description: "Calendario y panel admin de las llamadas agendadas desde los funnels",
+  },
 ]
 
 interface WebsPageProps {
@@ -35,7 +42,7 @@ interface WebsPageProps {
 export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
   const [tab, setTab] = useState<WebsTab>("funnels")
   const active = TABS.find((t) => t.id === tab)!
-  const filtered = webs.filter((w) => w.type === active.type)
+  const filtered = active.type ? webs.filter((w) => w.type === active.type) : []
 
   return (
     <>
@@ -46,7 +53,7 @@ export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
           {TABS.map((t) => {
             const Icon = t.icon
             const isActive = tab === t.id
-            const count = webs.filter((w) => w.type === t.type).length
+            const count = t.type ? webs.filter((w) => w.type === t.type).length : null
             return (
               <button
                 key={t.id}
@@ -61,7 +68,7 @@ export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
               >
                 <Icon className="h-4 w-4" />
                 {t.label}
-                {count > 0 && (
+                {count !== null && count > 0 && (
                   <span className="rounded-sm bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                     {count}
                   </span>
@@ -79,14 +86,18 @@ export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
           </div>
-          <Button variant="secondary" size="sm" disabled className="font-mono text-xs">
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Nuevo {active.label.slice(0, -1)}
-          </Button>
+          {active.type && (
+            <Button variant="secondary" size="sm" disabled className="font-mono text-xs">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Nuevo {active.label.slice(0, -1)}
+            </Button>
+          )}
         </div>
 
-        {/* Lista o empty state */}
-        {filtered.length === 0 ? (
+        {/* Contenido */}
+        {tab === "calls" ? (
+          <CallsAdminPanel />
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-sm border border-dashed border-border bg-card px-6 py-16 text-center">
             <active.icon className="h-8 w-8 text-muted-foreground/40" />
             <p className="mt-3 font-mono text-xs uppercase tracking-wide text-muted-foreground">
