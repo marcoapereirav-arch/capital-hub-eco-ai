@@ -156,10 +156,74 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    /* Evita el zoom automatico de iOS al tipear y autoajuste de texto en rotacion */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Soporte para safe-area en notch/home indicator */
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Evita el rebote elastico horizontal en iOS y permite gestos verticales */
+    overscroll-behavior-x: none;
+    /* Desactiva el resaltado azul de tap en moviles */
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Inputs >= 16px en movil para evitar el zoom de iOS al focus */
+  @media (max-width: 767px) {
+    input, textarea, select {
+      font-size: 16px;
+    }
+  }
+}
+
+/* ============================================
+   UTILIDADES MOBILE-FIRST
+   ============================================ */
+@layer utilities {
+  /* Safe-area insets para notch + home indicator */
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+  .px-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .py-safe {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Padding combinado: safe + valor base */
+  .pb-safe-4 { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
+  .pb-safe-6 { padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem); }
+  .pt-safe-4 { padding-top: calc(env(safe-area-inset-top) + 1rem); }
+  /* Margenes safe-area */
+  .mt-safe { margin-top: env(safe-area-inset-top); }
+  .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
+
+  /* Prevenir overscroll vertical (rebote) — usar en contenedores con scroll propio */
+  .no-overscroll { overscroll-behavior: contain; }
+
+  /* Tap target minimo Apple HIG */
+  .tap-target { min-height: 44px; min-width: 44px; }
+
+  /* Espacio reservado para que el bottom-tab-bar no tape contenido en movil.
+     En desktop no hay bottom nav -> 0. */
+  .pb-mobile-nav {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 768px) {
+    .pb-mobile-nav { padding-bottom: 0; }
+  }
+
+  /* Altura util en movil descontando MobileHeader (56px+safe-top) y BottomNav (56px+safe-bottom) */
+  .h-mobile-content {
+    height: calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  .min-h-mobile-content {
+    min-height: calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
 }

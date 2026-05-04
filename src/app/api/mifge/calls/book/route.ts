@@ -1,0 +1,184 @@
+import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+import { z } from "zod"
+import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
+import { sendCapiEvent } from "@/lib/meta/capi-client"
+import { createCalendarEventWithMeet, loadGoogleConnection } from "@/lib/google/calendar-client"
+import { rateLimit, getClientIp } from "@/lib/rate-limit/supabase-rate-limit"
+
+export const dynamic = "force-dynamic"
+
+const BookSchema = z.object({
+  lead_id: z.string().uuid().optional(),
+  email: z.string().email("Email inválido").max(255),
+  full_name: z.string().min(2).max(120),
+  phone: z.string().max(30).optional(),
+  slot_start: z.string().datetime({ message: "slot_start debe ser ISO 8601" }),
+  notes: z.string().max(2000).optional(),
+})
+
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+/**
+ * POST /api/mifge/calls/book
+ * Reserva un slot. Calcula slot_end con la duración configurada.
+ * Anti-double-booking: comprueba que el slot exacto no esté ya tomado.
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const ip = getClientIp(req)
+    const rl = await rateLimit({ key: `calls_book:${ip}`, limit: 5, windowSeconds: 60 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Demasiadas peticiones. Intenta de nuevo en un momento." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil((rl.resetAt.getTime() - Date.now()) / 1000)) } }
+      )
+    }
+
+    const body = await req.json()
+    const parsed = BookSchema.safeParse(body)
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Datos inválidos", issues: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      )
+    }
+    const data = parsed.data
+    const supabase = getAdminClient()
+
+    const { data: configRow, error: configError } = await supabase
+      .from("calls_availability")
+      .select("slot_minutes, default_meeting_url")
+      .eq("id", 1)
+      .single()
+    if (configError || !configRow) {
+      return NextResponse.json({ error: "Configuración no disponible" }, { status: 500 })
+    }
+
+    const slotStart = new Date(data.slot_start)
+    if (isNaN(slotStart.getTime())) {
+      return NextResponse.json({ error: "slot_start inválido" }, { status: 400 })
+    }
+    if (slotStart < new Date()) {
+      return NextResponse.json({ error: "El slot ya ha pasado" }, { status: 400 })
+    }
+    const slotEnd = new Date(slotStart.getTime() + configRow.slot_minutes * 60_000)
+
+    // Anti double-booking: comprueba colisión exacta
+    const { data: existing, error: existingError } = await supabase
+      .from("calls")
+      .select("id")
+      .eq("status", "booked")
+      .eq("slot_start", slotStart.toISOString())
+      .limit(1)
+    if (existingError) {
+      return NextResponse.json({ error: "Error verificando disponibilidad" }, { status: 500 })
+    }
+    if (existing && existing.length > 0) {
+      return NextResponse.json({ error: "Ese slot ya no está disponible" }, { status: 409 })
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("calls")
+      .insert({
+        lead_id: data.lead_id ?? null,
+        email: data.email.toLowerCase().trim(),
+        full_name: data.full_name.trim(),
+        phone: data.phone?.trim() ?? null,
+        slot_start: slotStart.toISOString(),
+        slot_end: slotEnd.toISOString(),
+        notes: data.notes ?? null,
+        meeting_url: configRow.default_meeting_url ?? null,
+        status: "booked",
+        source: "mifge_agenda",
+      })
+      .select("id, slot_start, slot_end, meeting_url, public_token")
+      .single()
+
+    if (insertError) {
+      console.error("[mifge/calls/book] insert error", insertError)
+      return NextResponse.json({ error: "No se pudo reservar el slot" }, { status: 500 })
+    }
+
+    // Si tenemos lead_id, también marcamos pipeline_stage = agendados
+    if (data.lead_id) {
+      await supabase.from("mifge_leads").update({ pipeline_stage: "agendados" }).eq("id", data.lead_id)
+    }
+
+    // Google Calendar: si Adrián tiene conectada su cuenta, crea evento + Meet.
+    // El meeting_url generado sustituye al default_meeting_url estático.
+    const gcalConn = await loadGoogleConnection()
+    let meetingUrl = inserted.meeting_url
+    if (gcalConn?.refresh_token) {
+      try {
+        const event = await createCalendarEventWithMeet({
+          title: `Capital Hub · ${data.full_name}`,
+          description: `Llamada de diagnóstico de 20 min.\n\nLead: ${data.email}${data.phone ? `\nTel: ${data.phone}` : ""}${data.notes ? `\n\nNotas: ${data.notes}` : ""}`,
+          startIso: slotStart.toISOString(),
+          endIso: slotEnd.toISOString(),
+          attendeeEmail: data.email,
+          attendeeName: data.full_name,
+        })
+        if (event?.meetUrl) {
+          meetingUrl = event.meetUrl
+          await supabase
+            .from("calls")
+            .update({ meeting_url: event.meetUrl, gcal_event_id: event.eventId })
+            .eq("id", inserted.id)
+        }
+      } catch (e) {
+        console.error("[mifge/calls/book] gcal create failed", e)
+      }
+    }
+
+    // Email de confirmación de agenda (no bloquea el response al cliente)
+    sendAgendaConfirmed({
+      fullName: data.full_name,
+      email: data.email,
+      slotStartIso: inserted.slot_start,
+      slotEndIso: inserted.slot_end,
+      meetingUrl,
+      callId: inserted.id,
+      publicToken: inserted.public_token,
+      leadId: data.lead_id,
+    }).catch((e) => console.error("[mifge/calls/book] email confirm error", e))
+
+    // Notificación interna a Adrián
+    notifyAdrianBooking({
+      fullName: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      slotStartIso: inserted.slot_start,
+      notes: data.notes,
+      callId: inserted.id,
+      leadId: data.lead_id,
+    }).catch((e) => console.error("[mifge/calls/book] notif Adrián error", e))
+
+    // Meta CAPI server-side: mifge_call_booked + Schedule estándar
+    sendCapiEvent({
+      eventName: "mifge_call_booked",
+      userData: { email: data.email, phone: data.phone },
+      customData: { value: 0, currency: "EUR", contentName: "Llamada agendada 20 min" },
+      leadId: data.lead_id,
+      triggeredBy: "api_calls_book",
+    }).catch((e) => console.error("[mifge/calls/book] CAPI call_booked", e))
+    sendCapiEvent({
+      eventName: "Schedule",
+      userData: { email: data.email, phone: data.phone },
+      customData: { value: 0, currency: "EUR", contentName: "Llamada de diagnóstico 20 min" },
+      leadId: data.lead_id,
+      triggeredBy: "api_calls_book_standard",
+    }).catch(() => {})
+
+    return NextResponse.json({ ok: true, call: inserted }, { status: 201 })
+  } catch (e) {
+    console.error("[mifge/calls/book]", e)
+    return NextResponse.json({ error: "Error inesperado" }, { status: 500 })
+  }
+}

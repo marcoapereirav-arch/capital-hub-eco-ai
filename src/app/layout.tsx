@@ -21,6 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://ecoai.capitalhubapp.com'),
   title: 'Capital Hub OS',
   description: 'Sistema operativo interno de Capital Hub',
   manifest: '/manifest.json',
@@ -43,6 +44,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#0F0F12',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
