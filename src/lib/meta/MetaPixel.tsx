@@ -1,21 +1,27 @@
 "use client"
 
 import Script from "next/script"
+import { useTrackingConsent } from "@/lib/cookies/CookieConsent"
 
 interface Props {
   pixelId?: string
 }
 
 /**
- * Carga el Pixel de Meta. Se monta solo en páginas públicas (/mifge/*).
- * Inicializa fbq() global + dispara PageView.
+ * Carga el Pixel de Meta SOLO si el usuario aceptó cookies de tracking.
+ * Cumple RGPD: cero tracking publicitario sin consent explícito.
  *
- * Los eventos custom (mifge_lead, etc) se disparan desde código con
+ * Eventos custom (mifge_lead, etc) se disparan desde código con
  * src/lib/meta/pixel-client.ts → track() — que llama a fbq("trackCustom").
+ * Esa función internamente verifica `window.fbq` (existe solo si este Script cargó),
+ * por lo que si el user rechazó cookies, los track() son no-op browser-side
+ * (el server-side CAPI sigue activo bajo nuestro propio interés legítimo de auditoría).
  */
 export function MetaPixel({ pixelId }: Props) {
   const id = pixelId ?? process.env.NEXT_PUBLIC_META_PIXEL_ID
-  if (!id) return null
+  const consented = useTrackingConsent()
+
+  if (!id || !consented) return null
 
   return (
     <>

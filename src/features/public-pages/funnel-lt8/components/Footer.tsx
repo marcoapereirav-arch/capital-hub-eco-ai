@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -11,7 +12,7 @@ export default function Footer() {
                  <div className="space-y-4 font-mono text-sm text-[#6B7280]">
                      <p>¿Tienes dudas?</p>
                      <p className="text-white">+34 623 600 094</p>
-                     <p className="text-white">hola@capitalhub.com</p>
+                     <a href="mailto:adrian@mail.capitalhubapp.com" className="text-white hover:text-[#9CA3AF] transition-colors block">adrian@mail.capitalhubapp.com</a>
                  </div>
             </div>
 
@@ -30,12 +31,16 @@ export default function Footer() {
             </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center text-[#4B5563] text-xs font-mono">
+        <div className="flex flex-col md:flex-row justify-between items-center text-[#4B5563] text-xs font-mono gap-4">
              <p className="text-center md:text-left">Este producto es propiedad de Adrián Villanueva & Capital Hub.</p>
-             <div className="flex gap-4 mt-4 md:mt-0">
-                <span>Copyright 2025</span>
+             <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center">
+                <span>© {new Date().getFullYear()}</span>
                 <span>|</span>
-                <a href="#" className="hover:text-white transition-colors">Política de Privacidad</a>
+                <Link href="/legal/privacidad" className="hover:text-white transition-colors">Privacidad</Link>
+                <span>|</span>
+                <Link href="/legal/terminos" className="hover:text-white transition-colors">Términos</Link>
+                <span>|</span>
+                <Link href="/legal/cookies" className="hover:text-white transition-colors">Cookies</Link>
              </div>
         </div>
 
