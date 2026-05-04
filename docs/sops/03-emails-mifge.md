@@ -49,18 +49,38 @@ Los 8 restantes se añaden iterando sin bloquear el lanzamiento.
 - Templates en **React Email** para que sean responsive y se rendericen bien en Gmail/Outlook/Apple Mail.
 - El `lead_id` se incluye en query de cada CTA para tracking interno.
 
-## Cron jobs Vercel (emails programados)
+## Cron jobs (emails programados) — via Supabase pg_cron
 
-`vercel.json` configura 2 cron jobs:
+**Por qué pg_cron y NO Vercel cron**: Vercel Hobby plan limita crons a 1 ejecución/día (necesitamos cada 30 min). Cambio a Supabase pg_cron (extensión `pg_cron` + `pg_net`), gratis e ilimitado.
 
-| Schedule | Path | Qué hace |
+Activado en Supabase `aglyoyqtzozdnusltjxe` con SQL:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- cada 30 min → /api/cron/agenda-reminder-24h
+-- cada 1h → /api/cron/trial-ends-48h
+```
+
+Ambos jobs llaman vía `net.http_get` a los endpoints en `https://ecoai.capitalhubapp.com/api/cron/*` con header `Authorization: Bearer <CRON_SECRET>`. El secret está hardcodeado en el job SQL (Supabase no expone fácilmente el `current_setting` desde el MCP por permisos). Si rota el secret: `cron.unschedule(...)` + `cron.schedule(...)` con el nuevo.
+
+Endpoints:
+
+| Path | Cron | Qué hace |
 |---|---|---|
-| `*/30 * * * *` (cada 30 min) | `/api/cron/agenda-reminder-24h` | Busca calls con `slot_start` entre 23h-25h en futuro y `reminder_sent_at=null` → envía email #5 (recordatorio 24h) + marca enviado |
-| `0 * * * *` (cada hora) | `/api/cron/trial-ends-48h` | Busca leads `pipeline_stage=free_trial` creados hace ~12 días con `trial_ends_email_sent_at=null` → envía email #8 (trial termina en 48h) + marca enviado |
+| `/api/cron/agenda-reminder-24h` | `*/30 * * * *` | Busca `calls` con `slot_start` entre 23h-25h en futuro y `reminder_sent_at=null` → envía email #5 + marca enviado |
+| `/api/cron/trial-ends-48h` | `0 * * * *` | Busca `mifge_leads` `pipeline_stage=free_trial` creados hace ~12 días con `trial_ends_email_sent_at=null` → envía email #8 + marca enviado |
 
-Ambos endpoints validan `Authorization: Bearer ${CRON_SECRET}` para que solo Vercel cron pueda llamarlos. Vercel inyecta ese header automáticamente cuando dispara el cron.
+Verificar jobs activos:
+```sql
+SELECT jobid, jobname, schedule, active FROM cron.job WHERE jobname LIKE 'mifge_%';
+```
 
-`CRON_SECRET` está en `.env.local` y en Vercel production. Generado con `openssl rand -hex 32`.
+Ver últimas ejecuciones:
+```sql
+SELECT * FROM cron.job_run_details WHERE jobid IN (SELECT jobid FROM cron.job WHERE jobname LIKE 'mifge_%') ORDER BY start_time DESC LIMIT 10;
+```
 
 ## Cambios versionados
 
