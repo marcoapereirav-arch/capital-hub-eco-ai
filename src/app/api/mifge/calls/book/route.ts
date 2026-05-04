@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
 import { sendCapiEvent } from "@/lib/meta/capi-client"
+import { createCalendarEventWithMeet, loadGoogleConnection } from "@/lib/google/calendar-client"
 
 export const dynamic = "force-dynamic"
 
@@ -100,13 +101,39 @@ export async function POST(req: NextRequest) {
       await supabase.from("mifge_leads").update({ pipeline_stage: "agendados" }).eq("id", data.lead_id)
     }
 
+    // Google Calendar: si Adrián tiene conectada su cuenta, crea evento + Meet.
+    // El meeting_url generado sustituye al default_meeting_url estático.
+    const gcalConn = await loadGoogleConnection()
+    let meetingUrl = inserted.meeting_url
+    if (gcalConn?.refresh_token) {
+      try {
+        const event = await createCalendarEventWithMeet({
+          title: `Capital Hub · ${data.full_name}`,
+          description: `Llamada de diagnóstico de 20 min.\n\nLead: ${data.email}${data.phone ? `\nTel: ${data.phone}` : ""}${data.notes ? `\n\nNotas: ${data.notes}` : ""}`,
+          startIso: slotStart.toISOString(),
+          endIso: slotEnd.toISOString(),
+          attendeeEmail: data.email,
+          attendeeName: data.full_name,
+        })
+        if (event?.meetUrl) {
+          meetingUrl = event.meetUrl
+          await supabase
+            .from("calls")
+            .update({ meeting_url: event.meetUrl, gcal_event_id: event.eventId })
+            .eq("id", inserted.id)
+        }
+      } catch (e) {
+        console.error("[mifge/calls/book] gcal create failed", e)
+      }
+    }
+
     // Email de confirmación de agenda (no bloquea el response al cliente)
     sendAgendaConfirmed({
       fullName: data.full_name,
       email: data.email,
       slotStartIso: inserted.slot_start,
       slotEndIso: inserted.slot_end,
-      meetingUrl: inserted.meeting_url,
+      meetingUrl,
       callId: inserted.id,
       publicToken: inserted.public_token,
       leadId: data.lead_id,

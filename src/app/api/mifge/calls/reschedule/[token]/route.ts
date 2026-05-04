@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   const supabase = getAdminClient()
   const { data: call } = await supabase
     .from("calls")
-    .select("id, status, slot_start, email, full_name, phone, lead_id")
+    .select("id, status, slot_start, email, full_name, phone, lead_id, gcal_event_id")
     .eq("public_token", token)
     .maybeSingle()
 
@@ -43,6 +43,22 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
       .from("calls")
       .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
       .eq("id", call.id)
+
+    if (call.gcal_event_id) {
+      try {
+        const { getValidAccessToken, loadGoogleConnection } = await import("@/lib/google/calendar-client")
+        const accessToken = await getValidAccessToken()
+        const conn = await loadGoogleConnection()
+        if (accessToken && conn) {
+          await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(conn.calendar_id)}/events/${call.gcal_event_id}?sendUpdates=all`,
+            { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }
+          )
+        }
+      } catch (e) {
+        console.error("[calls/reschedule] gcal delete failed", e)
+      }
+    }
   }
 
   const params = new URLSearchParams({

@@ -27,7 +27,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   const supabase = getAdminClient()
   const { data: call } = await supabase
     .from("calls")
-    .select("id, status, slot_start")
+    .select("id, status, slot_start, gcal_event_id")
     .eq("public_token", token)
     .maybeSingle()
 
@@ -44,6 +44,23 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   }
 
   await supabase.from("calls").update({ status: "cancelled", cancelled_at: new Date().toISOString() }).eq("id", call.id)
+
+  // Si la call tenía un evento en Google Calendar, lo eliminamos también
+  if (call.gcal_event_id) {
+    try {
+      const { getValidAccessToken, loadGoogleConnection } = await import("@/lib/google/calendar-client")
+      const accessToken = await getValidAccessToken()
+      const conn = await loadGoogleConnection()
+      if (accessToken && conn) {
+        await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(conn.calendar_id)}/events/${call.gcal_event_id}?sendUpdates=all`,
+          { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }
+        )
+      }
+    } catch (e) {
+      console.error("[calls/cancel] gcal delete failed", e)
+    }
+  }
 
   return NextResponse.redirect(`${baseUrl}/mifge/agenda?cancelled=ok`)
 }

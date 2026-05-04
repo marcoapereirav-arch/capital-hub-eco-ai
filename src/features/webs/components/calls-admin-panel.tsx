@@ -11,6 +11,7 @@ import {
   type CallRow,
   type CallStatus,
 } from "../services/calls-admin-service"
+import { GoogleCalendarCard } from "./google-calendar-card"
 
 const ALL_STATUSES: CallStatus[] = ["booked", "attended", "no_show", "cancelled", "rescheduled"]
 
@@ -72,6 +73,9 @@ export function CallsAdminPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Google Calendar connection */}
+      <GoogleCalendarCard />
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <StatCard label="Total" value={stats.total} />
