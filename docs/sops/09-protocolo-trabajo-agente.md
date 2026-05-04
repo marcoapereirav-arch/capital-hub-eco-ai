@@ -69,7 +69,31 @@ Al terminar un bloque de trabajo de código en este repo (feature, fix, doc, ref
 
 ---
 
+---
+
+## REGLA #4 — NO inventar nombres de UI de servicios externos
+
+Para **CUALQUIER** servicio externo (Meta, Whop, Resend, Vercel, GitHub, Supabase Dashboard, Stripe, Calendly, etc.):
+
+- **PROHIBIDO** decir "ve a la pestaña X" o "busca la opción Y" si no he visto esa pestaña/opción con mis propios ojos (vía screenshot del usuario, doc oficial leída en este turno, o curl al endpoint).
+- Si no estoy 100% seguro del nombre exacto de la UI: **pido captura de pantalla** o describo por funcionalidad (ej: "busca la opción que permite cambiar el email automático del cliente, suele estar en Settings del producto").
+- Si la decisión es crítica (cambia algo en producción): pedir confirmación con captura antes de afirmar.
+
+**Why:** El usuario me corrigió 2 veces:
+- 2026-05-04 turno A: le dije pestañas de Meta Events Manager que no existían en español ("Test Events" / "Activity" en lugar de "Probar eventos" / "Diagnóstico"). Perdió tiempo y confianza.
+- 2026-05-04 turno B: le dije opciones de Whop dashboard ("Email notifications", "Customer emails", "Welcome email") que no encontró porque las inventé.
+
+Inventarse nombres de UI es **mentir con confianza falsa**. Es peor que decir "no lo sé, pásame captura". El usuario pierde minutos buscando cosas que no existen y la confianza en mi guía cae a cero.
+
+**How to apply:**
+- Si voy a decir "ve a X" en un servicio externo, paso previo: ¿he visto X en este chat? ¿En screenshot del usuario? ¿En doc oficial que leí esta sesión?
+- Si la respuesta es NO → reemplazar por "no conozco la UI exacta, ¿me pasas captura del settings de [contexto] y te indico?"
+- Tampoco vale extrapolar de otros servicios ("Stripe lo llama así, Whop probablemente igual").
+
 ## Cambios versionados
 
 ### 2026-05-04 — Creación
 Las 3 reglas vivían dispersas: REGLA #1 y #2 en `~/.claude/.../memory/` (memoria privada local), REGLA #3 todavía no estaba escrita. Marco corrigió: **el Knowledge es la fuente única**. Movidas aquí, indexadas en `00-readme.md`. CLAUDE.md ahora solo tiene la REGLA #0 ("lee Knowledge antes de actuar") y apunta a este SOP indirectamente.
+
+### 2026-05-04 — REGLA #4 añadida
+Aplicación universal de la regla "no inventar UI de servicios externos". Estaba sólo para Meta en `07-tracking-meta.md` (versión 3) — Marco la rompió otra vez con Whop (le di opciones de dashboard que no existen). Ascendida a regla principal del agente, aplica a TODOS los servicios.

@@ -31,36 +31,68 @@ Reglas que no se rompen.
 
 Nombres definitivos pendientes — se actualizan post-MVP.
 
-## Flujo del checkout (link directo, MVP)
+## Flujo COMPLETO del funnel (orden de páginas)
 
 ```
-Landing /mifge
+Anuncio Meta
+   ↓
+/mifge (landing con VSL + CTA)
+   ↓
+Whop hosted checkout (free trial 14d producto MES, opcional order bump 19€)
    │
-   └──► click "QUIERO MI PRUEBA GRATUITA"
-        │
-        └──► Whop hosted checkout (URL directa con producto MES + bump opcional)
-             │
-             ├──► Whop captura tarjeta + activa trial
-             │
-             └──► Webhook `membership_activated` → /api/whop/webhook
-                  │
-                  ├──► Insert lead en `mifge_leads`
-                  ├──► Inserta entry en pipeline CRM como "Free Trial"
-                  ├──► Llamada HTTP a Capital Hub App para provisionar usuario
-                  ├──► Trigger email #1 (bienvenida trial)
-                  └──► Trigger evento Meta CAPI `mifge_free_trial_started`
-
-           Después: la página post-checkout dirige al cliente a /mifge/upsell-anual
-           dentro de NUESTRO dominio (no Whop). Desde ahí seguimos el flow.
+   ├─ webhook membership.went_valid → OS:
+   │    · upsert lead en mifge_leads (pipeline_stage=free_trial)
+   │    · email Resend #1 (bienvenida trial) — desde adrian@mail.capitalhubapp.com
+   │    · evento Meta CAPI mifge_free_trial_started
+   │    · HTTP call a Capital Hub App → provisión usuario + magic link
+   │
+   ↓ (success_url Whop redirige al cliente a:)
+/mifge/upsell-anual (oferta plan anual 970€ post-checkout — momento high intent)
+   │
+   ├─ SÍ → Whop checkout AÑO → webhook → pipeline_stage=won_ano + CAPI mifge_anual_purchased + email
+   │       success_url Whop AÑO redirige a /mifge/agenda
+   │
+   └─ NO → /mifge/agenda directo
+   ↓
+/mifge/agenda (calendar propio, slots disponibles 20min con Adrián)
+   ↓ (POST /api/mifge/calls/book)
+   │   · insert calls + lead a pipeline_stage=agendados
+   │   · email Resend #2 confirmación + .ics
+   │   · CAPI mifge_call_booked
+   ↓
+/mifge/llamada-confirmada (preparación pre-call + recordatorios cron 24h y 1h)
 ```
+
+**Reglas inquebrantables del flow:**
+
+- Tras Whop checkout (MES o AÑO) → siempre `/mifge/upsell-anual` (NO `/mifge/gracias`). El upsell anual va INMEDIATAMENTE post-pago para capturar intent.
+- `/mifge/gracias` existe pero NO está en el flow principal. Sirve como fallback para casos donde no hay upsell que ofrecer (ej: cliente que ya compró anual va directo a /mifge/agenda).
+- El cliente NUNCA debe ver `whop.com` salvo durante la pasarela de pago en sí. Después siempre rebota a nuestro dominio.
+
+## URL del webhook (productivo)
 
 ## URL del webhook (productivo)
 
 `https://ecoai.capitalhubapp.com/api/whop/webhook` — confirmado 2026-05-01. Vercel actual está en cuenta de Marco; cuando se migre a cuenta de Adrián/Capital Hub el dominio sigue siendo el mismo.
 
+## Configuración pendiente en Whop dashboard (acción manual de Marco)
+
+Por cada producto (MES, AÑO, BONUS) hay 2 cosas que configurar — **NO conozco los nombres exactos de las opciones en el dashboard de Whop, así que la lista es funcional, no literal**:
+
+1. **Desactivar emails que Whop envía al cliente** (welcome, recibos, recordatorios de renovación, etc.). Solo nuestros emails Resend deben llegar al cliente.
+2. **Configurar el redirect post-purchase** (success_url o equivalente) a:
+   - Producto MES → `https://ecoai.capitalhubapp.com/mifge/upsell-anual`
+   - Producto AÑO → `https://ecoai.capitalhubapp.com/mifge/agenda`
+   - Producto BONUS → mismo que MES (es order bump)
+3. **Desvincular cualquier "experience" / "Discord" / "Telegram" / hub Whop** que dé acceso interno a una comunidad Whop al cliente. El cliente solo accede a Capital Hub App vía magic link nuestro.
+
+Si Marco no encuentra alguna de estas opciones → comparte captura del settings del producto y AI le indica dónde tocar (regla #4: no inventar UI).
+
+Alternativa: la tarea `t_whop_configure_via_api` investiga si la API de Whop permite editar estos settings sin pasar por el dashboard.
+
 ## Refinamientos post-MVP
 
-- Personalizar el checkout: usar el widget embebido de Whop dentro de `/mifge/checkout` para mantener al cliente en nuestro dominio (mejor branding, menos drop-off).
+- Personalizar el checkout: usar el widget embebido de Whop dentro de `/mifge/checkout` para mantener al cliente en nuestro dominio (mejor branding, menos drop-off). En **someday** — el embed es nice-to-have. MVP funciona con redirect.
 - Renombrar productos con nombres definitivos cuando los confirmemos.
 
 ## Cambios versionados

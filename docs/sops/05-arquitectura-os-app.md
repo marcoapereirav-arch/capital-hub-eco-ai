@@ -34,9 +34,9 @@ Este documento clarifica qué es qué para no volver a confundirlos.
   - Comunidad (la real es Discord, esto se decidirá después)
   - Test vocacional
 - **Stack**: Next.js (otro repo, otro deploy).
-- **Supabase**: proyecto **DISTINTO** del OS.
-- **Vercel**: cuenta de Adrián.
-- **Repo**: en otro directorio del ordenador de Marco. NO está en este repo.
+- **Supabase**: proyecto **DISTINTO** del OS — **NO** es el `aglyoyqtzozdnusltjxe` que usamos en el OS. El App tiene su propio proyecto Supabase con su propia auth.users y sus propias tablas (formación, lecciones, progreso, etc.).
+- **Vercel**: **CUENTA distinta** a la cuenta actual del OS (que está en cuenta de Marco). Marco confirmó 2026-05-04 que el App vive en otra cuenta Vercel.
+- **Repo**: lo recibirá Marco de otra persona (en proceso). NO está en este repo del OS.
 
 ## Cómo se conectan
 
