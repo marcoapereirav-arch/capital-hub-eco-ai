@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Calendar, Plus, Trash2, Loader2 } from 'lucide-react'
-import { createScheduledPost, deleteScheduledPost } from '../actions'
+import { Calendar, Plus, Trash2, Loader2, Send } from 'lucide-react'
+import { createScheduledPost, deleteScheduledPost, publishScheduledPostNow } from '../actions'
 import type { ScheduledPost } from '../types'
 
 const MEDIA_TYPES: Array<ScheduledPost['media_type']> = ['reel', 'image', 'carousel', 'story']
@@ -57,6 +57,8 @@ export function CalendarView({ posts }: { posts: ScheduledPost[] }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [publishingId, setPublishingId] = useState<string | null>(null)
+  const [publishError, setPublishError] = useState<string | null>(null)
 
   const grouped = groupByDate(posts)
   const dates = Array.from(grouped.keys()).sort()
@@ -81,6 +83,16 @@ export function CalendarView({ posts }: { posts: ScheduledPost[] }) {
     setDeletingId(null)
   }
 
+  async function handlePublishNow(id: string) {
+    setPublishError(null)
+    setPublishingId(id)
+    const fd = new FormData()
+    fd.set('id', id)
+    const result = await publishScheduledPostNow(fd)
+    if (result.error) setPublishError(result.error)
+    setPublishingId(null)
+  }
+
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
   tomorrow.setHours(10, 0, 0, 0)
@@ -99,6 +111,12 @@ export function CalendarView({ posts }: { posts: ScheduledPost[] }) {
           Programar Post
         </Button>
       </div>
+
+      {publishError && (
+        <div className="border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+          Error al publicar: {publishError}
+        </div>
+      )}
 
       {dates.length === 0 ? (
         <div className="border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
@@ -144,6 +162,24 @@ export function CalendarView({ posts }: { posts: ScheduledPost[] }) {
                       <Badge variant={statusVariant(post.status)} className="font-mono text-[10px]">
                         {statusLabel(post.status)}
                       </Badge>
+                      {(post.status === 'scheduled' ||
+                        post.status === 'draft' ||
+                        post.status === 'failed') &&
+                        post.media_url && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handlePublishNow(post.id)}
+                            disabled={publishingId === post.id}
+                            title="Publicar ahora"
+                          >
+                            {publishingId === post.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Send className="h-3 w-3" />
+                            )}
+                          </Button>
+                        )}
                       <Button
                         size="sm"
                         variant="ghost"

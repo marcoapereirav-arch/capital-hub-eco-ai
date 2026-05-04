@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { publishMedia } from './services/meta-graph'
 
 export async function createScheduledPost(formData: FormData) {
   const supabase = await createClient()
@@ -91,4 +93,64 @@ export async function deleteScheduledPost(formData: FormData) {
 
   revalidatePath('/instagram')
   return { success: true }
+}
+
+export async function publishScheduledPostNow(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const id = formData.get('id')
+  if (typeof id !== 'string' || !id) return { error: 'id required' }
+
+  const { data: post } = await supabase
+    .from('ig_scheduled_posts')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()
+
+  if (!post) return { error: 'post not found' }
+  if (!post.media_url) return { error: 'media_url is required to publish' }
+
+  const admin = createAdminClient()
+  await admin
+    .from('ig_scheduled_posts')
+    .update({ status: 'publishing', publish_error: null })
+    .eq('id', id)
+
+  const mediaTypeMap: Record<string, 'REELS' | 'IMAGE' | 'STORIES'> = {
+    reel: 'REELS',
+    image: 'IMAGE',
+    carousel: 'IMAGE',
+    story: 'STORIES',
+  }
+  const igMediaType = mediaTypeMap[post.media_type] ?? 'REELS'
+
+  const result = await publishMedia({
+    mediaUrl: post.media_url,
+    caption: post.caption ?? undefined,
+    mediaType: igMediaType,
+  })
+
+  if (!result.ok) {
+    await admin
+      .from('ig_scheduled_posts')
+      .update({ status: 'failed', publish_error: result.error ?? 'unknown' })
+      .eq('id', id)
+    revalidatePath('/instagram')
+    return { error: result.error ?? 'publish failed' }
+  }
+
+  await admin
+    .from('ig_scheduled_posts')
+    .update({
+      status: 'published',
+      published_at: new Date().toISOString(),
+      ig_media_id: result.mediaId ?? null,
+      publish_error: null,
+    })
+    .eq('id', id)
+
+  revalidatePath('/instagram')
+  return { success: true, mediaId: result.mediaId }
 }

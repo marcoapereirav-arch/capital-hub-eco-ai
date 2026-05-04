@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getLiveInsights, getFollowerDemographics } from './meta-graph'
 import type { IgAccount, IgPost, IgOverview } from '../types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -46,8 +47,13 @@ export async function getTopPerformer(accountId: string): Promise<IgPost | null>
 
 export async function getOverview(): Promise<IgOverview> {
   const account = await getOwnAccount()
+  const metaGraphReady = Boolean(process.env.IG_ACCESS_TOKEN)
 
   if (!account) {
+    const [live, demographics] = await Promise.all([
+      getLiveInsights(),
+      getFollowerDemographics(),
+    ])
     return {
       account: null,
       totalPosts: 0,
@@ -60,7 +66,9 @@ export async function getOverview(): Promise<IgOverview> {
       posts30d: 0,
       topReel: null,
       recentPosts: [],
-      metaGraphReady: Boolean(process.env.META_ACCESS_TOKEN),
+      metaGraphReady,
+      live,
+      demographics,
     }
   }
 
@@ -75,6 +83,8 @@ export async function getOverview(): Promise<IgOverview> {
     posts30Res,
     topReel,
     recentPosts,
+    live,
+    demographics,
   ] = await Promise.all([
     supabase
       .from('ci_videos')
@@ -97,6 +107,8 @@ export async function getOverview(): Promise<IgOverview> {
       .gte('posted_at', thirtyDaysAgo),
     getTopPerformer(account.id),
     getRecentPosts(account.id, 12),
+    getLiveInsights(),
+    getFollowerDemographics(),
   ])
 
   type Row = { views: number | null; likes: number | null; comments: number | null; engagement_rate: number | null }
@@ -125,6 +137,8 @@ export async function getOverview(): Promise<IgOverview> {
     posts30d: posts30Res.count ?? 0,
     topReel,
     recentPosts,
-    metaGraphReady: Boolean(process.env.META_ACCESS_TOKEN),
+    metaGraphReady,
+    live,
+    demographics,
   }
 }

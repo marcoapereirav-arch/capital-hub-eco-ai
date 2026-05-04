@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Heart, MessageCircle, Eye, Film } from 'lucide-react'
-import type { IgOverview, IgPost } from '../types'
+import type { IgOverview, IgPost, IgDemographicsSnapshot } from '../types'
 
 function fmt(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -116,6 +116,59 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
         </div>
       )}
 
+      {overview.metaGraphReady && overview.live && (
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+              Snapshot en vivo (últimos 30 días)
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Datos directos de Meta Graph API. Se actualizan en cada carga.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+              {overview.live.followerCount !== null && (
+                <KpiCard
+                  title="Seguidores"
+                  value={overview.live.followerCount}
+                  source="meta-graph"
+                />
+              )}
+              <KpiCard title="Reach 30d" value={overview.live.reach30d} source="meta-graph" />
+              <KpiCard title="Vistas 30d" value={overview.live.views30d} source="meta-graph" />
+              <KpiCard
+                title="Visitas Perfil 30d"
+                value={overview.live.profileViews30d}
+                source="meta-graph"
+              />
+              <KpiCard
+                title="Cuentas Activadas 30d"
+                value={overview.live.accountsEngaged30d}
+                source="meta-graph"
+              />
+              <KpiCard
+                title="Interacciones 30d"
+                value={overview.live.totalInteractions30d}
+                source="meta-graph"
+              />
+              <KpiCard title="Likes 30d" value={overview.live.likes30d} source="meta-graph" />
+              <KpiCard
+                title="Comentarios 30d"
+                value={overview.live.comments30d}
+                source="meta-graph"
+              />
+              <KpiCard title="Shares 30d" value={overview.live.shares30d} source="meta-graph" />
+              <KpiCard title="Guardados 30d" value={overview.live.saves30d} source="meta-graph" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {overview.metaGraphReady && overview.demographics && (
+        <DemographicsPanel demographics={overview.demographics} />
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard title="Posts Totales" value={overview.totalPosts} source="apify" />
         <KpiCard title="Reels" value={overview.totalReels} source="apify" />
@@ -209,5 +262,59 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: number; la
       {icon}
       {fmt(value)} {label}
     </span>
+  )
+}
+
+function DemographicsPanel({ demographics }: { demographics: IgDemographicsSnapshot }) {
+  const blocks: Array<{ title: string; items: Array<{ key: string; value: number }> }> = [
+    { title: 'Países', items: demographics.byCountry },
+    { title: 'Ciudades', items: demographics.byCity },
+    { title: 'Edad', items: demographics.byAge },
+    { title: 'Género', items: demographics.byGender },
+  ].filter((b) => b.items.length > 0)
+
+  if (blocks.length === 0) return null
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+          Audiencia (este mes)
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Demografía de tus seguidores. Datos directos de Meta.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {blocks.map((block) => {
+            const max = Math.max(1, ...block.items.map((i) => i.value))
+            return (
+              <div key={block.title}>
+                <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {block.title}
+                </div>
+                <ul className="flex flex-col gap-2">
+                  {block.items.slice(0, 6).map((item) => (
+                    <li key={item.key} className="flex items-center gap-2 text-xs">
+                      <span className="w-16 truncate text-foreground">{item.key}</span>
+                      <div className="flex h-1 flex-1 items-center bg-border">
+                        <div
+                          className="h-full bg-foreground"
+                          style={{ width: `${(item.value / max) * 100}%` }}
+                        />
+                      </div>
+                      <span className="w-10 text-right font-mono text-muted-foreground">
+                        {fmt(item.value)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -21,6 +21,26 @@ export interface IgPost {
   thumbnail_url: string | null
 }
 
+export interface IgLiveSnapshot {
+  followerCount: number | null
+  reach30d: number
+  views30d: number
+  profileViews30d: number
+  accountsEngaged30d: number
+  totalInteractions30d: number
+  likes30d: number
+  comments30d: number
+  shares30d: number
+  saves30d: number
+}
+
+export interface IgDemographicsSnapshot {
+  byCountry: Array<{ key: string; value: number }>
+  byCity: Array<{ key: string; value: number }>
+  byAge: Array<{ key: string; value: number }>
+  byGender: Array<{ key: string; value: number }>
+}
+
 export interface IgOverview {
   account: IgAccount | null
   totalPosts: number
@@ -34,6 +54,8 @@ export interface IgOverview {
   topReel: IgPost | null
   recentPosts: IgPost[]
   metaGraphReady: boolean
+  live: IgLiveSnapshot | null
+  demographics: IgDemographicsSnapshot | null
 }
 
 export interface ScheduledPost {
