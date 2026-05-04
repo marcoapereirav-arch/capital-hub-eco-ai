@@ -49,6 +49,21 @@ Los 8 restantes se añaden iterando sin bloquear el lanzamiento.
 - Templates en **React Email** para que sean responsive y se rendericen bien en Gmail/Outlook/Apple Mail.
 - El `lead_id` se incluye en query de cada CTA para tracking interno.
 
+## Cron jobs Vercel (emails programados)
+
+`vercel.json` configura 2 cron jobs:
+
+| Schedule | Path | Qué hace |
+|---|---|---|
+| `*/30 * * * *` (cada 30 min) | `/api/cron/agenda-reminder-24h` | Busca calls con `slot_start` entre 23h-25h en futuro y `reminder_sent_at=null` → envía email #5 (recordatorio 24h) + marca enviado |
+| `0 * * * *` (cada hora) | `/api/cron/trial-ends-48h` | Busca leads `pipeline_stage=free_trial` creados hace ~12 días con `trial_ends_email_sent_at=null` → envía email #8 (trial termina en 48h) + marca enviado |
+
+Ambos endpoints validan `Authorization: Bearer ${CRON_SECRET}` para que solo Vercel cron pueda llamarlos. Vercel inyecta ese header automáticamente cuando dispara el cron.
+
+`CRON_SECRET` está en `.env.local` y en Vercel production. Generado con `openssl rand -hex 32`.
+
 ## Cambios versionados
 
 - **2026-04-30** (v1): definidos 13 emails + MVP de 5. Pendiente: copy específico de cada uno.
+- **2026-05-04** (v2): MIFGE 10 implementado. 5 templates React Email + senders + wiring webhook Whop + booking. Sender confirmado: `adrian@mail.capitalhubapp.com`. Dominio `mail.capitalhubapp.com` verificado en Resend.
+- **2026-05-04** (v3): MIFGE 20 implementado. Crons Vercel para emails programados (recordatorio 24h pre-call + trial termina 48h). Columna `mifge_leads.trial_ends_email_sent_at` añadida para idempotencia.
