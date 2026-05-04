@@ -1,4 +1,4 @@
-export type Platform = 'ghl' | 'meta_ads' | 'youtube' | 'instagram'
+export type Platform = 'ghl' | 'meta_ads' | 'youtube' | 'instagram' | 'manychat'
 
 export type ConnectionStatus = 'connected' | 'disconnected' | 'error'
 
@@ -52,10 +52,52 @@ export interface GhlRawContact {
   contact_created_at: string | null
 }
 
+export interface ManychatRawSubscriber {
+  id: string
+  page_id: string | null
+  name: string | null
+  first_name: string | null
+  last_name: string | null
+  gender: string | null
+  profile_pic: string | null
+  locale: string | null
+  language: string | null
+  timezone: string | null
+  ig_username: string | null
+  ig_id: string | null
+  last_input_text: string | null
+  last_interaction_at: string | null
+  last_seen_at: string | null
+  subscribed_at: string | null
+  status: string | null
+  optin_fb: boolean
+  optin_email: boolean
+  optin_sms: boolean
+  optin_whatsapp: boolean
+  tags: string[]
+  custom_fields: Record<string, unknown>
+  raw: Record<string, unknown>
+}
+
+export interface ManychatRawTag {
+  id: string
+  name: string
+}
+
+export interface ManychatRawCustomField {
+  id: string
+  name: string
+  type: string | null
+  description: string | null
+}
+
 export interface AdapterRawData {
   ghlPipelines?: GhlRawPipeline[]
   ghlOpportunities?: GhlRawOpportunity[]
   ghlContacts?: GhlRawContact[]
+  manychatSubscribers?: ManychatRawSubscriber[]
+  manychatTags?: ManychatRawTag[]
+  manychatCustomFields?: ManychatRawCustomField[]
 }
 
 export interface AdapterResult {

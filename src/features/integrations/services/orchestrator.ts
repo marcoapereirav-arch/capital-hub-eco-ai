@@ -94,10 +94,17 @@ export async function syncPlatform(platform: Platform): Promise<AdapterResult> {
     }
   }
 
-  // Persist raw data (GHL opps, pipelines, contacts)
+  // Persist raw data (GHL opps, pipelines, contacts; ManyChat tags, custom fields, subscribers)
   if (result.rawData) {
     const now = new Date().toISOString()
-    const { ghlPipelines, ghlOpportunities, ghlContacts } = result.rawData
+    const {
+      ghlPipelines,
+      ghlOpportunities,
+      ghlContacts,
+      manychatSubscribers,
+      manychatTags,
+      manychatCustomFields,
+    } = result.rawData
 
     if (ghlPipelines && ghlPipelines.length > 0) {
       const rows = ghlPipelines.map(p => ({
@@ -117,6 +124,21 @@ export async function syncPlatform(platform: Platform): Promise<AdapterResult> {
     if (ghlContacts && ghlContacts.length > 0) {
       const rows = ghlContacts.map(c => ({ ...c, synced_at: now }))
       await supabase.from('ghl_contacts_cache').upsert(rows, { onConflict: 'id' })
+    }
+
+    if (manychatTags && manychatTags.length > 0) {
+      const rows = manychatTags.map(t => ({ ...t, synced_at: now }))
+      await supabase.from('manychat_tags_cache').upsert(rows, { onConflict: 'id' })
+    }
+
+    if (manychatCustomFields && manychatCustomFields.length > 0) {
+      const rows = manychatCustomFields.map(f => ({ ...f, synced_at: now }))
+      await supabase.from('manychat_custom_fields_cache').upsert(rows, { onConflict: 'id' })
+    }
+
+    if (manychatSubscribers && manychatSubscribers.length > 0) {
+      const rows = manychatSubscribers.map(s => ({ ...s, synced_at: now }))
+      await supabase.from('manychat_subscribers_cache').upsert(rows, { onConflict: 'id' })
     }
   }
 
