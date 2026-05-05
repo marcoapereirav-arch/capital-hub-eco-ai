@@ -96,11 +96,19 @@ export async function POST(req: NextRequest) {
 
   const supabase = createAdminClient()
 
-  await supabase.from('manychat_events').insert({
+  const { error: eventError } = await supabase.from('manychat_events').insert({
     subscriber_id: subscriber?.id ? String(subscriber.id) : null,
     event_type: eventType,
     payload: body as unknown as Record<string, unknown>,
   })
+
+  if (eventError) {
+    console.error('[manychat-webhook] event insert failed:', eventError)
+    return Response.json(
+      { ok: false, error: 'event_insert_failed', detail: eventError.message },
+      { status: 500 }
+    )
+  }
 
   if (subscriber?.id) {
     const row = {
@@ -131,9 +139,17 @@ export async function POST(req: NextRequest) {
       synced_at: new Date().toISOString(),
     }
 
-    await supabase
+    const { error: subError } = await supabase
       .from('manychat_subscribers_cache')
       .upsert(row, { onConflict: 'id' })
+
+    if (subError) {
+      console.error('[manychat-webhook] subscriber upsert failed:', subError)
+      return Response.json(
+        { ok: false, error: 'subscriber_upsert_failed', detail: subError.message },
+        { status: 500 }
+      )
+    }
   }
 
   return Response.json({ ok: true })

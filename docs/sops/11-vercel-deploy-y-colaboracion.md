@@ -173,3 +173,26 @@ Sin estas las rutas nuevas fallarán en runtime cuando ManyChat las llame, pero 
 - Cuando un paquete tiene binarios nativos (ffmpeg, ffprobe, sharp, etc.) **siempre** añadirlo a `serverExternalPackages` en `next.config.ts`. Turbopack no sabe procesar binarios.
 - Si se cambia un import de paquete a otro equivalente (`ffprobe-static` → `@ffprobe-installer/ffprobe`), revisar también `next.config.ts` por si la entry vieja sigue ahí.
 - Antes de declarar "auto-deploy roto" investigar si el build falla por otra razón previa (env vars, packages, etc.).
+
+### 2026-05-05 — Activación ManyChat + Instagram en producción + fix typo `SUPABASE_SERVICE_KEY`
+
+**Qué se hizo:**
+1. Adrian añadió las 8 env vars pendientes vía CLI Vercel: `MANYCHAT_API_KEY`, `MANYCHAT_WEBHOOK_SECRET`, `IG_ACCESS_TOKEN`, `IG_APP_ID`, `IG_APP_SECRET`, `IG_USER_ID`, `META_APP_ID`, `META_APP_SECRET`. Esto desbloqueó las tasks `t_manychat_envvars_vercel` y `t_ig_meta_envvars_vercel`.
+2. Disparado redeploy con `vercel redeploy https://ecoai.capitalhubapp.com` para que los nuevos env vars se inyecten al runtime de las funciones serverless.
+3. Verificación end-to-end del webhook `POST /api/webhooks/manychat`:
+   - Sin auth → 401 (env `MANYCHAT_WEBHOOK_SECRET` cargado correctamente)
+   - Con auth válida → 200 + insert en `manychat_events` y upsert en `manychat_subscribers_cache` confirmados en BD.
+
+**Bug encontrado durante la verificación: `SUPABASE_SERVICE_KEY` tenía un typo en producción.**
+- Valor en Vercel: empezaba con `b_secret_...` (le faltaba la `s` inicial — debería ser `sb_secret_...`)
+- Valor correcto en `.env.local`: empieza con `sb_secret_...` (un caracter más al inicio)
+- Síntoma: el webhook devolvía `{"ok":true}` pero el insert a Supabase fallaba silenciosamente (token Supabase rechazado). Tabla `manychat_events` se quedaba vacía después de cada POST.
+- Fix: `vercel env rm SUPABASE_SERVICE_KEY production --yes` + `vercel env add` con el valor correcto desde `.env.local` + redeploy.
+
+**Bug colateral arreglado en el código del webhook:**
+[src/app/api/webhooks/manychat/route.ts](../../src/app/api/webhooks/manychat/route.ts) hacía `await supabase.from(...).insert(...)` sin verificar el `.error` devuelto. Si el insert fallaba (RLS, key inválida, schema mismatch) el endpoint igualmente respondía `ok:true`. Fix: ambos inserts (events + subscribers) ahora chequean error y devuelven 500 con detalle si hay fallo. Esto evitará que un futuro typo o bug pase desapercibido.
+
+**Aprendizaje:**
+- **Toda escritura a BD desde un endpoint público debe chequear el `error` retornado y propagarlo al response code.** Los webhooks que silencian errores son peligrosísimos — el caller (ManyChat) cree que entregó el mensaje y nunca reintenta; tú no te enteras hasta que ya hay 200 mensajes perdidos.
+- Cuando se pegan secrets manualmente en el dashboard de Vercel, **verificar que la longitud y prefijo coinciden con el formato esperado** (`sb_secret_*` para Supabase, `EAA*` para Meta corto, `IGAA*` para Meta IG long-lived, etc.). Un caracter perdido al copy-paste es un bug enterrado horas después.
+- `vercel env pull .env.vercel-production` permite descargar las env vars de producción y compararlas contra `.env.local`. Útil para diagnóstico post-incidente. Borrar el archivo después.
