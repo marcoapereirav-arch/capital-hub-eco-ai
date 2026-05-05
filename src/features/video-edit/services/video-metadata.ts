@@ -1,9 +1,8 @@
 import { spawn } from 'child_process'
-// @ts-expect-error - ffprobe-static no tiene tipos
-import ffprobeStatic from 'ffprobe-static'
+import ffprobeInstaller from '@ffprobe-installer/ffprobe'
 
 /**
- * Detecta metadatos del video usando ffprobe (ffprobe-static).
+ * Detecta metadatos del video usando ffprobe (@ffprobe-installer/ffprobe).
  *
  * Lo usamos para auto-detectar la rotación del iPhone HEVC vertical:
  * el archivo viene en bytes 1920x1080 (landscape sensor) con metadata
@@ -40,7 +39,7 @@ interface FFProbeResult {
 
 export async function probeVideo(url: string): Promise<VideoMetadata> {
   return new Promise((resolve, reject) => {
-    const ffprobePath = ffprobeStatic.path
+    const ffprobePath = ffprobeInstaller.path
     const args = [
       '-v',
       'error',
