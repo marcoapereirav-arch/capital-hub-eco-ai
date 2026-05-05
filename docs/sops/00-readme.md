@@ -30,6 +30,7 @@ Si una decisión no está aquí, **no existe**. Si está aquí, es la versión v
 | 08 | [Mobile-First OS](08-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints, anti-patrones |
 | 09 | [Protocolo de trabajo del agente](09-protocolo-trabajo-agente.md) | REGLA #1 auto-board, REGLA #2 auto-knowledge, REGLA #3 auto-commit+push |
 | 10 | [Protocolo de proyectos externos](10-proyectos-externos.md) | Verificar siempre nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / Polar / DNS |
+| 11 | [Vercel - deploy y colaboración](11-vercel-deploy-y-colaboracion.md) | Producción vive en el team Pro de Adrian. Workflow diario, env vars, dominios, incidente de migración 2026-05-05 |
 
 ## Cómo se actualiza
 
