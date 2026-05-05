@@ -135,3 +135,41 @@ Vercel solo dispara auto-deploy cuando el autor del commit en Git tiene su cuent
 - Para cualquier proyecto en producción donde haya 2+ colaboradores, el Vercel **debe ser un team Pro** desde el inicio, no Hobby personal. Hobby colapsa cuando entra un segundo dev.
 - Si un proyecto fue creado en Hobby personal y entra un segundo dev: o se transfiere a un team Pro, o el segundo dev está condenado a no desplegar.
 - Cuando se haga Transfer Project entre cuentas, el orden importa: primero borrar duplicados en el destino, después ajustar dominios, después transferir.
+
+### 2026-05-05 — Fix bug ffprobe pre-existente que bloqueaba builds
+
+**Síntoma:** después de migrar a Vercel Pro, el primer auto-deploy de Marco falló con `Module not found: Can't resolve 'ffprobe-static'`. Los 2 deploys anteriores (de hace 17h y 19h, antes de la migración) habían fallado por la misma razón.
+
+**Causa raíz:**
+El archivo [src/features/video-edit/services/video-metadata.ts](../../src/features/video-edit/services/video-metadata.ts) importaba `ffprobe-static`, paquete que no estaba en `package.json`. El paquete instalado era `@ffprobe-installer/ffprobe` (con `.path` similar). Probable refactor incompleto.
+
+**Fix aplicado en 2 commits:**
+
+1. `1de70e5` — Cambio del import en `video-metadata.ts`:
+   ```ts
+   // antes
+   import ffprobeStatic from 'ffprobe-static'
+   // después
+   import ffprobeInstaller from '@ffprobe-installer/ffprobe'
+   ```
+   También removí el `@ts-expect-error` porque el paquete nuevo trae tipos.
+
+2. `c7002e6` — Actualización de [next.config.ts](../../next.config.ts):
+   - Añadido `@ffprobe-installer/ffprobe` y `fluent-ffmpeg` a `serverExternalPackages`. Sin esto, Turbopack intenta empaquetar el binario nativo de ffprobe (linux-x64) en los Server Functions y falla con "Unknown module type".
+   - Eliminadas entries muertas de `ffprobe-static` y `ffmpeg-static` (no están instaladas).
+
+**Resultado:**
+Build pasa verde en 90s. Producción avanza al SHA `c7002e6`. Los endpoints nuevos de Adrian (`/manychat` 307, `/instagram` 307, `/api/webhooks/manychat` 405 a GET) responden correctamente.
+
+**Pendiente (no urgente):**
+Adrian debe añadir env vars en Vercel cuando active ManyChat/Instagram en producción:
+- `MANYCHAT_API_KEY`, `MANYCHAT_WEBHOOK_SECRET`
+- `IG_ACCESS_TOKEN`, `IG_APP_ID`, `IG_APP_SECRET`, `IG_USER_ID`
+- `META_APP_ID`, `META_APP_SECRET`
+
+Sin estas las rutas nuevas fallarán en runtime cuando ManyChat las llame, pero el resto del sitio funciona perfectamente.
+
+**Aprendizaje:**
+- Cuando un paquete tiene binarios nativos (ffmpeg, ffprobe, sharp, etc.) **siempre** añadirlo a `serverExternalPackages` en `next.config.ts`. Turbopack no sabe procesar binarios.
+- Si se cambia un import de paquete a otro equivalente (`ffprobe-static` → `@ffprobe-installer/ffprobe`), revisar también `next.config.ts` por si la entry vieja sigue ahí.
+- Antes de declarar "auto-deploy roto" investigar si el build falla por otra razón previa (env vars, packages, etc.).
