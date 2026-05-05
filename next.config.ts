@@ -22,9 +22,9 @@ const nextConfig: NextConfig = {
     '@remotion/bundler',
     '@remotion/renderer',
     'remotion',
-    'ffprobe-static',
-    'ffmpeg-static',
+    '@ffprobe-installer/ffprobe',
     '@ffmpeg-installer/ffmpeg',
+    'fluent-ffmpeg',
   ],
 
   async headers() {
