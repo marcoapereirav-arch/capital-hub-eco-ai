@@ -35,6 +35,7 @@ export const KNOWN_EVENTS = [
   "mifge_anual_purchased",
   "mifge_monthly_purchased",
   "mifge_call_attended",
+  "mifge_lead_magnet_optin",
 ] as const
 
 export const EVENT_LABELS: Record<string, string> = {
@@ -45,6 +46,20 @@ export const EVENT_LABELS: Record<string, string> = {
   mifge_anual_purchased: "Compra Anual 970€",
   mifge_monthly_purchased: "Compra Mensual 97€",
   mifge_call_attended: "Llamada atendida",
+  mifge_lead_magnet_optin: "Opt-in Lead Magnet (agregado)",
+}
+
+/**
+ * Para eventos granulares por lead magnet (mifge_lm_<slug>) que no son fijos,
+ * generamos label dinámico desde el slug.
+ */
+export function getEventLabel(eventName: string): string {
+  if (EVENT_LABELS[eventName]) return EVENT_LABELS[eventName]
+  if (eventName.startsWith("mifge_lm_")) {
+    const slug = eventName.slice("mifge_lm_".length)
+    return `Lead Magnet · ${slug.replace(/_/g, " ")}`
+  }
+  return eventName
 }
 
 export const STATUS_META: Record<EventStatus, { label: string; color: string }> = {

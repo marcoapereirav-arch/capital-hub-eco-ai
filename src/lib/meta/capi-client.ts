@@ -34,6 +34,9 @@ export type CapiEventName =
   | "mifge_anual_purchased"
   | "mifge_monthly_purchased"
   | "mifge_call_attended"
+  // Lead magnets (añadidos 2026-05-06 — ver SOP marketing/06-lead-magnets)
+  | "mifge_lead_magnet_optin"
+  | `mifge_lm_${string}`
   // Eventos estándar de Meta (mejor optimización de campañas)
   | "InitiateCheckout"
   | "Purchase"
