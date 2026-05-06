@@ -1,28 +1,39 @@
 import Replicate from 'replicate'
 import type { WhisperTranscript, WhisperWord } from '../types/video-edit'
 
-// Modelo: openai/whisper (large-v3). MENOS limpieza automática que WhisperX —
-// captura repeticiones reales del hablante (frases que se truncan y reformulan).
-// El otro modelo VAD-cleanea las repeticiones y el LLM-edit no podía atacarlas.
-// Acepta video directo (extrae audio via ffmpeg internally).
-const WHISPER_MODEL =
-  'openai/whisper:8099696689d249cf8b122d833c36ac3f75505c666a395ca40ef26f68e7d3d16e'
+/**
+ * Modelo: vaibhavs10/incredibly-fast-whisper.
+ *
+ * Devuelve word-level timestamps REALES (no aproximados). Hace alineación
+ * forzada del audio con cada palabra del transcript, por lo que los
+ * subtítulos clavan al ms con la voz.
+ *
+ * Antes usábamos openai/whisper que NO soporta word_timestamps — solo
+ * devuelve timestamps por segmento y aproximábamos por palabra
+ * proporcionalmente al length, causando descuadre visible en subs.
+ *
+ * Acepta video directo (extrae audio via ffmpeg internally).
+ */
+const WHISPER_MODEL = 'vaibhavs10/incredibly-fast-whisper'
 
-interface OpenAIWhisperSegment {
-  id?: number
-  start?: number
-  end?: number
-  text?: string
-  // openai/whisper no devuelve word-level timestamps por defecto, pero podemos
-  // pedirlo. Si no vienen, fallback a word=segment.
+interface IncrediblyFastWhisperChunk {
+  text: string
+  timestamp: [number, number] // [start_seconds, end_seconds]
 }
 
-interface OpenAIWhisperOutput {
-  detected_language?: string
-  transcription?: string
-  segments?: OpenAIWhisperSegment[]
-  // Algunas variantes devuelven word-level si activas word_timestamps
-  word_timestamps?: Array<{ word: string; start: number; end: number }>
+interface IncrediblyFastWhisperOutput {
+  text?: string
+  chunks?: IncrediblyFastWhisperChunk[]
+}
+
+// Códigos ISO → nombres aceptados por incredibly-fast-whisper
+const LANGUAGE_MAP: Record<string, string> = {
+  es: 'spanish',
+  en: 'english',
+  fr: 'french',
+  de: 'german',
+  it: 'italian',
+  pt: 'portuguese',
 }
 
 function getReplicate(): Replicate {
@@ -35,77 +46,63 @@ function getReplicate(): Replicate {
 
 /**
  * Transcribe un video subido a Supabase Storage via su URL publica firmada.
- * Acepta video (MOV/MP4) — WhisperX lo demultiplexa con ffmpeg automaticamente.
- * Devuelve transcript con palabras + timestamps.
+ * Acepta video (MOV/MP4) — el modelo demultiplexa con ffmpeg automaticamente.
+ * Devuelve transcript con palabras + timestamps por palabra.
  */
 export async function transcribeAudioFromUrl(
   signedAudioUrl: string,
   language: string = 'es',
 ): Promise<WhisperTranscript> {
   const replicate = getReplicate()
+  const lang = LANGUAGE_MAP[language] ?? language
 
   const output = (await replicate.run(WHISPER_MODEL, {
     input: {
       audio: signedAudioUrl,
-      language,
-      transcription: 'plain text',
-      condition_on_previous_text: true,
-      // word_timestamps: true → Whisper devuelve timestamps EXACTOS por palabra
-      // en vez de timestamps por segmento. Sin esto, los timestamps se
-      // aproximan distribuyendo el tiempo del segmento proporcionalmente al
-      // length de cada palabra → causa descuadre visible en los subs.
-      word_timestamps: true,
-      temperature: 0,
+      task: 'transcribe',
+      language: lang,
+      batch_size: 24,
+      timestamp: 'word', // crítico: timestamps reales por palabra
+      diarise_audio: false,
     },
-  })) as OpenAIWhisperOutput
+  })) as IncrediblyFastWhisperOutput
 
-  const segments = output.segments ?? []
-  const words: WhisperWord[] = []
-  const textParts: string[] = []
-
-  for (const seg of segments) {
-    if (seg.text) textParts.push(seg.text.trim())
-    if (typeof seg.start !== 'number' || typeof seg.end !== 'number' || !seg.text) continue
-
-    // Distribuir tiempo del segmento entre las palabras proporcionalmente
-    const segmentWords = seg.text
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-    if (segmentWords.length === 0) continue
-
-    const segDuration = seg.end - seg.start
-    const totalChars = segmentWords.reduce((acc, w) => acc + w.length, 0) || segmentWords.length
-
-    let cursor = seg.start
-    for (const word of segmentWords) {
-      const portion = (word.length || 1) / totalChars
-      const wordDuration = segDuration * portion
-      words.push({
-        word,
-        start: cursor,
-        end: cursor + wordDuration,
-      })
-      cursor += wordDuration
+  const chunks = output.chunks ?? []
+  if (chunks.length === 0) {
+    return {
+      text: output.text ?? '',
+      language,
+      words: [],
     }
   }
 
-  // Si Replicate devolvió word_timestamps directamente, los preferimos
-  let finalWords: WhisperWord[]
-  if (output.word_timestamps && output.word_timestamps.length > 0) {
-    finalWords = output.word_timestamps.map((w) => ({
-      word: w.word,
-      start: w.start,
-      end: w.end,
+  // Mapear chunks → words. El modelo a veces incluye chunks con timestamp null
+  // al final (cuando no puede alinear la última palabra) — los filtramos.
+  const rawWords: WhisperWord[] = chunks
+    .filter(
+      (c) =>
+        c.timestamp &&
+        Array.isArray(c.timestamp) &&
+        typeof c.timestamp[0] === 'number' &&
+        typeof c.timestamp[1] === 'number' &&
+        c.text &&
+        c.text.trim().length > 0,
+    )
+    .map((c) => ({
+      word: c.text.trim(),
+      start: c.timestamp[0],
+      end: c.timestamp[1],
     }))
-  } else {
-    finalWords = words
-  }
+    // Defensa: end debe ser > start. Si no, le damos al menos 50ms.
+    .map((w) => ({
+      ...w,
+      end: w.end > w.start ? w.end : w.start + 0.05,
+    }))
 
   return {
-    text: output.transcription ?? textParts.join(' '),
-    language: output.detected_language ?? language,
-    words: dedupeConsecutiveDuplicates(finalWords),
+    text: output.text ?? rawWords.map((w) => w.word).join(' '),
+    language,
+    words: dedupeConsecutiveDuplicates(rawWords),
   }
 }
 
