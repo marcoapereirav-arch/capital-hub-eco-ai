@@ -18,15 +18,15 @@ export const WarmColorGrade: React.FC<WarmColorGradeProps> = ({ intensity = 0.7 
   const i = Math.max(0, Math.min(1, intensity))
   return (
     <>
-      {/* Capa warm en midtones — soft-light suaviza, no satura demasiado */}
+      {/* Capa warm en midtones — soft-light, naranja suave */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(180deg, rgba(255, 165, 90, 1) 0%, rgba(255, 140, 70, 1) 60%, rgba(255, 110, 50, 1) 100%)',
+            'linear-gradient(180deg, rgba(255, 200, 155, 1) 0%, rgba(255, 180, 140, 1) 60%, rgba(245, 160, 120, 1) 100%)',
           mixBlendMode: 'soft-light',
-          opacity: 0.55 * i,
+          opacity: 0.30 * i,
           pointerEvents: 'none',
         }}
       />
@@ -35,9 +35,9 @@ export const WarmColorGrade: React.FC<WarmColorGradeProps> = ({ intensity = 0.7 
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(255, 130, 60, 1)',
+          background: 'rgba(255, 160, 110, 1)',
           mixBlendMode: 'overlay',
-          opacity: 0.12 * i,
+          opacity: 0.05 * i,
           pointerEvents: 'none',
         }}
       />
@@ -47,9 +47,9 @@ export const WarmColorGrade: React.FC<WarmColorGradeProps> = ({ intensity = 0.7 
           position: 'absolute',
           inset: 0,
           background:
-            'linear-gradient(180deg, rgba(255,255,255,0) 60%, rgba(120, 60, 20, 1) 100%)',
+            'linear-gradient(180deg, rgba(255,255,255,0) 60%, rgba(140, 90, 55, 1) 100%)',
           mixBlendMode: 'multiply',
-          opacity: 0.18 * i,
+          opacity: 0.10 * i,
           pointerEvents: 'none',
         }}
       />

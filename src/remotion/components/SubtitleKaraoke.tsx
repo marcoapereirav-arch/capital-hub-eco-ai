@@ -1,4 +1,5 @@
 import { useCurrentFrame, useVideoConfig } from 'remotion'
+import { loadCapitalHubFonts } from '../lib/fonts'
 
 export interface SubtitleWord {
   word: string
@@ -12,21 +13,11 @@ interface SubtitleKaraokeProps {
   maxVisibleWords?: number
 }
 
-/**
- * Subtítulos karaoke estilo Diego García del Río.
- *
- * Usa CSS real (browser rendering) para clavar al pixel:
- *  - Inter Medium 500
- *  - 40px sobre 1080
- *  - Blanco puro, sin outline
- *  - Posición lower-third (zona pecho del sujeto)
- *
- * El sliding window de 3 palabras avanza con cada palabra hablada.
- */
 export const SubtitleKaraoke: React.FC<SubtitleKaraokeProps> = ({
   words,
   maxVisibleWords = 3,
 }) => {
+  loadCapitalHubFonts()
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
   const currentSecond = frame / fps
@@ -69,13 +60,12 @@ export const SubtitleKaraoke: React.FC<SubtitleKaraokeProps> = ({
         transform: 'translateX(-50%)',
         width: '85%',
         textAlign: 'center',
-        fontFamily: 'Inter, "SF Pro Display", -apple-system, sans-serif',
-        fontWeight: 500,
+        fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
+        fontWeight: 800,
         fontSize: 44,
         color: '#FFFFFF',
-        // Sutil sombra para legibilidad sobre cualquier fondo (sin outline)
         textShadow:
-          '0 2px 8px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.65)',
+          '0 3px 10px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.75)',
         letterSpacing: -0.2,
         lineHeight: 1.15,
         // Sentence case heredado del transcript (Whisper devuelve casing natural)
