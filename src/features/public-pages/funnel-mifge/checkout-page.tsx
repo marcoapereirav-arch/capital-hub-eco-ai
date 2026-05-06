@@ -74,8 +74,12 @@ export default function MifgeCheckoutPage() {
         }
       }
     } finally {
-      // 3. Redirect al upsell anual sea como sea
-      window.location.href = "/mifge/upsell-anual"
+      // 3. Redirect al upsell anual con receipt_id (lo necesita para cobrar one-click)
+      const params = new URLSearchParams()
+      if (receiptId) params.set("rid", receiptId)
+      if (emailRef.current) params.set("e", emailRef.current)
+      const qs = params.toString()
+      window.location.href = `/mifge/upsell-anual${qs ? `?${qs}` : ""}`
     }
   }, [])
 

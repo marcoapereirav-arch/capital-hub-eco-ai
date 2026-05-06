@@ -1,23 +1,89 @@
 "use client"
 
-import React from "react"
-import { useRouter } from "next/navigation"
-import { AlertTriangle, Check, ArrowUpRight } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { AlertTriangle, Check, ArrowUpRight, Loader2 } from "lucide-react"
 import CustomCursor from "@/features/public-pages/funnel-lt8/components/CustomCursor"
+import { track } from "@/lib/meta/pixel-client"
 import "@/features/public-pages/funnel-lt8/styles.css"
 
 const NEXT_STEP = "/mifge/agenda"
 
 export default function MifgeUpsellAnualPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [processing, setProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [receiptId, setReceiptId] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
 
-  function handleAccept() {
-    // Whop AÑO checkout. Si no está configurada la env, fallback al siguiente step.
-    const url = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO
-    if (url) {
-      window.location.href = url
-    } else {
-      router.push(NEXT_STEP)
+  // Recoge receipt_id (rid) y email (e) del query string que pasa el checkout
+  useEffect(() => {
+    setReceiptId(searchParams.get("rid"))
+    setEmail(searchParams.get("e"))
+  }, [searchParams])
+
+  async function handleAccept() {
+    setError(null)
+
+    // Si no tenemos receipt_id, NO podemos hacer one-click → fallback al hosted
+    if (!receiptId) {
+      const fallback = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO
+      if (fallback) {
+        window.location.href = fallback
+      } else {
+        router.push(NEXT_STEP)
+      }
+      return
+    }
+
+    setProcessing(true)
+    try {
+      const res = await fetch("/api/mifge/upsell-anual/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          receipt_id: receiptId,
+          email: email ?? undefined,
+        }),
+      })
+      const data = await res.json()
+
+      if (res.ok && data.ok) {
+        // Pixel + CAPI Purchase 970EUR (el webhook tambien lo dispara, pero
+        // este client-side mejora attribution match en Meta)
+        track({
+          event: "mifge_upsell_anual_one_click",
+          standardEvent: "Purchase",
+          email: email ?? undefined,
+          value: 970,
+          currency: "EUR",
+          contentName: "CAPITAL HUB AÑO (one-click upsell)",
+          custom: { payment_id: data.payment_id },
+        }).catch(() => {})
+
+        // Mini delay para que el webhook tenga tiempo de procesar antes del agenda
+        setTimeout(() => router.push(NEXT_STEP), 800)
+        return
+      }
+
+      // Fallo: si Whop nos da fallback_url, redirigimos al checkout hosted
+      if (data.fallback_url) {
+        window.location.href = data.fallback_url
+        return
+      }
+
+      setError(data.error ?? "No pudimos procesar el cobro. Intenta de nuevo.")
+      setProcessing(false)
+    } catch (e) {
+      console.error("[upsell-anual] fetch error", e)
+      const fallback = process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO
+      if (fallback) {
+        window.location.href = fallback
+        return
+      }
+      setError("Error de conexión. Intenta de nuevo.")
+      setProcessing(false)
     }
   }
 
@@ -89,16 +155,40 @@ export default function MifgeUpsellAnualPage() {
             {/* BOTÓN SÍ — enorme */}
             <button
               onClick={handleAccept}
-              className="btn-green w-full py-5 font-mono uppercase text-sm md:text-base tracking-wider rounded-[2px] flex items-center justify-center gap-3 mb-4"
+              disabled={processing}
+              className="btn-green w-full py-5 font-mono uppercase text-sm md:text-base tracking-wider rounded-[2px] flex items-center justify-center gap-3 mb-2 disabled:opacity-60 disabled:cursor-wait"
             >
-              SÍ, QUIERO AHORRAR 194€ Y CAMBIAR A ANUAL
-              <ArrowUpRight size={20} />
+              {processing ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  COBRANDO 970€ A TU TARJETA…
+                </>
+              ) : (
+                <>
+                  SÍ, QUIERO AHORRAR 194€ Y CAMBIAR A ANUAL
+                  <ArrowUpRight size={20} />
+                </>
+              )}
             </button>
+
+            {/* Hint one-click discreto */}
+            {receiptId && !processing && (
+              <p className="text-center text-[#37ca37]/70 text-[10px] font-mono uppercase tracking-wider mb-4">
+                Pago en 1 click · usa la tarjeta que acabas de meter
+              </p>
+            )}
+
+            {error && (
+              <p className="text-center text-red-400 text-xs mb-4">
+                {error}
+              </p>
+            )}
 
             {/* BOTÓN NO — pequeño y discreto */}
             <button
               onClick={handleDecline}
-              className="block mx-auto text-[#4B5563] text-xs underline underline-offset-4 hover:text-[#6B7280] transition-colors"
+              disabled={processing}
+              className="block mx-auto text-[#4B5563] text-xs underline underline-offset-4 hover:text-[#6B7280] transition-colors disabled:opacity-30"
             >
               no gracias, prefiero pagar mes a mes
             </button>
