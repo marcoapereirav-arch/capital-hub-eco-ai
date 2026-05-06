@@ -1,6 +1,7 @@
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { BusinessStatus } from "@/features/dashboard/components/business-status"
 import { FunnelPerformance } from "@/features/dashboard/components/funnel-performance"
+import { LeadMagnetsMiniFunnel } from "@/features/dashboard/components/lead-magnets-mini-funnel"
 import { Separator } from "@/components/ui/separator"
 
 export const dynamic = "force-dynamic"
@@ -15,7 +16,12 @@ export default function DashboardPage() {
 
         <Separator />
 
-        {/* SECCIÓN 2 — Performance del funnel */}
+        {/* SECCIÓN 2 — KPI 0 Lead Magnets (mini-funnel) */}
+        <LeadMagnetsMiniFunnel />
+
+        <Separator />
+
+        {/* SECCIÓN 3 — Performance del funnel MIFGE (5 KPIs) */}
         <FunnelPerformance />
       </div>
     </>
