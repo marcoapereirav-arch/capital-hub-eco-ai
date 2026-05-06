@@ -1,6 +1,6 @@
 ---
 title: Arquitectura — Capital Hub OS vs Capital Hub App
-order: 5
+order: 2
 ---
 
 # Dos productos distintos, dos proyectos distintos

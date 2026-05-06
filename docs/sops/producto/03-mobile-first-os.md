@@ -1,6 +1,6 @@
 ---
 title: Mobile-First — Capital Hub OS
-order: 8
+order: 3
 ---
 
 # Mobile-First — Capital Hub OS

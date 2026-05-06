@@ -1,6 +1,6 @@
 ---
 title: Checkout y Whop — qué hace y qué NO hace
-order: 4
+order: 3
 ---
 
 # Whop = solo gateway de checkout

@@ -7,15 +7,14 @@ import { ChevronRight, FileText, Folder, Palette } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { PageNavHeader, type PageNavGroup } from "@/features/shell/components/page-nav-header"
 import { cn } from "@/lib/utils"
-import type { Sop } from "../services/knowledge-service"
+import type { QuadrantInfo, Sop } from "../services/knowledge-service"
 
 interface KnowledgePageProps {
-  sops: Sop[]
+  quadrants: QuadrantInfo[]
 }
 
 const BRANDKIT_ID = "__brandkit"
 const BRAND_FOLDER = "brand"
-const SOPS_FOLDER = "sops"
 
 type Item = { id: string; label: string; icon: LucideIcon }
 type FolderDef = { id: string; label: string; description: string; items: Item[] }
@@ -25,8 +24,10 @@ type View =
   | { kind: "folder"; folderId: string }
   | { kind: "item"; folderId: string; itemId: string }
 
-export function KnowledgePage({ sops }: KnowledgePageProps) {
+export function KnowledgePage({ quadrants }: KnowledgePageProps) {
   const [view, setView] = useState<View>({ kind: "root" })
+
+  const allSops: Sop[] = quadrants.flatMap((q) => q.sops)
 
   const folders: FolderDef[] = [
     {
@@ -35,12 +36,12 @@ export function KnowledgePage({ sops }: KnowledgePageProps) {
       description: "Identidad, brandkit, guías visuales",
       items: [{ id: BRANDKIT_ID, label: "Brandkit Capital Hub", icon: Palette }],
     },
-    {
-      id: SOPS_FOLDER,
-      label: "Standard Operating Procedures",
-      description: "Procesos operativos y manuales",
-      items: sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })),
-    },
+    ...quadrants.map((q) => ({
+      id: q.id,
+      label: q.label,
+      description: q.description,
+      items: q.sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })),
+    })),
   ]
 
   const groups: PageNavGroup[] = folders.map((f) => ({
@@ -126,7 +127,7 @@ export function KnowledgePage({ sops }: KnowledgePageProps) {
         )}
 
         {view.kind === "item" && currentItem && (
-          <ContentView itemId={currentItem.id} sops={sops} />
+          <ContentView itemId={currentItem.id} sops={allSops} />
         )}
       </main>
     </div>
@@ -182,7 +183,7 @@ function ItemGrid({
   if (folder.items.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
-        Esta carpeta está vacía.
+        Esta carpeta está vacía. Pendiente de contenido.
       </div>
     )
   }

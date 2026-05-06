@@ -9,29 +9,29 @@ Esta carpeta es la **fuente única de verdad operativa** del proyecto. Cada deci
 
 Si una decisión no está aquí, **no existe**. Si está aquí, es la versión vigente.
 
+## Estructura por cuadrantes del negocio
+
+El Knowledge se organiza en los 4 cuadrantes del negocio. Cada SOP vive en su cuadrante.
+
+| Cuadrante | Carpeta | Qué contiene |
+|---|---|---|
+| **Marketing** | [`marketing/`](marketing/) | Captación, contenido, ads, funnel hasta checkout, lead magnets |
+| **Producto** | [`producto/`](producto/) | Cómo se construye y opera el OS, arquitectura, deploys, protocolo del agente |
+| **Ventas** | [`ventas/`](ventas/) | Proceso de cierre, llamadas, follow-up *(pendiente de contenido)* |
+| **Finanzas** | [`finanzas/`](finanzas/) | Pricing, comisiones, modelo de negocio, P&L *(pendiente de contenido)* |
+
 ## Reglas
 
-- Todos los `.md` en este directorio se renderizan en `/knowledge` del OS (la ruta actualmente se llama `/sops` y será renombrada a `/knowledge` por consistencia).
-- Cada archivo tiene frontmatter con `title` y `order` (orden de aparición en el sidebar).
+- Todos los `.md` de las subcarpetas se renderizan en `/knowledge` del OS, agrupados por cuadrante.
+- Cada archivo tiene frontmatter con `title` y `order` (orden de aparición dentro de su cuadrante).
 - Las decisiones se versionan al final de cada archivo en sección "Cambios versionados" con fecha.
 - Las versiones antiguas se conservan, no se reescriben — el histórico importa.
-
-## Índice
-
-| # | Documento | Qué contiene |
-|---|---|---|
-| 01 | [Board y sistema de tareas](01-board-y-sistema-tareas.md) | Cómo funciona el sistema GTD+PARA, el board, los stages, la regla auto-sync |
-| 02 | [Pipeline MIFGE](02-pipeline-mifge.md) | Los 8 stages + 2 badges del CRM del funnel MIFGE |
-| 03 | [Emails MIFGE](03-emails-mifge.md) | Los 13 emails transaccionales (5 MVP + 8 iterativos) con sus triggers |
-| 04 | [Checkout y Whop](04-checkout-y-whop.md) | Reglas de Whop como gateway (NO portal) + 3 productos + flujo |
-| 05 | [Arquitectura OS vs App](05-arquitectura-os-app.md) | Capital Hub OS (admin) vs Capital Hub App (portal cliente) — proyectos separados |
-| 06 | [Estrategia + KPIs MIFGE](06-estrategia-kpis-mifge.md) | Misión 1.000€/día + 5 KPIs (proyección/objetivo) + pricing |
-| 07 | [Tracking Meta](07-tracking-meta.md) | Pixel + CAPI server-side + 7 eventos + Ads Insights API |
-| 08 | [Mobile-First OS](08-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints, anti-patrones |
-| 09 | [Protocolo de trabajo del agente](09-protocolo-trabajo-agente.md) | REGLA #1 auto-board, REGLA #2 auto-knowledge, REGLA #3 auto-commit+push |
-| 10 | [Protocolo de proyectos externos](10-proyectos-externos.md) | Verificar siempre nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / Polar / DNS |
-| 11 | [Vercel - deploy y colaboración](11-vercel-deploy-y-colaboracion.md) | Producción vive en el team Pro de Adrian. Workflow diario, env vars, dominios, incidente de migración 2026-05-05 |
+- El archivo `00-readme.md` de cada cuadrante NO se renderiza como SOP, es solo índice de la carpeta.
 
 ## Cómo se actualiza
 
 Sin pedir permiso. Cada vez que se toma una decisión importante en chat, el documento se actualiza ese mismo turno. Regla principal del proyecto.
+
+## Histórico
+
+- **2026-05-06**: Reorganización completa. Knowledge plano (12 SOPs sueltos) → 4 cuadrantes (Marketing, Producto, Ventas, Finanzas). Renumeración dentro de cada carpeta. `knowledge-service.ts` y `knowledge-page.tsx` actualizados para leer recursivamente. Sidebar del OS también reagrupado por cuadrante.

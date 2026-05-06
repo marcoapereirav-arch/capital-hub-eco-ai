@@ -1,6 +1,6 @@
 ---
 title: Vercel - deploy y colaboracion
-order: 11
+order: 6
 ---
 
 # Vercel — deploy y colaboración (CRÍTICO)

@@ -1,6 +1,6 @@
 ---
 title: Tracking Meta — Pixel + CAPI + Ads Insights
-order: 7
+order: 5
 ---
 
 # Tracking Meta — Pixel browser + CAPI server + Ads metrics
@@ -16,9 +16,11 @@ order: 7
 
 El usuario ya tiene los 3 — solo falta pasármelos en `.env.local`.
 
-## 7 eventos custom MIFGE
+## Eventos custom (7 MIFGE + 2 lead magnets)
 
-Doble disparo (browser + server-side) para deduplicación con `event_id`.
+Doble disparo (browser + server-side) para deduplicación con `event_id`. Los eventos lead magnet son SOLO server-side (el opt-in ocurre dentro de ManyChat, sin browser nuestro).
+
+### 7 eventos MIFGE (existentes)
 
 | Evento | Trigger | Cuándo se dispara | Value |
 |---|---|---|---|
@@ -29,6 +31,19 @@ Doble disparo (browser + server-side) para deduplicación con `event_id`.
 | `mifge_anual_purchased` | Webhook Whop `membership_activated` AÑO | Compra del plan anual | 970 EUR |
 | `mifge_monthly_purchased` | Webhook Whop `invoice_paid` recurrente MES (día 15+) | Cobro mensual exitoso | 97 EUR |
 | `mifge_call_attended` | Cron post-slot + Fathom OK | Cliente atendió la llamada | 0 |
+
+### 2 eventos lead magnets (nuevos — añadidos 2026-05-06)
+
+| Evento | Trigger | Cuándo se dispara | Value | Custom data |
+|---|---|---|---|---|
+| `mifge_lead_magnet_optin` | Endpoint `/api/manychat/lm-router` resuelve match | Email capturado vía lead magnet (cualquier LM) | 0 | `lead_magnet_slug`, `reel_post_id` (si lo conocemos), `manychat_subscriber_id` |
+| `mifge_lm_<slug>` | Mismo trigger | Mismo momento — evento granular por LM | 0 | mismo + facilita crear audiencias específicas en Meta por LM |
+
+**Por qué 2 eventos por opt-in:** `mifge_lead_magnet_optin` (agregado) facilita análisis cross-LM en Meta sin tener que sumar todos los slugs. `mifge_lm_<slug>` (granular) permite crear audiencias custom y medir ROAS por LM específico. Doble disparo = mismo `event_id` para que Meta NO los cuente como 2 leads — se deduplican y agregan datos.
+
+**Naming `<slug>`:** snake_case del nombre del lead magnet en BD. Ej: `test-vocacional` → `mifge_lm_test_vocacional`.
+
+**Convención server-only:** estos eventos NO llevan Pixel browser. El `user_data` se construye con `em` (email hasheado), `ig_username` si lo tenemos, IP/UA si los pasa ManyChat. Sin `fbp`/`fbc` (no hay browser nuestro en el opt-in).
 
 ## Arquitectura del tracking
 
@@ -193,3 +208,4 @@ Si los 3 datos están: el evento llegó OK al servidor de Meta, sin importar lo 
 - **2026-04-30 (v1)**: documento inicial. Pendiente: ejecutar implementación (tarea `t_mifge_11_meta_tracking` bloqueada por credenciales).
 - **2026-05-04 (v2)**: añadida estructura del módulo `/ads` en el OS (5 tabs: Dashboard / Tracker / Atribución / Configuración / Health). 7 tareas creadas en el board para construirlo.
 - **2026-05-04 (v3)**: implementación MIFGE 11 completa (Pixel + CAPI + 7 eventos wirados). Sección /ads con Tab Tracker + Config funcionales. Test event probado y confirmado por Meta (`events_received: 1`, `fbtrace_id: Au6GRITMGqL3NOkTCcoFnJV`). Modal manual + Config "Enviar test event" mejorados con respuesta enriquecida (eventId + fbtrace_id + events_received + link directo "Probar eventos"). Pestañas reales de Meta UI documentadas (en español). Regla nueva: NO inventar nombres de UI de servicios externos.
+- **2026-05-06 (v4)**: añadidos 2 eventos custom para lead magnets (`mifge_lead_magnet_optin` agregado + `mifge_lm_<slug>` granular). Convención server-only — no hay Pixel browser porque el opt-in vive dentro de ManyChat. Custom data incluye `lead_magnet_slug`, `reel_post_id` y `manychat_subscriber_id`. Wiring del trigger se hará en Fase A del proyecto lead-magnets — ver SOP `marketing/06-lead-magnets`.

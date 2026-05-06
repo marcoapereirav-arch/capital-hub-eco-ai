@@ -1,6 +1,6 @@
 ---
 title: Emails transaccionales del funnel MIFGE
-order: 3
+order: 2
 ---
 
 # Emails MIFGE — qué se manda, cuándo, por qué
