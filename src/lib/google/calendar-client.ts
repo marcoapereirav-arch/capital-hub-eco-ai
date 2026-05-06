@@ -148,8 +148,56 @@ export function decodeIdTokenEmail(idToken: string): string | null {
 }
 
 /**
- * Crea evento en el calendario con Meet link generado automáticamente.
- * Devuelve el meeting URL para que el booking lo persista en la call.
+ * Crea evento en el calendario CON un meeting URL externo (ej Zoom estático).
+ * El URL se embebe en location + description, NO se solicita Meet.
+ * Devuelve el eventId para poder cancelar/actualizar después.
+ */
+export async function createCalendarEventWithExternalUrl(input: {
+  title: string
+  description: string
+  startIso: string
+  endIso: string
+  attendeeEmail: string
+  attendeeName: string
+  meetingUrl: string
+}): Promise<{ eventId: string; htmlLink: string | null } | null> {
+  const accessToken = await getValidAccessToken()
+  if (!accessToken) return null
+  const conn = await loadGoogleConnection()
+  if (!conn) return null
+
+  const fullDescription = `${input.description}\n\nLink de la videollamada: ${input.meetingUrl}`
+
+  const res = await fetch(
+    `${CALENDAR_API}/calendars/${encodeURIComponent(conn.calendar_id)}/events?sendUpdates=all`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        summary: input.title,
+        description: fullDescription,
+        location: input.meetingUrl,
+        start: { dateTime: input.startIso, timeZone: "Europe/Madrid" },
+        end: { dateTime: input.endIso, timeZone: "Europe/Madrid" },
+        attendees: [{ email: input.attendeeEmail, displayName: input.attendeeName }],
+        reminders: { useDefault: true },
+      }),
+    }
+  )
+  if (!res.ok) {
+    console.error("[google-calendar] create event (external URL) failed", await res.text())
+    return null
+  }
+  const data = (await res.json()) as { id: string; htmlLink?: string }
+  return { eventId: data.id, htmlLink: data.htmlLink ?? null }
+}
+
+/**
+ * @deprecated Solo se usa si no hay default_meeting_url configurado.
+ * Crea evento con Meet auto-generado.
  */
 export async function createCalendarEventWithMeet(input: {
   title: string

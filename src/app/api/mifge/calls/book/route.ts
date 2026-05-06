@@ -3,7 +3,11 @@ import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
 import { sendCapiEvent } from "@/lib/meta/capi-client"
-import { createCalendarEventWithMeet, loadGoogleConnection } from "@/lib/google/calendar-client"
+import {
+  createCalendarEventWithExternalUrl,
+  createCalendarEventWithMeet,
+  loadGoogleConnection,
+} from "@/lib/google/calendar-client"
 import { rateLimit, getClientIp } from "@/lib/rate-limit/supabase-rate-limit"
 
 export const dynamic = "force-dynamic"
@@ -111,26 +115,48 @@ export async function POST(req: NextRequest) {
       await supabase.from("mifge_leads").update({ pipeline_stage: "agendados" }).eq("id", data.lead_id)
     }
 
-    // Google Calendar: si Adrián tiene conectada su cuenta, crea evento + Meet.
-    // El meeting_url generado sustituye al default_meeting_url estático.
+    // Google Calendar: si Adrián tiene conectada su cuenta, crea evento.
+    // - Si hay default_meeting_url (Zoom estatico) → evento embebe Zoom URL en
+    //   location + description (sin pedir Meet)
+    // - Si NO hay default_meeting_url → fallback a generar Meet auto
     const gcalConn = await loadGoogleConnection()
     let meetingUrl = inserted.meeting_url
     if (gcalConn?.refresh_token) {
       try {
-        const event = await createCalendarEventWithMeet({
-          title: `Capital Hub · ${data.full_name}`,
-          description: `Llamada de diagnóstico de 20 min.\n\nLead: ${data.email}${data.phone ? `\nTel: ${data.phone}` : ""}${data.notes ? `\n\nNotas: ${data.notes}` : ""}`,
-          startIso: slotStart.toISOString(),
-          endIso: slotEnd.toISOString(),
-          attendeeEmail: data.email,
-          attendeeName: data.full_name,
-        })
-        if (event?.meetUrl) {
-          meetingUrl = event.meetUrl
-          await supabase
-            .from("calls")
-            .update({ meeting_url: event.meetUrl, gcal_event_id: event.eventId })
-            .eq("id", inserted.id)
+        const baseDescription = `Llamada de diagnóstico de 20 min.\n\nLead: ${data.email}${data.phone ? `\nTel: ${data.phone}` : ""}${data.notes ? `\n\nNotas: ${data.notes}` : ""}`
+        const eventTitle = `Capital Hub · ${data.full_name}`
+
+        if (configRow.default_meeting_url) {
+          // Zoom (o cualquier URL externa) ya configurada
+          const event = await createCalendarEventWithExternalUrl({
+            title: eventTitle,
+            description: baseDescription,
+            startIso: slotStart.toISOString(),
+            endIso: slotEnd.toISOString(),
+            attendeeEmail: data.email,
+            attendeeName: data.full_name,
+            meetingUrl: configRow.default_meeting_url,
+          })
+          if (event) {
+            await supabase.from("calls").update({ gcal_event_id: event.eventId }).eq("id", inserted.id)
+          }
+        } else {
+          // Fallback: Meet auto-generado
+          const event = await createCalendarEventWithMeet({
+            title: eventTitle,
+            description: baseDescription,
+            startIso: slotStart.toISOString(),
+            endIso: slotEnd.toISOString(),
+            attendeeEmail: data.email,
+            attendeeName: data.full_name,
+          })
+          if (event?.meetUrl) {
+            meetingUrl = event.meetUrl
+            await supabase
+              .from("calls")
+              .update({ meeting_url: event.meetUrl, gcal_event_id: event.eventId })
+              .eq("id", inserted.id)
+          }
         }
       } catch (e) {
         console.error("[mifge/calls/book] gcal create failed", e)

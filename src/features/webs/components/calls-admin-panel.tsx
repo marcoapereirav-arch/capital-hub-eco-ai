@@ -12,6 +12,7 @@ import {
   type CallStatus,
 } from "../services/calls-admin-service"
 import { GoogleCalendarCard } from "./google-calendar-card"
+import { MeetingUrlCard } from "./meeting-url-card"
 
 const ALL_STATUSES: CallStatus[] = ["booked", "attended", "no_show", "cancelled", "rescheduled"]
 
@@ -75,6 +76,9 @@ export function CallsAdminPanel() {
     <div className="space-y-4">
       {/* Google Calendar connection */}
       <GoogleCalendarCard />
+
+      {/* Link Zoom (PMI de Adrián) */}
+      <MeetingUrlCard />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
