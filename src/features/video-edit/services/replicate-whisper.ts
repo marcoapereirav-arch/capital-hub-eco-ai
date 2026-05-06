@@ -50,9 +50,11 @@ export async function transcribeAudioFromUrl(
       language,
       transcription: 'plain text',
       condition_on_previous_text: true,
-      // openai/whisper devuelve segments con start/end pero no word-level
-      // timestamps por defecto. Aproximamos word-level distribuyendo el tiempo
-      // del segmento entre las palabras del segmento (proporcional a longitud).
+      // word_timestamps: true → Whisper devuelve timestamps EXACTOS por palabra
+      // en vez de timestamps por segmento. Sin esto, los timestamps se
+      // aproximan distribuyendo el tiempo del segmento proporcionalmente al
+      // length de cada palabra → causa descuadre visible en los subs.
+      word_timestamps: true,
       temperature: 0,
     },
   })) as OpenAIWhisperOutput
@@ -89,21 +91,57 @@ export async function transcribeAudioFromUrl(
   }
 
   // Si Replicate devolvió word_timestamps directamente, los preferimos
+  let finalWords: WhisperWord[]
   if (output.word_timestamps && output.word_timestamps.length > 0) {
-    return {
-      text: output.transcription ?? textParts.join(' '),
-      language: output.detected_language ?? language,
-      words: output.word_timestamps.map((w) => ({
-        word: w.word,
-        start: w.start,
-        end: w.end,
-      })),
-    }
+    finalWords = output.word_timestamps.map((w) => ({
+      word: w.word,
+      start: w.start,
+      end: w.end,
+    }))
+  } else {
+    finalWords = words
   }
 
   return {
     text: output.transcription ?? textParts.join(' '),
     language: output.detected_language ?? language,
-    words,
+    words: dedupeConsecutiveDuplicates(finalWords),
   }
+}
+
+/**
+ * Red de seguridad: elimina palabras consecutivas duplicadas (caso típico de
+ * "que que que" cuando el speaker se traba). El LLM-edit aggressive ya intenta
+ * detectar estas, pero como fallback pre-LLM filtramos los casos obvios:
+ *
+ *  - Misma palabra (case-insensitive, sin puntuación)
+ *  - Gap entre fin de la primera y start de la siguiente < 0.5s
+ *  - La primera dura < 0.4s (palabra "truncada", no énfasis intencional)
+ *
+ * Conservamos la ÚLTIMA ocurrencia (la "buena", típicamente la que el speaker
+ * deja como definitiva). Repeticiones intencionadas con pausa entre palabras
+ * o más largas se respetan.
+ */
+function dedupeConsecutiveDuplicates(words: WhisperWord[]): WhisperWord[] {
+  if (words.length < 2) return words
+
+  const normalize = (w: string) =>
+    w.toLowerCase().replace(/[.,!?;:¿¡"'()]/g, '').trim()
+
+  const result: WhisperWord[] = []
+  for (let i = 0; i < words.length; i++) {
+    const current = words[i]
+    const next = words[i + 1]
+    if (next) {
+      const gap = next.start - current.end
+      const currentDuration = current.end - current.start
+      const sameWord = normalize(current.word) === normalize(next.word)
+      if (sameWord && gap < 0.5 && currentDuration < 0.4) {
+        // Saltamos current (palabra truncada/repetida), conservamos next
+        continue
+      }
+    }
+    result.push(current)
+  }
+  return result
 }

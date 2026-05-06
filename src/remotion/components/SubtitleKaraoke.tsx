@@ -62,8 +62,8 @@ export const SubtitleKaraoke: React.FC<SubtitleKaraokeProps> = ({
         textAlign: 'center',
         fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
         fontWeight: 700,
-        fontSize: 64,
-        color: '#FFFFFF',
+        fontSize: 58,
+        color: '#F8F7F4',
         textShadow:
           '0 2px 6px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.55)',
         letterSpacing: '-0.02em',
