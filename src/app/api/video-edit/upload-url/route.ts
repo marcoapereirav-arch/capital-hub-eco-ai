@@ -62,12 +62,20 @@ export async function POST(req: NextRequest) {
     // Devolvemos los datos que necesita el cliente TUS (resumable upload).
     // El navegador autentica directo contra Supabase Storage usando su JWT
     // de sesion (RLS sobre storage.objects permite escribir a admins).
+    //
+    // Importante: usar el direct storage hostname (project-id.storage.supabase.co)
+    // y NO el genérico (project-id.supabase.co). El genérico va por NGINX/API
+    // gateway que tiene buffer limits que rechazan chunks grandes con 400
+    // mid-upload. Docs: https://supabase.com/docs/guides/storage/uploads/resumable-uploads
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+    const directStorageUrl = baseUrl.replace('.supabase.co', '.storage.supabase.co')
+
     return Response.json({
       ok: true,
       edit_id: editId,
       bucket: VIDEO_EDIT_BUCKET,
       path,
-      tus_endpoint: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/upload/resumable`,
+      tus_endpoint: `${directStorageUrl}/storage/v1/upload/resumable`,
     })
   } catch (err) {
     return Response.json(
