@@ -13,6 +13,10 @@ import {
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
+// Estructura del sidebar agrupada por cuadrantes del negocio (espejo del Knowledge).
+// Convención: solo se exportan secciones que tienen al menos un item.
+// Ventas y Finanzas viven aquí también pero no se exportan hasta que tengan rutas.
+
 export const navSections: NavSection[] = [
   {
     label: "Principal",
@@ -21,15 +25,26 @@ export const navSections: NavSection[] = [
       { title: "Tareas", href: "/tasks", icon: CheckSquare, mobilePrimary: true },
       { title: "Board", href: "/board", icon: Network, mobilePrimary: true },
       { title: "Knowledge", href: "/knowledge", icon: BookOpen, mobilePrimary: true },
-      { title: "Webs", href: "/webs", icon: Globe },
+    ],
+  },
+  {
+    label: "Marketing",
+    items: [
       { title: "CRM", href: "/crm", icon: Users },
+      { title: "Webs", href: "/webs", icon: Globe },
       { title: "Ads", href: "/ads", icon: Megaphone },
       { title: "Content Intel", href: "/content-intel", icon: Radar },
       { title: "Instagram", href: "/instagram", icon: Camera },
       { title: "ManyChat", href: "/manychat", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Producto",
+    items: [
       { title: "Integraciones", href: "/integrations", icon: Link2 },
     ],
   },
+  // Ventas y Finanzas — pendientes de rutas. Se añaden secciones aquí cuando existan.
 ]
 
 export const navAll = navSections.flatMap((s) => s.items)
