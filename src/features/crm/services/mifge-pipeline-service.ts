@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client"
 
 export type PipelineStage =
+  | "lead"
   | "free_trial"
   | "agendados"
   | "no_show"
@@ -24,9 +25,16 @@ export type MifgeLead = {
   created_at: string
   source: string | null
   whop_membership_id: string | null
+  // Campos lead magnets (añadidos 2026-05-06)
+  lead_source: string | null
+  manychat_subscriber_id: string | null
+  first_touch_lead_magnet_id: string | null
+  /** Foreign select: nombre y slug del lead magnet de origen (si lead vino por LM). */
+  lead_magnet: { slug: string; name: string } | null
 }
 
 export const STAGES: { id: PipelineStage; label: string; color: string }[] = [
+  { id: "lead", label: "Lead", color: "bg-purple-500/10 border-purple-500/30 text-purple-300" },
   { id: "free_trial", label: "Free Trial", color: "bg-blue-500/10 border-blue-500/30 text-blue-300" },
   { id: "agendados", label: "Agendados", color: "bg-cyan-500/10 border-cyan-500/30 text-cyan-300" },
   { id: "no_show", label: "No-show", color: "bg-orange-500/10 border-orange-500/30 text-orange-300" },
@@ -37,18 +45,46 @@ export const STAGES: { id: PipelineStage; label: string; color: string }[] = [
   { id: "beta", label: "Beta", color: "bg-zinc-500/10 border-zinc-500/30 text-zinc-300" },
 ]
 
+type RawMifgeLead = Omit<MifgeLead, "lead_magnet"> & {
+  lead_magnets: { slug: string; name: string } | { slug: string; name: string }[] | null
+}
+
 export async function loadMifgeLeads(): Promise<MifgeLead[]> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from("mifge_leads")
-    .select("id,email,full_name,phone,pipeline_stage,bump_purchased,converted_post_call,pipeline_stage_updated_at,created_at,source,whop_membership_id")
+    .select(
+      "id,email,full_name,phone,pipeline_stage,bump_purchased,converted_post_call,pipeline_stage_updated_at,created_at,source,whop_membership_id,lead_source,manychat_subscriber_id,first_touch_lead_magnet_id,lead_magnets:first_touch_lead_magnet_id(slug,name)"
+    )
     .order("pipeline_stage_updated_at", { ascending: false })
 
   if (error) {
     console.error("[crm] loadMifgeLeads", error)
     return []
   }
-  return (data ?? []) as MifgeLead[]
+
+  // Normalizar el foreign select: Supabase devuelve un objeto o array según cardinalidad inferida.
+  return (data ?? []).map((raw): MifgeLead => {
+    const r = raw as unknown as RawMifgeLead
+    const lm = Array.isArray(r.lead_magnets) ? r.lead_magnets[0] ?? null : r.lead_magnets ?? null
+    return {
+      id: r.id,
+      email: r.email,
+      full_name: r.full_name,
+      phone: r.phone,
+      pipeline_stage: r.pipeline_stage,
+      bump_purchased: r.bump_purchased,
+      converted_post_call: r.converted_post_call,
+      pipeline_stage_updated_at: r.pipeline_stage_updated_at,
+      created_at: r.created_at,
+      source: r.source,
+      whop_membership_id: r.whop_membership_id,
+      lead_source: r.lead_source,
+      manychat_subscriber_id: r.manychat_subscriber_id,
+      first_touch_lead_magnet_id: r.first_touch_lead_magnet_id,
+      lead_magnet: lm,
+    }
+  })
 }
 
 export function subscribeMifgeLeads(onChange: () => void): () => void {

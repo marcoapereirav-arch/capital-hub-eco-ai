@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Gift, Phone, AlertCircle, Mail } from "lucide-react"
+import { Gift, Phone, AlertCircle, Mail, Magnet, MessageCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   loadMifgeLeads,
@@ -114,6 +114,8 @@ export function MifgeKanban() {
 function LeadCard({ lead }: { lead: MifgeLead }) {
   const updated = new Date(lead.pipeline_stage_updated_at)
   const ago = formatTimeAgo(updated)
+  // Si el email es placeholder de ManyChat (todavía no recogido), mostrar @ig en su lugar
+  const isPlaceholderEmail = lead.email.endsWith("@lead.capitalhubapp.local")
 
   return (
     <div className="rounded-sm border border-border bg-card p-2.5 shadow-sm hover:border-foreground/40 transition-colors cursor-pointer">
@@ -122,10 +124,28 @@ function LeadCard({ lead }: { lead: MifgeLead }) {
         <span className="font-mono text-[9px] text-muted-foreground shrink-0">{ago}</span>
       </div>
       <p className="text-[10px] text-muted-foreground truncate flex items-center gap-1 mb-1.5">
-        <Mail className="h-2.5 w-2.5 shrink-0" />
-        {lead.email}
+        {isPlaceholderEmail ? (
+          <>
+            <MessageCircle className="h-2.5 w-2.5 shrink-0" />
+            <span className="italic">email pendiente · ManyChat</span>
+          </>
+        ) : (
+          <>
+            <Mail className="h-2.5 w-2.5 shrink-0" />
+            {lead.email}
+          </>
+        )}
       </p>
       <div className="flex items-center gap-1.5 flex-wrap">
+        {lead.lead_magnet && (
+          <span
+            className="flex items-center gap-0.5 rounded-sm border border-purple-500/40 bg-purple-500/10 px-1.5 py-0.5 font-mono text-[9px] text-purple-300"
+            title={`Lead magnet de origen: ${lead.lead_magnet.name}`}
+          >
+            <Magnet className="h-2.5 w-2.5" />
+            {lead.lead_magnet.slug}
+          </span>
+        )}
         {lead.bump_purchased && (
           <span className="flex items-center gap-0.5 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[9px] text-amber-300">
             <Gift className="h-2.5 w-2.5" /> Bump
