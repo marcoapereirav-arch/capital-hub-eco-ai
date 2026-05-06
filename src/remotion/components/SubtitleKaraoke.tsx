@@ -61,13 +61,13 @@ export const SubtitleKaraoke: React.FC<SubtitleKaraokeProps> = ({
         width: '85%',
         textAlign: 'center',
         fontFamily: "'Inter', 'SF Pro Display', -apple-system, sans-serif",
-        fontWeight: 800,
-        fontSize: 44,
+        fontWeight: 700,
+        fontSize: 64,
         color: '#FFFFFF',
         textShadow:
-          '0 3px 10px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.75)',
-        letterSpacing: -0.2,
-        lineHeight: 1.15,
+          '0 2px 6px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.55)',
+        letterSpacing: '-0.02em',
+        lineHeight: 1.12,
         // Sentence case heredado del transcript (Whisper devuelve casing natural)
       }}
     >

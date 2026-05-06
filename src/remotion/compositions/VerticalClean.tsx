@@ -1,7 +1,6 @@
 import { AbsoluteFill, OffthreadVideo, Sequence, useVideoConfig } from 'remotion'
 import { z } from 'zod'
 import { SubtitleKaraoke, type SubtitleWord } from '../components/SubtitleKaraoke'
-import { WarmColorGrade } from '../components/WarmColorGrade'
 
 /**
  * Composición Remotion para Variante 1 — Vertical Clean (estilo Diego).
@@ -11,9 +10,8 @@ import { WarmColorGrade } from '../components/WarmColorGrade'
  *  - segments[] de habla (sourceStart + duration + outputStart) ya post silence-trim + LLM-cuts
  *  - words[] palabras shifted al timeline output
  *  - rotationDegrees (0/90/180/270 — auto-detected via ffprobe)
- *  - colorGradeIntensity (0-1)
  *
- * Salida: video 9:16 1080×1920 con cortes + subs Diego + warm cinematic.
+ * Salida: video 9:16 1080×1920 con cortes + subs Diego (sin color grade).
  */
 
 export const VideoSegmentSchema = z.object({
@@ -33,7 +31,6 @@ export const VerticalCleanPropsSchema = z.object({
   segments: z.array(VideoSegmentSchema),
   words: z.array(SubtitleWordSchema),
   rotationDegrees: z.number().default(0),
-  colorGradeIntensity: z.number().min(0).max(1).default(0.7),
 })
 
 export type VerticalCleanProps = z.infer<typeof VerticalCleanPropsSchema>
@@ -43,7 +40,6 @@ export const defaultVerticalCleanProps: VerticalCleanProps = {
   segments: [],
   words: [],
   rotationDegrees: 0,
-  colorGradeIntensity: 0.7,
 }
 
 export const VerticalClean: React.FC<VerticalCleanProps> = ({
@@ -51,7 +47,6 @@ export const VerticalClean: React.FC<VerticalCleanProps> = ({
   segments,
   words,
   rotationDegrees,
-  colorGradeIntensity,
 }) => {
   const { fps } = useVideoConfig()
 
@@ -109,10 +104,7 @@ export const VerticalClean: React.FC<VerticalCleanProps> = ({
         )
       })}
 
-      {/* TRACK 2: color grade warm (encima del video, debajo de los subs) */}
-      <WarmColorGrade intensity={colorGradeIntensity} />
-
-      {/* TRACK 3: subtítulos karaoke */}
+      {/* TRACK 2: subtítulos karaoke (sin color grade — Vertical Clean = solo cortes + subs) */}
       <SubtitleKaraoke words={words as SubtitleWord[]} maxVisibleWords={3} />
     </AbsoluteFill>
   )

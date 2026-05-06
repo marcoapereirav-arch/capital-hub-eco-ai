@@ -122,7 +122,6 @@ export async function POST(_req: NextRequest, { params }: Params) {
         segments: trim.segments,
         words: trim.shiftedWords,
         rotationDegrees,
-        colorGradeIntensity: brand.colorGradeIntensity,
       },
     })
 
