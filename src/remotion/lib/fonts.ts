@@ -1,15 +1,36 @@
 /**
- * Placeholder: el componente SubtitleKaraoke importa loadCapitalHubFonts pero
- * el módulo no existía y el build de producción fallaba con
- * "Cannot find module '../lib/fonts'".
+ * Font loader para Remotion.
  *
- * Esta es una implementación no-op para desbloquear el deploy. Si se requieren
- * fuentes específicas en el render Remotion, completar con la API:
- * https://www.remotion.dev/docs/google-fonts
+ * Carga Google Fonts dinámicamente en el browser de Remotion para que
+ * el render tenga acceso a la tipografía correcta (Inter Bold para
+ * SubtitleKaraoke estilo Diego).
  *
- * Creado 2026-05-06 para desbloquear el deploy de la Fase A de lead-magnets.
+ * Reemplaza al stub no-op que se creó temporalmente para desbloquear
+ * deploy. Sin esto, los subs Diego renderizan con fallback system font
+ * en vez de Inter Bold.
  */
-export function loadCapitalHubFonts(): void {
-  // Intencionalmente vacío. Comportamiento previo (antes del bug): sin
-  // carga de fuentes — los renders usaban la fuente por defecto del sistema.
+
+const loadedFonts = new Set<string>()
+
+export const loadGoogleFont = (
+  fontFamily: string,
+  weights = '400;500;600;700;800;900',
+): void => {
+  if (typeof document === 'undefined') return
+  if (loadedFonts.has(fontFamily)) return
+
+  const link = document.createElement('link')
+  link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@${weights}&display=swap`
+  link.rel = 'stylesheet'
+  document.head.appendChild(link)
+  loadedFonts.add(fontFamily)
+}
+
+export const FONT_FAMILIES = {
+  primary: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  display: "'Poppins', sans-serif",
+} as const
+
+export const loadCapitalHubFonts = (): void => {
+  loadGoogleFont('Inter')
 }
