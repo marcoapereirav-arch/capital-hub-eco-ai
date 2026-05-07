@@ -5,6 +5,11 @@ import {
   defaultVerticalCleanProps,
   type VerticalCleanProps,
 } from './compositions/VerticalClean'
+import {
+  MisionVivencias,
+  MisionVivenciasPropsSchema,
+  defaultMisionVivenciasProps,
+} from './compositions/MisionVivencias'
 
 /**
  * Punto de entrada de Remotion. Define las composiciones disponibles.
@@ -34,6 +39,17 @@ export const RemotionRoot: React.FC = () => {
             height: 1920,
           }
         }}
+      />
+
+      <Composition
+        id="mision-vivencias"
+        component={MisionVivencias}
+        durationInFrames={300}
+        fps={30}
+        width={1080}
+        height={1920}
+        schema={MisionVivenciasPropsSchema}
+        defaultProps={defaultMisionVivenciasProps}
       />
     </>
   )

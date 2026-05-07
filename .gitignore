@@ -81,3 +81,6 @@ supabase/.temp
 # Local content / personal media
 /Contenidos/
 tsconfig.tsbuildinfo
+
+# Remotion source clips (heavy, no commit)
+/public/raw/
