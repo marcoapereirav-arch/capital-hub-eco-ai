@@ -89,6 +89,7 @@ Si no lo hago: el código en producción ve la variable como `undefined` y los e
 - Emails Resend no se envían (porque `RESEND_API_KEY` falta)
 - Tracking Meta CAPI falla con "Meta credentials no configuradas"
 - Botón landing va a `/mifge/checkout` en vez de Whop directo (porque `NEXT_PUBLIC_WHOP_CHECKOUT_URL_MES` está vacía y se usa el fallback)
+- Generador de guiones de Content Intel devuelve `OPENROUTER_API_KEY not set` (porque la key está en `.env.local` pero no en Vercel production — incidente 2026-05-07)
 
 **Verificación rápida de qué está en Vercel**:
 ```bash
@@ -104,3 +105,4 @@ npx vercel deploy --prod --yes
 
 - **2026-04-30** (v1): definida arquitectura OS ↔ App con HTTP + secret. Pendiente: dominio del OS, migración Vercel a Adrián.
 - **2026-05-04** (v2): regla añadida sobre env vars y Vercel. Subidas a Vercel production: WHOP_*, RESEND_*, META_*, NEXT_PUBLIC_WHOP_CHECKOUT_URL_*, NEXT_PUBLIC_META_PIXEL_ID. Triggered redeploy `capital-hub-eco-f738cokki`.
+- **2026-05-07** (v3): incidente Content Intel. Adrián intentó generar un guion en producción y obtuvo `OPENROUTER_API_KEY not set`. Verificado: las 3 keys del feature (`OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `APIFY_TOKEN`) estaban en `.env.local` pero NO en Vercel production. Subidas con `printf | vercel env add ... --force` y triggered redeploy `capital-hub-eco-e9ucfe4l7` (Ready · Production). **Lección**: cualquier feature nueva que añade dependencia de API externa (OpenRouter, Gemini, Apify, Resend, etc.) debe incluir como subtarea explícita "subir keys a Vercel production + redeploy" — no asumir que el equipo lo hará después.
