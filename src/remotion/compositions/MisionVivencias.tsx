@@ -14,50 +14,53 @@ export const defaultMisionVivenciasProps: MisionVivenciasProps = {
 
 type Vivencia = { text: string; x: number; y: number }
 
-// Distribución de 28 frases sobre 1080x1920, anclada a los grupos visibles
-// del clip generado por Veo 3 (parque cenital con ~30 grupos en mantas).
+// 28 frases ancladas sobre los grupos visibles en el clip Veo 3 v2 (parque
+// cenital con cámara fija, ~30 grupos en mantas, edificios al fondo).
+// Coordenadas calibradas mirando el frame medio (t=4s) del clip.
 const VIVENCIAS: Vivencia[] = [
-  // Fila superior (4 grupos visibles)
-  { text: 'mi hora\nfavorita', x: 200, y: 140 },
-  { text: 'mejores\namigos', x: 720, y: 110 },
-  { text: 'mudándose\npronto', x: 920, y: 240 },
-  { text: 'comiendo\nsolo', x: 380, y: 230 },
+  // Fila lejana (grupos pequeños arriba, debajo de los edificios y árboles)
+  { text: 'mejores\namigos', x: 230, y: 320 },
+  { text: 'mi hora\nfavorita', x: 470, y: 290 },
+  { text: 'mudándose\npronto', x: 740, y: 320 },
+  { text: 'comiendo\nsolo', x: 970, y: 380 },
 
   // Segunda fila
-  { text: 'cotilleando', x: 560, y: 360 },
-  { text: 'modo no\nmolestar', x: 220, y: 410 },
-  { text: 'recién\nprometidos', x: 880, y: 430 },
-  { text: 'matando\nel tiempo', x: 720, y: 510 },
+  { text: 'cotilleando', x: 200, y: 460 },
+  { text: 'modo no\nmolestar', x: 420, y: 470 },
+  { text: 'recién\nprometidos', x: 660, y: 460 },
+  { text: 'matando\nel tiempo', x: 880, y: 480 },
 
-  // Tercera fila — centro de gravedad
-  { text: 'no quería\nestar solo', x: 420, y: 580 },
-  { text: 'sentados más\ncerca de lo normal', x: 920, y: 640 },
-  { text: 'poniéndose\nal día', x: 220, y: 690 },
-  { text: 'rutina\nde siempre', x: 600, y: 740 },
+  // Fila tercera
+  { text: 'rutina\nde siempre', x: 280, y: 620 },
+  { text: 'no quería\nestar solo', x: 500, y: 600 },
+  { text: 'poniéndose\nal día', x: 700, y: 640 },
+  { text: 'sentados más\ncerca de lo normal', x: 940, y: 660 },
 
-  // Cuarta fila
-  { text: 'riéndose\nde todo', x: 380, y: 870 },
-  { text: 'la misma\nhistoria', x: 800, y: 880 },
-  { text: 'pasándolo\nbien', x: 200, y: 940 },
-  { text: 'conversación\nincómoda', x: 1000, y: 990 },
+  // Cuarta — zona media
+  { text: 'pasándolo\nbien', x: 200, y: 800 },
+  { text: 'riéndose\nde todo', x: 420, y: 800 },
+  { text: 'la misma\nhistoria', x: 620, y: 810 },
+  { text: 'conversación\nincómoda', x: 880, y: 850 },
 
-  // Quinta fila
-  { text: 'perdido en\npensamientos', x: 560, y: 1040 },
-  { text: 'primer\naniversario', x: 220, y: 1110 },
-  { text: 'energía\nsin fin', x: 880, y: 1180 },
-  { text: 'celebrando', x: 380, y: 1240 },
+  // Quinta
+  { text: 'primer\naniversario', x: 250, y: 980 },
+  { text: 'perdido en\npensamientos', x: 520, y: 990 },
+  { text: 'energía\nsin fin', x: 760, y: 1000 },
+  { text: 'celebrando', x: 940, y: 1040 },
 
-  // Sexta fila
-  { text: 'perdiendo la\nnoción del tiempo', x: 600, y: 1340 },
-  { text: 'necesitaba\naire', x: 200, y: 1380 },
-  { text: 'cómodo en\nel silencio', x: 940, y: 1430 },
-  { text: 'día libre', x: 400, y: 1490 },
+  // Sexta
+  { text: 'necesitaba\naire', x: 220, y: 1180 },
+  { text: 'perdiendo la\nnoción del tiempo', x: 520, y: 1200 },
+  { text: 'cómodo en\nel silencio', x: 820, y: 1220 },
 
-  // Séptima fila — abajo
-  { text: 'sin\npreocupaciones', x: 700, y: 1620 },
-  { text: 'sin plan', x: 220, y: 1660 },
-  { text: 'pensando qué\nviene ahora', x: 540, y: 1790 },
-  { text: 'esperando\nrespuesta', x: 900, y: 1830 },
+  // Séptima — primer plano grupos cercanos
+  { text: 'día libre', x: 320, y: 1430 },
+  { text: 'sin\npreocupaciones', x: 700, y: 1450 },
+
+  // Octava — abajo último plano
+  { text: 'sin plan', x: 260, y: 1660 },
+  { text: 'pensando qué\nviene ahora', x: 580, y: 1730 },
+  { text: 'esperando\nrespuesta', x: 880, y: 1820 },
 ]
 
 export const MisionVivencias: React.FC<MisionVivenciasProps> = ({ videoSrc }) => {
