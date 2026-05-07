@@ -8,6 +8,7 @@ import {
   buildScriptChatUserPrompt,
   type ChatMessage,
 } from '../prompts/script-chat'
+import { loadBrandContext } from './brand-context'
 
 const ScriptChatResponseSchema = z.object({
   response: z.string().min(1).max(6000),
@@ -43,7 +44,8 @@ export interface ChatScriptResult {
 }
 
 export async function chatScript(input: ChatScriptInput): Promise<ChatScriptResult> {
-  const userPrompt = buildScriptChatUserPrompt(input)
+  const brand = await loadBrandContext()
+  const userPrompt = buildScriptChatUserPrompt({ ...input, avatar: brand.avatar.text })
 
   const { object, usage } = await generateObject({
     model: getModel(),
