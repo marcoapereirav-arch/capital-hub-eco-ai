@@ -95,9 +95,22 @@ export async function POST(_req: NextRequest, { params }: Params) {
       }
     }
 
-    // 4) Aplicar LLM-cuts al transcript
+    // 4) Aplicar cortes al transcript
+    //    - Combinamos llm_cuts (filtrando los rejected_indices del usuario)
+    //      + manual_cuts añadidos por el usuario en el editor.
+    //    - Si el usuario nunca abrió el editor, cut_overrides es default
+    //      ({rejected_indices:[], manual:[]}) → equivalente al comportamiento previo.
     const llmCuts = (edit.llm_cuts as LlmCut[] | null) ?? []
-    const filteredWords = applyLlmCutsToWords(transcript.words, llmCuts)
+    const overrides = (edit.cut_overrides as
+      | { rejected_indices?: number[]; manual?: LlmCut[] }
+      | null) ?? { rejected_indices: [], manual: [] }
+    const rejectedSet = new Set(overrides.rejected_indices ?? [])
+    const approvedLlmCuts = llmCuts.filter((_, i) => !rejectedSet.has(i))
+    const manualCuts = overrides.manual ?? []
+    const finalCuts: LlmCut[] = [...approvedLlmCuts, ...manualCuts].sort(
+      (a, b) => a.start - b.start,
+    )
+    const filteredWords = applyLlmCutsToWords(transcript.words, finalCuts)
 
     // 5) Silence-trim sobre las palabras filtradas → segmentos para Remotion
     const trim = trimSilences(filteredWords, brand.silenceThresholdMs)
@@ -107,7 +120,8 @@ export async function POST(_req: NextRequest, { params }: Params) {
     }
 
     console.log(
-      `[render] ${id} · llm_cuts=${llmCuts.length} · segments=${trim.segments.length} · ` +
+      `[render] ${id} · llm_cuts=${llmCuts.length} (rejected=${rejectedSet.size}) · ` +
+        `manual_cuts=${manualCuts.length} · segments=${trim.segments.length} · ` +
         `output_dur=${trim.totalOutputDuration.toFixed(1)}s · ` +
         `silence_removed=${trim.silenceRemoved.toFixed(1)}s · ` +
         `rotation=${rotationDegrees}`,

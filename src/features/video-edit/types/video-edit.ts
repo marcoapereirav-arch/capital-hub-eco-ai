@@ -39,6 +39,17 @@ export interface WhisperTranscript {
 export type FunnelStage = 'tofu' | 'mofu' | 'bofu'
 export type CtaType = 'follow' | 'freebie' | 'paid_offer'
 
+export interface LlmCut {
+  start: number
+  end: number
+  reason: string
+}
+
+export interface CutOverrides {
+  rejected_indices: number[]
+  manual: LlmCut[]
+}
+
 export interface VideoEditRow {
   id: string
   user_id: string
@@ -64,6 +75,11 @@ export interface VideoEditRow {
   cta_type: CtaType | null
   cta_word: string | null
   rotation_degrees: 0 | 90 | 180 | 270
+  llm_cuts: LlmCut[]
+  llm_seconds_removed: number | null
+  cut_overrides: CutOverrides
+  transcript_edited_at: string | null
+  cuts_reviewed_at: string | null
   created_at: string
   updated_at: string
 }
