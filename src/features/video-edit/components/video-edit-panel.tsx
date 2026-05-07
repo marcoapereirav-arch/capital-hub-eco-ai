@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as tus from 'tus-js-client'
 import {
   Upload,
@@ -14,6 +14,7 @@ import {
   Download,
   RotateCcw,
   Settings2,
+  Pencil,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,6 +31,7 @@ import {
   type VideoEditStatus,
   type VideoPresetOption,
 } from '../types/video-edit'
+import { VideoEditEditor } from './video-edit-editor'
 
 interface UploadUrlResponse {
   ok: boolean
@@ -117,6 +119,13 @@ export function VideoEditPanel() {
   const [ctaType, setCtaType] = useState<CtaType | ''>('')
   const [headlineText, setHeadlineText] = useState<string>('')
   const [ctaWord, setCtaWord] = useState<string>('')
+
+  // Editor manual abierto (sheet)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const editingEdit = useMemo(
+    () => edits.find((e) => e.id === editingId) ?? null,
+    [edits, editingId],
+  )
 
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -618,6 +627,20 @@ export function VideoEditPanel() {
                       </a>
                     )}
 
+                    {canRender && (
+                      <Button
+                        onClick={() => setEditingId(edit.id)}
+                        size="sm"
+                        variant="outline"
+                        disabled={isQueueing || isRendering}
+                        className="h-8 text-xs"
+                        title="Editar transcripción y cortes manualmente"
+                      >
+                        <Pencil className="mr-1 h-3.5 w-3.5" />
+                        Editar
+                      </Button>
+                    )}
+
                     {canRender && !hasOutput && (
                       <Button
                         onClick={() => handleRender(edit.id)}
@@ -685,6 +708,16 @@ export function VideoEditPanel() {
           </div>
         )}
       </div>
+
+      <VideoEditEditor
+        edit={editingEdit}
+        open={editingId !== null}
+        onClose={() => setEditingId(null)}
+        onRerendered={() => {
+          setEditingId(null)
+          void loadEdits()
+        }}
+      />
     </div>
   )
 }
