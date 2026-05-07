@@ -11,6 +11,7 @@ import {
   BookOpen,
   Megaphone,
   Magnet,
+  Rocket,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -44,6 +45,7 @@ export const navSections: NavSection[] = [
     label: "Producto",
     items: [
       { title: "Integraciones", href: "/integrations", icon: Link2 },
+      { title: "Misión", href: "/mision", icon: Rocket },
     ],
   },
   // Ventas y Finanzas — pendientes de rutas. Se añaden secciones aquí cuando existan.
