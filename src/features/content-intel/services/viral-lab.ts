@@ -91,7 +91,9 @@ async function selectVideos(
   const { filters, total_limit } = input
   const cap = Math.min(total_limit, MAX_VIDEOS_HARD_CAP)
 
-  // Query base
+  // ============================================================
+  // Query 1: videos EXTERNOS (no own) con los filtros del usuario
+  // ============================================================
   let q = supabase.from('ci_videos').select(`
     id, account_id, views, likes, comments, caption, transcript, posted_at,
     ci_seed_accounts!inner(handle, role, is_own)
@@ -140,21 +142,80 @@ async function selectVideos(
     transcript: r.transcript,
   }))
 
-  // Si top_n_per_account está definido, aplicamos dedup por cuenta
+  // ============================================================
+  // Query 2: TODOS los videos OWN con transcript, SIN filtros
+  // ------------------------------------------------------------
+  // Garantiza que la voz propia siempre está en el corpus para
+  // calibración de tono, da igual qué filtro de views/fecha haya
+  // puesto el usuario. Sin esto, los videos own del usuario se
+  // quedan fuera del top por engagement vs. cuentas competidoras
+  // virales y el modelo recibe own_videos vacío.
+  //
+  // Excepción: si el usuario filtra por account_ids específicos
+  // que NO incluyen ninguna cuenta own, respetamos esa decisión
+  // y no metemos own forzado.
+  // ============================================================
+  const userPickedSpecificAccounts =
+    filters.account_ids !== undefined && filters.account_ids.length > 0
+
+  let ownVideos: SelectedVideo[] = []
+  if (!userPickedSpecificAccounts) {
+    const { data: ownData, error: ownErr } = await supabase
+      .from('ci_videos')
+      .select(`
+        id, account_id, views, likes, comments, caption, transcript, posted_at,
+        ci_seed_accounts!inner(handle, role, is_own)
+      `)
+      .eq('platform', input.platform)
+      .eq('ci_seed_accounts.is_own', true)
+      .not('transcript', 'is', null)
+      .order('posted_at', { ascending: false, nullsFirst: false })
+      .limit(20) // tope sano: max 20 own videos por análisis
+
+    if (ownErr) {
+      // No reventamos el análisis: si falla la query own, seguimos sin voz propia
+      console.warn(`[viral-lab] own videos query failed: ${ownErr.message}`)
+    } else {
+      const ownRows = (ownData ?? []) as unknown as typeof rows
+      ownVideos = ownRows.map((r) => ({
+        id: r.id,
+        account_id: r.account_id,
+        handle: r.ci_seed_accounts.handle,
+        role: r.ci_seed_accounts.role,
+        is_own: r.ci_seed_accounts.is_own,
+        views: r.views,
+        likes: r.likes,
+        comments: r.comments,
+        caption: r.caption,
+        transcript: r.transcript,
+      }))
+    }
+  }
+
+  // ============================================================
+  // Combinar: external (con cap) + own (siempre, sin contar cap)
+  // ============================================================
+  const externalIds = new Set(mapped.map((v) => v.id))
+  const ownNotAlreadyIncluded = ownVideos.filter((v) => !externalIds.has(v.id))
+
+  // Aplicar top_n_per_account / cap solo a los external
+  let externalSelected: SelectedVideo[]
   if (filters.top_n_per_account && filters.top_n_per_account > 0) {
     const perAccountCount = new Map<string, number>()
-    const filtered: SelectedVideo[] = []
+    externalSelected = []
     for (const v of mapped) {
       const count = perAccountCount.get(v.account_id) ?? 0
       if (count >= filters.top_n_per_account) continue
       perAccountCount.set(v.account_id, count + 1)
-      filtered.push(v)
-      if (filtered.length >= cap) break
+      externalSelected.push(v)
+      if (externalSelected.length >= cap) break
     }
-    return filtered
+  } else {
+    externalSelected = mapped.slice(0, cap)
   }
 
-  return mapped.slice(0, cap)
+  // Devolvemos external + own (own no consumen cap, siempre van)
+  return [...externalSelected, ...ownNotAlreadyIncluded]
 }
 
 // ---------- Paso 2: Auto-transcribir los que falten ----------

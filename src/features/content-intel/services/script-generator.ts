@@ -9,6 +9,7 @@ import {
   SCRIPT_GENERATOR_SYSTEM_PROMPT,
   buildScriptUserPrompt,
   type GenerateScriptInput,
+  type OwnVoiceSample,
 } from '../prompts/generate-script'
 import { loadBrandContext } from './brand-context'
 import type { Platform } from '../types/platform'
@@ -73,6 +74,43 @@ async function fetchReferences(
   }))
 }
 
+/**
+ * Trae transcripts de TODOS los videos del propio Adrián (cuentas marcadas
+ * is_own=true) para que el modelo pueda calibrar el tono de voz.
+ *
+ * Sin esto, los guiones suenan a "IA generando contenido emprendedor"
+ * porque el modelo solo tiene el playbook como referencia de tono. Con los
+ * transcripts del propio Adrián, puede detectar su ritmo, léxico y
+ * cadencia reales.
+ *
+ * Tope: 8 videos más recientes (≈12k chars de contexto). Si falla la
+ * query no rompemos la generación — devolvemos array vacío y se fallback
+ * a calibración solo via playbook.
+ */
+async function fetchOwnVoiceSamples(
+  supabase: SupabaseClient,
+): Promise<OwnVoiceSample[]> {
+  const { data, error } = await supabase
+    .from('ci_videos')
+    .select('caption, transcript, ci_seed_accounts!inner(is_own)')
+    .eq('ci_seed_accounts.is_own', true)
+    .not('transcript', 'is', null)
+    .order('posted_at', { ascending: false, nullsFirst: false })
+    .limit(8)
+
+  if (error) {
+    console.warn(`[script-gen] own voice fetch failed: ${error.message}`)
+    return []
+  }
+
+  return (data ?? [])
+    .map((v) => ({
+      caption: (v.caption as string | null) ?? null,
+      transcript: (v.transcript as string | null) ?? '',
+    }))
+    .filter((s) => s.transcript.length > 30)
+}
+
 function scriptToMarkdown(script: ScriptOutput): string {
   const hooks = script.hook_variants.map((h, i) => `${i + 1}. ${h}`).join('\n')
   const beats = script.beats.map((b) => `- **${b.label}**: ${b.text}`).join('\n')
@@ -112,6 +150,7 @@ export async function generateScript(input: GenerateScriptApiInput): Promise<Scr
 
   const brand = await loadBrandContext()
   const references = await fetchReferences(supabase, input.reference_video_ids ?? [])
+  const ownVoiceSamples = await fetchOwnVoiceSamples(supabase)
 
   const promptInput: GenerateScriptInput = {
     brief: input.brief,
@@ -120,6 +159,7 @@ export async function generateScript(input: GenerateScriptApiInput): Promise<Scr
     content_pillar: input.content_pillar ?? null,
     brand,
     references,
+    own_voice_samples: ownVoiceSamples,
   }
 
   const userPrompt = buildScriptUserPrompt(promptInput)

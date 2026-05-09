@@ -37,7 +37,20 @@ REGLAS DE ESCRITURA:
 - No inventar cifras ni resultados específicos que no estén en el Playbook.
 - Si el brief pide algo que contradice los 3 pilares de contenido, pivota al pilar más cercano y explícalo en production_notes.
 
+CALIBRACIÓN DE TONO (regla #2):
+Recibirás una sección "VOZ DE ADRIÁN" con transcripciones de videos suyos previos. NO copies frases literales de ahí. Lo que SÍ tienes que hacer:
+- Detectar su ritmo: longitud media de frases, dónde respira, cuándo acelera.
+- Detectar su léxico real: muletillas que usa como estilo, palabras que repite, conectores recurrentes, modismos suyos.
+- Detectar su forma de empezar y cerrar: ¿abre con afirmación? ¿con pregunta? ¿cierra con frase corta o con lista?
+- Detectar la cadencia emocional: ¿escala? ¿se queda plano? ¿usa pausas dramáticas?
+El guion que escribas DEBE sonar como si lo hubiera escrito él. Si te lo lees en voz alta y suena a "IA generando contenido emprendedor", está mal. Si suena a Adrián grabando, está bien.
+
 Responde SOLO con el JSON pedido, nada más.`
+
+export interface OwnVoiceSample {
+  caption: string | null
+  transcript: string
+}
 
 export interface GenerateScriptInput {
   brief: string
@@ -52,10 +65,20 @@ export interface GenerateScriptInput {
     transcript: string | null
     views: number | null
   }>
+  /** Transcripciones de videos del propio Adrián para calibrar tono. */
+  own_voice_samples: OwnVoiceSample[]
 }
 
 export function buildScriptUserPrompt(input: GenerateScriptInput): string {
-  const { brief, platform, duration_target_s, content_pillar, brand, references } = input
+  const {
+    brief,
+    platform,
+    duration_target_s,
+    content_pillar,
+    brand,
+    references,
+    own_voice_samples,
+  } = input
 
   const refBlock =
     references.length === 0
@@ -74,12 +97,31 @@ export function buildScriptUserPrompt(input: GenerateScriptInput): string {
           )
           .join('\n\n')
 
+  const voiceBlock =
+    own_voice_samples.length === 0
+      ? '(no hay transcripciones de Adrián disponibles — calibra el tono basándote solo en el playbook)'
+      : own_voice_samples
+          .map((s, i) =>
+            [
+              `### Sample ${i + 1}`,
+              s.caption ? `Caption: ${s.caption.slice(0, 300)}` : '',
+              'Transcript:',
+              s.transcript.slice(0, 1500),
+            ]
+              .filter(Boolean)
+              .join('\n'),
+          )
+          .join('\n\n')
+
   return [
     '# BRAND PLAYBOOK (fuente de verdad)',
     brand.playbook.text,
     '',
     '# AVATAR (cliente ideal Andrés)',
     brand.avatar.text,
+    '',
+    '# VOZ DE ADRIÁN (calibración de tono — NO copiar literal)',
+    voiceBlock,
     '',
     '# BRIEF DEL USUARIO',
     `Plataforma: ${platform}`,
