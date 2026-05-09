@@ -235,12 +235,25 @@ export function VideoEditPanel() {
       }
       const editId = urlJson.edit_id
 
-      // 2) Obtener token JWT de la sesión para autenticar contra Storage
+      // 2) Obtener token JWT de la sesión para autenticar contra Storage.
+      //    Forzamos refreshSession() antes del upload para asegurar que el JWT
+      //    no está expirado (1h TTL). Sin esto, si la pestaña lleva rato
+      //    abierta, el token caduca y Storage devuelve 403 "exp claim
+      //    timestamp check failed" mid-upload.
       const supabase = createClient()
-      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession()
-      const accessToken = sessionData.session?.access_token
-      if (sessionErr || !accessToken) {
-        throw new Error('Sesión expirada. Recarga la página y vuelve a intentarlo.')
+      let accessToken: string | undefined
+      try {
+        const { data: refreshed } = await supabase.auth.refreshSession()
+        accessToken = refreshed.session?.access_token
+      } catch {
+        // refresh falló (refresh_token también expiró) → fallback a sesión actual
+      }
+      if (!accessToken) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        accessToken = sessionData.session?.access_token
+      }
+      if (!accessToken) {
+        throw new Error('Sesión caducada. Cierra sesión y vuelve a entrar.')
       }
 
       // 3) Upload TUS resumable (chunks de 6 MB, retry automático)
