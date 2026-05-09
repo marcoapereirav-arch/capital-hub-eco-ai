@@ -2,38 +2,38 @@ import Replicate from 'replicate'
 import type { WhisperTranscript, WhisperWord } from '../types/video-edit'
 
 /**
- * Modelo: vaibhavs10/incredibly-fast-whisper.
+ * Modelo: victor-upmeet/whisperx con align_output=true.
  *
- * Devuelve word-level timestamps REALES (no aproximados). Hace alineación
- * forzada del audio con cada palabra del transcript, por lo que los
- * subtítulos clavan al ms con la voz.
+ * Devuelve word-level timestamps REALES con alineación forzada (forced
+ * alignment), por lo que los subtítulos clavan al ms con la voz.
  *
- * Antes usábamos openai/whisper que NO soporta word_timestamps — solo
- * devuelve timestamps por segmento y aproximábamos por palabra
- * proporcionalmente al length, causando descuadre visible en subs.
+ * El otro modelo que probamos (vaibhavs10/incredibly-fast-whisper) NO
+ * devuelve word-level, solo chunks de 30s. Y openai/whisper tampoco
+ * acepta el parámetro word_timestamps. Whisperx es la mejor opción
+ * disponible en Replicate para nuestro caso.
  *
  * Acepta video directo (extrae audio via ffmpeg internally).
  */
-const WHISPER_MODEL = 'vaibhavs10/incredibly-fast-whisper'
+const WHISPER_MODEL =
+  'victor-upmeet/whisperx:84d2ad2d6194fe98a17d2b60bef1c7f910c46b2f6fd38996ca457afd9c8abfcb'
 
-interface IncrediblyFastWhisperChunk {
+interface WhisperxWord {
+  word: string
+  start: number
+  end: number
+  score?: number
+}
+
+interface WhisperxSegment {
+  start: number
+  end: number
   text: string
-  timestamp: [number, number] // [start_seconds, end_seconds]
+  words?: WhisperxWord[]
 }
 
-interface IncrediblyFastWhisperOutput {
-  text?: string
-  chunks?: IncrediblyFastWhisperChunk[]
-}
-
-// Códigos ISO → nombres aceptados por incredibly-fast-whisper
-const LANGUAGE_MAP: Record<string, string> = {
-  es: 'spanish',
-  en: 'english',
-  fr: 'french',
-  de: 'german',
-  it: 'italian',
-  pt: 'portuguese',
+interface WhisperxOutput {
+  segments?: WhisperxSegment[]
+  detected_language?: string
 }
 
 function getReplicate(): Replicate {
@@ -47,62 +47,79 @@ function getReplicate(): Replicate {
 /**
  * Transcribe un video subido a Supabase Storage via su URL publica firmada.
  * Acepta video (MOV/MP4) — el modelo demultiplexa con ffmpeg automaticamente.
- * Devuelve transcript con palabras + timestamps por palabra.
+ * Devuelve transcript con palabras + timestamps por palabra (word-level real,
+ * no aproximado).
  */
 export async function transcribeAudioFromUrl(
   signedAudioUrl: string,
   language: string = 'es',
 ): Promise<WhisperTranscript> {
   const replicate = getReplicate()
-  const lang = LANGUAGE_MAP[language] ?? language
 
   const output = (await replicate.run(WHISPER_MODEL, {
     input: {
-      audio: signedAudioUrl,
-      task: 'transcribe',
-      language: lang,
-      batch_size: 24,
-      timestamp: 'word', // crítico: timestamps reales por palabra
-      diarise_audio: false,
+      audio_file: signedAudioUrl,
+      language, // ISO code (es, en, fr, ...)
+      align_output: true, // crítico: activa word-level timestamps con forced alignment
+      batch_size: 64,
+      temperature: 0,
+      // VAD parámetros: dejamos los defaults (0.5 / 0.363). El VAD recorta
+      // silencios largos del transcript pero NO afecta el audio del video
+      // — solo lo que se transcribe. Si vemos que se come repeticiones
+      // intencionadas del speaker, ajustamos estos parámetros.
     },
-  })) as IncrediblyFastWhisperOutput
+  })) as WhisperxOutput
 
-  const chunks = output.chunks ?? []
-  if (chunks.length === 0) {
-    return {
-      text: output.text ?? '',
-      language,
-      words: [],
+  const segments = output.segments ?? []
+  const words: WhisperWord[] = []
+  const textParts: string[] = []
+
+  for (const seg of segments) {
+    if (seg.text) textParts.push(seg.text.trim())
+
+    if (seg.words && seg.words.length > 0) {
+      // Word-level real desde whisperx (align_output=true)
+      for (const w of seg.words) {
+        if (
+          typeof w.start !== 'number' ||
+          typeof w.end !== 'number' ||
+          !w.word ||
+          w.word.trim().length === 0
+        ) {
+          continue
+        }
+        words.push({
+          word: w.word.trim(),
+          start: w.start,
+          end: w.end > w.start ? w.end : w.start + 0.05,
+        })
+      }
+    } else if (typeof seg.start === 'number' && typeof seg.end === 'number' && seg.text) {
+      // Fallback: si por alguna razón un segmento no tiene words (raro con
+      // align_output=true), aproximamos distribuyendo el tiempo proporcional
+      // al length de cada palabra. Mejor que perder ese segmento.
+      const segWords = seg.text.trim().split(/\s+/).filter(Boolean)
+      const segDuration = seg.end - seg.start
+      const totalChars =
+        segWords.reduce((acc, w) => acc + w.length, 0) || segWords.length
+      let cursor = seg.start
+      for (const word of segWords) {
+        const portion = (word.length || 1) / totalChars
+        const wordDuration = segDuration * portion
+        words.push({
+          word,
+          start: cursor,
+          end: cursor + wordDuration,
+        })
+        cursor += wordDuration
+      }
     }
   }
 
-  // Mapear chunks → words. El modelo a veces incluye chunks con timestamp null
-  // al final (cuando no puede alinear la última palabra) — los filtramos.
-  const rawWords: WhisperWord[] = chunks
-    .filter(
-      (c) =>
-        c.timestamp &&
-        Array.isArray(c.timestamp) &&
-        typeof c.timestamp[0] === 'number' &&
-        typeof c.timestamp[1] === 'number' &&
-        c.text &&
-        c.text.trim().length > 0,
-    )
-    .map((c) => ({
-      word: c.text.trim(),
-      start: c.timestamp[0],
-      end: c.timestamp[1],
-    }))
-    // Defensa: end debe ser > start. Si no, le damos al menos 50ms.
-    .map((w) => ({
-      ...w,
-      end: w.end > w.start ? w.end : w.start + 0.05,
-    }))
-
   return {
-    text: output.text ?? rawWords.map((w) => w.word).join(' '),
-    language,
-    words: dedupeConsecutiveDuplicates(rawWords),
+    text: textParts.join(' '),
+    language: output.detected_language ?? language,
+    words: dedupeConsecutiveDuplicates(words),
   }
 }
 
