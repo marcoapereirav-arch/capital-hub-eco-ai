@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Video, Share2, Trash2, FileText, Loader2 } from 'lucide-react'
+import { Video, Share2, Trash2, FileText, Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { SCRIPT_STATUS_LABELS } from '../types/script'
 import type { ScriptRow, ScriptStatus } from '../types/script'
 import { ScriptChatPanel } from './script-chat-panel'
+import { ScriptGenerateForm } from './script-generate-form'
 
 type HistoryFilter = 'pendientes' | 'grabados' | 'publicados' | 'todos'
 
@@ -167,9 +168,23 @@ export function ScriptGeneratorPanel() {
             Mis guiones
           </h3>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Almacén de drafts. Genera nuevos desde Studio.
+            Almacén de drafts. Genera nuevos desde el formulario.
           </p>
         </div>
+
+        <Button
+          onClick={() => {
+            setScript(null)
+            setEditable('')
+            setError(null)
+          }}
+          variant="outline"
+          size="sm"
+          className="w-full text-xs"
+        >
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          Nuevo guion
+        </Button>
 
         <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
           {(['pendientes', 'grabados', 'publicados', 'todos'] as const).map((f) => (
@@ -303,15 +318,13 @@ export function ScriptGeneratorPanel() {
         )}
 
         {!script && !loadingList && (
-          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/50 p-10 text-center">
-            <FileText className="h-8 w-8 text-muted-foreground/60" strokeWidth={1.5} />
-            <h4 className="font-heading text-lg font-medium text-foreground">
-              Selecciona un guion para editarlo
-            </h4>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Aquí gestionas todos tus drafts. Para crear nuevos, ve a <span className="text-foreground/80">Studio</span> y pídeselo al chat.
-            </p>
-          </div>
+          <ScriptGenerateForm
+            onGenerated={(newScript) => {
+              setScript(newScript)
+              setEditable(newScript.user_edited_markdown ?? newScript.llm_output_markdown ?? '')
+              void loadHistory()
+            }}
+          />
         )}
 
         {script && (
