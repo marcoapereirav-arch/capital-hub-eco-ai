@@ -11,6 +11,17 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 180
 
+const CorpusFiltersSchema = z.object({
+  account_ids: z.array(z.string().uuid()).optional(),
+  min_views: z.number().int().min(0).optional(),
+  from_date: z.string().optional(),
+  to_date: z.string().optional(),
+  order_by: z
+    .enum(['views', 'engagement_rate', 'comments', 'likes', 'posted_at'])
+    .optional(),
+  top_n_per_account: z.number().int().min(1).max(20).optional(),
+})
+
 const GenerateSchema = z.object({
   brief: z.string().min(3).max(2000),
   platform: z.enum(PLATFORMS),
@@ -19,6 +30,11 @@ const GenerateSchema = z.object({
     .union([z.enum(CONTENT_PILLARS), z.string().max(60)])
     .optional(),
   reference_video_ids: z.array(z.string().uuid()).optional().default([]),
+  /**
+   * Si se envían, el endpoint extrae patrones del corpus filtrado y los inyecta
+   * al prompt como grounding ("qué funciona en estas cuentas").
+   */
+  corpus_filters: CorpusFiltersSchema.optional(),
 })
 
 export async function GET() {
@@ -71,6 +87,7 @@ export async function POST(req: NextRequest) {
       duration_target_s: parsed.data.duration_target_s,
       content_pillar: parsed.data.content_pillar,
       reference_video_ids: parsed.data.reference_video_ids,
+      corpus_filters: parsed.data.corpus_filters,
     })
     return Response.json({ ok: true, script }, { status: 201 })
   } catch (err) {

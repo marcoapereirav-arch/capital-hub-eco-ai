@@ -67,6 +67,12 @@ export interface GenerateScriptInput {
   }>
   /** Transcripciones de videos del propio Adrián para calibrar tono. */
   own_voice_samples: OwnVoiceSample[]
+  /**
+   * Markdown con patrones dominantes del corpus filtrado por el usuario
+   * (hooks, estructuras, CTAs que funcionan en las cuentas que eligió como
+   * referencia). null si el usuario no aplicó filtros / no quiso grounding.
+   */
+  corpus_patterns_markdown: string | null
 }
 
 export function buildScriptUserPrompt(input: GenerateScriptInput): string {
@@ -78,6 +84,7 @@ export function buildScriptUserPrompt(input: GenerateScriptInput): string {
     brand,
     references,
     own_voice_samples,
+    corpus_patterns_markdown,
   } = input
 
   const refBlock =
@@ -113,6 +120,18 @@ export function buildScriptUserPrompt(input: GenerateScriptInput): string {
           )
           .join('\n\n')
 
+  const corpusBlock = corpus_patterns_markdown
+    ? [
+        '# PATRONES DEL CORPUS FILTRADO (qué funciona en las cuentas que el usuario eligió)',
+        corpus_patterns_markdown,
+        '',
+        '> Usa estos patrones como GUÍA estructural del guion: si los hooks que funcionan',
+        '> en este corpus son contrarian, abre contrarian. Si las estructuras dominantes son',
+        '> "anécdota → moraleja", úsala. NO copies frases literales — adapta los patrones a',
+        '> la voz de Adrián y al brief del usuario.',
+      ].join('\n')
+    : null
+
   return [
     '# BRAND PLAYBOOK (fuente de verdad)',
     brand.playbook.text,
@@ -123,6 +142,8 @@ export function buildScriptUserPrompt(input: GenerateScriptInput): string {
     '# VOZ DE ADRIÁN (calibración de tono — NO copiar literal)',
     voiceBlock,
     '',
+    corpusBlock ?? '',
+    corpusBlock ? '' : null,
     '# BRIEF DEL USUARIO',
     `Plataforma: ${platform}`,
     duration_target_s ? `Duración objetivo: ${duration_target_s}s` : '',
@@ -130,9 +151,9 @@ export function buildScriptUserPrompt(input: GenerateScriptInput): string {
     '',
     brief,
     '',
-    '# REFERENCIAS DEL CORPUS DE CONTENT INTEL',
+    '# REFERENCIAS DEL CORPUS DE CONTENT INTEL (videos específicos pasados a mano, opcional)',
     refBlock,
   ]
-    .filter(Boolean)
+    .filter((s) => s !== null && s !== undefined)
     .join('\n')
 }
