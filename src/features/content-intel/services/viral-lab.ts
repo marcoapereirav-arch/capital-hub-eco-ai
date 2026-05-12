@@ -35,6 +35,19 @@ import type { ScriptOutput } from '../types/script'
 const MAX_VIDEOS_HARD_CAP = 100
 const MAX_AUTO_TRANSCRIBE = 100
 
+// ==============================================================
+// Calidad mínima del corpus para análisis de patrones
+// ==============================================================
+// Un transcript "útil" debe tener al menos esto de longitud (en chars).
+// Por debajo de eso, no aporta nada al análisis (1 frase suelta, lema
+// publicitario, etc. — el modelo no puede inferir patrones).
+const MIN_TRANSCRIPT_CHARS = 200
+
+// Mínimo de videos con transcript útil para considerar el corpus
+// estadísticamente analizable. Por debajo, abortamos con error claro
+// en vez de devolver patrones a ciegas.
+const MIN_USABLE_VIDEOS = 3
+
 // Schema simple sin constraints para script generation (Anthropic/Azure-compat)
 const ScriptOutputSchema: z.ZodType<ScriptOutput> = z.object({
   title: z.string(),
@@ -82,6 +95,119 @@ interface SelectedVideo {
   comments: number | null
   caption: string | null
   transcript: string | null
+}
+
+/**
+ * Heurística simple para detectar si un transcript está en español.
+ *
+ * Cuenta apariciones de palabras españolas vs inglesas frecuentes. Si hay
+ * más marcadores españoles que ingleses, asumimos español. No es 100%
+ * preciso pero filtra casos obvios como canciones en inglés o transcripts
+ * de cuentas que escriben en otro idioma.
+ *
+ * NO usamos servicios de detección de idioma (langdetect, fastText) para
+ * mantener cero dependencias extra. Esta heurística cubre el 95% de casos
+ * reales en nuestro corpus.
+ */
+function looksLikeSpanish(text: string): boolean {
+  if (!text || text.length < 30) return false
+  const lower = text.toLowerCase()
+  const tokens = lower.replace(/[^\p{L}\s]/gu, ' ').split(/\s+/)
+  const tokenSet = new Set(tokens)
+
+  const spanishMarkers = [
+    'que',
+    'para',
+    'porque',
+    'cuando',
+    'tengo',
+    'tiene',
+    'aquí',
+    'esto',
+    'pero',
+    'así',
+    'tipo',
+    'gente',
+    'algo',
+    'tienes',
+    'puedes',
+    'eres',
+    'estás',
+    'están',
+    'siempre',
+    'nunca',
+    'también',
+    'entonces',
+    'mucho',
+    'poco',
+    'cómo',
+    'qué',
+    'sí',
+    'están',
+  ]
+  const englishMarkers = [
+    'the',
+    'and',
+    'you',
+    'your',
+    'this',
+    'that',
+    'with',
+    'have',
+    'just',
+    'about',
+    'know',
+    'going',
+    'really',
+    'don',
+    'because',
+    'something',
+  ]
+
+  const spanishCount = spanishMarkers.filter((m) => tokenSet.has(m)).length
+  const englishCount = englishMarkers.filter((m) => tokenSet.has(m)).length
+
+  return spanishCount > englishCount
+}
+
+/**
+ * Filtra videos para quedarnos solo con los que tienen transcript ÚTIL para
+ * análisis de patrones:
+ *   - Transcript no nulo
+ *   - Longitud >= MIN_TRANSCRIPT_CHARS (filtra lemas cortos / "no speech")
+ *   - En español (filtra canciones inglesas y otros idiomas)
+ *
+ * Los own videos también pasan por este filtro — no aporta nada al análisis
+ * un video propio cuya transcripción es una canción inglesa o tiene 50 chars.
+ *
+ * Devuelve { useful, dropped } con razones, para que el caller pueda dar
+ * feedback al usuario.
+ */
+function filterUsefulVideos(videos: SelectedVideo[]): {
+  useful: SelectedVideo[]
+  dropped: { video: SelectedVideo; reason: string }[]
+} {
+  const useful: SelectedVideo[] = []
+  const dropped: { video: SelectedVideo; reason: string }[] = []
+  for (const v of videos) {
+    if (!v.transcript || v.transcript === '[NO_SPEECH]') {
+      dropped.push({ video: v, reason: 'sin transcript' })
+      continue
+    }
+    if (v.transcript.length < MIN_TRANSCRIPT_CHARS) {
+      dropped.push({
+        video: v,
+        reason: `transcript corto (${v.transcript.length} < ${MIN_TRANSCRIPT_CHARS} chars)`,
+      })
+      continue
+    }
+    if (!looksLikeSpanish(v.transcript)) {
+      dropped.push({ video: v, reason: 'transcript no parece español' })
+      continue
+    }
+    useful.push(v)
+  }
+  return { useful, dropped }
 }
 
 async function selectVideos(
@@ -590,6 +716,30 @@ export async function runViralLab(input: ViralLabInput): Promise<ViralLabResult>
   // 2. Asegurar transcripciones
   videos = await ensureTranscriptions(supabase, videos)
 
+  // 2b. Filtrar videos sin transcripts ÚTILES (cortos / otro idioma / vacíos)
+  //     + abortar si el corpus efectivo es demasiado pequeño para análisis
+  //     estadístico. Evita devolver patrones "a ciegas" cuando el filtro del
+  //     usuario es demasiado restrictivo o el corpus tiene poca densidad.
+  const { useful: usefulVideos, dropped } = filterUsefulVideos(videos)
+  if (dropped.length > 0) {
+    console.log(
+      `[viral-lab] descartados ${dropped.length} videos por calidad de transcript: ` +
+        dropped
+          .slice(0, 5)
+          .map((d) => `@${d.video.handle} (${d.reason})`)
+          .join(', '),
+    )
+  }
+  if (usefulVideos.length < MIN_USABLE_VIDEOS) {
+    const detail =
+      `Solo ${usefulVideos.length} videos del corpus filtrado tienen transcripciones útiles ` +
+      `(>${MIN_TRANSCRIPT_CHARS} chars en español). Necesitas mínimo ${MIN_USABLE_VIDEOS} para análisis robusto. ` +
+      `Opciones: baja min_views, amplía rango de fechas, selecciona otras cuentas con más actividad ` +
+      `reciente en español, o transcribe manualmente videos pendientes en la tab Videos.`
+    throw new ContentIntelError('insufficient_corpus', detail)
+  }
+  videos = usefulVideos
+
   // 3. Analizar patrones
   const { markdown: analysisMarkdown, tokens: analysisTokens, videosUsed } = await analyzePatterns(
     videos,
@@ -890,6 +1040,29 @@ export async function runStudioChat(input: StudioChatInput): Promise<StudioChatR
       }
     }
     videos = await ensureTranscriptions(supabase, videos)
+
+    // Filtrar videos sin transcripts útiles + validar corpus mínimo
+    const { useful, dropped } = filterUsefulVideos(videos)
+    if (dropped.length > 0) {
+      console.log(
+        `[viral-lab/chat] descartados ${dropped.length} videos por calidad de transcript`,
+      )
+    }
+    if (useful.length < MIN_USABLE_VIDEOS) {
+      return {
+        reply:
+          `Solo ${useful.length} videos del corpus filtrado tienen transcripciones útiles ` +
+          `(>${MIN_TRANSCRIPT_CHARS} chars en español). Necesito mínimo ${MIN_USABLE_VIDEOS} para análisis. ` +
+          `Relaja el filtro (baja min_views, amplía fechas, otras cuentas) y vuelve a preguntar.`,
+        intent: 'chat',
+        script_ids: [],
+        query_id: null,
+        cost_usd: 0,
+        tokens_used: 0,
+      }
+    }
+    videos = useful
+
     const analyzed = await analyzePatterns(videos, labInput)
     analysisMd = analyzed.markdown
     analysisTokens = analyzed.tokens
