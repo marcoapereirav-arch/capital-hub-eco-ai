@@ -33,7 +33,12 @@ import {
 import type { ScriptOutput } from '../types/script'
 
 const MAX_VIDEOS_HARD_CAP = 100
-const MAX_AUTO_TRANSCRIBE = 100
+// Tope alto para auto-transcripción. Permite transcribir bajo demanda hasta 200
+// videos en una sola consulta del Viral Lab. Coste estimado por video con
+// Gemini 2.5 transcripción: ~$0.03. 200 videos = ~$6. Si quieres más, sube
+// este número (o pídelo en una consulta segmentada).
+const MAX_AUTO_TRANSCRIBE = 200
+const COST_PER_TRANSCRIPTION_USD = 0.03
 
 // ==============================================================
 // Calidad mínima del corpus para análisis de patrones
@@ -355,11 +360,19 @@ async function ensureTranscriptions(
   if (needTranscript.length > MAX_AUTO_TRANSCRIBE) {
     throw new ContentIntelError(
       'too_many_untranscribed',
-      `Demasiados videos sin transcribir (${needTranscript.length}). Reduce el filtro o transcribe manualmente.`,
+      `Tu consulta requeriría transcribir ${needTranscript.length} videos en una sola tanda ` +
+        `(tope: ${MAX_AUTO_TRANSCRIBE}). Reduce el filtro total_limit, sube min_views para ` +
+        `tener menos resultados, o transcribe primero un batch manual desde la tab Videos.`,
     )
   }
 
-  console.log(`[viral-lab] Auto-transcribing ${needTranscript.length} videos...`)
+  const estimatedCost = needTranscript.length * COST_PER_TRANSCRIPTION_USD
+  const estimatedSeconds = needTranscript.length * 4 // ~4s/video con Gemini en paralelo
+  console.log(
+    `[viral-lab] Auto-transcribing ${needTranscript.length} videos · ` +
+      `coste estimado: ~$${estimatedCost.toFixed(2)} · ` +
+      `tiempo estimado: ~${estimatedSeconds}s`,
+  )
   await transcribeBatch({ video_ids: needTranscript.map((v) => v.id) })
 
   // Re-fetch para traer transcripts actualizados
