@@ -17,6 +17,7 @@ import {
   AlertCircle,
   TrendingUp,
   Zap,
+  Sunrise,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -133,6 +134,9 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
   )
   const [genTotalLimit, setGenTotalLimit] = useState(20)
   const [generating, setGenerating] = useState(false)
+
+  // Daily session
+  const [startingDaily, setStartingDaily] = useState(false)
 
   // Rank dialog
   const [rankOpen, setRankOpen] = useState(false)
@@ -315,6 +319,32 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
   }
 
   // ============================================================
+  // Sesión del día (chat conversacional con corpus + ideas)
+  // ============================================================
+  const startDailySession = async () => {
+    setStartingDaily(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/content-intel/ideas/daily-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform: 'instagram', total_limit: 25 }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      // Saltamos al tab "Chat con Corpus" con el chat ya creado + el primer
+      // mensaje auto-enviado pidiendo las 3 mejores ideas
+      if (onChatGenerated && json.chat_id) {
+        onChatGenerated(json.chat_id, json.first_user_message)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
+    } finally {
+      setStartingDaily(false)
+    }
+  }
+
+  // ============================================================
   // Rank ideas por potencial (cuello de botella)
   // ============================================================
   const runRank = async () => {
@@ -420,18 +450,42 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2.5">
-          <Lightbulb className="h-5 w-5 text-foreground" strokeWidth={1.5} />
-          <h3 className="font-heading text-2xl font-medium tracking-tight text-foreground">
-            Ideas
-          </h3>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2.5">
+            <Lightbulb className="h-5 w-5 text-foreground" strokeWidth={1.5} />
+            <h3 className="font-heading text-2xl font-medium tracking-tight text-foreground">
+              Ideas
+            </h3>
+          </div>
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Conecta un Google Doc con tus ideas crudas. Sincroniza para
+            importarlas, y convierte cada idea en un guion grounded en el
+            corpus con 1 clic.
+          </p>
         </div>
-        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Conecta un Google Doc con tus ideas crudas. Sincroniza para
-          importarlas, y convierte cada idea en un guion grounded en el corpus
-          con 1 clic.
-        </p>
+        {sources.length > 0 && (
+          <Button
+            onClick={startDailySession}
+            disabled={startingDaily}
+            size="lg"
+            variant="default"
+            className="gap-2"
+            title="Inicia una sesión conversacional para elegir las 3 ideas del día y generar los 3 guiones"
+          >
+            {startingDaily ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Preparando sesión…
+              </>
+            ) : (
+              <>
+                <Sunrise className="h-4 w-4" />
+                Sesión del día
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       {/* Errores / éxitos */}

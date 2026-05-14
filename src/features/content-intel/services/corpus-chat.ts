@@ -46,6 +46,7 @@ export interface CorpusChatRow {
   platform: Platform
   total_videos_in_context: number
   archived: boolean
+  session_type: 'daily' | null
   created_at: string
   updated_at: string
 }
@@ -108,6 +109,55 @@ REGLAS DE ESCRITURA:
 - Si necesitas un dato que no tienes, márcalo [DATO_NECESARIO: ...] en vez de inventarlo
 
 NUNCA inventes contenido del corpus. Si la información no está en los transcripts que tienes, dilo claramente. Mejor decir "no lo veo en el corpus filtrado" que adivinar.`
+
+const DAILY_SESSION_SYSTEM = `${CORPUS_CHAT_SYSTEM}
+
+═══════════════════════════════════════════════════════════════
+MODO ESPECIAL: SESIÓN DEL DÍA
+═══════════════════════════════════════════════════════════════
+
+Esta NO es una conversación libre. Es la sesión diaria de Adrián para
+elegir las 3 ideas que va a grabar HOY (2 TOFU + 1 MOFU) y producir
+los 3 guiones uno por uno.
+
+PROTOCOLO DE LA SESIÓN (síguelo estrictamente):
+
+FASE 1 — Selección de ternas
+Cuando Adrián te pida "dame las 3 mejores" (o equivalente):
+1. Lee la sección "IDEAS PENDIENTES" del contexto (te las paso siempre)
+2. Cruza cada idea con: corpus + avatar Andrés + brand playbook
+3. Propón EXACTAMENTE 3 ideas: 2 TOFU + 1 MOFU
+4. Para cada una di: ID de la idea, contenido resumido, funnel,
+   por qué la elegiste (anclando al corpus y/o al avatar concreto),
+   hook propuesto en ≤12 palabras
+5. Espera la respuesta de Adrián. Posibles respuestas:
+   - "Las 3 me convencen" / "vamos con estas" → FASE 2
+   - "La 2 no me convence, dame otra" → propón otra TOFU manteniendo
+     las que aprobó. Vuelve a esperar
+   - "Ninguna me convence" → propón otra terna distinta
+   - Pregunta específica → respondes y vuelves a esperar
+
+FASE 2 — Generación de guiones (uno por uno, NUNCA todos a la vez)
+Cuando Adrián confirme las 3:
+1. Listas el orden: "vamos con guion 1 (...), después 2, después 3"
+2. Generas SOLO el primer guion completo (hook ≤12 palabras + 3
+   variantes, cuerpo word-for-word, CTA implícito, notas de producción)
+3. Esperas su feedback. Posibles respuestas:
+   - "Perfecto, siguiente" → generas el guion 2
+   - "Cambia X" → iteras solo lo que pide, NO repites todo el guion
+   - "Hazlo más afilado" / etc → iteras
+4. Solo cuando confirma un guion, pasas al siguiente
+5. Al final de los 3 guiones: confirmas "Sesión cerrada. 3 guiones
+   listos para grabar."
+
+REGLAS DURAS:
+- Nunca generes los 3 guiones a la vez aunque te lo pidan. Uno por uno
+- Nunca te saltes la fase de selección. Aunque Adrián te pida "dame
+  el primer guion", primero le confirmas qué idea es esa
+- Si Adrián cambia de idea a mitad ("olvida la #2, mejor esta otra"),
+  flexibilízate pero recuérdale el orden actual antes de seguir
+- Si propones una idea, SIEMPRE incluye su ID (el del input) para que
+  el sistema pueda marcarla como "generated" en BD después`
 
 // ============================================================
 // Helper: cargar videos del chat con transcripts
@@ -189,6 +239,28 @@ function buildContextBlock(videos: ChatContextVideo[]): string {
     .join('\n\n---\n\n')
 }
 
+async function loadPendingIdeasForUser(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<Array<{ id: string; content: string }>> {
+  const { data, error } = await supabase
+    .from('ci_ideas')
+    .select('id, content, position_in_source')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .order('position_in_source', { ascending: true, nullsFirst: false })
+    .limit(100)
+
+  if (error) {
+    console.warn(`[corpus-chat] loadPendingIdeas failed: ${error.message}`)
+    return []
+  }
+  return (data ?? []).map((r) => ({
+    id: r.id as string,
+    content: r.content as string,
+  }))
+}
+
 async function buildFullSystemPrompt(
   supabase: SupabaseClient,
   chat: CorpusChatRow,
@@ -199,8 +271,30 @@ async function buildFullSystemPrompt(
 
   const filtersDescription = describeFilters(chat.filters)
 
+  const isDaily = chat.session_type === 'daily'
+  const systemBase = isDaily ? DAILY_SESSION_SYSTEM : CORPUS_CHAT_SYSTEM
+
+  // En modo daily, cargamos las ideas pendientes del usuario en cada turno.
+  // Las cargamos cada vez (no cacheadas en el chat) porque el usuario puede
+  // sincronizar el doc mientras la sesión está abierta y queremos que se
+  // refleje sin tener que cerrar el chat.
+  let pendingIdeasBlock = ''
+  if (isDaily) {
+    const pendingIdeas = await loadPendingIdeasForUser(supabase, chat.user_id)
+    if (pendingIdeas.length === 0) {
+      pendingIdeasBlock = '_(No hay ideas pendientes. Avísale a Adrián que sincronice su doc o añada ideas nuevas.)_'
+    } else {
+      pendingIdeasBlock = pendingIdeas
+        .map(
+          (i, idx) =>
+            `${idx + 1}. (id: ${i.id}) ${i.content.slice(0, 400)}${i.content.length > 400 ? '…' : ''}`,
+        )
+        .join('\n\n')
+    }
+  }
+
   return [
-    CORPUS_CHAT_SYSTEM,
+    systemBase,
     '',
     '# BRAND PLAYBOOK',
     brand.playbook.text,
@@ -217,6 +311,9 @@ async function buildFullSystemPrompt(
     '',
     '# TOP VIDEOS DEL CORPUS (transcripciones completas)',
     contextBlock,
+    '',
+    isDaily ? '# IDEAS PENDIENTES (las que Adrián tiene apuntadas y aún no ha grabado)' : '',
+    isDaily ? pendingIdeasBlock : '',
   ]
     .filter(Boolean)
     .join('\n')
@@ -254,6 +351,47 @@ export interface CreateChatInput {
 export async function createCorpusChat(
   input: CreateChatInput,
 ): Promise<CorpusChatRow> {
+  return _createCorpusChatInternal(input, null)
+}
+
+/**
+ * Crea una "sesión del día": un chat de corpus pre-configurado para el
+ * workflow diario de Adrián.
+ *
+ * Diferencias con un chat normal:
+ *   - session_type='daily' marcado en BD
+ *   - El system prompt incluye protocolo estricto (selección → guiones uno a uno)
+ *   - Las IDEAS PENDIENTES del usuario se cargan EN CADA TURNO en el system
+ *     prompt (se actualiza dinámicamente si sincroniza el doc mid-sesión)
+ *   - Título auto: "Sesión del día — DD/MM"
+ *   - Auto-mensaje inicial: "Dame las 3 mejores: 2 TOFU + 1 MOFU"
+ */
+export async function createDailySession(input: {
+  userId: string
+  filters: ViralLabFilters
+  totalLimit?: number
+  platform?: Platform
+}): Promise<{ chat: CorpusChatRow; firstUserMessage: string }> {
+  const chat = await _createCorpusChatInternal(
+    {
+      userId: input.userId,
+      filters: input.filters,
+      totalLimit: input.totalLimit ?? 25,
+      platform: input.platform,
+    },
+    'daily',
+  )
+
+  const firstUserMessage =
+    'De todas las ideas pendientes que tengo, mira el corpus y los patrones que funcionan AHORA, mira mi avatar Andrés, y proponme las 3 ideas con mayor potencial para grabar hoy: 2 TOFU + 1 MOFU. Para cada una dime: el ID de la idea, el funnel, hook propuesto en ≤12 palabras, y por qué la has elegido (con referencia concreta al corpus o al avatar). Si necesitas que cambie alguna, te lo digo y propones otra.'
+
+  return { chat, firstUserMessage }
+}
+
+async function _createCorpusChatInternal(
+  input: CreateChatInput,
+  sessionType: 'daily' | null,
+): Promise<CorpusChatRow> {
   const supabase = createAdminClient()
   const platform: Platform = input.platform ?? 'instagram'
 
@@ -274,9 +412,12 @@ export async function createCorpusChat(
   }
 
   // Generamos un título inicial provisional
-  const title = input.initialBrief
-    ? generateTitleFromBrief(input.initialBrief)
-    : `Chat del ${new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+  const title =
+    sessionType === 'daily'
+      ? `Sesión del día — ${new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+      : input.initialBrief
+        ? generateTitleFromBrief(input.initialBrief)
+        : `Chat del ${new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
 
   const { data, error } = await supabase
     .from('ci_corpus_chats')
@@ -288,6 +429,7 @@ export async function createCorpusChat(
       analysis_md: analysisMd,
       platform,
       total_videos_in_context: videoIds.length,
+      session_type: sessionType,
     })
     .select('*')
     .single()
