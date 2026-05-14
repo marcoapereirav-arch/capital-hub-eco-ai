@@ -97,7 +97,12 @@ function describeFiltersShort(f: Filters): string {
   return parts.join(' · ')
 }
 
-export function CorpusChatPanel() {
+interface CorpusChatPanelProps {
+  /** Si se pasa, abre ese chat al montar (útil cuando vienes desde tab Ideas) */
+  initialChatId?: string | null
+}
+
+export function CorpusChatPanel({ initialChatId }: CorpusChatPanelProps = {}) {
   const [chats, setChats] = useState<ChatRow[]>([])
   const [activeChat, setActiveChat] = useState<ChatWithMessages | null>(null)
   const [accounts, setAccounts] = useState<AccountRow[]>([])
@@ -169,6 +174,14 @@ export function CorpusChatPanel() {
     void loadChats()
     void loadAccounts()
   }, [])
+
+  // Auto-abrir el chat si llegamos con un initialChatId (desde tab Ideas)
+  useEffect(() => {
+    if (initialChatId && (!activeChat || activeChat.id !== initialChatId)) {
+      void openChat(initialChatId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialChatId])
 
   // ============================================================
   // Auto-scroll al fondo cuando llegan mensajes nuevos / stream

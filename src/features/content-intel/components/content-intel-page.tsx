@@ -7,12 +7,19 @@ import { AccountsTab } from './accounts-tab'
 import { VideosTab } from './videos-tab'
 import { QueriesScriptsTab } from './queries-scripts-tab'
 import { CorpusChatPanel } from './corpus-chat-panel'
+import { IdeasTab } from './ideas-tab'
 import { VideoEditPanel } from '@/features/video-edit/components/video-edit-panel'
 
-type Tab = 'chat' | 'accounts' | 'videos' | 'queries' | 'edit'
+type Tab = 'ideas' | 'chat' | 'accounts' | 'videos' | 'queries' | 'edit'
 
 export function ContentIntelPage() {
-  const [tab, setTab] = useState<Tab>('chat')
+  const [tab, setTab] = useState<Tab>('ideas')
+  const [pendingChatId, setPendingChatId] = useState<string | null>(null)
+
+  const jumpToChat = (chatId: string) => {
+    setPendingChatId(chatId)
+    setTab('chat')
+  }
 
   return (
     <>
@@ -20,6 +27,7 @@ export function ContentIntelPage() {
       <div className="flex flex-col gap-4 p-4 pb-mobile-nav md:p-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
           <TabsList className="-mx-4 w-auto justify-start overflow-x-auto px-4 md:mx-0 md:px-0">
+            <TabsTrigger value="ideas">Ideas</TabsTrigger>
             <TabsTrigger value="chat">Chat con Corpus</TabsTrigger>
             <TabsTrigger value="accounts">Cuentas</TabsTrigger>
             <TabsTrigger value="videos">Videos</TabsTrigger>
@@ -27,8 +35,11 @@ export function ContentIntelPage() {
             <TabsTrigger value="edit">Edición</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="ideas" className="mt-6">
+            <IdeasTab onChatGenerated={jumpToChat} />
+          </TabsContent>
           <TabsContent value="chat" className="mt-6">
-            <CorpusChatPanel />
+            <CorpusChatPanel initialChatId={pendingChatId} />
           </TabsContent>
           <TabsContent value="accounts" className="mt-6">
             <AccountsTab />
