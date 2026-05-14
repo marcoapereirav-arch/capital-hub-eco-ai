@@ -27,7 +27,10 @@ const CreateSchema = z.object({
   filters: FiltersSchema,
   platform: z.enum(PLATFORMS).optional().default('instagram'),
   total_limit: z.number().int().min(3).max(50).optional().default(20),
-  initial_brief: z.string().max(500).optional(),
+  // Subido a 8000 para alinear con el límite del endpoint de mensajes.
+  // Permite prompts largos como primer mensaje (briefs estratégicos
+  // detallados, contexto pegado, etc.).
+  initial_brief: z.string().max(8000).optional(),
 })
 
 export async function GET() {
