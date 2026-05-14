@@ -15,9 +15,11 @@ type Tab = 'ideas' | 'chat' | 'accounts' | 'videos' | 'queries' | 'edit'
 export function ContentIntelPage() {
   const [tab, setTab] = useState<Tab>('ideas')
   const [pendingChatId, setPendingChatId] = useState<string | null>(null)
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
 
-  const jumpToChat = (chatId: string) => {
+  const jumpToChat = (chatId: string, ideaContent?: string) => {
     setPendingChatId(chatId)
+    setPendingPrompt(ideaContent ?? null)
     setTab('chat')
   }
 
@@ -39,7 +41,10 @@ export function ContentIntelPage() {
             <IdeasTab onChatGenerated={jumpToChat} />
           </TabsContent>
           <TabsContent value="chat" className="mt-6">
-            <CorpusChatPanel initialChatId={pendingChatId} />
+            <CorpusChatPanel
+              initialChatId={pendingChatId}
+              initialPrompt={pendingPrompt}
+            />
           </TabsContent>
           <TabsContent value="accounts" className="mt-6">
             <AccountsTab />

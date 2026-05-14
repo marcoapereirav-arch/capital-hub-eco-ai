@@ -100,9 +100,18 @@ function describeFiltersShort(f: Filters): string {
 interface CorpusChatPanelProps {
   /** Si se pasa, abre ese chat al montar (útil cuando vienes desde tab Ideas) */
   initialChatId?: string | null
+  /**
+   * Si se pasa junto con initialChatId, el chat se abre y se envía
+   * automáticamente este texto como primer mensaje (caso típico: viene
+   * desde tab Ideas con una idea recién convertida en chat).
+   */
+  initialPrompt?: string | null
 }
 
-export function CorpusChatPanel({ initialChatId }: CorpusChatPanelProps = {}) {
+export function CorpusChatPanel({
+  initialChatId,
+  initialPrompt,
+}: CorpusChatPanelProps = {}) {
   const [chats, setChats] = useState<ChatRow[]>([])
   const [activeChat, setActiveChat] = useState<ChatWithMessages | null>(null)
   const [accounts, setAccounts] = useState<AccountRow[]>([])
@@ -182,6 +191,22 @@ export function CorpusChatPanel({ initialChatId }: CorpusChatPanelProps = {}) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialChatId])
+
+  // Auto-enviar el initialPrompt como primer mensaje si el chat está vacío
+  const initialPromptSentRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (
+      activeChat &&
+      initialPrompt &&
+      activeChat.messages.length === 0 &&
+      !streaming &&
+      initialPromptSentRef.current !== activeChat.id
+    ) {
+      initialPromptSentRef.current = activeChat.id
+      void sendMessage(initialPrompt)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChat, initialPrompt])
 
   // ============================================================
   // Auto-scroll al fondo cuando llegan mensajes nuevos / stream

@@ -100,7 +100,7 @@ const STATUS_VARIANT: Record<Idea['status'], string> = {
 
 interface IdeasTabProps {
   /** Callback opcional: cuando se genera un chat, podemos saltar al tab Chat con Corpus */
-  onChatGenerated?: (chatId: string) => void
+  onChatGenerated?: (chatId: string, ideaContent?: string) => void
 }
 
 export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
@@ -280,7 +280,10 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
       setSuccess(`Chat creado. Cambiando al tab "Chat con Corpus"…`)
       await loadIdeas()
       if (onChatGenerated && json.result?.chatId) {
-        setTimeout(() => onChatGenerated(json.result.chatId), 800)
+        setTimeout(
+          () => onChatGenerated(json.result.chatId, json.result.ideaContent),
+          800,
+        )
       }
       setTimeout(() => setSuccess(null), 3000)
     } catch (err) {
@@ -553,7 +556,9 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                   )}
                   {idea.status === 'generated' && idea.generated_chat_id && (
                     <Button
-                      onClick={() => onChatGenerated?.(idea.generated_chat_id!)}
+                      onClick={() =>
+                        onChatGenerated?.(idea.generated_chat_id!, undefined)
+                      }
                       size="sm"
                       variant="default"
                       className="h-8 gap-1 text-xs"
