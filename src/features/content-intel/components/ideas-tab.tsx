@@ -15,6 +15,8 @@ import {
   FileText,
   Filter,
   AlertCircle,
+  TrendingUp,
+  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -131,6 +133,25 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
   )
   const [genTotalLimit, setGenTotalLimit] = useState(20)
   const [generating, setGenerating] = useState(false)
+
+  // Rank dialog
+  const [rankOpen, setRankOpen] = useState(false)
+  const [ranking, setRanking] = useState(false)
+  type RankedItem = {
+    idea_id: string
+    content: string
+    score: number
+    funnel: 'TOFU' | 'MOFU' | 'BOFU'
+    reason: string
+    hook_preview: string
+    corpus_anchor: string
+  }
+  const [rankResult, setRankResult] = useState<{
+    bottleneck: string
+    items: RankedItem[]
+    videosUsed: number
+    cost: number
+  } | null>(null)
 
   // ============================================================
   // Carga
@@ -290,6 +311,43 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  // ============================================================
+  // Rank ideas por potencial (cuello de botella)
+  // ============================================================
+  const runRank = async () => {
+    setRanking(true)
+    setError(null)
+    try {
+      const filters: Filters = {
+        min_views: 100000,
+        from_date: daysAgoISO(60),
+        order_by: 'engagement_rate',
+        top_n_per_account: 3,
+      }
+      const res = await fetch('/api/content-intel/ideas/rank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filters,
+          total_limit: 25,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      setRankResult({
+        bottleneck: json.result.bottleneck_analysis,
+        items: json.result.ranked,
+        videosUsed: json.result.videos_used,
+        cost: json.result.cost_usd,
+      })
+      setRankOpen(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido')
+    } finally {
+      setRanking(false)
     }
   }
 
@@ -459,6 +517,28 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
             <Plus className="mr-1 h-3 w-3" />
             Otro doc
           </Button>
+          {ideas.length > 0 && (
+            <Button
+              onClick={runRank}
+              disabled={ranking}
+              variant="default"
+              size="sm"
+              className="ml-auto gap-1.5 text-xs"
+              title="Analiza tus ideas pendientes y rankea por potencial de palanca"
+            >
+              {ranking ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Analizando ideas…
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  Rankear por potencial
+                </>
+              )}
+            </Button>
+          )}
         </div>
       )}
 
@@ -601,6 +681,136 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
           })}
         </div>
       )}
+
+      {/* MODAL: ranking de ideas por potencial */}
+      <Sheet open={rankOpen} onOpenChange={setRankOpen}>
+        <SheetContent
+          side="right"
+          className="flex w-full max-w-2xl flex-col gap-0 p-0 sm:max-w-2xl"
+        >
+          <SheetHeader className="border-b border-border px-6 py-4">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4" />
+              Ideas rankeadas por potencial
+            </SheetTitle>
+            <SheetDescription className="text-xs">
+              Basado en patrones del corpus + avatar Andrés + cuello de
+              botella actual de la cuenta. Las top te las recomiendo grabar
+              primero.
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="flex-1 overflow-y-auto">
+            <div className="flex flex-col gap-4 px-6 py-4">
+              {rankResult && (
+                <>
+                  <div className="rounded-lg border border-border bg-card/40 p-3">
+                    <div className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <Zap className="h-3 w-3" />
+                      Cuello de botella detectado
+                    </div>
+                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                      {rankResult.bottleneck}
+                    </p>
+                    <p className="mt-2 text-[10px] text-muted-foreground">
+                      {rankResult.videosUsed} videos del corpus analizados · ~$
+                      {rankResult.cost.toFixed(3)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {rankResult.items.map((it, idx) => {
+                      const scoreColor =
+                        it.score >= 80
+                          ? 'border-emerald-500/60 text-emerald-500'
+                          : it.score >= 60
+                            ? 'border-foreground text-foreground'
+                            : it.score >= 40
+                              ? 'border-foreground/40 text-foreground'
+                              : 'border-border text-muted-foreground'
+                      const funnelColor =
+                        it.funnel === 'TOFU'
+                          ? 'border-blue-500/60 text-blue-500'
+                          : it.funnel === 'MOFU'
+                            ? 'border-purple-500/60 text-purple-500'
+                            : 'border-emerald-500/60 text-emerald-500'
+                      return (
+                        <div
+                          key={it.idea_id}
+                          className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="font-mono text-[11px] font-medium text-muted-foreground">
+                              #{idx + 1}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`shrink-0 font-mono text-[10px] ${scoreColor}`}
+                            >
+                              {it.score}/100
+                            </Badge>
+                            <Badge
+                              variant="outline"
+                              className={`shrink-0 text-[10px] ${funnelColor}`}
+                            >
+                              {it.funnel}
+                            </Badge>
+                            <p className="flex-1 text-xs leading-relaxed text-foreground">
+                              {it.content.slice(0, 200)}
+                              {it.content.length > 200 ? '…' : ''}
+                            </p>
+                          </div>
+                          <div className="flex flex-col gap-1 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Hook propuesto:
+                              </span>{' '}
+                              <em>&quot;{it.hook_preview}&quot;</em>
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Por qué:
+                              </span>{' '}
+                              {it.reason}
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Ancla en corpus:
+                              </span>{' '}
+                              {it.corpus_anchor}
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-1.5">
+                            <Button
+                              onClick={() => {
+                                setRankOpen(false)
+                                setTimeout(() => openGenerate(it.idea_id), 200)
+                              }}
+                              size="sm"
+                              variant={idx < 3 ? 'default' : 'ghost'}
+                              className="h-7 gap-1 text-xs"
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              Generar guion
+                            </Button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="flex items-center justify-between gap-2 border-t border-border bg-card/30 px-6 py-3">
+            <p className="text-[11px] text-muted-foreground">
+              Te recomiendo grabar las top 3 esta semana.
+            </p>
+            <Button variant="ghost" onClick={() => setRankOpen(false)}>
+              Cerrar
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* MODAL: añadir fuente */}
       <Sheet
