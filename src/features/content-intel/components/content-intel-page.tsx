@@ -6,12 +6,13 @@ import { ShellHeader } from '@/features/shell/components/shell-header'
 import { AccountsTab } from './accounts-tab'
 import { VideosTab } from './videos-tab'
 import { QueriesScriptsTab } from './queries-scripts-tab'
+import { CorpusChatPanel } from './corpus-chat-panel'
 import { VideoEditPanel } from '@/features/video-edit/components/video-edit-panel'
 
-type Tab = 'accounts' | 'videos' | 'queries' | 'edit'
+type Tab = 'chat' | 'accounts' | 'videos' | 'queries' | 'edit'
 
 export function ContentIntelPage() {
-  const [tab, setTab] = useState<Tab>('accounts')
+  const [tab, setTab] = useState<Tab>('chat')
 
   return (
     <>
@@ -19,12 +20,16 @@ export function ContentIntelPage() {
       <div className="flex flex-col gap-4 p-4 pb-mobile-nav md:p-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
           <TabsList className="-mx-4 w-auto justify-start overflow-x-auto px-4 md:mx-0 md:px-0">
+            <TabsTrigger value="chat">Chat con Corpus</TabsTrigger>
             <TabsTrigger value="accounts">Cuentas</TabsTrigger>
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="queries">Consultas & Guiones</TabsTrigger>
             <TabsTrigger value="edit">Edición</TabsTrigger>
           </TabsList>
 
+          <TabsContent value="chat" className="mt-6">
+            <CorpusChatPanel />
+          </TabsContent>
           <TabsContent value="accounts" className="mt-6">
             <AccountsTab />
           </TabsContent>
