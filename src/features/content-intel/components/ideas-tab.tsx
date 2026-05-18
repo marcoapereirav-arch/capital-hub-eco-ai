@@ -31,6 +31,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 
+import { extractApiError } from '../lib/extract-api-error'
 interface Source {
   id: string
   source_type: 'google_doc'
@@ -230,7 +231,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         }),
       })
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       setNewDocUrl('')
       setNewDocName('')
       setAddOpen(false)
@@ -258,7 +259,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         { method: 'POST' },
       )
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       const r = json.result
       setSuccess(
         `Sync OK · ${r.imported} ideas nuevas · ${r.skipped_existing} ya existían (total parseadas: ${r.total_parsed})`,
@@ -300,7 +301,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         },
       )
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       setGenerateIdeaId(null)
       setSuccess(`Chat creado. Cambiando al tab "Chat con Corpus"…`)
       await loadIdeas()
@@ -331,7 +332,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         body: JSON.stringify({ platform: 'instagram', total_limit: 25 }),
       })
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       // Saltamos al tab "Chat con Corpus" con el chat ya creado + el primer
       // mensaje auto-enviado pidiendo las 3 mejores ideas
       if (onChatGenerated && json.chat_id) {
@@ -366,7 +367,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         }),
       })
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       setRankResult({
         bottleneck: json.result.bottleneck_analysis,
         items: json.result.ranked,

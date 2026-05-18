@@ -27,6 +27,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
+import { extractApiError } from '../lib/extract-api-error'
 
 interface AccountRow {
   id: string
@@ -244,25 +245,60 @@ export function CorpusChatPanel({
     setError(null)
     setCreating(true)
     try {
-      const filters: Filters = {
-        ...newFilters,
-        ...(newSelectedAccountIds.size > 0 && {
-          account_ids: Array.from(newSelectedAccountIds),
-        }),
+      // Limpieza defensiva de filtros: solo enviamos campos con valores
+      // válidos. Esto evita errores de validación cuando un campo numérico
+      // queda como NaN o un string vacío.
+      const cleanFilters: Filters = {}
+      if (
+        typeof newFilters.min_views === 'number' &&
+        !isNaN(newFilters.min_views) &&
+        newFilters.min_views > 0
+      ) {
+        cleanFilters.min_views = newFilters.min_views
       }
+      if (newFilters.from_date) cleanFilters.from_date = newFilters.from_date
+      if (newFilters.to_date) cleanFilters.to_date = newFilters.to_date
+      if (newFilters.order_by) cleanFilters.order_by = newFilters.order_by
+      if (
+        typeof newFilters.top_n_per_account === 'number' &&
+        !isNaN(newFilters.top_n_per_account) &&
+        newFilters.top_n_per_account > 0
+      ) {
+        cleanFilters.top_n_per_account = newFilters.top_n_per_account
+      }
+      if (newSelectedAccountIds.size > 0) {
+        cleanFilters.account_ids = Array.from(newSelectedAccountIds)
+      }
+
+      // total_limit defensivo
+      const safeTotalLimit =
+        typeof newTotalLimit === 'number' &&
+        !isNaN(newTotalLimit) &&
+        newTotalLimit >= 3 &&
+        newTotalLimit <= 50
+          ? newTotalLimit
+          : 20
+
+      // initial_brief: trim + validar longitud
+      const trimmedBrief = newInitialBrief.trim()
+      const safeBrief =
+        trimmedBrief.length === 0
+          ? undefined
+          : trimmedBrief.slice(0, 8000)
+
       const res = await fetch('/api/content-intel/corpus-chats', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          filters,
+          filters: cleanFilters,
           platform: 'instagram',
-          total_limit: newTotalLimit,
-          initial_brief: newInitialBrief || undefined,
+          total_limit: safeTotalLimit,
+          initial_brief: safeBrief,
         }),
       })
       const json = await res.json()
       if (!res.ok || !json.ok) {
-        throw new Error(json.detail ?? json.error ?? `HTTP ${res.status}`)
+        throw new Error(extractApiError(json, res.status))
       }
       setNewChatOpen(false)
       await loadChats()
@@ -325,7 +361,7 @@ export function CorpusChatPanel({
 
       if (!res.ok) {
         const j = await res.json().catch(() => ({}))
-        throw new Error(j.detail ?? j.error ?? `HTTP ${res.status}`)
+        throw new Error(extractApiError(j, res.status))
       }
 
       if (!res.body) throw new Error('Sin stream en la respuesta')
@@ -370,7 +406,7 @@ export function CorpusChatPanel({
         method: 'DELETE',
       })
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       if (activeChat?.id === id) setActiveChat(null)
       await loadChats()
     } catch (err) {
@@ -409,7 +445,7 @@ export function CorpusChatPanel({
         },
       )
       const json = await res.json()
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      if (!res.ok || !json.ok) throw new Error(extractApiError(json, res.status))
       // Recargar chat
       const fresh = await fetch(
         `/api/content-intel/corpus-chats/${activeChat.id}`,
@@ -625,7 +661,8 @@ export function CorpusChatPanel({
               <div className="mx-auto flex max-w-3xl items-end gap-2">
                 <Textarea
                   value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
+                  onChange={(e) => setDraft(e.target.value.slice(0, 8000))}
+                  maxLength={8000}
                   placeholder="Pregunta lo que sea sobre el corpus filtrado…"
                   rows={2}
                   className="resize-none text-sm"
@@ -676,14 +713,28 @@ export function CorpusChatPanel({
               setTotalLimit={setNewTotalLimit}
             />
             <div className="mt-6 flex flex-col gap-1.5">
-              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Primer mensaje (opcional)
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Primer mensaje (opcional)
+                </label>
+                <span
+                  className={`text-[10px] tabular-nums ${
+                    newInitialBrief.length > 7500
+                      ? 'text-destructive'
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  {newInitialBrief.length}/8000
+                </span>
+              </div>
               <Textarea
                 value={newInitialBrief}
-                onChange={(e) => setNewInitialBrief(e.target.value)}
+                onChange={(e) =>
+                  setNewInitialBrief(e.target.value.slice(0, 8000))
+                }
+                maxLength={8000}
                 placeholder="Ej: dame 5 ángulos virales en base a los patrones del corpus, calibrados a Andrés."
-                rows={3}
+                rows={4}
               />
               <p className="text-[11px] text-muted-foreground">
                 Si pones algo aquí, se envía como primer mensaje en cuanto el
