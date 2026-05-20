@@ -133,6 +133,14 @@ Por ser un hombre que ha construido desde cero, que vive lo que predica — en e
 
 > **Nota:** Negocio y cuellos de botella queda fuera de los 3 core (amarillo para audiencia B2C). Se mete cuando toque, no es pilar central.
 
+## 12.1 Formatos Short-Form con IA
+
+Capital Hub puede usar formatos visuales generados o asistidos con IA cuando funcionen como piezas humanas, observacionales y alineadas con el avatar, no como demostraciones de tecnologia.
+
+Formato activo documentado: `docs/shortform-ai-visual-formats.md`.
+
+Regla: si una pieza generada con IA se siente artificial, generica o desconectada de la marca personal de Adrian, no se publica. La IA debe amplificar una verdad humana, no sustituirla.
+
 ---
 
 ## 13. Prison Test
