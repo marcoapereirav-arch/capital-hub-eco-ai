@@ -33,10 +33,11 @@ Este documento clarifica qué es qué para no volver a confundirlos.
   - Bolsa de empleo
   - Comunidad (la real es Discord, esto se decidirá después)
   - Test vocacional
-- **Stack**: Next.js (otro repo, otro deploy).
+- **Stack** (verificado 2026-05-25 al clonar): **Vite + React 19 SPA + Tailwind + Supabase**, NO Next.js. El front vive en `web/`; el backend son **Supabase Edge Functions** en `supabase/functions/` (función `api` con router + handlers como `training.ts`, `subscription.ts`; más webhooks `stripe-webhook`, `hotmart-webhook`, `ghl-webhook`).
+- **Modelo de acceso**: por `subscription_tier` (ej. `T1` = acceso completo a formación + marketplace/bolsa de empleo) + estado activo. Lo conceden los webhooks de pago. ⚠️ **Hoy la App tiene webhooks de Stripe / Hotmart / GHL, NO de Whop** — y el OS cobra por Whop. Ese es el hueco a cerrar en la integración.
 - **Supabase**: proyecto **DISTINTO** del OS — **NO** es el `aglyoyqtzozdnusltjxe` que usamos en el OS. El App tiene su propio proyecto Supabase con su propia auth.users y sus propias tablas (formación, lecciones, progreso, etc.).
 - **Vercel**: **CUENTA distinta** a la cuenta actual del OS (que está en cuenta de Marco). Marco confirmó 2026-05-04 que el App vive en otra cuenta Vercel.
-- **Repo**: lo recibirá Marco de otra persona (en proceso). NO está en este repo del OS.
+- **Repo** (recibido 2026-05-25): `https://github.com/SASbot01/capitalhub2.0.git`. Clonado en `/Users/marcoantonio/Desktop/Marco-Codes/App Capital Hub` (carpeta local renombrada desde `capitalhub2.0`; hermana del OS, dentro de Marco-Codes). NO confundir con `app-capital-hub` (carpeta vieja con guiones). NO está dentro de este repo del OS.
 
 ## Cómo se conectan
 
@@ -58,6 +59,8 @@ Cliente paga en Whop
                        │
                        └──► Cliente clica → entra a App Capital Hub logueado
 ```
+
+> **Nota de implementación (2026-05-25):** como la App es un SPA Vite (sin rutas API de Next.js), el endpoint de provisión NO es una ruta Next.js sino una **Supabase Edge Function de la App** (ej. `https://<app-ref>.supabase.co/functions/v1/provision-user`), que valida el secret compartido (`_shared/auth.ts`), crea/enlaza el usuario (migración `auth_link`), pone `subscription_tier` activo y devuelve magic link. El lado OS ya está listo salvo esa llamada: es el `// TODO provisión App` en `src/app/api/whop/webhook/route.ts` (case `membership.went_valid`).
 
 ## Variables de entorno cruzadas
 
@@ -106,3 +109,4 @@ npx vercel deploy --prod --yes
 - **2026-04-30** (v1): definida arquitectura OS ↔ App con HTTP + secret. Pendiente: dominio del OS, migración Vercel a Adrián.
 - **2026-05-04** (v2): regla añadida sobre env vars y Vercel. Subidas a Vercel production: WHOP_*, RESEND_*, META_*, NEXT_PUBLIC_WHOP_CHECKOUT_URL_*, NEXT_PUBLIC_META_PIXEL_ID. Triggered redeploy `capital-hub-eco-f738cokki`.
 - **2026-05-07** (v3): incidente Content Intel. Adrián intentó generar un guion en producción y obtuvo `OPENROUTER_API_KEY not set`. Verificado: las 3 keys del feature (`OPENROUTER_API_KEY`, `GEMINI_API_KEY`, `APIFY_TOKEN`) estaban en `.env.local` pero NO en Vercel production. Subidas con `printf | vercel env add ... --force` y triggered redeploy `capital-hub-eco-e9ucfe4l7` (Ready · Production). **Lección**: cualquier feature nueva que añade dependencia de API externa (OpenRouter, Gemini, Apify, Resend, etc.) debe incluir como subtarea explícita "subir keys a Vercel production + redeploy" — no asumir que el equipo lo hará después.
+- **2026-05-25** (v4): App **recibida y clonada** (`SASbot01/capitalhub2.0`, carpeta local renombrada a `App Capital Hub`). Stack real verificado: **Vite + React 19 SPA + Supabase Edge Functions**, NO Next.js (se corrige la suposición previa). Modelo de acceso por `subscription_tier`. La App trae webhooks Stripe/Hotmart/GHL pero **no Whop** → hueco de integración identificado. El endpoint de provisión se implementará como Edge Function de la App, llamado desde el `// TODO` del webhook Whop del OS.

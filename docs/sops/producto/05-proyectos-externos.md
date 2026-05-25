@@ -25,7 +25,21 @@ Supabase (migraciones, tablas, RLS, SQL), Vercel (env vars, deploys, projects), 
 
 **No excepciones.** Mejor perder 30 segundos preguntando que tocar un proyecto ajeno.
 
+## Caso concreto: `nvision-saas` NO es Capital Hub (CRÍTICO)
+
+`nvision-saas` (Supabase `oytssmypmvgpqmurwjme`, repo `marcoapereirav-arch/nvision-saas`) es el **proyecto personal de Marco**, separado de Capital Hub. Marco colabora con Adrián en Capital Hub, pero nvision es **otra cosa**.
+
+- **El OS (este proyecto) usa el Supabase `aglyoyqtzozdnusltjxe`** (lo confirma `NEXT_PUBLIC_SUPABASE_URL` en `.env.local`). Es la cuenta compartida con Adrián.
+- **JAMÁS se toca `nvision` desde este proyecto.** Los cambios en nvision se hacen solo en su propia ventana/repo (`Marco-Codes/NVISION`).
+- **Trampa detectada (2026-05-25):** el MCP de Supabase de Claude apunta a `nvision`, no a Capital Hub, porque es la cuenta a la que Marco tiene token. Había DOS conexiones a nvision: el conector Claude.ai (`mcp__claude_ai_Supabase`) y un servidor local en `.mcp.json` (`@supabase/mcp-server-supabase`) con un PAT personal de Marco.
+- **Bloqueo aplicado:** en `.claude/settings.local.json` (gitignored, solo Marco) → `permissions.deny: ["mcp__claude_ai_Supabase", "mcp__supabase"]` + `disabledMcpjsonServers: ["supabase"]`. En este proyecto **es imposible tocar nvision por MCP**.
+- **Cómo se hace trabajo de BD del OS:** NO por MCP (apunta a nvision). Se usa la conexión real de Capital Hub vía credenciales de `.env.local` (`aglyoyqtzozdnusltjxe` + service role) con la CLI de Supabase. Pendiente: configurar un acceso scoped a la cuenta de Capital Hub (token de la org de Adrián) si se quiere MCP propio del OS.
+- **Consecuencia en el board:** `public.tasks` vive en el Supabase de Capital Hub. Hasta tener la vía CLI/token de esa cuenta, el auto-sync del board (REGLA #1) no puede hacerse por MCP — no se debe escribir en las `tasks` de nvision.
+
 ## Cambios versionados
 
 ### 2026-05-04 — Migrado desde CLAUDE.md
 Este protocolo vivía inline en `CLAUDE.md`. Movido al Knowledge para que CLAUDE.md solo contenga la regla #0 ("lee Knowledge antes de actuar") y todas las reglas operativas vivan aquí versionadas.
+
+### 2026-05-25 — Caso `nvision-saas` + bloqueo del MCP de Supabase
+Marco aclaró que `nvision-saas` es su proyecto personal, NO Capital Hub. El MCP de Supabase apuntaba a nvision (única cuenta con token de Marco). Se bloqueó el MCP de Supabase en este proyecto (`.claude/settings.local.json`: deny + disabledMcpjsonServers) para que sea imposible tocar nvision desde aquí. Documentado cómo se hace el trabajo de BD del OS (CLI + `.env.local` → `aglyoyqtzozdnusltjxe`) y el impacto en el auto-sync del board.
