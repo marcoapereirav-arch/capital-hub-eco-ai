@@ -12,6 +12,7 @@ import {
   Megaphone,
   Magnet,
   Rocket,
+  FolderKanban,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -25,6 +26,7 @@ export const navSections: NavSection[] = [
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, mobilePrimary: true },
       { title: "Tareas", href: "/tasks", icon: CheckSquare, mobilePrimary: true },
+      { title: "Proyectos", href: "/projects", icon: FolderKanban, mobilePrimary: true },
       { title: "Board", href: "/board", icon: Network, mobilePrimary: true },
       { title: "Knowledge", href: "/knowledge", icon: BookOpen, mobilePrimary: true },
     ],
