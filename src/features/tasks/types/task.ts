@@ -1,12 +1,14 @@
 export type GTDStatus = "inbox" | "next" | "waiting" | "someday" | "done"
 export type Priority = "urgent" | "high" | "normal" | "low"
 export type ParaType = "project" | "area" | "resource" | "archive"
+export type ParaStatus = "active" | "completed"
 export type Assignee = "marco" | "adrian" | "equipo" | "ai"
 
 export type ParaItem = {
   id: string
   name: string
   type: ParaType
+  status: ParaStatus
 }
 
 export type Task = {

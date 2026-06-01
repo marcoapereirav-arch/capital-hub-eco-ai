@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Task, ParaItem, GTDStatus, Priority, Assignee, ParaType } from "../types/task"
+import type { Task, ParaItem, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
 
 type TaskRow = {
   id: string
@@ -19,6 +19,7 @@ type ParaRow = {
   id: string
   name: string
   type: ParaType
+  status: ParaStatus
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -37,7 +38,15 @@ function rowToTask(row: TaskRow): Task {
 }
 
 function rowToPara(row: ParaRow): ParaItem {
-  return { id: row.id, name: row.name, type: row.type }
+  return { id: row.id, name: row.name, type: row.type, status: row.status ?? "active" }
+}
+
+function paraUpdatesToRow(updates: Partial<ParaItem>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  if (updates.name !== undefined) out.name = updates.name
+  if (updates.type !== undefined) out.type = updates.type
+  if (updates.status !== undefined) out.status = updates.status
+  return out
 }
 
 function taskToInsert(task: Omit<Task, "id" | "createdAt" | "completedAt">) {
@@ -114,12 +123,25 @@ export const tasksService = {
     if (error) throw error
   },
 
-  async addParaItem(item: Omit<ParaItem, "id">): Promise<ParaItem> {
+  async addParaItem(item: { name: string; type: ParaType; status?: ParaStatus }): Promise<ParaItem> {
     const supabase = createClient()
     const id = `para_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     const { data, error } = await supabase
       .from("para_items")
-      .insert({ id, name: item.name, type: item.type })
+      .insert({ id, name: item.name, type: item.type, status: item.status ?? "active" })
+      .select("*")
+      .single()
+    if (error) throw error
+    return rowToPara(data as ParaRow)
+  },
+
+  async updateParaItem(id: string, updates: Partial<ParaItem>): Promise<ParaItem> {
+    const supabase = createClient()
+    const patch = paraUpdatesToRow(updates)
+    const { data, error } = await supabase
+      .from("para_items")
+      .update(patch)
+      .eq("id", id)
       .select("*")
       .single()
     if (error) throw error
@@ -138,6 +160,7 @@ export type RealtimeHandlers = {
   onTaskUpdate: (task: Task) => void
   onTaskDelete: (id: string) => void
   onParaInsert: (item: ParaItem) => void
+  onParaUpdate: (item: ParaItem) => void
   onParaDelete: (id: string) => void
 }
 
@@ -165,6 +188,11 @@ export function subscribeRealtime(handlers: RealtimeHandlers) {
       "postgres_changes",
       { event: "INSERT", schema: "public", table: "para_items" },
       (payload) => handlers.onParaInsert(rowToPara(payload.new as ParaRow))
+    )
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "para_items" },
+      (payload) => handlers.onParaUpdate(rowToPara(payload.new as ParaRow))
     )
     .on(
       "postgres_changes",

@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Task, ParaItem, GTDStatus, Priority, Assignee } from "../types/task"
+import type { Task, ParaItem, GTDStatus, Assignee, ParaType, ParaStatus } from "../types/task"
 import { tasksService, subscribeRealtime } from "../services/tasks-service"
 
 type TaskFilters = {
@@ -33,7 +33,8 @@ type TaskStore = {
   quickCapture: (title: string) => Promise<void>
 
   // PARA CRUD
-  addParaItem: (item: Omit<ParaItem, "id">) => Promise<void>
+  addParaItem: (item: { name: string; type: ParaType; status?: ParaStatus }) => Promise<void>
+  updateParaItem: (id: string, updates: Partial<ParaItem>) => Promise<void>
   deleteParaItem: (id: string) => Promise<void>
 
   // UI State
@@ -106,6 +107,11 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
               ? state
               : { paraItems: [...state.paraItems, item] }
           )
+        },
+        onParaUpdate: (item) => {
+          set((state) => ({
+            paraItems: state.paraItems.map((p) => (p.id === item.id ? item : p)),
+          }))
         },
         onParaDelete: (id) => {
           set((state) => ({
@@ -210,6 +216,26 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       // Realtime INSERT
     } catch (e) {
       set({ error: e instanceof Error ? e.message : "Error creando PARA item" })
+      throw e
+    }
+  },
+
+  updateParaItem: async (id, updates) => {
+    const prev = get().paraItems.find((p) => p.id === id)
+    if (!prev) return
+
+    // Optimistic
+    set((state) => ({
+      paraItems: state.paraItems.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }))
+
+    try {
+      await tasksService.updateParaItem(id, updates)
+    } catch (e) {
+      set((state) => ({
+        paraItems: state.paraItems.map((p) => (p.id === id ? prev : p)),
+        error: e instanceof Error ? e.message : "Error actualizando PARA item",
+      }))
       throw e
     }
   },
