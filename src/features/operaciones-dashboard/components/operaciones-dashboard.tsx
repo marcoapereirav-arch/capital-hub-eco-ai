@@ -103,6 +103,19 @@ export function OperacionesDashboard() {
       .slice(0, 8)
   }, [openPlanTasks])
 
+  // === ACCIONES HUMANAS (no AI, no Marco) — bloqueos externos del plan ===
+  const humanActions = useMemo(() => {
+    return openPlanTasks
+      .filter((t) => t.assignee !== "ai" && t.assignee !== "marco")
+      .sort((a, b) => {
+        if (!a.dueDate && !b.dueDate) return 0
+        if (!a.dueDate) return 1
+        if (!b.dueDate) return -1
+        return a.dueDate.localeCompare(b.dueDate)
+      })
+      .slice(0, 10)
+  }, [openPlanTasks])
+
   // === PROGRESO POR PROYECTO ===
   const projectsProgress = useMemo(() => {
     return activeProjects
@@ -273,6 +286,48 @@ export function OperacionesDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* ============ ACCIONES HUMANAS (bloqueos externos) ============ */}
+        {humanActions.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-amber-400" /> Acciones humanas pendientes
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                (Adrián / JP / equipo — bloquean avance del plan)
+              </span>
+            </h2>
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border/40">
+              {humanActions.map((t) => {
+                const isOverdue = t.dueDate && new Date(t.dueDate) < startOfToday
+                const days = t.dueDate ? Math.ceil((new Date(t.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
+                return (
+                  <div key={t.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className={cn(
+                        "h-1.5 w-1.5 rounded-full shrink-0",
+                        t.priority === "urgent" && "bg-red-400",
+                        t.priority === "high" && "bg-orange-400",
+                        t.priority === "normal" && "bg-blue-400",
+                        t.priority === "low" && "bg-muted-foreground/40"
+                      )} />
+                      <span className="text-sm truncate">{t.title}</span>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 text-[10px] font-mono uppercase tracking-wider">
+                      <span className="text-muted-foreground">
+                        {ASSIGNEE_LABELS[t.assignee as keyof typeof ASSIGNEE_LABELS] ?? t.assignee}
+                      </span>
+                      {days !== null && (
+                        <span className={isOverdue ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"}>
+                          {isOverdue ? `${Math.abs(days)}d tarde` : days === 0 ? "Hoy" : `${days}d`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </section>
         )}
