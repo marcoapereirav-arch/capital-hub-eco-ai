@@ -1,5 +1,5 @@
-import { CrmPage } from "@/features/crm/components/crm-page"
+import { redirect } from "next/navigation"
 
-export default function CrmRoute() {
-  return <CrmPage />
+export default function CrmLegacyRedirect() {
+  redirect("/contactos")
 }

@@ -6,7 +6,7 @@ import { MifgeKanban } from "./mifge-kanban"
 export function CrmPage() {
   return (
     <>
-      <ShellHeader title="CRM" />
+      <ShellHeader title="Contactos" />
       <MifgeKanban />
     </>
   )

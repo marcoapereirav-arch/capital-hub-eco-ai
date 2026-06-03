@@ -11,6 +11,7 @@ import {
   Magnet,
   Rocket,
   FolderKanban,
+  CalendarCheck,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -30,7 +31,8 @@ export const navSections: NavSection[] = [
   {
     label: "Marketing",
     items: [
-      { title: "CRM", href: "/crm", icon: Users },
+      { title: "Contactos", href: "/contactos", icon: Users },
+      { title: "Calendario", href: "/calendario", icon: CalendarCheck },
       { title: "Webs", href: "/webs", icon: Globe },
       { title: "Lead Magnets", href: "/webs/lead-magnets", icon: Magnet },
       { title: "Ads", href: "/ads", icon: Megaphone },
