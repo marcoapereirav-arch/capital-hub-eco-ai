@@ -20,6 +20,7 @@ type ParaRow = {
   name: string
   type: ParaType
   status: ParaStatus
+  parent_id: string | null
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -38,7 +39,13 @@ function rowToTask(row: TaskRow): Task {
 }
 
 function rowToPara(row: ParaRow): ParaItem {
-  return { id: row.id, name: row.name, type: row.type, status: row.status ?? "active" }
+  return {
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    status: row.status ?? "active",
+    parentId: row.parent_id ?? null,
+  }
 }
 
 function paraUpdatesToRow(updates: Partial<ParaItem>): Record<string, unknown> {
@@ -46,6 +53,7 @@ function paraUpdatesToRow(updates: Partial<ParaItem>): Record<string, unknown> {
   if (updates.name !== undefined) out.name = updates.name
   if (updates.type !== undefined) out.type = updates.type
   if (updates.status !== undefined) out.status = updates.status
+  if (updates.parentId !== undefined) out.parent_id = updates.parentId
   return out
 }
 
@@ -123,12 +131,18 @@ export const tasksService = {
     if (error) throw error
   },
 
-  async addParaItem(item: { name: string; type: ParaType; status?: ParaStatus }): Promise<ParaItem> {
+  async addParaItem(item: { name: string; type: ParaType; status?: ParaStatus; parentId?: string | null }): Promise<ParaItem> {
     const supabase = createClient()
     const id = `para_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
     const { data, error } = await supabase
       .from("para_items")
-      .insert({ id, name: item.name, type: item.type, status: item.status ?? "active" })
+      .insert({
+        id,
+        name: item.name,
+        type: item.type,
+        status: item.status ?? "active",
+        parent_id: item.parentId ?? null,
+      })
       .select("*")
       .single()
     if (error) throw error

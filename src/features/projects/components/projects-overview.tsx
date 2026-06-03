@@ -1,11 +1,27 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { CheckCircle2, Circle, FolderKanban } from "lucide-react"
+import { CheckCircle2, Circle, FolderKanban, ArrowDownUp, LayoutGrid as LayoutGridIcon } from "lucide-react"
 import { useTaskStore } from "@/features/tasks/store/task-store"
 import { cn } from "@/lib/utils"
 import type { ParaItem, ParaStatus, Task } from "@/features/tasks/types/task"
+import { ROOT_AREAS } from "@/features/tasks/types/task"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+type ProjectSortBy = "alpha" | "most_open" | "least_open" | "most_progress" | "least_progress"
+const PROJECT_SORT_LABELS: Record<ProjectSortBy, string> = {
+  alpha: "A → Z",
+  most_open: "Más tareas abiertas",
+  least_open: "Menos tareas abiertas",
+  most_progress: "Más avanzados",
+  least_progress: "Menos avanzados",
+}
 
 type FilterValue = ParaStatus | "all"
 
@@ -43,13 +59,47 @@ export function ProjectsOverview() {
   const updateParaItem = useTaskStore((s) => s.updateParaItem)
 
   const [filter, setFilter] = useState<FilterValue>("active")
+  const [areaFilter, setAreaFilter] = useState<string | "all">("all")
+  const [sortBy, setSortBy] = useState<ProjectSortBy>("most_open")
 
   useEffect(() => {
     init()
   }, [init])
 
   const allProjects = paraItems.filter((p): p is ParaItem => p.type === "project")
-  const visible = filter === "all" ? allProjects : allProjects.filter((p) => p.status === filter)
+  const byStatus = filter === "all" ? allProjects : allProjects.filter((p) => p.status === filter)
+  const byArea = areaFilter === "all" ? byStatus : byStatus.filter((p) => p.parentId === areaFilter)
+
+  const visible = useMemo(() => {
+    const items = [...byArea]
+    items.sort((a, b) => {
+      const ma = metricsFor(a.id, tasks)
+      const mb = metricsFor(b.id, tasks)
+      const openA = ma.total - ma.done
+      const openB = mb.total - mb.done
+      const pctA = ma.total === 0 ? 0 : ma.done / ma.total
+      const pctB = mb.total === 0 ? 0 : mb.done / mb.total
+      switch (sortBy) {
+        case "alpha":
+          return a.name.localeCompare(b.name)
+        case "most_open":
+          return openB - openA
+        case "least_open":
+          return openA - openB
+        case "most_progress":
+          return pctB - pctA
+        case "least_progress":
+          return pctA - pctB
+        default:
+          return 0
+      }
+    })
+    return items
+  }, [byArea, tasks, sortBy])
+
+  const activeAreaName = areaFilter === "all"
+    ? null
+    : ROOT_AREAS.find((a) => a.id === areaFilter)?.name ?? "Área"
 
   const counts = {
     all: allProjects.length,
@@ -77,25 +127,63 @@ export function ProjectsOverview() {
             <h1 className="text-lg font-semibold">Proyectos</h1>
           </div>
 
-          <div className="ml-auto flex items-center gap-1 rounded-md bg-muted/50 p-0.5">
-            {FILTERS.map((f) => (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setFilter(f.value)}
-                className={cn(
-                  "rounded px-2.5 py-1 text-xs font-medium transition-colors",
-                  filter === f.value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {f.label}{" "}
-                <span className="font-mono tabular-nums text-muted-foreground">
-                  ({counts[f.value]})
-                </span>
-              </button>
-            ))}
+          <div className="ml-auto flex items-center gap-2 flex-wrap">
+            {/* Filtro área */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                  <LayoutGridIcon className="h-3 w-3" />
+                  {activeAreaName ?? "Área"}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setAreaFilter("all")}>Todas</DropdownMenuItem>
+                {ROOT_AREAS.map((a) => (
+                  <DropdownMenuItem key={a.id} onClick={() => setAreaFilter(a.id)}>
+                    {a.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Sort */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                  <ArrowDownUp className="h-3 w-3" />
+                  {PROJECT_SORT_LABELS[sortBy]}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(Object.keys(PROJECT_SORT_LABELS) as ProjectSortBy[]).map((s) => (
+                  <DropdownMenuItem key={s} onClick={() => setSortBy(s)}>
+                    {PROJECT_SORT_LABELS[s]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Toggle estado */}
+            <div className="flex items-center gap-1 rounded-md bg-muted/50 p-0.5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setFilter(f.value)}
+                  className={cn(
+                    "rounded px-2.5 py-1 text-xs font-medium transition-colors",
+                    filter === f.value
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {f.label}{" "}
+                  <span className="font-mono tabular-nums text-muted-foreground">
+                    ({counts[f.value]})
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </header>

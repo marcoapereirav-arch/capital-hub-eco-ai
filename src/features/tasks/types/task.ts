@@ -9,7 +9,23 @@ export type ParaItem = {
   name: string
   type: ParaType
   status: ParaStatus
+  parentId: string | null
 }
+
+// IDs deterministas de las 4 áreas raíz (deben existir en BD via migration 0024)
+export const AREA_IDS = {
+  MARKETING: "area_marketing",
+  PRODUCTO: "area_producto",
+  VENTAS: "area_ventas",
+  FINANZAS: "area_finanzas",
+} as const
+
+export const ROOT_AREAS: { id: string; name: string }[] = [
+  { id: AREA_IDS.MARKETING, name: "Marketing" },
+  { id: AREA_IDS.PRODUCTO, name: "Producto" },
+  { id: AREA_IDS.VENTAS, name: "Ventas" },
+  { id: AREA_IDS.FINANZAS, name: "Finanzas" },
+]
 
 export type Task = {
   id: string

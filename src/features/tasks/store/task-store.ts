@@ -1,13 +1,20 @@
 import { create } from "zustand"
-import type { Task, ParaItem, GTDStatus, Assignee, ParaType, ParaStatus } from "../types/task"
+import type { Task, ParaItem, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
 import { tasksService, subscribeRealtime } from "../services/tasks-service"
+
+export type DueRange = "all" | "overdue" | "today" | "week" | "month" | "no_date"
+export type SortBy = "priority" | "due_asc" | "due_desc" | "status" | "assignee" | "created_desc" | "created_asc" | "alpha"
 
 type TaskFilters = {
   status: GTDStatus | "all"
   assignee: Assignee | "all"
+  priority: Priority | "all"
   paraId: string | null
   paraType: string | null
+  areaId: string | null
+  dueRange: DueRange
   search: string
+  sortBy: SortBy
 }
 
 type TaskStore = {
@@ -33,7 +40,7 @@ type TaskStore = {
   quickCapture: (title: string) => Promise<void>
 
   // PARA CRUD
-  addParaItem: (item: { name: string; type: ParaType; status?: ParaStatus }) => Promise<void>
+  addParaItem: (item: { name: string; type: ParaType; status?: ParaStatus; parentId?: string | null }) => Promise<void>
   updateParaItem: (id: string, updates: Partial<ParaItem>) => Promise<void>
   deleteParaItem: (id: string) => Promise<void>
 
@@ -53,9 +60,38 @@ type TaskStore = {
 const defaultFilters: TaskFilters = {
   status: "all",
   assignee: "all",
+  priority: "all",
   paraId: null,
   paraType: null,
+  areaId: null,
+  dueRange: "all",
   search: "",
+  sortBy: "priority",
+}
+
+const PRIORITY_RANK: Record<Priority, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
+const STATUS_RANK: Record<GTDStatus, number> = { inbox: 0, next: 1, waiting: 2, someday: 3, done: 4 }
+
+function inDueRange(task: Task, range: DueRange): boolean {
+  if (range === "all") return true
+  if (range === "no_date") return !task.dueDate
+  if (!task.dueDate) return false
+  const due = new Date(task.dueDate)
+  // Use 2026-06-03 as anchor (today is set in CLAUDE env); avoid Date.now for purity
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfTomorrow = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000)
+  if (range === "overdue") return due < startOfToday
+  if (range === "today") return due >= startOfToday && due < startOfTomorrow
+  if (range === "week") {
+    const endOfWeek = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000)
+    return due >= startOfToday && due < endOfWeek
+  }
+  if (range === "month") {
+    const endOfMonth = new Date(startOfToday.getTime() + 30 * 24 * 60 * 60 * 1000)
+    return due >= startOfToday && due < endOfMonth
+  }
+  return true
 }
 
 let unsubscribeRealtime: (() => void) | null = null
@@ -278,19 +314,33 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   getFilteredTasks: () => {
-    const { tasks, filters } = get()
-    return tasks.filter((task) => {
+    const { tasks, filters, paraItems } = get()
+    const filtered = tasks.filter((task) => {
       if (filters.status !== "all" && task.status !== filters.status) return false
       if (filters.assignee !== "all" && task.assignee !== filters.assignee) return false
+      if (filters.priority !== "all" && task.priority !== filters.priority) return false
       if (filters.paraId && task.paraId !== filters.paraId) return false
       if (filters.paraType) {
         if (filters.paraType === "inbox") {
           if (task.status !== "inbox") return false
         } else {
-          const paraItem = get().paraItems.find((p) => p.id === task.paraId)
+          const paraItem = paraItems.find((p) => p.id === task.paraId)
           if (!paraItem || paraItem.type !== filters.paraType) return false
         }
       }
+      if (filters.areaId) {
+        // Match tasks que pertenecen al area directamente o via proyecto hijo
+        const ownerPara = paraItems.find((p) => p.id === task.paraId)
+        if (!ownerPara) return false
+        if (ownerPara.id === filters.areaId) {
+          /* directa */
+        } else if (ownerPara.parentId === filters.areaId) {
+          /* via proyecto hijo */
+        } else {
+          return false
+        }
+      }
+      if (!inDueRange(task, filters.dueRange)) return false
       if (filters.search) {
         const q = filters.search.toLowerCase()
         if (
@@ -301,6 +351,36 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }
       return true
     })
+
+    const sorted = [...filtered].sort((a, b) => {
+      switch (filters.sortBy) {
+        case "priority":
+          return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+        case "due_asc":
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return a.dueDate.localeCompare(b.dueDate)
+        case "due_desc":
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return b.dueDate.localeCompare(a.dueDate)
+        case "status":
+          return STATUS_RANK[a.status] - STATUS_RANK[b.status]
+        case "assignee":
+          return a.assignee.localeCompare(b.assignee)
+        case "created_desc":
+          return b.createdAt.localeCompare(a.createdAt)
+        case "created_asc":
+          return a.createdAt.localeCompare(b.createdAt)
+        case "alpha":
+          return a.title.localeCompare(b.title)
+        default:
+          return 0
+      }
+    })
+    return sorted
   },
 
   getTasksByParaId: (paraId) => {
