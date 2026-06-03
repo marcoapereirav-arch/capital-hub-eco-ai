@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { AgendaPublica } from "@/features/calendario/components/agenda-publica"
+
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Reserva tu llamada con Adrián — Capital Hub",
@@ -8,5 +11,9 @@ export const metadata: Metadata = {
 }
 
 export default function AgendaRoute() {
-  return <AgendaPublica />
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0F0F12]" />}>
+      <AgendaPublica />
+    </Suspense>
+  )
 }

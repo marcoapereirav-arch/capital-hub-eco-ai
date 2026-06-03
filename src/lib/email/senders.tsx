@@ -48,14 +48,14 @@ export async function sendAgendaConfirmed(input: {
   callId?: string
   publicToken?: string
   leadId?: string
+  cancelUrlPath?: string // ej "/api/calendar/cancel" — default mifge legacy
+  reschedulePath?: string // ej "/api/calendar/reschedule"
 }) {
   const { generateIcs } = await import("@/lib/calendar/ics")
-  const cancelUrl = input.publicToken
-    ? `${APP_URL}/api/mifge/calls/cancel/${input.publicToken}`
-    : null
-  const rescheduleUrl = input.publicToken
-    ? `${APP_URL}/api/mifge/calls/reschedule/${input.publicToken}`
-    : null
+  const cancelPath = input.cancelUrlPath ?? "/api/mifge/calls/cancel"
+  const reschedulePath = input.reschedulePath ?? "/api/mifge/calls/reschedule"
+  const cancelUrl = input.publicToken ? `${APP_URL}${cancelPath}/${input.publicToken}` : null
+  const rescheduleUrl = input.publicToken ? `${APP_URL}${reschedulePath}/${input.publicToken}` : null
   const html = await render(AgendaConfirmedEmail({
     fullName: input.fullName,
     slotStartIso: input.slotStartIso,

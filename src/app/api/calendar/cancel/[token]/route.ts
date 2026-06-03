@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
   const supabase = getAdminClient()
   const { data: booking } = await supabase
     .from("calendar_bookings")
-    .select("id, status, start_at")
+    .select("id, status, start_at, gcal_event_id, contact_id")
     .eq("public_token", token)
     .maybeSingle()
   if (!booking) return NextResponse.redirect(`${baseUrl}/agenda?error=not_found`)
@@ -31,6 +31,34 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     .from("calendar_bookings")
     .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
     .eq("id", booking.id)
+
+  // Delete Google Calendar event si existe
+  if (booking.gcal_event_id) {
+    try {
+      const { getValidAccessToken, loadGoogleConnection } = await import("@/lib/google/calendar-client")
+      const accessToken = await getValidAccessToken()
+      const conn = await loadGoogleConnection()
+      if (accessToken && conn) {
+        await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(conn.calendar_id)}/events/${booking.gcal_event_id}?sendUpdates=all`,
+          { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }
+        )
+      }
+    } catch (e) {
+      console.error("[calendar/cancel] gcal delete failed", e)
+    }
+  }
+
+  // Log journey event
+  if (booking.contact_id) {
+    await supabase.from("contact_journey_events").insert({
+      contact_id: booking.contact_id,
+      type: "call_cancelled",
+      title: "Llamada cancelada por el lead",
+      data: { booking_id: booking.id },
+    })
+    await supabase.from("contacts").update({ stage: "contacted" }).eq("id", booking.contact_id)
+  }
 
   return NextResponse.redirect(`${baseUrl}/agenda?cancelled=ok`)
 }

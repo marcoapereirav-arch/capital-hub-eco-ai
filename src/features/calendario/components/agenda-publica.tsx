@@ -15,6 +15,7 @@ export function AgendaPublica() {
   const [booking, setBooking] = useState(false)
   const [success, setSuccess] = useState<{ start: string; end: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [rescheduled, setRescheduled] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -22,6 +23,17 @@ export function AgendaPublica() {
       .then((r) => r.json())
       .then((d) => setSlots(d.slots ?? []))
       .finally(() => setLoading(false))
+
+    // Prefill desde query string (viene de /api/calendar/reschedule)
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const email = params.get("email")
+      const name = params.get("name")
+      if (params.get("rescheduled") === "1") setRescheduled(true)
+      if (email || name) {
+        setForm((f) => ({ ...f, email: email ?? f.email, name: name ?? f.name }))
+      }
+    }
   }, [])
 
   // Agrupar slots por día
@@ -95,6 +107,11 @@ export function AgendaPublica() {
   return (
     <div className="min-h-screen bg-[#0F0F12] text-white">
       <div className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+        {rescheduled && (
+          <div className="mb-6 rounded-sm border border-amber-500/40 bg-amber-500/[0.06] p-3 text-center text-sm">
+            Tu llamada anterior se ha cancelado. Elige un nuevo hueco abajo.
+          </div>
+        )}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 border border-[#2A2D34] px-3 py-1 rounded-sm mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-[#37CA37] animate-pulse" />

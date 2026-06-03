@@ -32,6 +32,7 @@ export const navSections: NavSection[] = [
     label: "Marketing",
     items: [
       { title: "Contactos", href: "/contactos", icon: Users },
+      { title: "Outreach IG", href: "/outreach-ig", icon: Camera },
       { title: "Calendario", href: "/calendario", icon: CalendarCheck },
       { title: "Webs", href: "/webs", icon: Globe },
       { title: "Lead Magnets", href: "/webs/lead-magnets", icon: Magnet },
