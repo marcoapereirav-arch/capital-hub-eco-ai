@@ -1,7 +1,13 @@
 export type GTDStatus = "inbox" | "next" | "waiting" | "someday" | "done"
 export type Priority = "urgent" | "high" | "normal" | "low"
 export type ParaType = "project" | "area" | "resource" | "archive"
-export type ParaStatus = "active" | "completed"
+export type ParaStatus = "active" | "paused" | "completed"
+
+export const PARA_STATUS_LABELS: Record<ParaStatus, string> = {
+  active: "En progreso",
+  paused: "En pausa",
+  completed: "Completados",
+}
 export type Assignee = "marco" | "adrian" | "equipo" | "ai"
 
 export type ParaItem = {

@@ -27,6 +27,7 @@ type FilterValue = ParaStatus | "all"
 
 const FILTERS: { value: FilterValue; label: string }[] = [
   { value: "active", label: "En progreso" },
+  { value: "paused", label: "En pausa" },
   { value: "completed", label: "Completados" },
   { value: "all", label: "Todos" },
 ]
@@ -104,6 +105,7 @@ export function ProjectsOverview() {
   const counts = {
     all: allProjects.length,
     active: allProjects.filter((p) => p.status === "active").length,
+    paused: allProjects.filter((p) => p.status === "paused").length,
     completed: allProjects.filter((p) => p.status === "completed").length,
   }
 

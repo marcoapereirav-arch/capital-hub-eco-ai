@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { CheckSquare, FolderKanban, Network, LayoutGrid } from "lucide-react"
+import { CheckSquare, FolderKanban, Network, LayoutGrid, Gauge } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TABS = [
+  { href: "/overview", label: "Dashboard", icon: Gauge },
   { href: "/areas", label: "Áreas", icon: LayoutGrid },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
