@@ -15,6 +15,8 @@ import { NoShowEmail } from "./templates/no-show"
 import { PostCallFollowupEmail } from "./templates/post-call-followup"
 import { BetaRetargetingEmail } from "./templates/beta-retargeting"
 import { InternalErrorAlert, type ErrorAlertItem } from "./templates/internal-error-alert"
+import { WelcomeAlumnoHTEmail } from "./templates/welcome-alumno-ht"
+import { TeamInviteEmail } from "./templates/team-invite"
 
 const ADRIAN_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_ADRIAN ?? "adrianvillanuevarios@gmail.com"
 const MARCO_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_MARCO ?? "marcoapereirav@gmail.com"
@@ -266,6 +268,66 @@ export async function notifyAdrianBooking(input: {
     html,
     callId: input.callId,
     leadId: input.leadId,
+  })
+}
+
+/**
+ * Email de bienvenida al alumno tras venta high-ticket.
+ * El inviteUrl debe ser app.capitalhubapp.com/accept/[token] generado via BYOE
+ * (supabase.auth.admin.generateLink + persistir token en student_invites).
+ */
+export async function sendWelcomeAlumnoHT(input: {
+  fullName: string
+  email: string
+  product: string
+  inviteUrl: string
+  closerName?: string
+  contactId?: string
+  leadId?: string
+}) {
+  const html = await render(WelcomeAlumnoHTEmail({
+    fullName: input.fullName,
+    product: input.product,
+    inviteUrl: input.inviteUrl,
+    closerName: input.closerName,
+  }))
+  return sendEmail({
+    template: "welcome_alumno_ht",
+    to: input.email,
+    toName: input.fullName,
+    subject: `${input.fullName.split(" ")[0] ?? "Hola"}, entras hoy a Capital Hub`,
+    html,
+    leadId: input.leadId,
+    metadata: { product: input.product, contactId: input.contactId },
+  })
+}
+
+/**
+ * Email invitación a miembro del equipo (BYOE).
+ * El acceptUrl lleva un token único guardado en team_invitations.
+ * La persona configura su contraseña y entra al OS.
+ */
+export async function sendTeamInvite(input: {
+  fullName: string
+  email: string
+  invitedByName: string
+  role: string
+  acceptUrl: string
+  expiresIn?: string
+}) {
+  const html = await render(TeamInviteEmail({
+    fullName: input.fullName,
+    invitedByName: input.invitedByName,
+    role: input.role,
+    acceptUrl: input.acceptUrl,
+    expiresIn: input.expiresIn ?? "7 días",
+  }))
+  return sendEmail({
+    template: "team_invite",
+    to: input.email,
+    toName: input.fullName,
+    subject: `${input.invitedByName} te invita al OS de Capital Hub`,
+    html,
   })
 }
 

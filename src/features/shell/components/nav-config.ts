@@ -12,6 +12,8 @@ import {
   Rocket,
   FolderKanban,
   CalendarCheck,
+  Shield,
+  Mail,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -26,6 +28,7 @@ export const navSections: NavSection[] = [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, mobilePrimary: true },
       { title: "Operaciones", href: "/overview", icon: FolderKanban, mobilePrimary: true },
       { title: "Knowledge", href: "/knowledge", icon: BookOpen, mobilePrimary: true },
+      { title: "Equipo", href: "/team", icon: Shield },
     ],
   },
   {
@@ -34,6 +37,7 @@ export const navSections: NavSection[] = [
       { title: "Contactos", href: "/contactos", icon: Users },
       { title: "Outreach IG", href: "/outreach-ig", icon: Camera },
       { title: "Calendario", href: "/calendario", icon: CalendarCheck },
+      { title: "Email Marketing", href: "/email-marketing", icon: Mail },
       { title: "Webs", href: "/webs", icon: Globe },
       { title: "Lead Magnets", href: "/webs/lead-magnets", icon: Magnet },
       { title: "Ads", href: "/ads", icon: Megaphone },
