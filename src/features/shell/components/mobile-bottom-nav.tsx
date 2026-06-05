@@ -45,7 +45,7 @@ export function MobileBottomNav({
 
   const displayName = deriveDisplayName(userName, userEmail)
   const initials = deriveInitials(displayName)
-  const roleLabel = userRole === "admin" ? "Admin" : userRole ?? "Miembro"
+  const roleLabel = (userRole === "admin" || userRole === "super_admin") ? "Admin" : userRole ?? "Miembro"
 
   const isSecondaryActive = navSecondary.some(
     (i) => pathname === i.href || pathname.startsWith(i.href + "/")

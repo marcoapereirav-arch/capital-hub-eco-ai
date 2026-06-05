@@ -24,7 +24,7 @@ export default async function MisionRoutePage() {
     .eq("id", user.id)
     .maybeSingle()
 
-  if (profile?.role !== "admin") notFound()
+  if (profile?.role !== "admin" && profile?.role !== "super_admin") notFound()
 
   const email = (user.email ?? "").toLowerCase()
   const currentAssignee = ASSIGNEE_BY_EMAIL[email] ?? null

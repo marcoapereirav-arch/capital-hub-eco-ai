@@ -41,7 +41,7 @@ export function UserMenu({ email, name, role }: UserMenuProps) {
   const router = useRouter()
   const displayName = deriveDisplayName(name, email)
   const initials = deriveInitials(displayName)
-  const roleLabel = role === "admin" ? "Admin" : role ?? "Miembro"
+  const roleLabel = (role === "admin" || role === "super_admin") ? "Admin" : role ?? "Miembro"
 
   const handleSignOut = async () => {
     const supabase = createClient()

@@ -76,7 +76,7 @@ export async function requireAdmin(): Promise<
       const { data: firstAdmin } = await supabase
         .from('profiles')
         .select('id, email')
-        .eq('role', 'admin')
+        .in('role', ['super_admin', 'admin'])
         .limit(1)
         .maybeSingle()
       if (firstAdmin?.id) {
@@ -93,7 +93,7 @@ export async function requireAdmin(): Promise<
     // headers() puede fallar en contextos no-request; seguimos con auth normal
   }
 
-  // 2) Auth normal por cookies + role=admin
+  // 2) Auth normal por cookies + role=admin (acepta 'super_admin' nuevo y 'admin' legacy)
   const supabase = await createClient()
 
   const {
@@ -115,7 +115,7 @@ export async function requireAdmin(): Promise<
     return { error: { status: 403, body: { ok: false, error: 'profile_lookup_failed' } } }
   }
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
     return { error: { status: 403, body: { ok: false, error: 'forbidden' } } }
   }
 
