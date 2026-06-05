@@ -2,9 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Calendar, Target, Users, AlertCircle, ChevronRight, Flag, LayoutGrid, FolderKanban } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Calendar, Target, Users, AlertCircle, ChevronRight, Flag, LayoutGrid, FolderKanban, CheckCircle2, Circle } from "lucide-react"
 import { useTaskStore } from "@/features/tasks/store/task-store"
 import { ROOT_AREAS, ASSIGNEE_LABELS } from "@/features/tasks/types/task"
+import type { Task, Assignee } from "@/features/tasks/types/task"
+import type { DueRange } from "@/features/tasks/store/task-store"
+import { TaskDetail } from "@/features/tasks/components/task-detail"
 import { cn } from "@/lib/utils"
 
 const AREA_COLORS: Record<string, { dot: string; ring: string; tint: string }> = {
@@ -22,12 +26,25 @@ const FOCUS_GRADIENTS: Record<string, string> = {
 }
 
 export function OperacionesDashboard() {
+  const router = useRouter()
   const init = useTaskStore((s) => s.init)
   const paraItems = useTaskStore((s) => s.paraItems)
   const tasks = useTaskStore((s) => s.tasks)
   const focuses = useTaskStore((s) => s.focuses)
   const initialized = useTaskStore((s) => s.initialized)
   const loading = useTaskStore((s) => s.loading)
+  const setFilters = useTaskStore((s) => s.setFilters)
+  const resetFilters = useTaskStore((s) => s.resetFilters)
+
+  function navigateToTasks(filters: { status?: string; assignee?: string; dueRange?: DueRange }) {
+    resetFilters()
+    setFilters({
+      ...(filters.status !== undefined ? { status: filters.status as "all" | "inbox" | "next" | "waiting" | "someday" | "done" } : {}),
+      ...(filters.assignee !== undefined ? { assignee: filters.assignee as Assignee | "all" } : {}),
+      ...(filters.dueRange !== undefined ? { dueRange: filters.dueRange } : {}),
+    })
+    router.push("/tasks")
+  }
 
   useEffect(() => { init() }, [init])
 
@@ -266,10 +283,37 @@ export function OperacionesDashboard() {
 
         {/* ============ STATS CARDS ============ */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label={mode === "general" ? "Total tareas" : "Total foco"} value={totalScopedTasks} sublabel={`${scopedProjects.length} proyectos`} icon={Target} />
-          <StatCard label="Abiertas" value={openScoped.length} sublabel={`${doneScoped} hechas`} icon={Target} accent="cyan" />
-          <StatCard label="Vencidas" value={overdue.length} sublabel={overdue.length > 0 ? "Atrasadas" : "Todo al día"} icon={AlertCircle} accent={overdue.length > 0 ? "red" : "green"} />
-          <StatCard label="Esta semana" value={dueThisWeek.length} sublabel="Próx 7 días" icon={Calendar} accent="amber" />
+          <StatCard
+            label={mode === "general" ? "Total tareas" : "Total foco"}
+            value={totalScopedTasks}
+            sublabel={`${scopedProjects.length} proyectos`}
+            icon={Target}
+            onClick={() => navigateToTasks({ status: "all" })}
+          />
+          <StatCard
+            label="Abiertas"
+            value={openScoped.length}
+            sublabel={`${doneScoped} hechas`}
+            icon={Target}
+            accent="cyan"
+            onClick={() => navigateToTasks({ status: "next" })}
+          />
+          <StatCard
+            label="Vencidas"
+            value={overdue.length}
+            sublabel={overdue.length > 0 ? "Atrasadas" : "Todo al día"}
+            icon={AlertCircle}
+            accent={overdue.length > 0 ? "red" : "green"}
+            onClick={() => overdue.length > 0 && navigateToTasks({ dueRange: "overdue" })}
+          />
+          <StatCard
+            label="Esta semana"
+            value={dueThisWeek.length}
+            sublabel="Próx 7 días"
+            icon={Calendar}
+            accent="amber"
+            onClick={() => navigateToTasks({ dueRange: "week" })}
+          />
         </section>
 
         {/* ============ ÁREAS ============ */}
@@ -347,17 +391,26 @@ export function OperacionesDashboard() {
           <section className="space-y-3">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <Users className="h-4 w-4 text-muted-foreground" /> Carga por persona
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                (click para ver sus tareas)
+              </span>
             </h2>
             <div className="rounded-md border border-border/40 divide-y divide-border/40">
               {byAssignee.map((a) => (
-                <div key={a.assignee} className="flex items-center justify-between px-3 py-2 text-sm">
+                <button
+                  key={a.assignee}
+                  type="button"
+                  onClick={() => navigateToTasks({ assignee: a.assignee, status: "all" })}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors hover:bg-card/60"
+                >
                   <span>{ASSIGNEE_LABELS[a.assignee as keyof typeof ASSIGNEE_LABELS] ?? a.assignee}</span>
                   <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
                     <span className="text-muted-foreground">{a.open} abiertas</span>
                     {a.overdue > 0 && <span className="text-red-400">{a.overdue} vencidas</span>}
                     <span className="text-muted-foreground">{a.total} total</span>
+                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </section>
@@ -373,34 +426,9 @@ export function OperacionesDashboard() {
               </span>
             </h2>
             <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border/40">
-              {humanActions.map((t) => {
-                const isOverdue = t.dueDate && new Date(t.dueDate) < startOfToday
-                const days = t.dueDate ? Math.ceil((new Date(t.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
-                return (
-                  <div key={t.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className={cn(
-                        "h-1.5 w-1.5 rounded-full shrink-0",
-                        t.priority === "urgent" && "bg-red-400",
-                        t.priority === "high" && "bg-orange-400",
-                        t.priority === "normal" && "bg-blue-400",
-                        t.priority === "low" && "bg-muted-foreground/40"
-                      )} />
-                      <span className="text-sm truncate">{t.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0 text-[10px] font-mono uppercase tracking-wider">
-                      <span className="text-muted-foreground">
-                        {ASSIGNEE_LABELS[t.assignee as keyof typeof ASSIGNEE_LABELS] ?? t.assignee}
-                      </span>
-                      {days !== null && (
-                        <span className={isOverdue ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"}>
-                          {isOverdue ? `${Math.abs(days)}d tarde` : days === 0 ? "Hoy" : `${days}d`}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+              {humanActions.map((t) => (
+                <TaskRow key={t.id} task={t} startOfToday={startOfToday} now={now} variant="amber" />
+              ))}
             </div>
           </section>
         )}
@@ -412,34 +440,110 @@ export function OperacionesDashboard() {
               <Calendar className="h-4 w-4 text-muted-foreground" /> Próximos deadlines
             </h2>
             <div className="rounded-md border border-border/40 divide-y divide-border/40">
-              {upcomingDeadlines.map((t) => {
-                const d = new Date(t.dueDate!)
-                const days = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-                const isOverdue = days < 0
-                return (
-                  <div key={t.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className={cn(
-                        "h-1.5 w-1.5 rounded-full shrink-0",
-                        t.priority === "urgent" && "bg-red-400",
-                        t.priority === "high" && "bg-orange-400",
-                        t.priority === "normal" && "bg-blue-400",
-                        t.priority === "low" && "bg-muted-foreground/40"
-                      )} />
-                      <span className="truncate">{t.title}</span>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0 text-[10px] font-mono uppercase tracking-wider">
-                      <span className={isOverdue ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"}>
-                        {isOverdue ? `${Math.abs(days)}d tarde` : days === 0 ? "Hoy" : `${days}d`}
-                      </span>
-                      <span className="text-muted-foreground">{ASSIGNEE_LABELS[t.assignee as keyof typeof ASSIGNEE_LABELS] ?? t.assignee}</span>
-                    </div>
-                  </div>
-                )
-              })}
+              {upcomingDeadlines.map((t) => (
+                <TaskRow key={t.id} task={t} startOfToday={startOfToday} now={now} variant="default" />
+              ))}
             </div>
           </section>
         )}
+      </div>
+
+      {/* Detalle de task lateral — controlado por el store (selectedTaskId). */}
+      <TaskDetail />
+    </div>
+  )
+}
+
+/**
+ * Fila clicable de task usada en Acciones Humanas + Próximos Deadlines.
+ * - Click ✓ a la izquierda: marca done sin abrir detalle (quick-action)
+ * - Click en el resto: abre el drawer TaskDetail con toda la edición
+ */
+function TaskRow({
+  task,
+  startOfToday,
+  now,
+  variant,
+}: {
+  task: Task
+  startOfToday: Date
+  now: Date
+  variant: "amber" | "default"
+}) {
+  const setSelectedTask = useTaskStore((s) => s.setSelectedTask)
+  const updateTask = useTaskStore((s) => s.updateTask)
+
+  const isOverdue = task.dueDate && new Date(task.dueDate) < startOfToday
+  const days = task.dueDate
+    ? Math.ceil((new Date(task.dueDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    : null
+  const isDone = task.status === "done"
+
+  async function handleToggleDone(e: React.MouseEvent) {
+    e.stopPropagation()
+    await updateTask(task.id, {
+      status: isDone ? "next" : "done",
+      completedAt: isDone ? null : new Date().toISOString(),
+    })
+  }
+
+  function handleOpen() {
+    setSelectedTask(task.id)
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleOpen}
+      onKeyDown={(e) => { if (e.key === "Enter") handleOpen() }}
+      className={cn(
+        "w-full flex items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-card/60 cursor-pointer",
+        variant === "amber" && "hover:bg-amber-500/[0.08]",
+        isDone && "opacity-50"
+      )}
+    >
+      {/* Quick-action: marcar/desmarcar done */}
+      <button
+        type="button"
+        onClick={handleToggleDone}
+        title={isDone ? "Marcar como pendiente" : "Marcar como hecha"}
+        className="shrink-0 hover:scale-110 transition-transform"
+      >
+        {isDone ? (
+          <CheckCircle2 className="h-4 w-4 text-green-400" />
+        ) : (
+          <Circle className="h-4 w-4 text-muted-foreground hover:text-green-400" />
+        )}
+      </button>
+
+      {/* Title + priority dot */}
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full shrink-0",
+            task.priority === "urgent" && "bg-red-400",
+            task.priority === "high" && "bg-orange-400",
+            task.priority === "normal" && "bg-blue-400",
+            task.priority === "low" && "bg-muted-foreground/40"
+          )}
+        />
+        <span className={cn("text-sm truncate", isDone && "line-through")}>{task.title}</span>
+      </div>
+
+      {/* Meta: persona + fecha */}
+      <div className="flex items-center gap-3 shrink-0 text-[10px] font-mono uppercase tracking-wider">
+        <span className="text-muted-foreground">
+          {ASSIGNEE_LABELS[task.assignee as keyof typeof ASSIGNEE_LABELS] ?? task.assignee}
+        </span>
+        {days !== null && (
+          <span className={cn(
+            isOverdue ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"
+          )}>
+            {isOverdue ? `${Math.abs(days)}d tarde` : days === 0 ? "Hoy" : `${days}d`}
+          </span>
+        )}
+        <ChevronRight className="h-3 w-3 text-muted-foreground" />
       </div>
     </div>
   )
@@ -451,12 +555,14 @@ function StatCard({
   sublabel,
   icon: Icon,
   accent,
+  onClick,
 }: {
   label: string
   value: number
   sublabel?: string
   icon: typeof Target
   accent?: "cyan" | "green" | "red" | "amber"
+  onClick?: () => void
 }) {
   const accentColor = {
     cyan: "text-cyan-400",
@@ -465,8 +571,8 @@ function StatCard({
     amber: "text-amber-400",
   }[accent ?? "cyan"]
 
-  return (
-    <div className="rounded-md border border-border/40 bg-card/40 p-3">
+  const content = (
+    <>
       <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">
         <Icon className={cn("h-3 w-3", accent && accentColor)} />
         {label}
@@ -477,6 +583,20 @@ function StatCard({
           {sublabel}
         </div>
       )}
-    </div>
+    </>
   )
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="rounded-md border border-border/40 bg-card/40 p-3 text-left transition-all hover:border-border hover:bg-card/60 cursor-pointer"
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return <div className="rounded-md border border-border/40 bg-card/40 p-3">{content}</div>
 }
