@@ -1,6 +1,7 @@
 import { create } from "zustand"
-import type { Task, ParaItem, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
+import type { Task, ParaItem, Focus, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
 import { tasksService, subscribeRealtime } from "../services/tasks-service"
+import { focusesService } from "../services/focuses-service"
 
 export type DueRange = "all" | "overdue" | "today" | "week" | "month" | "no_date"
 export type SortBy = "priority" | "due_asc" | "due_desc" | "status" | "assignee" | "created_desc" | "created_asc" | "alpha"
@@ -20,6 +21,7 @@ type TaskFilters = {
 type TaskStore = {
   tasks: Task[]
   paraItems: ParaItem[]
+  focuses: Focus[]
   filters: TaskFilters
   selectedTaskId: string | null
   viewMode: "board" | "list"
@@ -99,6 +101,7 @@ let unsubscribeRealtime: (() => void) | null = null
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
   paraItems: [],
+  focuses: [],
   filters: defaultFilters,
   selectedTaskId: null,
   viewMode: "board",
@@ -111,11 +114,12 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (get().initialized || get().loading) return
     set({ loading: true, error: null })
     try {
-      const [tasks, paraItems] = await Promise.all([
+      const [tasks, paraItems, focuses] = await Promise.all([
         tasksService.listTasks(),
         tasksService.listParaItems(),
+        focusesService.listFocuses().catch(() => []),
       ])
-      set({ tasks, paraItems, initialized: true, loading: false })
+      set({ tasks, paraItems, focuses, initialized: true, loading: false })
 
       if (unsubscribeRealtime) unsubscribeRealtime()
       unsubscribeRealtime = subscribeRealtime({

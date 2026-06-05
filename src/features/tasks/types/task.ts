@@ -16,6 +16,18 @@ export type ParaItem = {
   type: ParaType
   status: ParaStatus
   parentId: string | null
+  focusId: string | null
+}
+
+export type Focus = {
+  id: string
+  name: string
+  description: string | null
+  startDate: string | null
+  endDate: string | null
+  color: string
+  active: boolean
+  sortOrder: number
 }
 
 // IDs deterministas de las 4 áreas raíz (deben existir en BD via migration 0024)

@@ -21,6 +21,7 @@ type ParaRow = {
   type: ParaType
   status: ParaStatus
   parent_id: string | null
+  focus_id: string | null
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -45,6 +46,7 @@ function rowToPara(row: ParaRow): ParaItem {
     type: row.type,
     status: row.status ?? "active",
     parentId: row.parent_id ?? null,
+    focusId: row.focus_id ?? null,
   }
 }
 
@@ -54,6 +56,7 @@ function paraUpdatesToRow(updates: Partial<ParaItem>): Record<string, unknown> {
   if (updates.type !== undefined) out.type = updates.type
   if (updates.status !== undefined) out.status = updates.status
   if (updates.parentId !== undefined) out.parent_id = updates.parentId
+  if (updates.focusId !== undefined) out.focus_id = updates.focusId
   return out
 }
 

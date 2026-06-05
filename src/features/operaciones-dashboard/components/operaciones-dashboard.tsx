@@ -1,17 +1,11 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Calendar, Target, Users, AlertCircle, ChevronRight, Flag } from "lucide-react"
+import { Calendar, Target, Users, AlertCircle, ChevronRight, Flag, LayoutGrid, FolderKanban } from "lucide-react"
 import { useTaskStore } from "@/features/tasks/store/task-store"
-import { ROOT_AREAS, ASSIGNEE_LABELS, PRIORITY_LABELS } from "@/features/tasks/types/task"
+import { ROOT_AREAS, ASSIGNEE_LABELS } from "@/features/tasks/types/task"
 import { cn } from "@/lib/utils"
-
-// === FOCO PRINCIPAL: LANZAMIENTO ===
-// Cuando cambie el lanzamiento, modificar estas dos constantes.
-const LAUNCH_DATE = new Date("2026-08-08T18:00:00+02:00")
-const LAUNCH_LABEL = "Webinar en directo · 8/8/2026"
-const PROGRESS_START_DATE = new Date("2026-06-03T00:00:00+02:00") // arranque del plan
 
 const AREA_COLORS: Record<string, { dot: string; ring: string; tint: string }> = {
   area_marketing: { dot: "bg-blue-400", ring: "ring-blue-500/30", tint: "bg-blue-500/[0.05]" },
@@ -20,92 +14,115 @@ const AREA_COLORS: Record<string, { dot: string; ring: string; tint: string }> =
   area_finanzas:  { dot: "bg-purple-400", ring: "ring-purple-500/30", tint: "bg-purple-500/[0.05]" },
 }
 
+const FOCUS_GRADIENTS: Record<string, string> = {
+  amber: "from-amber-500 to-red-500",
+  blue: "from-blue-500 to-cyan-500",
+  green: "from-emerald-500 to-green-500",
+  purple: "from-purple-500 to-pink-500",
+}
+
 export function OperacionesDashboard() {
   const init = useTaskStore((s) => s.init)
   const paraItems = useTaskStore((s) => s.paraItems)
   const tasks = useTaskStore((s) => s.tasks)
+  const focuses = useTaskStore((s) => s.focuses)
   const initialized = useTaskStore((s) => s.initialized)
   const loading = useTaskStore((s) => s.loading)
 
   useEffect(() => { init() }, [init])
 
-  // Solo trabajamos con proyectos active (el plan 8/8). Pausados y completados los ignoramos aquí.
-  const activeProjects = useMemo(
-    () => paraItems.filter((p) => p.type === "project" && p.status === "active"),
-    [paraItems]
-  )
-  const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects])
+  // Modo: "general" (todo) o id de foco activo
+  const [mode, setMode] = useState<string>("general")
 
-  // Tasks del plan 8/8: las que cuelgan de proyectos active, NO incluye tasks directas de áreas
-  const planTasks = useMemo(
-    () => tasks.filter((t) => t.paraId && activeProjectIds.has(t.paraId)),
-    [tasks, activeProjectIds]
+  // Cuando llegan focuses, seleccionar el primer activo como default
+  useEffect(() => {
+    if (focuses.length > 0 && mode === "general") {
+      // No auto-cambiamos: general es default. Si user selecciona foco, se queda.
+    }
+  }, [focuses, mode])
+
+  const activeFocus = mode === "general" ? null : focuses.find((f) => f.id === mode) ?? null
+
+  // === SCOPE: qué proyectos/tasks entran en el dashboard ===
+  const scopedProjects = useMemo(() => {
+    if (mode === "general") {
+      return paraItems.filter((p) => p.type === "project" && p.status === "active")
+    }
+    return paraItems.filter((p) => p.type === "project" && p.status === "active" && p.focusId === mode)
+  }, [paraItems, mode])
+
+  const scopedProjectIds = useMemo(() => new Set(scopedProjects.map((p) => p.id)), [scopedProjects])
+  const scopedTasks = useMemo(
+    () => tasks.filter((t) => t.paraId && scopedProjectIds.has(t.paraId)),
+    [tasks, scopedProjectIds]
   )
 
-  // === COUNTDOWN AL LANZAMIENTO ===
+  // === Foco countdown ===
   const now = new Date()
-  const totalMs = LAUNCH_DATE.getTime() - PROGRESS_START_DATE.getTime()
-  const elapsedMs = Math.max(0, now.getTime() - PROGRESS_START_DATE.getTime())
-  const timeProgressPct = totalMs > 0 ? Math.min(100, (elapsedMs / totalMs) * 100) : 100
-  const msToLaunch = LAUNCH_DATE.getTime() - now.getTime()
-  const daysToLaunch = Math.max(0, Math.ceil(msToLaunch / (1000 * 60 * 60 * 24)))
-  const weeksToLaunch = Math.floor(daysToLaunch / 7)
-  const extraDays = daysToLaunch % 7
-
-  // === PROGRESO DE TAREAS ===
-  const totalPlanTasks = planTasks.length
-  const donePlanTasks = planTasks.filter((t) => t.status === "done").length
-  const tasksProgressPct = totalPlanTasks > 0 ? (donePlanTasks / totalPlanTasks) * 100 : 0
-
-  // === MÉTRICAS GENERALES ===
-  const openPlanTasks = planTasks.filter((t) => t.status !== "done")
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const in7Days = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const focusCountdown = useMemo(() => {
+    if (!activeFocus || !activeFocus.endDate) return null
+    const endDate = new Date(activeFocus.endDate + "T18:00:00+02:00")
+    const startDate = activeFocus.startDate ? new Date(activeFocus.startDate + "T00:00:00+02:00") : null
+    const totalMs = startDate ? endDate.getTime() - startDate.getTime() : 0
+    const elapsedMs = startDate ? Math.max(0, now.getTime() - startDate.getTime()) : 0
+    const timePct = totalMs > 0 ? Math.min(100, (elapsedMs / totalMs) * 100) : 0
+    const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    const weeks = Math.floor(daysLeft / 7)
+    const extraDays = daysLeft % 7
+    return { endDate, startDate, timePct, daysLeft, weeks, extraDays }
+  }, [activeFocus, now])
 
-  const overdueTasks = openPlanTasks.filter((t) => t.dueDate && new Date(t.dueDate) < startOfToday)
-  const dueThisWeek = openPlanTasks.filter((t) => {
+  // === Progreso tasks scope ===
+  const totalScopedTasks = scopedTasks.length
+  const doneScoped = scopedTasks.filter((t) => t.status === "done").length
+  const tasksPct = totalScopedTasks > 0 ? (doneScoped / totalScopedTasks) * 100 : 0
+  const openScoped = scopedTasks.filter((t) => t.status !== "done")
+  const in7Days = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const overdue = openScoped.filter((t) => t.dueDate && new Date(t.dueDate) < startOfToday)
+  const dueThisWeek = openScoped.filter((t) => {
     if (!t.dueDate) return false
     const d = new Date(t.dueDate)
     return d >= startOfToday && d < in7Days
   })
 
-  // === POR ÁREA ===
+  // === Por área ===
   const byArea = useMemo(() => {
     return ROOT_AREAS.map((area) => {
-      const projects = activeProjects.filter((p) => p.parentId === area.id)
-      const areaTaskIds = new Set(projects.map((p) => p.id))
-      const areaTasks = tasks.filter((t) => t.paraId && areaTaskIds.has(t.paraId))
+      const projects = scopedProjects.filter((p) => p.parentId === area.id)
+      const areaProjectIds = new Set(projects.map((p) => p.id))
+      const areaTasks = tasks.filter((t) => t.paraId && areaProjectIds.has(t.paraId))
       const total = areaTasks.length
       const done = areaTasks.filter((t) => t.status === "done").length
       const pct = total > 0 ? (done / total) * 100 : 0
       return { ...area, projects, total, done, pct }
     })
-  }, [activeProjects, tasks])
+  }, [scopedProjects, tasks])
 
-  // === POR PERSONA ===
+  // === Por persona ===
   const byAssignee = useMemo(() => {
     const map = new Map<string, { total: number; open: number; overdue: number }>()
-    for (const t of planTasks) {
+    for (const t of scopedTasks) {
       const cur = map.get(t.assignee) ?? { total: 0, open: 0, overdue: 0 }
       cur.total++
       if (t.status !== "done") cur.open++
       if (t.dueDate && new Date(t.dueDate) < startOfToday && t.status !== "done") cur.overdue++
       map.set(t.assignee, cur)
     }
-    return Array.from(map.entries()).map(([assignee, m]) => ({ assignee, ...m })).sort((a, b) => b.open - a.open)
-  }, [planTasks, startOfToday])
+    return Array.from(map.entries()).map(([a, m]) => ({ assignee: a, ...m })).sort((a, b) => b.open - a.open)
+  }, [scopedTasks, startOfToday])
 
-  // === PRÓXIMOS DEADLINES (top 8) ===
+  // === Próximos deadlines (top 8) ===
   const upcomingDeadlines = useMemo(() => {
-    return openPlanTasks
+    return openScoped
       .filter((t) => t.dueDate)
       .sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? ""))
       .slice(0, 8)
-  }, [openPlanTasks])
+  }, [openScoped])
 
-  // === ACCIONES HUMANAS (no AI, no Marco) — bloqueos externos del plan ===
+  // === Acciones humanas (no marco, no ai) ===
   const humanActions = useMemo(() => {
-    return openPlanTasks
+    return openScoped
       .filter((t) => t.assignee !== "ai" && t.assignee !== "marco")
       .sort((a, b) => {
         if (!a.dueDate && !b.dueDate) return 0
@@ -114,11 +131,11 @@ export function OperacionesDashboard() {
         return a.dueDate.localeCompare(b.dueDate)
       })
       .slice(0, 10)
-  }, [openPlanTasks])
+  }, [openScoped])
 
-  // === PROGRESO POR PROYECTO ===
+  // === Progreso por proyecto ===
   const projectsProgress = useMemo(() => {
-    return activeProjects
+    return scopedProjects
       .map((p) => {
         const ts = tasks.filter((t) => t.paraId === p.id)
         const total = ts.length
@@ -127,7 +144,7 @@ export function OperacionesDashboard() {
         return { ...p, total, done, open, pct: total > 0 ? (done / total) * 100 : 0 }
       })
       .sort((a, b) => b.open - a.open)
-  }, [activeProjects, tasks])
+  }, [scopedProjects, tasks])
 
   if (loading && !initialized) {
     return (
@@ -140,66 +157,122 @@ export function OperacionesDashboard() {
   return (
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* ============ HERO: FOCO 8/8 ============ */}
-        <section className="rounded-md border border-border bg-card/40 p-5 md:p-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Flag className="h-4 w-4 text-amber-400" />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-amber-400">
-              FOCO PRINCIPAL
-            </span>
-          </div>
+        {/* ============ MODE SWITCHER ============ */}
+        <div className="flex items-center gap-1 rounded-md bg-muted/40 p-0.5 w-fit">
+          <button
+            onClick={() => setMode("general")}
+            className={cn(
+              "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+              mode === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <LayoutGrid className="h-3 w-3" /> General
+          </button>
+          {focuses.filter((f) => f.active).map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setMode(f.id)}
+              className={cn(
+                "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                mode === f.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Flag className="h-3 w-3" /> {f.name}
+            </button>
+          ))}
+        </div>
 
-          <h1 className="text-2xl md:text-3xl font-semibold mb-1">{LAUNCH_LABEL}</h1>
-          <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-5">
-            {daysToLaunch === 0
-              ? "ES HOY"
-              : weeksToLaunch > 0
-                ? `Quedan ${weeksToLaunch} semana${weeksToLaunch === 1 ? "" : "s"}${extraDays ? ` y ${extraDays} día${extraDays === 1 ? "" : "s"}` : ""}`
-                : `Quedan ${daysToLaunch} día${daysToLaunch === 1 ? "" : "s"}`}
-          </p>
+        {/* ============ HERO ============ */}
+        {activeFocus ? (
+          <section className="rounded-md border border-border bg-card/40 p-5 md:p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <Flag className={cn("h-4 w-4", `text-${activeFocus.color}-400`)} />
+              <span className={cn("font-mono text-[10px] uppercase tracking-widest", `text-${activeFocus.color}-400`)}>
+                FOCO ACTIVO
+              </span>
+            </div>
+            <h1 className="text-2xl md:text-3xl font-semibold mb-1">{activeFocus.name}</h1>
+            {activeFocus.description && (
+              <p className="text-xs text-muted-foreground mb-3 max-w-2xl">{activeFocus.description}</p>
+            )}
+            {focusCountdown && (
+              <>
+                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-5">
+                  {focusCountdown.daysLeft === 0
+                    ? "ES HOY"
+                    : focusCountdown.weeks > 0
+                      ? `Quedan ${focusCountdown.weeks} semana${focusCountdown.weeks === 1 ? "" : "s"}${focusCountdown.extraDays ? ` y ${focusCountdown.extraDays} día${focusCountdown.extraDays === 1 ? "" : "s"}` : ""}`
+                      : `Quedan ${focusCountdown.daysLeft} día${focusCountdown.daysLeft === 1 ? "" : "s"}`}
+                </p>
 
-          {/* Barra de progreso TIEMPO */}
-          <div className="space-y-1.5 mb-4">
-            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              <span>Tiempo transcurrido</span>
-              <span>{Math.round(timeProgressPct)}%</span>
-            </div>
-            <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-amber-500 to-red-500 transition-all"
-                style={{ width: `${timeProgressPct}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-              <span>3 jun 2026 (arranque plan)</span>
-              <span>8 ago 2026 (webinar)</span>
-            </div>
-          </div>
+                <div className="space-y-1.5 mb-4">
+                  <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    <span>Tiempo transcurrido</span>
+                    <span>{Math.round(focusCountdown.timePct)}%</span>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
+                    <div
+                      className={cn("h-full bg-gradient-to-r transition-all", FOCUS_GRADIENTS[activeFocus.color] ?? FOCUS_GRADIENTS.amber)}
+                      style={{ width: `${focusCountdown.timePct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+                    <span>
+                      {focusCountdown.startDate?.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                    <span>
+                      {focusCountdown.endDate.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
 
-          {/* Barra de progreso TAREAS */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-              <span>Tareas completadas del plan</span>
-              <span>{donePlanTasks} / {totalPlanTasks} · {Math.round(tasksProgressPct)}%</span>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                <span>Tareas completadas del foco</span>
+                <span>{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
+              </div>
             </div>
-            <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all"
-                style={{ width: `${tasksProgressPct}%` }}
-              />
+          </section>
+        ) : (
+          // MODO GENERAL: hero distinto
+          <section className="rounded-md border border-border bg-card/40 p-5 md:p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                VISTA GENERAL · TODO EL NEGOCIO
+              </span>
             </div>
-          </div>
-        </section>
+            <h1 className="text-2xl md:text-3xl font-semibold mb-1">Operaciones</h1>
+            <p className="text-xs text-muted-foreground mb-5 max-w-2xl">
+              {scopedProjects.length} proyectos activos · {totalScopedTasks} tareas totales · todas las áreas
+            </p>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                <span>Completadas globalmente</span>
+                <span>{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ============ STATS CARDS ============ */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Total plan 8/8" value={totalPlanTasks} sublabel={`${activeProjects.length} proyectos`} icon={Target} />
-          <StatCard label="Abiertas" value={openPlanTasks.length} sublabel={`${donePlanTasks} hechas`} icon={Target} accent="cyan" />
-          <StatCard label="Vencidas" value={overdueTasks.length} sublabel={overdueTasks.length > 0 ? "Atrasadas" : "Todo al día"} icon={AlertCircle} accent={overdueTasks.length > 0 ? "red" : "green"} />
+          <StatCard label={mode === "general" ? "Total tareas" : "Total foco"} value={totalScopedTasks} sublabel={`${scopedProjects.length} proyectos`} icon={Target} />
+          <StatCard label="Abiertas" value={openScoped.length} sublabel={`${doneScoped} hechas`} icon={Target} accent="cyan" />
+          <StatCard label="Vencidas" value={overdue.length} sublabel={overdue.length > 0 ? "Atrasadas" : "Todo al día"} icon={AlertCircle} accent={overdue.length > 0 ? "red" : "green"} />
           <StatCard label="Esta semana" value={dueThisWeek.length} sublabel="Próx 7 días" icon={Calendar} accent="amber" />
         </section>
 
-        {/* ============ ÁREAS DEL PLAN ============ */}
+        {/* ============ ÁREAS ============ */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Target className="h-4 w-4 text-muted-foreground" /> Progreso por área
@@ -235,10 +308,12 @@ export function OperacionesDashboard() {
           </div>
         </section>
 
-        {/* ============ PROGRESO POR PROYECTO ============ */}
+        {/* ============ PROYECTOS ============ */}
         {projectsProgress.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold">Proyectos del plan</h2>
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <FolderKanban className="h-4 w-4 text-muted-foreground" /> Proyectos
+            </h2>
             <div className="rounded-md border border-border/40 divide-y divide-border/40">
               {projectsProgress.map((p) => (
                 <Link
@@ -279,9 +354,7 @@ export function OperacionesDashboard() {
                   <span>{ASSIGNEE_LABELS[a.assignee as keyof typeof ASSIGNEE_LABELS] ?? a.assignee}</span>
                   <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
                     <span className="text-muted-foreground">{a.open} abiertas</span>
-                    {a.overdue > 0 && (
-                      <span className="text-red-400">{a.overdue} vencidas</span>
-                    )}
+                    {a.overdue > 0 && <span className="text-red-400">{a.overdue} vencidas</span>}
                     <span className="text-muted-foreground">{a.total} total</span>
                   </div>
                 </div>
@@ -290,13 +363,13 @@ export function OperacionesDashboard() {
           </section>
         )}
 
-        {/* ============ ACCIONES HUMANAS (bloqueos externos) ============ */}
+        {/* ============ ACCIONES HUMANAS ============ */}
         {humanActions.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <Users className="h-4 w-4 text-amber-400" /> Acciones humanas pendientes
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                (Adrián / JP / equipo — bloquean avance del plan)
+                (no Marco / no AI — bloquean avance)
               </span>
             </h2>
             <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border/40">

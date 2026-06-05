@@ -24,7 +24,7 @@ export const navSections: NavSection[] = [
     label: "Principal",
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, mobilePrimary: true },
-      { title: "Operaciones", href: "/tasks", icon: FolderKanban, mobilePrimary: true },
+      { title: "Operaciones", href: "/overview", icon: FolderKanban, mobilePrimary: true },
       { title: "Knowledge", href: "/knowledge", icon: BookOpen, mobilePrimary: true },
     ],
   },
