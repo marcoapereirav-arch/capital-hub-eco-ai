@@ -50,15 +50,24 @@ export async function GET(req: NextRequest) {
     update.google_oauth_refresh_token = tokens.refresh_token
   }
 
-  const { error: updateError } = await supabase
-    .from("calls_availability")
-    .update(update)
-    .eq("id", 1)
+  // Guarda en AMBAS tablas: calls_availability (legacy MIFGE) y calendar_owners (nuevo /calendario).
+  // Así las dos UIs reflejan el estado conectado.
+  const [{ error: legacyErr }, { error: ownersErr }] = await Promise.all([
+    supabase.from("calls_availability").update(update).eq("id", 1),
+    supabase
+      .from("calendar_owners")
+      .update({
+        ...update,
+        google_calendar_id: "primary",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", "adrian"),
+  ])
 
-  if (updateError) {
-    console.error("[google-calendar/callback] persist failed", updateError)
+  if (legacyErr || ownersErr) {
+    console.error("[google-calendar/callback] persist failed", legacyErr ?? ownersErr)
     return NextResponse.redirect(`${baseUrl}/webs?gcal_error=persist_failed`)
   }
 
-  return NextResponse.redirect(`${baseUrl}/webs?gcal_connected=1`)
+  return NextResponse.redirect(`${baseUrl}/calendario?gcal_connected=1`)
 }

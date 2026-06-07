@@ -22,18 +22,19 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const admin = getAdminClient()
-  const { error } = await admin
-    .from("calls_availability")
-    .update({
-      google_oauth_email: null,
-      google_oauth_refresh_token: null,
-      google_oauth_access_token: null,
-      google_oauth_expires_at: null,
-      google_oauth_connected_at: null,
-    })
-    .eq("id", 1)
+  const clear = {
+    google_oauth_email: null,
+    google_oauth_refresh_token: null,
+    google_oauth_access_token: null,
+    google_oauth_expires_at: null,
+    google_oauth_connected_at: null,
+  }
+  const [{ error: legacyErr }, { error: ownersErr }] = await Promise.all([
+    admin.from("calls_availability").update(clear).eq("id", 1),
+    admin.from("calendar_owners").update({ ...clear, updated_at: new Date().toISOString() }).eq("id", "adrian"),
+  ])
 
-  if (error) {
+  if (legacyErr || ownersErr) {
     return NextResponse.json({ error: "Disconnect failed" }, { status: 500 })
   }
   return NextResponse.json({ ok: true })
