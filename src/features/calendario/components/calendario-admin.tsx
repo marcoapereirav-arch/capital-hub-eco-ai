@@ -258,22 +258,45 @@ export function CalendarioAdmin() {
             "rounded-md border p-3",
             owner.google_oauth_connected_at ? "border-green-500/30 bg-green-500/5" : "border-amber-500/40 bg-amber-500/5"
           )}>
-            <div className="flex items-center gap-2 mb-1">
-              {owner.google_oauth_connected_at ? (
-                <CheckCircle2 className="h-4 w-4 text-green-400" />
-              ) : (
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                {owner.google_oauth_connected_at ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                )}
+                <span className="text-sm">
+                  Google Calendar: {owner.google_oauth_connected_at ? `Conectado (${owner.google_oauth_email})` : "Sin conectar"}
+                </span>
+              </div>
+
+              {owner.google_oauth_connected_at && (
+                <button
+                  onClick={async () => {
+                    if (!confirm("¿Desconectar Google Calendar? Tendrás que volver a conectar después.")) return
+                    await fetch("/api/admin/google-calendar/disconnect", { method: "POST" })
+                    load()
+                  }}
+                  className="text-[10px] font-mono uppercase tracking-wider border border-border/40 rounded-sm px-2 py-1 hover:bg-card text-muted-foreground"
+                >
+                  Desconectar
+                </button>
               )}
-              <span className="text-sm">
-                Google Calendar: {owner.google_oauth_connected_at ? `Conectado (${owner.google_oauth_email})` : "Sin conectar"}
-              </span>
             </div>
-            {!owner.google_oauth_connected_at && (
+
+            {!owner.google_oauth_connected_at ? (
               <a
                 href="/api/admin/google-calendar/connect"
-                className="inline-flex items-center gap-1 mt-2 text-xs font-mono uppercase tracking-wider text-amber-400 hover:underline"
+                className="inline-flex items-center gap-1 mt-1 text-xs font-mono uppercase tracking-wider text-amber-400 hover:underline"
               >
                 Conectar ahora <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              <a
+                href="/api/admin/google-calendar/connect"
+                className="inline-flex items-center gap-1 mt-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground hover:underline"
+              >
+                Reconectar (emite token nuevo) <ExternalLink className="h-2.5 w-2.5" />
               </a>
             )}
           </div>

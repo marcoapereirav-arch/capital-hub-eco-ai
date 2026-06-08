@@ -2,6 +2,7 @@ import { create } from "zustand"
 import type { Task, ParaItem, Focus, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
 import { tasksService, subscribeRealtime } from "../services/tasks-service"
 import { focusesService } from "../services/focuses-service"
+import { getCurrentAssignee } from "../lib/current-assignee"
 
 export type DueRange = "all" | "overdue" | "today" | "week" | "month" | "no_date"
 export type SortBy = "priority" | "due_asc" | "due_desc" | "status" | "assignee" | "created_desc" | "created_asc" | "alpha"
@@ -239,12 +240,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   quickCapture: async (title) => {
+    const assignee = await getCurrentAssignee()
     await get().addTask({
       title,
       description: "",
       status: "inbox",
       priority: "normal",
-      assignee: "marco",
+      assignee,
       paraId: null,
       dueDate: null,
     })
