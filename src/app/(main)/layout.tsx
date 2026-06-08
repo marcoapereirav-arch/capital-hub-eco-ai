@@ -6,6 +6,7 @@ import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { PushNotificationPrompt } from "@/features/notifications/components/PushNotificationPrompt"
 import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { RegistrarVentaWidget } from "@/features/sales/components/registrar-venta-widget"
+import { NotificationsPanel } from "@/features/notifications/components/NotificationsPanel"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function MainLayout({
@@ -53,6 +54,7 @@ export default async function MainLayout({
       <PushNotificationPrompt userId={user.id} />
       <UpdateNotifier />
       <RegistrarVentaWidget />
+      <NotificationsPanel />
     </SidebarProvider>
   )
 }
