@@ -163,6 +163,9 @@
     text-size-adjust: 100%;
     /* Soporte para safe-area en notch/home indicator */
     height: 100%;
+    /* Reserva espacio para el scrollbar SIEMPRE — evita que el contenido salte
+       horizontalmente al cambiar de pagina cuando una tiene scroll y otra no */
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background text-foreground;

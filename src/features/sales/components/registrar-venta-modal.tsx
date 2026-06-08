@@ -211,7 +211,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
               })}
             </div>
             <p className="text-[10px] font-mono text-muted-foreground mt-2">
-              Default: 1 producto. Se permite multi pero solo si el cliente lo pidió expreso.
+              Por norma el alumno compra solo 1. La UI permite varios por flexibilidad.
             </p>
           </section>
 
