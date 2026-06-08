@@ -17,6 +17,7 @@ import { BetaRetargetingEmail } from "./templates/beta-retargeting"
 import { InternalErrorAlert, type ErrorAlertItem } from "./templates/internal-error-alert"
 import { WelcomeAlumnoHTEmail } from "./templates/welcome-alumno-ht"
 import { TeamInviteEmail } from "./templates/team-invite"
+import { InternalGCalAlert } from "./templates/internal-gcal-alert"
 
 const ADRIAN_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_ADRIAN ?? "adrianvillanuevarios@gmail.com"
 const MARCO_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_MARCO ?? "marcoapereirav@gmail.com"
@@ -329,6 +330,39 @@ export async function sendTeamInvite(input: {
     subject: `${input.invitedByName} te invita al OS de Capital Hub`,
     html,
   })
+}
+
+/**
+ * Email alerta a Marco + Adrián cuando Google Calendar se desconecta.
+ * Se dispara desde:
+ *  - cron health check si refresh_token falla
+ *  - disconnect endpoint si alguien lo borra desde la UI
+ *  - book endpoint si crear evento Calendar falla por OAuth
+ */
+export async function notifyGCalDisconnected(input: {
+  reason: string
+  detail?: string
+  lastConnectedAt?: string | null
+  ownerEmail?: string | null
+}) {
+  const html = await render(InternalGCalAlert(input))
+  const results = await Promise.allSettled([
+    sendEmail({
+      template: "internal_gcal_alert_marco",
+      to: MARCO_EMAIL,
+      toName: "Marco",
+      subject: "⚠️ Google Calendar desconectado del OS",
+      html,
+    }),
+    sendEmail({
+      template: "internal_gcal_alert_adrian",
+      to: ADRIAN_EMAIL,
+      toName: "Adrián",
+      subject: "⚠️ Tu Google Calendar se desconectó del OS",
+      html,
+    }),
+  ])
+  return results
 }
 
 export async function notifyMarcoErrors(input: {
