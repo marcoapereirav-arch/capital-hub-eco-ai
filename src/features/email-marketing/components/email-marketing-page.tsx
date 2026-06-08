@@ -153,6 +153,7 @@ function DashboardTab() {
 function TemplatesTab() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
+  const [preview, setPreview] = useState<Template | null>(null)
 
   useEffect(() => {
     fetch("/api/admin/email/templates")
@@ -174,19 +175,20 @@ function TemplatesTab() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        17 templates registrados. Editar copy requiere modificar el archivo TSX correspondiente en{" "}
-        <code className="font-mono">src/lib/email/templates/</code> y redeploy. Para previsualizar un template,
-        envía un email de prueba a tu propio correo desde el botón en cada tarjeta.
+        {templates.length} templates registrados. Click en cualquiera para previsualizar con datos demo.
+        Para editar el copy modifica el archivo TSX en <code className="font-mono">src/lib/email/templates/</code>.
       </p>
 
       {Array.from(byCategory.entries()).map(([cat, list]) => (
         <section key={cat}>
-          <h2 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">
-            {cat}
-          </h2>
+          <h2 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">{cat}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {list.map((t) => (
-              <div key={t.key} className="rounded-md border border-border/40 p-3 hover:border-border transition-colors">
+              <button
+                key={t.key}
+                onClick={() => setPreview(t)}
+                className="rounded-md border border-border/40 p-3 hover:border-border hover:bg-card/40 transition-colors text-left"
+              >
                 <div className="flex items-start justify-between mb-1">
                   <div className="text-sm font-medium">{t.label}</div>
                   <span className={cn(
@@ -197,12 +199,40 @@ function TemplatesTab() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">{t.description}</p>
-                <div className="text-[10px] font-mono text-muted-foreground">key: {t.key}</div>
-              </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-mono text-muted-foreground">key: {t.key}</div>
+                  <div className="text-[10px] font-mono text-foreground/60 underline">Ver preview →</div>
+                </div>
+              </button>
             ))}
           </div>
         </section>
       ))}
+
+      {preview && <PreviewModal template={preview} onClose={() => setPreview(null)} />}
+    </div>
+  )
+}
+
+function PreviewModal({ template, onClose }: { template: Template; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-background border border-border rounded-lg w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+        <div className="border-b border-border px-4 py-3 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold">{template.label}</h3>
+            <p className="text-[10px] font-mono text-muted-foreground">key: {template.key}</p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs font-mono uppercase tracking-wider">
+            Cerrar ✕
+          </button>
+        </div>
+        <iframe
+          src={`/api/admin/email/preview/${template.key}`}
+          className="flex-1 w-full bg-white"
+          title={`Preview ${template.label}`}
+        />
+      </div>
     </div>
   )
 }

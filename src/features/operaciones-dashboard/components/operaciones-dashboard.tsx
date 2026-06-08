@@ -61,18 +61,30 @@ export function OperacionesDashboard() {
   const activeFocus = mode === "general" ? null : focuses.find((f) => f.id === mode) ?? null
 
   // === SCOPE: qué proyectos/tasks entran en el dashboard ===
+  // Modo "general": TODO el negocio (active + paused + completed) y TODAS las tareas
+  //                 (incluido someday + inbox) — vista panorámica
+  // Modo "foco":    solo proyectos active del foco + sus tareas (sin someday/inbox)
+  //                 — vista de ejecución
   const scopedProjects = useMemo(() => {
     if (mode === "general") {
-      return paraItems.filter((p) => p.type === "project" && p.status === "active")
+      // Todo proyecto que tenga tasks o haya tenido — sin filtro de status
+      return paraItems.filter((p) => p.type === "project")
     }
     return paraItems.filter((p) => p.type === "project" && p.status === "active" && p.focusId === mode)
   }, [paraItems, mode])
 
   const scopedProjectIds = useMemo(() => new Set(scopedProjects.map((p) => p.id)), [scopedProjects])
-  const scopedTasks = useMemo(
-    () => tasks.filter((t) => t.paraId && scopedProjectIds.has(t.paraId)),
-    [tasks, scopedProjectIds]
-  )
+  const scopedTasks = useMemo(() => {
+    if (mode === "general") {
+      // En General: todas las tareas que pertenezcan a proyectos visibles
+      // (cualquier status: next/waiting/someday/inbox/done)
+      return tasks.filter((t) => t.paraId && scopedProjectIds.has(t.paraId))
+    }
+    // En Foco: excluir someday + inbox para que solo se vea lo "vivo"
+    return tasks.filter(
+      (t) => t.paraId && scopedProjectIds.has(t.paraId) && t.status !== "someday" && t.status !== "inbox"
+    )
+  }, [tasks, scopedProjectIds, mode])
 
   // === Foco countdown ===
   const now = new Date()
@@ -266,7 +278,7 @@ export function OperacionesDashboard() {
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold mb-1">Operaciones</h1>
             <p className="text-xs text-muted-foreground mb-5 max-w-2xl">
-              {scopedProjects.length} proyectos activos · {totalScopedTasks} tareas totales · todas las áreas
+              {scopedProjects.filter((p) => p.status === "active").length} activos · {scopedProjects.filter((p) => p.status === "paused").length} pausados · {scopedProjects.filter((p) => p.status === "completed").length} completados · {totalScopedTasks} tareas totales (incluido Someday)
             </p>
 
             <div className="space-y-1.5">
@@ -363,10 +375,26 @@ export function OperacionesDashboard() {
                 <Link
                   key={p.id}
                   href={`/projects/${p.id}`}
-                  className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-card/40 transition-colors"
+                  className={cn(
+                    "flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-card/40 transition-colors",
+                    p.status === "paused" && "opacity-60",
+                    p.status === "completed" && "opacity-50"
+                  )}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate mb-1">{p.name}</div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm truncate">{p.name}</span>
+                      {p.status === "paused" && (
+                        <span className="shrink-0 text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-amber-500/40 text-amber-400">
+                          pausado
+                        </span>
+                      )}
+                      {p.status === "completed" && (
+                        <span className="shrink-0 text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-green-500/40 text-green-400">
+                          completado
+                        </span>
+                      )}
+                    </div>
                     <div className="h-1 rounded-full bg-secondary/40 overflow-hidden">
                       <div className="h-full bg-green-500" style={{ width: `${p.pct}%` }} />
                     </div>

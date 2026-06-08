@@ -28,6 +28,7 @@ const TEMPLATES = [
   { key: "internal_booking_alert", label: "Internal: Booking Alert (Adrián)", description: "Notif a Adrián cada vez que se reserva llamada", category: "internal" },
   { key: "internal_purchase_alert", label: "Internal: Purchase Alert (Marco)", description: "Notif a Marco cada compra/evento revenue", category: "internal" },
   { key: "internal_error_alert", label: "Internal: Error Alert (Marco)", description: "Digest de fallos email/CAPI cada 30 min via cron", category: "internal" },
+  { key: "internal_gcal_alert", label: "Internal: Google Calendar Alert", description: "Aviso a Marco + Adrián cuando el calendar se desconecta", category: "internal" },
 ] as const
 
 export async function GET() {
