@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { ExternalLink } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -94,6 +95,21 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
+        <a
+          href={process.env.NEXT_PUBLIC_APP_ALUMNO_URL ?? "https://app.capitalhubapp.com"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-md border border-border/40 px-2.5 py-2 text-xs hover:bg-card transition-colors group"
+          title="Abre la App de alumnos en otra pestaña (mismas credenciales)"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+            <span className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground group-hover:text-foreground truncate">
+              Ir a la App
+            </span>
+          </span>
+          <span className="text-[9px] font-mono text-muted-foreground/60 shrink-0">↗</span>
+        </a>
         <UserMenu email={userEmail} name={userName} role={userRole} />
       </SidebarFooter>
 
