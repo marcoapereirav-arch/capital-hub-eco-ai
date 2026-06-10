@@ -137,7 +137,12 @@ function SidebarProvider({
           } as React.CSSProperties
         }
         className={cn(
-          "group/sidebar-wrapper flex min-h-svh w-full has-data-[variant=inset]:bg-sidebar",
+          // FIX SCROLL: h-svh (no min-h-svh) para que el wrapper raiz tenga ALTURA FIJA = viewport.
+          // Asi cuando el contenido excede el viewport, el wrapper interno con overflow-y-auto
+          // scrollea internamente y el sidebar (hermano flex) queda FIJO.
+          // Con min-h-svh el wrapper crecia hasta acomodar el contenido, lo que hacia
+          // que window scrolleara y arrastrara el sidebar con el.
+          "group/sidebar-wrapper flex h-svh w-full overflow-hidden has-data-[variant=inset]:bg-sidebar",
           className
         )}
         {...props}
