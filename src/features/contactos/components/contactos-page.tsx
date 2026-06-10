@@ -118,13 +118,15 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   if (view === "kanban") {
     return (
       <>
-        <div className="flex h-full min-h-0 flex-col">
+        <div className="flex h-full min-h-0 min-w-0 flex-col">
           {/* Toolbar fijo arriba */}
           <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-3">
             {Toolbar}
           </div>
-          {/* Kanban: SOLO area con scroll horizontal. Las columnas tienen su propio scroll vertical. */}
-          <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden px-4 md:px-6 py-4">
+          {/* Kanban: scroll H aislado en este area. Padding va al CONTENIDO interior
+              (no al contenedor scrollable) para que ambos extremos respeten margen
+              incluso cuando el usuario scrollea hasta el final. */}
+          <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-hidden py-4">
             {loading ? (
               <div className="text-center py-12 text-sm text-muted-foreground">Cargando…</div>
             ) : (

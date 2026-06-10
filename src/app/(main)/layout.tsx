@@ -40,7 +40,9 @@ export default async function MainLayout({
       <SidebarInset>
         <MobileHeader userEmail={userEmail} userName={userName} />
 
-        <div className="flex flex-1 flex-col">
+        {/* min-w-0 es crítico en flex children: por defecto min-width es auto = ancho mínimo del contenido.
+            Sin esto, paginas con kanbans (CRM/pipeline) hacen overflow del body. */}
+        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
           {children}
         </div>
 
