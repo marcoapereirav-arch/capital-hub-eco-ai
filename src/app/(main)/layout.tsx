@@ -50,7 +50,7 @@ export default async function MainLayout({
             - overflow-y-auto: permite scroll vertical SOLO en esta area cuando el contenido excede.
               El sidebar y el header de movil quedan FIJOS, este wrapper es el unico que scrollea
               verticalmente. */}
-        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-x-hidden overflow-y-auto">
+        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-x-hidden overflow-y-auto overscroll-none">
           {children}
         </div>
 

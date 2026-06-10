@@ -169,10 +169,18 @@
   }
   body {
     @apply bg-background text-foreground;
-    /* Evita el rebote elastico horizontal en iOS y permite gestos verticales */
-    overscroll-behavior-x: none;
+    /* Evita TODO rebote elastico (horizontal y vertical) en macOS/iOS.
+       Sin esto, el trackpad genera bounce al hacer scroll up y aparece
+       espacio en blanco/contenido desalineado por encima del wrapper. */
+    overscroll-behavior: none;
     /* Desactiva el resaltado azul de tap en moviles */
     -webkit-tap-highlight-color: transparent;
+  }
+  /* Date pickers (input[type="date"]) en dark mode: forzar al browser
+     a usar UI dark. Sin esto, el icono del calendario nativo aparece
+     NEGRO sobre fondo oscuro = invisible. */
+  input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"], input[type="week"] {
+    color-scheme: dark;
   }
   /* Inputs >= 16px en movil para evitar el zoom de iOS al focus */
   @media (max-width: 767px) {
