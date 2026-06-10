@@ -26,7 +26,7 @@ Capital Hub está compuesto por **dos productos software separados** con dos rep
 - Dashboard de operaciones (foco 8/8 + general)
 - Contactos (CRM estilo GoHighLevel) + Pipelines kanban
 - Calendario propio (reemplaza Calendly)
-- Outreach IG (bandeja closer junior)
+
 - Webs + Lead Magnets + Ads + Content Intel + Instagram + ManyChat
 - Tareas + Proyectos + Áreas + Foco + Board (sistema PARA + GTD)
 - Email Marketing (templates, broadcasts, logs, métricas)
@@ -71,7 +71,7 @@ Capital Hub está compuesto por **dos productos software separados** con dos rep
 |---|---|
 | Funnel de venta, CRM, ficha contacto, pipelines | **OS** |
 | Calendario, agenda, slots, bookings | **OS** |
-| Outreach IG, cold DMs | **OS** |
+| ManyChat → CRM auto (sin UI propia, vive en pipeline) | **OS** |
 | Dashboards internos, métricas, KPIs | **OS** |
 | Sistema tareas/proyectos/áreas/focos | **OS** |
 | Ads, Meta Pixel, lead magnets, webs | **OS** |

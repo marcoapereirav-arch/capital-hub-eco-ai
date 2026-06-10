@@ -28,17 +28,17 @@ order: 12
 - Marco activa **follow-me ads** en Meta apuntando a los reels más fuertes
 - Resultado: nuevos seguidores cualificados llegan al IG de Adrián
 
-### 1b. Cold outreach IG (closer junior)
-- Cada nuevo seguidor relevante entra en `/outreach-ig` del OS
-- El closer junior gestiona su bandeja con estos estados:
-  - `to_contact` — por contactar
-  - `messaged` — DM enviado
-  - `replied` — el lead respondió
-  - `phone_got` — el lead dio su teléfono
-  - `handed_off` — pasado a Adrián para cerrar
-  - `discarded` — descartado
-- Cuando llega a `phone_got`, el closer manda al lead el link `https://ecoai.capitalhubapp.com/agenda`
-- Cuando pasa a `handed_off`: el OS **crea automáticamente el contacto** en `contacts` con stage `contacted`, owner = closer junior asignado
+### 1b. Captación automática vía ManyChat
+- ManyChat detecta cada nuevo seguidor de Instagram
+- ManyChat dispara webhook a `/api/webhooks/manychat` con `subscriber_id` + datos básicos
+- El OS crea contacto con stage `nuevo_seguidor` en `/crm/pipeline` (columna izquierda)
+- Setter recibe notificación push + email
+- Setter ve la card en pipeline, click "Abrir chat en ManyChat" → conversación en inbox de ManyChat
+- ManyChat envía DM con link `/agenda?mc_id=<subscriber_id>` (parámetro de tracking)
+- Cuando el lead clica el link → /agenda detecta el `mc_id`, vincula con el contacto existente, no duplica
+- Estados naturales del CRM: nuevo_seguidor → contactado → agendado → atendio → seguimiento / cliente / no_show / perdido
+- **NO existe `/outreach-ig`** (eliminado del OS — era manual sin valor)
+- **Detalles del flow:** ver `docs/sops/producto/20-manychat-crm.md`
 
 ---
 

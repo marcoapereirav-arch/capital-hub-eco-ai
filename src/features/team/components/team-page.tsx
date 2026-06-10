@@ -27,7 +27,7 @@ type Invitation = {
 
 const ROLE_OPTIONS = [
   { value: "super_admin", label: "Super Admin", desc: "Acceso total + invitar gente" },
-  { value: "closer", label: "Closer", desc: "Contactos, Calendario, Outreach IG" },
+  { value: "closer", label: "Closer", desc: "CRM (contactos + pipeline), Calendario" },
   { value: "formador", label: "Formador", desc: "Su formación + alumnos de su producto" },
   { value: "equipo", label: "Equipo", desc: "Lectura básica" },
 ]

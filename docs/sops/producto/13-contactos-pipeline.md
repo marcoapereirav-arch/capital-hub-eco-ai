@@ -54,7 +54,7 @@ Default al crear contacto: `nuevo_seguidor`.
 Hay 5 fuentes por las que un contacto aparece:
 
 1. **Reserva en `/agenda`** → sistema crea contacto con stage `booked`, source `agenda_calendar`
-2. **Closer junior lo crea manual** desde `/outreach-ig` cuando hace handoff a Adrián
+2. **ManyChat detecta nuevo follower de IG** y dispara webhook → crea contacto stage `nuevo_seguidor` automático
 3. **Compra directa via widget "Registrar venta"** → si email no existe se crea con stage `won`
 4. **Webhook ManyChat** (cuando lead acepta DM y entra al flujo de bot)
 5. **Webhook Whop** (compras MIFGE legacy — sigue funcionando)
@@ -131,3 +131,4 @@ Si una métrica no cuadra: revisar `contact_journey_events` para ese contacto. L
 - **Título "CRM" + "Contactos" duplicados en la cabecera**: causaba que se vieran 2 botones de toggle sidebar + título repetido. Fix: quitar `<ShellHeader>` de los componentes hijos cuando viven dentro del layout `/crm`. El layout es la única fuente del título.
 - **Toggle Lista/Kanban interno duplicaba navegación**: las URLs `/crm/contactos` y `/crm/pipeline` ya son la fuente de verdad. El toggle interno se eliminó.
 - **Pipeline mostraba "Sin contactos" cuando estaba vacío**: ahora SIEMPRE renderiza las columnas del funnel (vacías o llenas). El kanban es navegación, no contenido.
+- **Doble scroll horizontal en /crm/pipeline**: el kanban tiene 8 columnas de 288px = 2400px. Si el padre `<PageContainer>` está en `max-w-7xl` (1280px), el navegador genera scroll horizontal DEL CONTAINER + el propio kanban con `overflow-x-auto` = 2 scrolls. **Fix**: en vista kanban usar `<PageContainer wide>` (max-w-full) y quitar el truco `-mx-4 px-4` del kanban. Regla: el componente con `overflow-x-auto` debe ser el ÚNICO con scroll horizontal en su jerarquía.

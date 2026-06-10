@@ -83,7 +83,10 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   return (
     <>
       {/* NO ShellHeader aqui — el layout /crm ya pinta el titulo "CRM" + tabs */}
-      <PageContainer>
+      {/* En vista kanban usamos wide para que el contenedor sea full-width:
+          el kanban es mas ancho que max-w-7xl, sin esto habria doble scroll
+          horizontal (uno del page container + el del propio kanban) */}
+      <PageContainer wide={view === "kanban"}>
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[200px] max-w-md">

@@ -84,7 +84,100 @@ Si decidimos NO conectarlo:
 ## Limitación importante
 Meta NO permite a apps externas leer/responder DMs de Instagram cuentas business sin permisos especiales (proceso largo de review). ManyChat SÍ puede porque tiene partnership oficial con Meta. Por eso lo necesitamos como intermediario — no podemos conectarnos directo a Instagram.
 
-## Decisión pendiente
-El usuario tiene que decidir:
-- (a) Sí, conectar ManyChat → CRM. Yo construyo la lógica del webhook. ManyChat ya está pagado y funcionando para Adrián.
-- (b) No, eliminar `/outreach-ig` del OS y el equipo gestionará Instagram directamente desde la app nativa.
+## Decisión tomada (hoy)
+- `/outreach-ig` eliminado del OS por ser sección manual sin valor.
+- ManyChat → CRM se va a construir (ManyChat ya está pagado).
+
+---
+
+# Realidad del chat con Instagram
+
+## ¿Se puede conversar con seguidores desde el panel del OS?
+**NO directamente.** Razones técnicas verificadas:
+
+1. **Instagram Messaging API requiere Meta Business Verification + App Review** (proceso de 4-8 semanas, no siempre se aprueba).
+2. **Solo apps con partnership oficial con Meta** pueden leer/enviar DMs (ManyChat tiene ese partnership; nosotros NO).
+3. Construir esto desde 0 implica gastar semanas en burocracia que ManyChat ya ha resuelto.
+
+## Cómo se conversa entonces
+- **El setter usa el inbox de ManyChat** (`manychat.com/inbox`).
+- El OS muestra un **botón "Abrir chat en ManyChat"** en cada card del CRM (columna nuevo_seguidor / contactado). Click → abre el inbox de ManyChat con esa conversación activa en pestaña nueva.
+- Es 1 click extra pero NO requiere construir infraestructura imposible.
+
+---
+
+# Cómo se vincula que el chat de IG agendó
+
+Esta es la parte CRÍTICA. El problema: si solo tenemos su Instagram username, ¿cómo sabemos que la persona que agendó es esa misma?
+
+## Mecanismo: parámetro de tracking en el link
+
+Cuando ManyChat detecta nuevo seguidor genera un **link único de agenda** con un identificador del subscriber:
+
+```
+https://ecoai.capitalhubapp.com/agenda?mc_id=<subscriber_id>
+```
+
+Donde `subscriber_id` es el ID interno de ManyChat para esa persona.
+
+## Flow paso a paso
+
+```
+1. Persona sigue a @adrian en IG
+        ↓
+2. ManyChat detecta el evento, le crea subscriber_id = 12345 internamente
+        ↓
+3. ManyChat dispara webhook al OS:
+   POST /api/webhooks/manychat
+   { event: "new_subscriber", subscriber_id: 12345, ig_username: "@juan_lopez", first_name: "Juan" }
+        ↓
+4. El OS crea contacto:
+   contacts {
+     id: <uuid>,
+     full_name: "Juan",
+     stage: "nuevo_seguidor",
+     metadata: { manychat_subscriber_id: 12345, ig_username: "@juan_lopez" }
+   }
+        ↓
+5. Setter ve la card en /crm/pipeline columna "Nuevo seguidor"
+   Click "Abrir chat en ManyChat" → entra al inbox de ManyChat de Juan
+        ↓
+6. Setter le escribe en ManyChat: "Hola Juan, ¿quieres saber más?
+   Reserva un slot aquí: https://ecoai.capitalhubapp.com/agenda?mc_id=12345"
+   (ManyChat reemplaza automáticamente {{user_id}} con 12345)
+        ↓
+7. Juan clica el link, llega a /agenda?mc_id=12345
+        ↓
+8. /agenda parsea el parámetro mc_id=12345
+   Busca contacts WHERE metadata->>'manychat_subscriber_id' = '12345'
+   ENCUENTRA el contacto que ya existe.
+        ↓
+9. Juan rellena nombre/email/teléfono y reserva slot.
+   El OS ACTUALIZA el contacto existente:
+   - email: <el que puso>
+   - phone: <el que puso>
+   - stage: "agendado"
+   - last_call_at: <fecha del slot>
+   NO crea contacto nuevo. Es el mismo Juan.
+```
+
+## Notificación al gestor
+Cuando un nuevo seguidor entra al CRM (paso 4), el sistema:
+- Envía email al setter asignado a "nuevo_seguidor" (`owner_assignee`)
+- Crea push notification en el panel del OS (badge rojo arriba)
+- Si tiene ManyChat custom field "interes" → lo añade a metadata para contexto
+
+## Limitación importante
+Si la persona NO clica el link `?mc_id=12345` y va directo a `/agenda` (porque te dio el teléfono a parte, o lo encontró por Google), el OS NO sabe que es la misma persona. Hace match por email/teléfono después. **Solución:** ManyChat se configura para SIEMPRE generar links con `mc_id`, así casi todos los agenda traen el parámetro.
+
+---
+
+# Lo que falta construir (orden de prioridad)
+
+1. **Webhook handler completo** `/api/webhooks/manychat` — recibe eventos y traduce a operaciones CRM
+2. **Lookup por mc_id** en `/agenda` — al recibir reserva con `mc_id`, vincular al contacto existente
+3. **Botón "Abrir chat en ManyChat"** en cards del CRM
+4. **Custom field mapping** ManyChat → CRM (tags, interes, etc)
+5. **Setup en panel ManyChat** — Adrián añade External Request en su Flow Builder apuntando a nuestro webhook
+
+Los puntos 1-3 son código del OS. El 5 requiere acción en panel ManyChat por Adrián.

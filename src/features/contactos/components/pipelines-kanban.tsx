@@ -53,7 +53,7 @@ export function PipelinesKanban({
   }, [contacts, stages])
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4">
+    <div className="flex gap-3 overflow-x-auto pb-4">
       {stages.map((s) => {
         const list = grouped.get(s.value) ?? []
         const totalRev = list.reduce((acc, c) => acc + (c.total_revenue ?? 0), 0)
