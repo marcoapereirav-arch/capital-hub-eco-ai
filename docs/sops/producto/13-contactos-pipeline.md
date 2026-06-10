@@ -1,16 +1,54 @@
 ---
-title: Contactos · pipeline visual end-to-end
+title: CRM · contactos + pipeline end-to-end
 order: 13
 area: producto
 ---
 
-# Contactos — pipeline CRM end-to-end
+# CRM — Contactos + Pipeline (2 sub-pestañas)
 
 ## Para qué sirve
-Sección `/contactos` del OS. Es el CRM completo del negocio. Cada persona que entra en contacto con Capital Hub (lead frío, reservó llamada, asistió, compró, no-show, perdido) vive aquí con todo su historial.
+Sección `/crm` del OS. Es el CRM completo del negocio con 2 vistas separadas:
+- **Contactos** (lista estilo GoHighLevel): /crm/contactos
+- **Pipeline** (kanban con stages): /crm/pipeline
 
-## URL
-`https://ecoai.capitalhubapp.com/contactos`
+Las 2 vistas comparten data pero tienen URLs propias y propósito distinto.
+
+## URLs
+- `https://ecoai.capitalhubapp.com/crm` → redirige a `/crm/contactos`
+- `https://ecoai.capitalhubapp.com/crm/contactos` (lista)
+- `https://ecoai.capitalhubapp.com/crm/pipeline` (kanban)
+- `https://ecoai.capitalhubapp.com/contactos` → redirige a `/crm/contactos` (legacy compat)
+
+## Funnel en español (stages reales)
+
+```
+nuevo_seguidor → contactado → agendado → atendio → cliente
+                                            ↓
+                                       seguimiento ⇄ cliente
+                                            ↓
+                                         perdido
+                                            
+                             no_show ← agendado (si no asiste)
+```
+
+| value (BD) | label UI | Cuándo aplica |
+|------------|----------|---------------|
+| `nuevo_seguidor` | Nuevo seguidor | ManyChat detecta nuevo follower en IG |
+| `contactado` | Contactado | Setter junior envió DM |
+| `agendado` | Agendado | Lead reservó llamada en /agenda |
+| `atendio` | Atendió llamada | Entró a la videollamada (automático cuando entra a la hora) |
+| `seguimiento` | Seguimiento | Post-llamada, no cerró pero hay potencial |
+| `cliente` | Cliente | Compró (widget Registrar venta dispara esto) |
+| `no_show` | No show | No asistió a la llamada |
+| `perdido` | Perdido | Descartado / no quiere comprar |
+
+Default al crear contacto: `nuevo_seguidor`.
+
+## Reglas de UX del CRM
+- **No hay ShellHeader en /crm/contactos ni /crm/pipeline** — el layout del CRM ya pinta el título "CRM" + las 2 sub-pestañas
+- **No hay toggle list/kanban interno** — cada sub-tab es su propia URL
+- **El pipeline SIEMPRE muestra todas las columnas** aunque no haya contactos en ellas (el funnel siempre visible)
+- **Layout/ancho fijo** con `<PageContainer>` para evitar shift entre sub-tabs
 
 ## Cómo llega alguien a /contactos
 Hay 5 fuentes por las que un contacto aparece:
@@ -88,3 +126,8 @@ Click en una card abre drawer derecho con:
 
 ## Reportar bugs
 Si una métrica no cuadra: revisar `contact_journey_events` para ese contacto. La timeline es la fuente de verdad.
+
+## Bugs evitados (histórico)
+- **Título "CRM" + "Contactos" duplicados en la cabecera**: causaba que se vieran 2 botones de toggle sidebar + título repetido. Fix: quitar `<ShellHeader>` de los componentes hijos cuando viven dentro del layout `/crm`. El layout es la única fuente del título.
+- **Toggle Lista/Kanban interno duplicaba navegación**: las URLs `/crm/contactos` y `/crm/pipeline` ya son la fuente de verdad. El toggle interno se eliminó.
+- **Pipeline mostraba "Sin contactos" cuando estaba vacío**: ahora SIEMPRE renderiza las columnas del funnel (vacías o llenas). El kanban es navegación, no contenido.

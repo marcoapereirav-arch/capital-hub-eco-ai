@@ -82,8 +82,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
 
   return (
     <>
-      <ShellHeader title="Contactos" />
-
+      {/* NO ShellHeader aqui — el layout /crm ya pinta el titulo "CRM" + tabs */}
       <PageContainer>
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-2">
@@ -111,21 +110,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
             {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
           </span>
 
-          {/* View toggle */}
-          <div className="flex items-center border border-border rounded-sm">
-            <button
-              onClick={() => setView("list")}
-              className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", view === "list" ? "bg-accent" : "text-muted-foreground hover:text-foreground")}
-            >
-              <List className="h-3 w-3" /> Lista
-            </button>
-            <button
-              onClick={() => setView("kanban")}
-              className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", view === "kanban" ? "bg-accent" : "text-muted-foreground hover:text-foreground")}
-            >
-              <LayoutGrid className="h-3 w-3" /> Pipelines
-            </button>
-          </div>
+          {/* Toggle list/kanban eliminado: cada sub-tab del CRM tiene su propia URL ahora */}
 
           <button
             onClick={() => setCreating(true)}
@@ -138,17 +123,19 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
         {/* Vista */}
         {loading ? (
           <div className="text-center py-12 text-sm text-muted-foreground">Cargando…</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border">
-            {search || stageFilter !== "all" ? "Sin resultados con esos filtros." : "Aún no hay contactos."}
-          </div>
         ) : view === "kanban" ? (
+          // Pipeline kanban: SIEMPRE mostrar las columnas (stages) aunque no haya contactos.
+          // El usuario debe ver el funnel siempre. Las columnas se ven vacias = OK.
           <PipelinesKanban
             contacts={filtered}
             stages={PIPELINE_STAGES}
             onUpdateStage={updateStage}
             onSelect={setSelectedId}
           />
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border">
+            {search || stageFilter !== "all" ? "Sin resultados con esos filtros." : "Aún no hay contactos."}
+          </div>
         ) : (
           <div className="rounded-md border border-border/40 divide-y divide-border/40 overflow-hidden">
             {filtered.map((c) => {
