@@ -1,0 +1,103 @@
+---
+title: Dashboard OS · operaciones + foco
+order: 19
+area: producto
+---
+
+# Dashboard operaciones — vista panorámica del negocio
+
+## URL
+`https://ecoai.capitalhubapp.com/` (raíz del OS)
+
+## Para qué sirve
+Pantalla principal del OS. Es lo primero que ve un admin al entrar. Muestra el estado del negocio en una sola vista.
+
+## Dos modos
+
+### General (default)
+Muestra **TODOS los proyectos activos + pausados + completados**. Vista panorámica de TODO el negocio. Y TODAS las tareas (incluido someday e inbox).
+
+### Foco webinar 8/8
+Muestra solo proyectos `status=active` con `focus_id=focus_webinar_880`. Vista de ejecución pura del plan webinar.
+
+Toggle arriba a la derecha cambia entre los dos.
+
+## Hero
+
+### En modo General
+- "X proyectos activos · Y pausados · Z completados · W tareas totales"
+- Barra de progreso global
+
+### En modo Foco
+- Countdown gigante: "Quedan X semanas Y días" al webinar 8/8
+- Barra de tiempo transcurrido
+- Barra de tareas del foco completadas
+
+## Stats cards
+
+4 cards clicables que llevan a `/tasks` con filtros pre-aplicados (ahora cambian a vista list):
+
+1. **Total tareas** → lista todas
+2. **Pendientes** → status=next
+3. **Vencidas** → dueRange=overdue (solo si hay vencidas)
+4. **Esta semana** → dueRange=week
+
+## Secciones
+
+### Acciones humanas pendientes (top 10)
+Lista de tareas más urgentes (por prioridad + due_date). Click en una → drawer con detalle + acciones rápidas.
+
+### Próximos deadlines
+Tareas con due_date cercano. Visual de timeline.
+
+### Carga por persona
+Cada admin/colaborador con su contador de tareas abiertas. Click → /tasks filtrado por assignee.
+
+### Proyectos con progreso
+Lista de proyectos con barra de progreso visual. Click → /projects/{id}. Badges:
+- "pausado" amber
+- "completado" green
+
+### Áreas (Marketing, Producto, Ventas, Finanzas)
+Bloques con resumen de tareas pendientes por área PARA.
+
+## Filtros aplicados al hacer click en card
+
+Cuando haces click en una stats card, el sistema:
+1. Resetea filtros previos
+2. Aplica el filtro específico (status / dueRange / assignee)
+3. **Cambia viewMode a "list"** (no board, para que veas claramente las filtradas)
+4. Navega a `/tasks`
+
+Si en `/tasks` quieres volver al kanban general → cambia viewMode con el toggle de la toolbar.
+
+## Tasks dentro de cada Proyecto
+
+Click en un proyecto → `/projects/{id}`. Verás:
+- Header con progreso del proyecto
+- Toolbar con toggle **Pendientes (N)** / **Todas (M)** (por default solo pendientes)
+- Lista de tareas filtrada
+- Click en tarea → drawer con detalle
+
+## Tabla BD
+- `tasks` (todas las tareas con paraId, assignee, status, priority, due_date)
+- `para_items` (proyectos + áreas + recursos + archivo)
+- `focuses` (el foco webinar 8/8 vive aquí)
+
+## Reglas operativas
+- **General incluye tareas Someday e Inbox.** Foco las excluye para mantener limpieza.
+- **Project detail oculta done por default.** Hay toggle para verlas si quieres revisar el histórico.
+- **Si una task no tiene paraId, va a Inbox** (vista alternativa, no por defecto en Dashboard).
+- **El countdown del foco usa endDate 2026-08-08.** Sólo cambiable editando el row de `focuses` en BD.
+
+## Real-time
+El store de tasks tiene Supabase Realtime. Cuando alguien actualiza una task en otra sesión, se refleja en vivo en el dashboard.
+
+## Quick Capture
+Caja flotante en la esquina (o atajo de teclado). Crea task en Inbox con assignee = usuario actual logueado (mapping email → assignee). No por defecto Marco como antes.
+
+## Verificación
+- Carga `/` → debe mostrar estado actual sin errores
+- Toggle General ↔ Foco debe filtrar correctamente
+- Click "Vencidas" → debe ir a `/tasks` viendo solo las vencidas en lista, NO el board completo
+- Click en proyecto → `/projects/{id}` debe ocultar tareas done por default

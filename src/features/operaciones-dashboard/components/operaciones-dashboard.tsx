@@ -36,8 +36,11 @@ export function OperacionesDashboard() {
   const setFilters = useTaskStore((s) => s.setFilters)
   const resetFilters = useTaskStore((s) => s.resetFilters)
 
+  const setViewMode = useTaskStore((s) => s.setViewMode)
+
   function navigateToTasks(filters: { status?: string; assignee?: string; dueRange?: DueRange }) {
     resetFilters()
+    setViewMode("list")  // siempre lista filtrada cuando vienes desde una card especifica
     setFilters({
       ...(filters.status !== undefined ? { status: filters.status as "all" | "inbox" | "next" | "waiting" | "someday" | "done" } : {}),
       ...(filters.assignee !== undefined ? { assignee: filters.assignee as Assignee | "all" } : {}),
