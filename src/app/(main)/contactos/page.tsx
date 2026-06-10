@@ -1,5 +1,6 @@
-import { ContactosPage } from "@/features/contactos/components/contactos-page"
+import { redirect } from "next/navigation"
 
-export default function ContactosRoute() {
-  return <ContactosPage />
+// Compat con bookmarks viejos: /contactos → /crm/contactos
+export default function ContactosLegacyRedirect() {
+  redirect("/crm/contactos")
 }

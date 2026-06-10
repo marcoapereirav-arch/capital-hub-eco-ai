@@ -23,25 +23,27 @@ type ContactRow = {
   created_at: string
 }
 
-// Pipelines disponibles (estados de conciencia del lead)
+// Funnel real Capital Hub (en español)
+// Lead viene de IG → Marco/Adrián/setter le habla → agenda → llamada → seguimiento o cliente
 const PIPELINE_STAGES = [
-  { value: "new", label: "Nuevo" },
-  { value: "contacted", label: "Contactado" },
-  { value: "booked", label: "Agendado" },
-  { value: "attended", label: "Atendido" },
-  { value: "no_show", label: "No show" },
-  { value: "won", label: "Cerrado (Ganado)" },
-  { value: "lost", label: "Perdido" },
+  { value: "nuevo_seguidor", label: "Nuevo seguidor" },  // ManyChat detecta nuevo follower
+  { value: "contactado", label: "Contactado" },          // Setter envió DM
+  { value: "agendado", label: "Agendado" },              // Reservó llamada
+  { value: "atendio", label: "Atendió llamada" },        // Entró a la videollamada
+  { value: "seguimiento", label: "Seguimiento" },        // No cerró ahora pero hay potencial
+  { value: "cliente", label: "Cliente" },                // Compró
+  { value: "no_show", label: "No show" },                // No asistió a la llamada
+  { value: "perdido", label: "Perdido" },                // Descartado / no quiere comprar
 ]
 
-export function ContactosPage() {
+export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
   const [contacts, setContacts] = useState<ContactRow[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [stageFilter, setStageFilter] = useState<string | "all">("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
-  const [view, setView] = useState<"list" | "kanban">("list")
+  const [view, setView] = useState<"list" | "kanban">(initialView)
 
   async function updateStage(contactId: string, newStage: string) {
     await fetch(`/api/admin/contacts/${contactId}`, {

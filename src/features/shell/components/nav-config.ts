@@ -34,11 +34,10 @@ export const navSections: NavSection[] = [
   {
     label: "Marketing",
     items: [
-      { title: "Contactos", href: "/contactos", icon: Users },
+      { title: "CRM", href: "/crm", icon: Users },
       { title: "Outreach IG", href: "/outreach-ig", icon: Camera },
       { title: "Calendario", href: "/calendario", icon: CalendarCheck },
       { title: "Email Marketing", href: "/email-marketing", icon: Mail },
-      { title: "Contenido alumnos", href: "/contenido", icon: BookOpen },
       { title: "Webs", href: "/webs", icon: Globe },
       { title: "Sistema visual", href: "/webs/sistema", icon: LayoutDashboard },
       { title: "Lead Magnets", href: "/webs/lead-magnets", icon: Magnet },
