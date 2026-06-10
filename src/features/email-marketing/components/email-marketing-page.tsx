@@ -4,13 +4,25 @@ import { useEffect, useState } from "react"
 import { Mail, Send, FileText, Settings, BarChart3, Search, Filter, CheckCircle2, XCircle, Eye, MousePointerClick } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
+import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { cn } from "@/lib/utils"
 
 type Stats = {
-  last24h: { total: number; failed: number }
-  last7d: { total: number; failed: number }
-  last30d: { total: number; failed: number; opened: number; clicked: number }
-  topTemplates: { template: string; total: number; failed: number }[]
+  range: { from: string; to: string }
+  metrics: {
+    total: number
+    delivered: number
+    opened: number
+    clicked: number
+    bounced: number
+    failed: number
+    deliveryRate: number
+    openRate: number
+    clickRate: number
+    bounceRate: number
+    failureRate: number
+  }
+  topTemplates: { template: string; total: number; failed: number; opened: number; clicked: number }[]
 }
 
 type EmailLog = {
@@ -93,59 +105,73 @@ export function EmailMarketingPage() {
 function DashboardTab() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<PeriodRange | undefined>(undefined)
 
   useEffect(() => {
-    fetch("/api/admin/email/stats")
+    if (!period) return
+    setLoading(true)
+    const params = new URLSearchParams({ from: period.from.toISOString(), to: period.to.toISOString() })
+    fetch(`/api/admin/email/stats?${params.toString()}`)
       .then((r) => r.json())
       .then((d) => setStats(d))
       .finally(() => setLoading(false))
-  }, [])
-
-  if (loading) return <div className="text-sm text-muted-foreground py-6">Cargando…</div>
-  if (!stats) return <div className="text-sm text-muted-foreground py-6">Sin datos</div>
-
-  const openRate30d = stats.last30d.total > 0 ? (stats.last30d.opened / stats.last30d.total) * 100 : 0
-  const clickRate30d = stats.last30d.total > 0 ? (stats.last30d.clicked / stats.last30d.total) * 100 : 0
+  }, [period?.from?.toISOString(), period?.to?.toISOString()])
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Últimas 24h" value={stats.last24h.total} sublabel={`${stats.last24h.failed} fallidos`} accent={stats.last24h.failed > 0 ? "red" : "cyan"} />
-        <StatCard label="Últimos 7 días" value={stats.last7d.total} sublabel={`${stats.last7d.failed} fallidos`} accent={stats.last7d.failed > 0 ? "red" : "green"} />
-        <StatCard label="Open rate 30d" value={Math.round(openRate30d)} sublabel={`${stats.last30d.opened} aperturas`} suffix="%" accent="amber" />
-        <StatCard label="Click rate 30d" value={Math.round(clickRate30d)} sublabel={`${stats.last30d.clicked} clicks`} suffix="%" accent="purple" />
+      {/* Filtro de periodo (reusable). Si quieres este mismo filtro en otro dashboard,
+          importa <PeriodFilter> de @/components/ui/period-filter */}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            Métricas {stats?.range ? `· ${new Date(stats.range.from).toLocaleDateString("es-ES")} – ${new Date(stats.range.to).toLocaleDateString("es-ES")}` : ""}
+          </p>
+        </div>
+        <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
-      <section>
-        <h2 className="text-sm font-semibold mb-2">Top templates (últimos 7d)</h2>
-        {stats.topTemplates.length === 0 ? (
-          <div className="text-xs text-muted-foreground p-3 border border-dashed border-border rounded-sm">
-            Sin envíos en los últimos 7 días.
+      {loading || !stats ? (
+        <div className="text-sm text-muted-foreground py-12 text-center">Cargando métricas…</div>
+      ) : (
+        <>
+          {/* 6 KPI cards completas */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <StatCard label="Enviados" value={stats.metrics.total} accent="cyan" />
+            <StatCard label="Entregados" value={stats.metrics.delivered} sublabel={`${stats.metrics.deliveryRate}%`} accent="green" />
+            <StatCard label="Abiertos" value={stats.metrics.opened} sublabel={`${stats.metrics.openRate}%`} suffix="" accent="amber" />
+            <StatCard label="Clicados" value={stats.metrics.clicked} sublabel={`${stats.metrics.clickRate}%`} accent="purple" />
+            <StatCard label="Bounces" value={stats.metrics.bounced} sublabel={`${stats.metrics.bounceRate}%`} accent={stats.metrics.bounced > 0 ? "red" : "cyan"} />
+            <StatCard label="Fallidos" value={stats.metrics.failed} sublabel={`${stats.metrics.failureRate}%`} accent={stats.metrics.failed > 0 ? "red" : "cyan"} />
           </div>
-        ) : (
-          <div className="rounded-md border border-border/40 divide-y divide-border/40">
-            {stats.topTemplates.map((t) => (
-              <div key={t.template} className="flex items-center justify-between px-3 py-2 text-sm">
-                <span className="font-mono text-xs">{t.template}</span>
-                <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
-                  <span className="text-muted-foreground">{t.total} envíos</span>
-                  {t.failed > 0 && <span className="text-red-400">{t.failed} fallos</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
-      <section>
-        <h2 className="text-sm font-semibold mb-2">Tracking en vivo</h2>
-        <div className="rounded-md border border-green-500/40 bg-green-500/[0.04] p-3 text-xs text-muted-foreground">
-          ✓ <strong className="text-green-400">Webhooks activos:</strong> Resend nos notifica aperturas, clicks,
-          bounces, entregas y quejas en tiempo real vía{" "}
-          <code className="font-mono text-foreground">/api/email/webhooks/resend</code>.
-          Open rate y click rate se actualizan automáticamente cuando los destinatarios interactúan.
-        </div>
-      </section>
+          <section>
+            <h2 className="text-sm font-semibold mb-2">Top templates en el período</h2>
+            {stats.topTemplates.length === 0 ? (
+              <div className="text-xs text-muted-foreground p-3 border border-dashed border-border rounded-sm">
+                Sin envíos en este rango. Cambia el filtro de período para ver otras fechas.
+              </div>
+            ) : (
+              <div className="rounded-md border border-border/40 divide-y divide-border/40">
+                {stats.topTemplates.map((t) => {
+                  const openR = t.total > 0 ? Math.round((t.opened / t.total) * 100) : 0
+                  const clickR = t.total > 0 ? Math.round((t.clicked / t.total) * 100) : 0
+                  return (
+                    <div key={t.template} className="flex items-center justify-between px-3 py-2 text-sm">
+                      <span className="font-mono text-xs truncate">{t.template}</span>
+                      <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider shrink-0">
+                        <span className="text-muted-foreground">{t.total} envíos</span>
+                        <span className="text-amber-400">{openR}% open</span>
+                        <span className="text-violet-400">{clickR}% click</span>
+                        {t.failed > 0 && <span className="text-red-400">{t.failed} fallos</span>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </div>
   )
 }
