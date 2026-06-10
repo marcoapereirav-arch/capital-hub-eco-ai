@@ -67,7 +67,10 @@ export function FunnelPerformance() {
     <section className="space-y-4">
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="font-heading text-base font-semibold text-foreground">🎯 Performance del funnel</h2>
+          <h2 className="font-heading text-base font-semibold text-foreground inline-flex items-center gap-2">
+            <Target className="h-4 w-4 text-muted-foreground" />
+            Performance del funnel
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
             KPIs definidas en daily 27-abr — proyección, objetivo y valor actual
           </p>

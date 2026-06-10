@@ -1,4 +1,4 @@
-import { Users, TrendingUp, CalendarClock, XCircle, Award } from "lucide-react"
+import { Users, TrendingUp, CalendarClock, XCircle, Award, BarChart3 } from "lucide-react"
 
 type StatCard = {
   label: string
@@ -32,7 +32,10 @@ export function BusinessStatus() {
       {/* HEADER */}
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="font-heading text-base font-semibold text-foreground">📊 Estado actual</h2>
+          <h2 className="font-heading text-base font-semibold text-foreground inline-flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            Estado actual
+          </h2>
           <p className="mt-0.5 text-sm text-muted-foreground">Métricas operativas en vivo del negocio</p>
         </div>
       </div>
