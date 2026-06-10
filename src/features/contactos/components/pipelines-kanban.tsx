@@ -17,13 +17,14 @@ type Contact = {
 type Stage = { value: string; label: string }
 
 const STAGE_COLORS: Record<string, string> = {
-  new: "border-border/40",
-  contacted: "border-blue-500/40",
-  booked: "border-amber-500/40",
-  attended: "border-cyan-500/40",
+  nuevo_seguidor: "border-border/40",
+  contactado: "border-blue-500/40",
+  agendado: "border-amber-500/40",
+  atendio: "border-cyan-500/40",
+  seguimiento: "border-violet-500/40",
+  cliente: "border-green-500/40",
   no_show: "border-orange-500/40",
-  won: "border-green-500/40",
-  lost: "border-red-500/40",
+  perdido: "border-red-500/40",
 }
 
 export function PipelinesKanban({
@@ -44,7 +45,7 @@ export function PipelinesKanban({
     const map = new Map<string, Contact[]>()
     for (const s of stages) map.set(s.value, [])
     for (const c of contacts) {
-      const stage = c.stage ?? "new"
+      const stage = c.stage ?? "nuevo_seguidor"
       const arr = map.get(stage) ?? []
       arr.push(c)
       map.set(stage, arr)
@@ -53,7 +54,9 @@ export function PipelinesKanban({
   }, [contacts, stages])
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-4">
+    // El scroll horizontal lo maneja el contenedor padre (ContactosPage en modo kanban).
+    // Aqui solo distribuimos columnas + cada columna scrollea vertical INTERNO.
+    <div className="flex gap-3 h-full pb-1">
       {stages.map((s) => {
         const list = grouped.get(s.value) ?? []
         const totalRev = list.reduce((acc, c) => acc + (c.total_revenue ?? 0), 0)
@@ -71,19 +74,20 @@ export function PipelinesKanban({
               setDragging(null)
             }}
             className={cn(
-              "shrink-0 w-72 rounded-md border bg-card/30 p-2 space-y-2 transition-colors",
+              "shrink-0 w-72 h-full rounded-md border bg-card/30 p-2 transition-colors flex flex-col",
               STAGE_COLORS[s.value] ?? "border-border/40",
               isOver && "bg-card/60 ring-2 ring-foreground/30"
             )}
           >
-            <div className="flex items-center justify-between px-1.5">
+            <div className="flex items-center justify-between px-1.5 shrink-0 mb-2">
               <div className="text-xs font-mono uppercase tracking-wider text-foreground">{s.label}</div>
               <div className="text-[10px] font-mono text-muted-foreground">
                 {list.length}{totalRev > 0 && <span className="text-green-400 ml-2">{Math.round(totalRev)}€</span>}
               </div>
             </div>
 
-            <div className="space-y-1.5 min-h-[100px]">
+            {/* Lista de cards con SCROLL VERTICAL propio. */}
+            <div className="space-y-1.5 flex-1 min-h-0 overflow-y-auto pr-0.5">
               {list.length === 0 ? (
                 <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 px-1.5 py-2">
                   vacío

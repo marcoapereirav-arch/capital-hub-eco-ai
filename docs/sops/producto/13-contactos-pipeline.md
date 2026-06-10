@@ -63,14 +63,16 @@ Hay 5 fuentes por las que un contacto aparece:
 
 | Campo | Para qué |
 |-------|----------|
-| email | Único, llave primaria operativa |
+| email | Llave principal de identidad (puede ser null inicialmente si viene de IG) |
 | full_name | Nombre real |
 | phone | Para llamadas + WhatsApp |
-| stage | `new` → `contacted` → `booked` → `attended` → `won`/`no_show`/`lost` |
+| instagram_username | @usuario de IG (sin `@`). Útil para leads de ManyChat antes de tener email. Búsqueda case-insensitive |
+| manychat_subscriber_id | ID interno de ManyChat. UNIQUE. Permite vinculación automática cuando agendan con `?mc_id=` |
+| stage | `nuevo_seguidor` → `contactado` → `agendado` → `atendio` → `seguimiento` / `cliente` / `no_show` / `perdido` |
 | products[] | Array de productos comprados (IA, MBD, CC) |
 | total_revenue | Suma de revenue de todas las ventas |
 | total_cash_collected | Suma de cash collected |
-| source | De dónde vino (agenda_calendar, outreach_ig, sales_call_close, etc) |
+| source | De dónde vino (agenda_calendar, manychat, sales_call_close, etc) |
 | owner_assignee | Quién lo gestiona (marco, adrian, nagai, etc) |
 | last_call_at | Última llamada con él |
 | created_at | Cuándo entró al sistema |

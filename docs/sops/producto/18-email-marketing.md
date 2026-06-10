@@ -49,12 +49,17 @@ Lista cronológica de TODOS los emails enviados:
   - ❌ rojo (rebote / queja)
 - Click en envío → drawer con detalles, payload completo, timestamps
 
-## Webhooks Resend (tracking real)
+## Webhooks Resend (tracking real) — ✅ VERIFICADO ACTIVO
 
 Configurado en `resend.com/webhooks` con endpoint:
 ```
 https://ecoai.capitalhubapp.com/api/email/webhooks/resend
 ```
+
+**Estado actual** (verificable via `GET https://api.resend.com/webhooks`):
+- Webhook id: `00f4f315-fd32-4f19-8b74-7ccaf4a3a28f`
+- Status: `enabled`
+- RESEND_WEBHOOK_SECRET configurado en Vercel del OS
 
 Eventos suscritos:
 - email.sent

@@ -14,6 +14,7 @@ type ContactRow = {
   full_name: string
   email: string
   phone: string | null
+  instagram_username: string | null
   stage: string | null
   products: string[]
   total_revenue: number
@@ -80,61 +81,85 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
       })
     : contacts
 
-  return (
-    <>
-      {/* NO ShellHeader aqui — el layout /crm ya pinta el titulo "CRM" + tabs */}
-      {/* En vista kanban usamos wide para que el contenedor sea full-width:
-          el kanban es mas ancho que max-w-7xl, sin esto habria doble scroll
-          horizontal (uno del page container + el del propio kanban) */}
-      <PageContainer wide={view === "kanban"}>
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar nombre, email, teléfono…"
-              className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
-            />
+  // Toolbar comun a las dos vistas
+  const Toolbar = (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex-1 min-w-[200px] max-w-md">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar nombre, email, teléfono, Instagram…"
+          className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
+        />
+      </div>
+      <select
+        value={stageFilter}
+        onChange={(e) => setStageFilter(e.target.value)}
+        className="h-8 rounded-sm border border-border bg-background px-2 text-xs"
+      >
+        <option value="all">Todos los pipelines</option>
+        {PIPELINE_STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+      </select>
+      <div className="flex-1" />
+      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
+      </span>
+      <button
+        onClick={() => setCreating(true)}
+        className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
+      >
+        <Plus className="h-3 w-3" /> Nuevo
+      </button>
+    </div>
+  )
+
+  // KANBAN: layout columnar fijo - toolbar ARRIBA fijo + kanban con scroll H solo
+  if (view === "kanban") {
+    return (
+      <>
+        <div className="flex h-full min-h-0 flex-col">
+          {/* Toolbar fijo arriba */}
+          <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-3">
+            {Toolbar}
           </div>
-          <select
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            className="h-8 rounded-sm border border-border bg-background px-2 text-xs"
-          >
-            <option value="all">Todos los pipelines</option>
-            {PIPELINE_STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-
-          <div className="flex-1" />
-
-          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
-          </span>
-
-          {/* Toggle list/kanban eliminado: cada sub-tab del CRM tiene su propia URL ahora */}
-
-          <button
-            onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
-          >
-            <Plus className="h-3 w-3" /> Nuevo
-          </button>
+          {/* Kanban: SOLO area con scroll horizontal. Las columnas tienen su propio scroll vertical. */}
+          <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden px-4 md:px-6 py-4">
+            {loading ? (
+              <div className="text-center py-12 text-sm text-muted-foreground">Cargando…</div>
+            ) : (
+              <PipelinesKanban
+                contacts={filtered}
+                stages={PIPELINE_STAGES}
+                onUpdateStage={updateStage}
+                onSelect={setSelectedId}
+              />
+            )}
+          </div>
         </div>
 
-        {/* Vista */}
+        {selectedId && (
+          <ContactDrawer
+            contactId={selectedId}
+            onClose={() => setSelectedId(null)}
+            onUpdate={() => load()}
+            stages={PIPELINE_STAGES}
+          />
+        )}
+        {creating && <ContactCreateModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
+      </>
+    )
+  }
+
+  // LISTA: layout normal con PageContainer
+  return (
+    <>
+      <PageContainer>
+        {Toolbar}
+
+        {/* Vista lista */}
         {loading ? (
           <div className="text-center py-12 text-sm text-muted-foreground">Cargando…</div>
-        ) : view === "kanban" ? (
-          // Pipeline kanban: SIEMPRE mostrar las columnas (stages) aunque no haya contactos.
-          // El usuario debe ver el funnel siempre. Las columnas se ven vacias = OK.
-          <PipelinesKanban
-            contacts={filtered}
-            stages={PIPELINE_STAGES}
-            onUpdateStage={updateStage}
-            onSelect={setSelectedId}
-          />
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border">
             {search || stageFilter !== "all" ? "Sin resultados con esos filtros." : "Aún no hay contactos."}
@@ -176,11 +201,14 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                   {stage && (
                     <span className={cn(
                       "shrink-0 text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border",
-                      stage.value === "won" && "border-green-500/40 text-green-400",
-                      stage.value === "lost" && "border-red-500/40 text-red-400",
-                      stage.value === "attended" && "border-cyan-500/40 text-cyan-400",
-                      stage.value === "booked" && "border-amber-500/40 text-amber-400",
-                      !["won", "lost", "attended", "booked"].includes(stage.value) && "border-border/40 text-muted-foreground"
+                      stage.value === "cliente" && "border-green-500/40 text-green-400",
+                      stage.value === "perdido" && "border-red-500/40 text-red-400",
+                      stage.value === "no_show" && "border-red-500/40 text-red-400",
+                      stage.value === "atendio" && "border-cyan-500/40 text-cyan-400",
+                      stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
+                      stage.value === "agendado" && "border-amber-500/40 text-amber-400",
+                      stage.value === "contactado" && "border-blue-500/40 text-blue-400",
+                      stage.value === "nuevo_seguidor" && "border-border/40 text-muted-foreground"
                     )}>
                       {stage.label}
                     </span>

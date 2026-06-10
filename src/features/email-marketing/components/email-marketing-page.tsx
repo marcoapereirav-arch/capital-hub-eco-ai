@@ -138,13 +138,12 @@ function DashboardTab() {
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold mb-2">Open + Click tracking</h2>
-        <div className="rounded-md border border-amber-500/40 bg-amber-500/[0.04] p-3 text-xs text-muted-foreground">
-          ⚠️ <strong className="text-amber-400">No configurado todavía:</strong> Resend tiene webhooks (open, click,
-          bounce, delivered, complaint). Hay que configurar en{" "}
-          <a href="https://resend.com/webhooks" target="_blank" rel="noreferrer" className="underline text-foreground">resend.com/webhooks</a>{" "}
-          con URL <code className="font-mono text-foreground">ecoai.capitalhubapp.com/api/email/webhooks/resend</code>.
-          Hasta entonces, open_rate y click_rate seguirán a 0%.
+        <h2 className="text-sm font-semibold mb-2">Tracking en vivo</h2>
+        <div className="rounded-md border border-green-500/40 bg-green-500/[0.04] p-3 text-xs text-muted-foreground">
+          ✓ <strong className="text-green-400">Webhooks activos:</strong> Resend nos notifica aperturas, clicks,
+          bounces, entregas y quejas en tiempo real vía{" "}
+          <code className="font-mono text-foreground">/api/email/webhooks/resend</code>.
+          Open rate y click rate se actualizan automáticamente cuando los destinatarios interactúan.
         </div>
       </section>
     </div>
@@ -359,16 +358,16 @@ function ConfigTab() {
         <p className="text-[10px] text-muted-foreground">Editar via env vars: <code>RESEND_FROM_EMAIL</code>, <code>RESEND_FROM_NAME</code></p>
       </section>
 
-      <section className="rounded-md border border-border/40 p-3 space-y-2">
-        <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Webhooks Resend (pendiente)</h3>
+      <section className="rounded-md border border-green-500/40 bg-green-500/[0.04] p-3 space-y-2">
+        <h3 className="text-xs font-mono uppercase tracking-wider text-green-400">✓ Webhooks Resend activos</h3>
         <p className="text-xs text-muted-foreground">
-          Para tracking de aperturas/clicks/bounces hay que configurar webhook en{" "}
-          <a href="https://resend.com/webhooks" target="_blank" rel="noreferrer" className="underline">resend.com/webhooks</a>:
+          Tracking automático de aperturas, clicks, bounces, entregas y quejas. Las métricas del Dashboard se
+          actualizan en tiempo real cuando los destinatarios interactúan con los emails.
         </p>
         <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-4">
-          <li>URL: <code className="font-mono">ecoai.capitalhubapp.com/api/email/webhooks/resend</code></li>
-          <li>Eventos: opened, clicked, bounced, delivered, complained</li>
-          <li>Secret: copiar y añadir como envvar RESEND_WEBHOOK_SECRET</li>
+          <li>Endpoint: <code className="font-mono">ecoai.capitalhubapp.com/api/email/webhooks/resend</code></li>
+          <li>Estado: enabled en Resend dashboard</li>
+          <li>Eventos suscritos: sent, delivered, opened, clicked, bounced, complained, failed</li>
         </ul>
       </section>
 

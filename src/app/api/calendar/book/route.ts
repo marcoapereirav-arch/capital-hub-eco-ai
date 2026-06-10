@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
             full_name: data.attendee_name.trim(),
             email: data.attendee_email.toLowerCase().trim(),
             phone: data.attendee_phone?.trim() ?? null,
-            stage: "booked",
+            stage: "agendado",
             source: "agenda_publica",
             notes: data.notes ?? null,
           })
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
         await supabase
           .from("contacts")
           .update({
-            stage: "booked",
+            stage: "agendado",
             last_call_at: startAt.toISOString(),
             updated_at: new Date().toISOString(),
           })

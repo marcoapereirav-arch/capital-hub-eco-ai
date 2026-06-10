@@ -17,6 +17,7 @@ const PatchSchema = z.object({
   full_name: z.string().min(1).max(200).optional(),
   email: z.string().email().max(255).optional(),
   phone: z.string().max(40).nullable().optional(),
+  instagram_username: z.string().max(60).nullable().optional(),
   company: z.string().max(200).nullable().optional(),
   stage: z.string().max(50).optional(),
   source: z.string().max(60).nullable().optional(),

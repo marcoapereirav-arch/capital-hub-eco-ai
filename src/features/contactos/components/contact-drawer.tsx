@@ -9,6 +9,8 @@ type ContactDetail = {
   full_name: string
   email: string
   phone: string | null
+  instagram_username: string | null
+  manychat_subscriber_id: string | null
   company: string | null
   stage: string | null
   products: string[]
@@ -186,9 +188,17 @@ export function ContactDrawer({
                 <DataField label="Nombre completo" value={draft.full_name ?? contact.full_name} onChange={(v) => setDraft({ ...draft, full_name: v })} />
                 <DataField label="Email" value={draft.email ?? contact.email} onChange={(v) => setDraft({ ...draft, email: v })} type="email" />
                 <DataField label="Teléfono" value={draft.phone ?? contact.phone ?? ""} onChange={(v) => setDraft({ ...draft, phone: v })} type="tel" />
+                <DataField label="Instagram (@usuario)" value={draft.instagram_username ?? contact.instagram_username ?? ""} onChange={(v) => setDraft({ ...draft, instagram_username: v.replace(/^@/, "") })} placeholder="ej. juan_lopez (sin @)" />
                 <DataField label="Empresa" value={draft.company ?? contact.company ?? ""} onChange={(v) => setDraft({ ...draft, company: v })} />
-                <DataField label="Origen" value={draft.source ?? contact.source ?? ""} onChange={(v) => setDraft({ ...draft, source: v })} placeholder="organic, ads, referral…" />
+                <DataField label="Origen" value={draft.source ?? contact.source ?? ""} onChange={(v) => setDraft({ ...draft, source: v })} placeholder="organic, ads, referral, manychat…" />
                 <DataField label="Asignado a" value={draft.owner_assignee ?? contact.owner_assignee ?? ""} onChange={(v) => setDraft({ ...draft, owner_assignee: v })} placeholder="adrian, nagai, marco…" />
+
+                {/* ManyChat subscriber ID (solo lectura, lo setea el webhook) */}
+                {contact.manychat_subscriber_id && (
+                  <div className="text-[10px] font-mono text-muted-foreground border-t border-border/40 pt-3">
+                    ManyChat subscriber ID: <code className="text-foreground">{contact.manychat_subscriber_id}</code>
+                  </div>
+                )}
 
                 {Object.keys(draft).length > 0 && (
                   <div className="flex items-center gap-2 pt-3">
