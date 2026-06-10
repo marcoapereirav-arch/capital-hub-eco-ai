@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { UserPlus, Mail, Shield, Clock, X, Trash2, Check } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 
 type Member = {
@@ -76,7 +77,7 @@ export function TeamPage() {
     <>
       <ShellHeader title="Equipo" />
 
-      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+      <PageContainer>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -189,7 +190,7 @@ export function TeamPage() {
             ))}
           </div>
         </section>
-      </div>
+      </PageContainer>
 
       {inviting && <InviteModal onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load() }} />}
     </>

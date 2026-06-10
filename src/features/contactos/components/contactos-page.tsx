@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Search, Plus, ChevronRight, LayoutGrid, List } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { ContactDrawer } from "./contact-drawer"
 import { ContactCreateModal } from "./contact-create-modal"
 import { PipelinesKanban } from "./pipelines-kanban"
@@ -83,7 +84,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     <>
       <ShellHeader title="Contactos" />
 
-      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+      <PageContainer>
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -201,7 +202,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {selectedId && (
         <ContactDrawer

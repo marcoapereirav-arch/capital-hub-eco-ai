@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Mail, Send, FileText, Settings, BarChart3, Search, Filter, CheckCircle2, XCircle, Eye, MousePointerClick } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 
 type Stats = {
@@ -48,7 +49,7 @@ export function EmailMarketingPage() {
     <>
       <ShellHeader title="Email Marketing" />
 
-      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+      <PageContainer>
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5 text-muted-foreground" />
           <h1 className="text-lg font-semibold">Email Marketing</h1>
@@ -84,7 +85,7 @@ export function EmailMarketingPage() {
         {tab === "logs" && <LogsTab />}
         {tab === "broadcasts" && <BroadcastsTab />}
         {tab === "config" && <ConfigTab />}
-      </div>
+      </PageContainer>
     </>
   )
 }

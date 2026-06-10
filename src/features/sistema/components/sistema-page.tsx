@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Camera, MessageSquare, Calendar, Video, ShoppingBag, Mail, GraduationCap, Users, FileText, ArrowRight } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 
 /**
@@ -112,7 +113,7 @@ export function SistemaPage() {
     <>
       <ShellHeader title="Sistema end-to-end" />
 
-      <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
+      <PageContainer>
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-2">
           <div className="inline-flex items-center gap-2 border border-border/40 px-3 py-1 rounded-sm">
@@ -172,7 +173,7 @@ export function SistemaPage() {
             Webinar en directo. El sistema completo ejecuta una compra real cada vez que alguien atraviese este flujo.
           </p>
         </section>
-      </div>
+      </PageContainer>
     </>
   )
 }

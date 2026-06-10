@@ -1,0 +1,38 @@
+import { cn } from "@/lib/utils"
+
+/**
+ * Contenedor estándar de página del OS.
+ *
+ * Garantiza ancho + padding + spacing consistentes entre TODAS las páginas
+ * y sub-pestañas. Evita que el layout "baile" al cambiar de sección.
+ *
+ * Uso:
+ *   <PageContainer>...</PageContainer>          // ancho normal (max-w-7xl ≈ 1280px)
+ *   <PageContainer wide>...</PageContainer>     // full width (para kanbans, gráficas)
+ *   <PageContainer narrow>...</PageContainer>   // ancho leído cómodo (max-w-4xl ≈ 896px)
+ *
+ * Si necesitas título usa <ShellHeader> ENCIMA, fuera del PageContainer.
+ */
+export function PageContainer({
+  children,
+  className,
+  wide = false,
+  narrow = false,
+}: {
+  children: React.ReactNode
+  className?: string
+  wide?: boolean
+  narrow?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        "mx-auto w-full px-4 py-4 md:px-6 md:py-6 space-y-4",
+        wide ? "max-w-full" : narrow ? "max-w-4xl" : "max-w-7xl",
+        className
+      )}
+    >
+      {children}
+    </div>
+  )
+}

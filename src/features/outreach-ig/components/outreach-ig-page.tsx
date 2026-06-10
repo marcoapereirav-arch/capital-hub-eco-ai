@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Camera, Plus, ExternalLink, Send, ArrowRight, Trash2, X } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 
 type Lead = {
@@ -76,7 +77,7 @@ export function OutreachIGPage() {
     <>
       <ShellHeader title="Outreach IG" />
 
-      <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4">
+      <PageContainer>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -187,7 +188,7 @@ export function OutreachIGPage() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {creating && (
         <CreateModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />

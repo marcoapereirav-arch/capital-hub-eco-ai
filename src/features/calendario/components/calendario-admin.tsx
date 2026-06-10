@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Calendar, Clock, Trash2, Plus, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PageContainer } from "@/components/ui/page-container"
 
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
 const WEEKDAYS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
@@ -104,7 +105,7 @@ export function CalendarioAdmin() {
   const past = bookings.filter((b) => new Date(b.start_at).getTime() < now)
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
+    <PageContainer>
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
@@ -302,7 +303,7 @@ export function CalendarioAdmin() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   )
 }
 
