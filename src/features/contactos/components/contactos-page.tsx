@@ -115,10 +115,12 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   )
 
   // KANBAN: layout columnar fijo - toolbar ARRIBA fijo + kanban con scroll H solo
+  // h-[calc(100vh-...)] fuerza altura visible sin que el wrapper main scrollee verticalmente.
+  // En este modo no queremos scroll vertical de la pagina entera, solo de cada columna.
   if (view === "kanban") {
     return (
       <>
-        <div className="flex h-full min-h-0 min-w-0 flex-col">
+        <div className="flex h-[calc(100vh-9rem)] md:h-[calc(100vh-9rem)] min-h-0 min-w-0 flex-col">
           {/* Toolbar fijo arriba */}
           <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-3">
             {Toolbar}

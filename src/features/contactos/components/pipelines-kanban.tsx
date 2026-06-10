@@ -56,9 +56,10 @@ export function PipelinesKanban({
   return (
     // El scroll horizontal lo maneja el contenedor padre (ContactosPage en modo kanban).
     // Aqui solo distribuimos columnas + cada columna scrollea vertical INTERNO.
-    // PADDING INTERNO (px-4 md:px-6): asi cuando el usuario scrollea hasta el final,
-    // la ultima columna mantiene margen lateral derecho (no se pega al borde).
-    <div className="flex gap-3 h-full pb-1 px-4 md:px-6">
+    // PADDING INTERNO (px-4 md:px-6) lateral - margen simetrico izquierda y derecha.
+    // Extra pr-* para asegurar que al scrollear hasta el final, la ultima columna
+    // tiene espacio respirable y no toca el borde derecho del viewport.
+    <div className="flex gap-3 h-full pb-1 pl-4 md:pl-6 pr-6 md:pr-8">
       {stages.map((s) => {
         const list = grouped.get(s.value) ?? []
         const totalRev = list.reduce((acc, c) => acc + (c.total_revenue ?? 0), 0)

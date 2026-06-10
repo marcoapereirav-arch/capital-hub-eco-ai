@@ -40,9 +40,17 @@ export default async function MainLayout({
       <SidebarInset>
         <MobileHeader userEmail={userEmail} userName={userName} />
 
-        {/* min-w-0 es crítico en flex children: por defecto min-width es auto = ancho mínimo del contenido.
-            Sin esto, paginas con kanbans (CRM/pipeline) hacen overflow del body. */}
-        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
+        {/* Wrapper del contenido principal:
+            - min-w-0: en flex children, el min-width por defecto es auto = ancho del contenido.
+              Sin esto, paginas con kanbans hacen overflow del body horizontalmente.
+            - min-h-0: mismo principio para vertical (necesario para que overflow-y-auto funcione
+              en flex containers).
+            - overflow-x-hidden: bloquea scroll horizontal de TODA la pagina (paginas con kanban
+              tienen su propio overflow-x-auto interno).
+            - overflow-y-auto: permite scroll vertical SOLO en esta area cuando el contenido excede.
+              El sidebar y el header de movil quedan FIJOS, este wrapper es el unico que scrollea
+              verticalmente. */}
+        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-x-hidden overflow-y-auto">
           {children}
         </div>
 
