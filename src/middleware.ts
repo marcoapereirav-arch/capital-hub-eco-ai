@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 
 /**
- * Middleware global del OS.
+ * Middleware CORS. Aplica a /api/auth/* y /api/calendar/book/* que son
+ * los endpoints que la App alumno (cross-origin) llama.
  *
- * Responsabilidades:
- * 1. CORS: permite que la App alumno (app.capitalhubapp.com + previews Vercel
- *    + localhost dev) llame a endpoints del OS sin que el browser bloquee
- *    el preflight.
- *
- * Solo se aplica a rutas /api/auth/* y /api/public/* que están pensadas para
- * ser consumidas por la App (cross-origin). Los /api/admin/* NO necesitan
- * CORS porque solo el OS mismo los llama.
+ * Modo aplicación:
+ * - OPTIONS preflight: respuesta 204 inmediata con headers CORS.
+ * - GET/POST: forwarder al handler, pero AÑADE headers CORS a la response
+ *   final con NextResponse.next({headers}) que en Next.js 16 sí propaga.
  */
 
 const ALLOWED_ORIGIN_PATTERNS: Array<string | RegExp> = [
   "https://app.capitalhubapp.com",
-  /^https:\/\/capital-hub-app-[a-z0-9-]+\.vercel\.app$/,
+  /^https:\/\/capital-hub-[a-z0-9-]*\.vercel\.app$/,
   "http://localhost:5173",
   "http://localhost:3000",
 ]
@@ -26,41 +23,38 @@ function isAllowedOrigin(origin: string): boolean {
   )
 }
 
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl
-  // Solo CORS sobre endpoints cross-origin de la App
-  const needsCors =
-    pathname.startsWith("/api/auth/") ||
-    pathname.startsWith("/api/public/") ||
-    pathname.startsWith("/api/calendar/book")
-
-  if (!needsCors) return NextResponse.next()
-
-  const origin = req.headers.get("origin") ?? ""
-  const allowed = isAllowedOrigin(origin)
-  const corsHeaders: Record<string, string> = {
-    "Access-Control-Allow-Origin": allowed ? origin : "https://app.capitalhubapp.com",
+function getCorsHeaders(origin: string | null): HeadersInit {
+  const allow = origin && isAllowedOrigin(origin)
+  return {
+    "Access-Control-Allow-Origin": allow ? origin : "https://app.capitalhubapp.com",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   }
+}
 
-  // Preflight: responder inmediatamente con 204 + headers
+export function middleware(req: NextRequest) {
+  const origin = req.headers.get("origin")
+  const headers = getCorsHeaders(origin)
+
+  // Preflight
   if (req.method === "OPTIONS") {
-    return new NextResponse(null, { status: 204, headers: corsHeaders })
+    return new NextResponse(null, { status: 204, headers })
   }
 
-  // Para requests reales, dejamos pasar pero añadimos los headers a la response
-  const res = NextResponse.next()
-  for (const [k, v] of Object.entries(corsHeaders)) {
-    res.headers.set(k, v)
-  }
-  return res
+  // Forward + añadir headers a la response (Next 16 lo propaga con esta sintaxis)
+  return NextResponse.next({
+    headers,
+    request: { headers: req.headers },
+  })
 }
 
 export const config = {
-  // Match cualquier ruta API que la App pueda llamar (cross-origin).
-  // Usamos glob amplio para evitar problemas con la sintaxis de :path*
-  matcher: ["/api/:path*"],
+  // Matcher amplio: cualquier /api/auth/* o /api/calendar/book/*
+  matcher: [
+    "/api/auth/:path*",
+    "/api/calendar/book/:path*",
+    "/api/public/:path*",
+  ],
 }
