@@ -12,7 +12,26 @@ function getAdminClient() {
   )
 }
 
-// CORS lo maneja src/middleware.ts globalmente. No hace falta OPTIONS aquí.
+// CORS: headers explícitos también en este endpoint (backup al middleware).
+// La App alumno (cross-origin) llama aquí.
+function corsHeaders(origin: string | null): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": origin ?? "https://app.capitalhubapp.com",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Vary": "Origin",
+  }
+}
+
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, { status: 204, headers: corsHeaders(req.headers.get("origin")) })
+}
+
+function withCors(req: NextRequest, res: NextResponse): NextResponse {
+  const headers = corsHeaders(req.headers.get("origin"))
+  for (const [k, v] of Object.entries(headers)) res.headers.set(k, v)
+  return res
+}
 
 const ValidateSchema = z.object({
   token: z.string().min(32).max(128),
@@ -32,7 +51,7 @@ export async function GET(req: NextRequest) {
   const token = new URL(req.url).searchParams.get("token")
   const parsed = ValidateSchema.safeParse({ token })
   if (!parsed.success) {
-    return NextResponse.json({ valid: false, error: "Invalid token" }, { status: 400 })
+    return withCors(req, NextResponse.json({ valid: false, error: "Invalid token" }, { status: 400 }))
   }
 
   const admin = getAdminClient()
@@ -43,21 +62,21 @@ export async function GET(req: NextRequest) {
     .maybeSingle()
 
   if (!invite) {
-    return NextResponse.json({ valid: false, error: "Invitacion no encontrada" }, { status: 404 })
+    return withCors(req, NextResponse.json({ valid: false, error: "Invitacion no encontrada" }, { status: 404 }))
   }
   if (invite.accepted_at) {
-    return NextResponse.json({ valid: false, error: "Esta invitacion ya fue usada" }, { status: 409 })
+    return withCors(req, NextResponse.json({ valid: false, error: "Esta invitacion ya fue usada" }, { status: 409 }))
   }
   if (new Date(invite.expires_at) < new Date()) {
-    return NextResponse.json({ valid: false, error: "Invitacion caducada" }, { status: 410 })
+    return withCors(req, NextResponse.json({ valid: false, error: "Invitacion caducada" }, { status: 410 }))
   }
 
-  return NextResponse.json({
+  return withCors(req, NextResponse.json({
     valid: true,
     email: invite.email,
     full_name: invite.full_name,
     products: invite.products,
-  })
+  }))
 }
 
 /**
@@ -77,7 +96,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const parsed = AcceptSchema.safeParse(await req.json())
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid", issues: parsed.error.flatten().fieldErrors }, { status: 400 })
+    return withCors(req, NextResponse.json({ error: "Invalid", issues: parsed.error.flatten().fieldErrors }, { status: 400 }))
   }
   const { token, password } = parsed.data
   const admin = getAdminClient()
@@ -88,9 +107,9 @@ export async function POST(req: NextRequest) {
     .eq("token", token)
     .maybeSingle()
 
-  if (!invite) return NextResponse.json({ error: "Invitacion no encontrada" }, { status: 404 })
-  if (invite.accepted_at) return NextResponse.json({ error: "Ya fue usada" }, { status: 409 })
-  if (new Date(invite.expires_at) < new Date()) return NextResponse.json({ error: "Caducada" }, { status: 410 })
+  if (!invite) return withCors(req, NextResponse.json({ error: "Invitacion no encontrada" }, { status: 404 }))
+  if (invite.accepted_at) return withCors(req, NextResponse.json({ error: "Ya fue usada" }, { status: 409 }))
+  if (new Date(invite.expires_at) < new Date()) return withCors(req, NextResponse.json({ error: "Caducada" }, { status: 410 }))
 
   const email = invite.email.toLowerCase().trim()
 
@@ -116,7 +135,7 @@ export async function POST(req: NextRequest) {
     }
     if (!userId) {
       console.error("[student-invite-accept] createUser fallo", createErr)
-      return NextResponse.json({ error: "No se pudo crear cuenta", detail: createErr.message }, { status: 500 })
+      return withCors(req, NextResponse.json({ error: "No se pudo crear cuenta", detail: createErr.message }, { status: 500 }))
     }
   } else {
     userId = created.user.id
@@ -169,10 +188,10 @@ export async function POST(req: NextRequest) {
   // El bloqueo por producto se aplica en el catalogo: solo muestra formations cuyo
   // product matchea invite.products.
 
-  return NextResponse.json({
+  return withCors(req, NextResponse.json({
     ok: true,
     email,
     products: invite.products,
     user_id: userId,
-  })
+  }))
 }

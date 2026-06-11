@@ -60,5 +60,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/auth/:path*", "/api/public/:path*", "/api/calendar/book/:path*"],
+  // Match cualquier ruta API que la App pueda llamar (cross-origin).
+  // Usamos glob amplio para evitar problemas con la sintaxis de :path*
+  matcher: ["/api/:path*"],
 }
