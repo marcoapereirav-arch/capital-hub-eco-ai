@@ -37,6 +37,7 @@ export function OperacionesDashboard() {
   const resetFilters = useTaskStore((s) => s.resetFilters)
 
   const setViewMode = useTaskStore((s) => s.setViewMode)
+  const setSelectedTask = useTaskStore((s) => s.setSelectedTask)
 
   function navigateToTasks(filters: { status?: string; assignee?: string; dueRange?: DueRange }) {
     resetFilters()
@@ -346,7 +347,7 @@ export function OperacionesDashboard() {
               </span>
             </div>
             <button
-              onClick={() => setSelectedTaskId(nextTask.id)}
+              onClick={() => setSelectedTask(nextTask.id)}
               className="w-full text-left group block"
             >
               <div className="flex items-start justify-between gap-3">
@@ -397,7 +398,7 @@ export function OperacionesDashboard() {
                     return (
                       <button
                         key={t.id}
-                        onClick={() => setSelectedTaskId(t.id)}
+                        onClick={() => setSelectedTask(t.id)}
                         className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-sm hover:bg-card/40 text-left transition-colors"
                       >
                         <span className="shrink-0 w-5 text-[10px] font-mono text-muted-foreground">{i + 2}.</span>
