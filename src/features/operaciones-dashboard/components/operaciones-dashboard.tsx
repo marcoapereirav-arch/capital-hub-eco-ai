@@ -111,9 +111,14 @@ export function OperacionesDashboard() {
   const tasksPct = totalScopedTasks > 0 ? (doneScoped / totalScopedTasks) * 100 : 0
   const openScoped = scopedTasks.filter((t) => t.status !== "done")
   const in7Days = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000)
-  const overdue = openScoped.filter((t) => t.dueDate && new Date(t.dueDate) < startOfToday)
+  // CRÍTICO: "Vencida" / "Esta semana" deben coincidir EXACTAMENTE con los presets
+  // de /tasks. Allí filtran status=next. Si aquí contamos t.status !== "done"
+  // (que incluye someday/waiting/inbox), el contador del dashboard (62) NO
+  // coincide con lo que el usuario ve al hacer click en la card (1).
+  // Las tareas someday/waiting con due_date vieja NO son "vencidas" — están en cola.
+  const overdue = openScoped.filter((t) => t.status === "next" && t.dueDate && new Date(t.dueDate) < startOfToday)
   const dueThisWeek = openScoped.filter((t) => {
-    if (!t.dueDate) return false
+    if (t.status !== "next" || !t.dueDate) return false
     const d = new Date(t.dueDate)
     return d >= startOfToday && d < in7Days
   })
@@ -164,6 +169,38 @@ export function OperacionesDashboard() {
       })
       .slice(0, 10)
   }, [openScoped])
+
+  // === RANKING INTELIGENTE "siguiente tarea" ===
+  // Score combinado por prioridad (rank desc) + cercanía de fecha (más urgente = más arriba).
+  // urgent vencidas → 1000, urgent hoy → 900, urgent <=3d → 700
+  // high vencidas → 800, high hoy → 600, high <=3d → 500
+  // normal vencidas → 400, normal hoy → 300, normal <=7d → 200
+  // sin fecha → priority rank * 100 - 50
+  const nextActions = useMemo(() => {
+    const PRIORITY_RANK: Record<string, number> = { urgent: 4, high: 3, normal: 2, low: 1 }
+    function score(t: typeof openScoped[0]): number {
+      const prio = PRIORITY_RANK[t.priority] ?? 2
+      if (!t.dueDate) return prio * 100 - 50  // sin fecha: solo por prioridad pero penalizado
+      const due = new Date(t.dueDate)
+      const daysToEnd = Math.floor((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+      let dueScore = 0
+      if (daysToEnd < 0) dueScore = 1000      // vencida
+      else if (daysToEnd === 0) dueScore = 800 // hoy
+      else if (daysToEnd <= 3) dueScore = 600  // próx 3 días
+      else if (daysToEnd <= 7) dueScore = 400  // esta semana
+      else dueScore = 200                       // futuro lejano
+      return dueScore + prio * 25  // prioridad ajusta dentro del rango de fecha
+    }
+    return openScoped
+      .filter((t) => t.status === "next")
+      .map((t) => ({ task: t, score: score(t) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .map((x) => x.task)
+  }, [openScoped, startOfToday])
+
+  const nextTask = nextActions[0] ?? null
+  const upNext = nextActions.slice(1, 6)
 
   // === Progreso por proyecto ===
   const projectsProgress = useMemo(() => {
@@ -293,6 +330,94 @@ export function OperacionesDashboard() {
                 <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
               </div>
             </div>
+          </section>
+        )}
+
+        {/* ============ SIGUIENTE TAREA + UPNEXT (claridad #1 del dashboard) ============ */}
+        {nextTask && (
+          <section className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/[0.06] to-transparent p-4 md:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400">
+                ▸ Siguiente tarea
+              </span>
+              <div className="flex-1 h-px bg-amber-500/20" />
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                la más urgente · click para abrir
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedTaskId(nextTask.id)}
+              className="w-full text-left group block"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base md:text-lg font-semibold leading-tight group-hover:text-amber-200 transition-colors line-clamp-2">
+                    {nextTask.title}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    {nextTask.priority === "urgent" && (
+                      <span className="px-1.5 py-0.5 rounded-sm border border-red-500/40 text-red-400 bg-red-500/[0.06]">
+                        🔴 URGENT
+                      </span>
+                    )}
+                    {nextTask.priority === "high" && (
+                      <span className="px-1.5 py-0.5 rounded-sm border border-orange-500/40 text-orange-400 bg-orange-500/[0.06]">
+                        HIGH
+                      </span>
+                    )}
+                    {nextTask.dueDate && (() => {
+                      const due = new Date(nextTask.dueDate)
+                      const days = Math.floor((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+                      const label = days < 0
+                        ? `Vencida hace ${Math.abs(days)}d`
+                        : days === 0 ? "Vence hoy"
+                        : days === 1 ? "Vence mañana"
+                        : `Vence en ${days}d`
+                      const color = days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"
+                      return <span className={cn("inline-flex items-center gap-1", color)}>📅 {label}</span>
+                    })()}
+                    <span>👤 {ASSIGNEE_LABELS[nextTask.assignee] ?? nextTask.assignee}</span>
+                  </div>
+                </div>
+                <span className="shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full border border-amber-500/40 text-amber-400 group-hover:bg-amber-500/[0.1] transition-colors">
+                  →
+                </span>
+              </div>
+            </button>
+
+            {upNext.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-amber-500/20">
+                <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                  Después de esta · top {upNext.length}
+                </div>
+                <div className="space-y-1">
+                  {upNext.map((t, i) => {
+                    const due = t.dueDate ? new Date(t.dueDate) : null
+                    const days = due ? Math.floor((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24)) : null
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTaskId(t.id)}
+                        className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-sm hover:bg-card/40 text-left transition-colors"
+                      >
+                        <span className="shrink-0 w-5 text-[10px] font-mono text-muted-foreground">{i + 2}.</span>
+                        <span className="flex-1 min-w-0 text-sm truncate">{t.title}</span>
+                        {t.priority === "urgent" && <span className="text-[9px] text-red-400 shrink-0">URGENT</span>}
+                        {t.priority === "high" && <span className="text-[9px] text-orange-400 shrink-0">HIGH</span>}
+                        {days !== null && (
+                          <span className={cn(
+                            "text-[10px] font-mono shrink-0",
+                            days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"
+                          )}>
+                            {days < 0 ? `${days}d` : days === 0 ? "hoy" : `+${days}d`}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
