@@ -55,7 +55,11 @@ export function TaskFilters() {
   const setViewMode = useTaskStore((s) => s.setViewMode)
   const tasks = useTaskStore((s) => s.tasks)
 
-  // Counts por preset en vivo
+  // Counts por preset en vivo. CRÍTICO: cada count debe coincidir EXACTAMENTE con
+  // el filtro que aplica el preset al hacer click. Si el chip "Vencidas" filtra
+  // status=next AND dueRange=overdue, el count debe ser SOLO las que cumplen ambos.
+  // Antes el bug era: vencidas++ contaba TODAS las que tenian due_date pasada
+  // (incluido done). Al filtrar con status=next mostraba 1 sola pero el chip decía 63.
   const counts = useMemo(() => {
     const now = new Date()
     const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -68,13 +72,16 @@ export function TaskFilters() {
     for (const t of tasks) {
       if (t.status === "done") {
         hechas++
-        continue
+        continue   // las done NO entran en ningún otro count
       }
+      // A partir de aquí solo tareas NO done (next/waiting/someday/inbox)
       if (t.status === "next") pendientes++
-      if (t.dueDate) {
+      // Vencidas y Esta semana: solo cuentan las que estan en status=next
+      // (que es el filtro que aplica el preset al hacer click).
+      if (t.status === "next" && t.dueDate) {
         const due = new Date(t.dueDate)
         if (due < startToday) vencidas++
-        if (due >= startToday && due < week) esta_semana++
+        else if (due < week) esta_semana++
       }
     }
     return { pendientes, vencidas, esta_semana, hechas, todas: tasks.length }

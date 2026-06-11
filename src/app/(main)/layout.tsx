@@ -6,7 +6,7 @@ import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { PushNotificationPrompt } from "@/features/notifications/components/PushNotificationPrompt"
 import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { RegistrarVentaWidget } from "@/features/sales/components/registrar-venta-widget"
-// NotificationsBell ahora vive dentro de ShellHeader (no flotante)
+import { OsTopBar } from "@/features/shell/components/os-top-bar"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function MainLayout({
@@ -64,6 +64,9 @@ export default async function MainLayout({
       <PushNotificationPrompt userId={user.id} />
       <UpdateNotifier />
       <RegistrarVentaWidget />
+      {/* OsTopBar global: la campana de notif vive aquí SIEMPRE, no en cada page header.
+          Visible en todas las rutas del OS. */}
+      <OsTopBar />
     </SidebarProvider>
   )
 }

@@ -1,15 +1,14 @@
 "use client"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { NotificationsBell } from "@/features/notifications/components/NotificationsPanel"
 
 /**
- * Header superior visible en desktop.
- * - Lado izquierdo: trigger del sidebar + título de la sección actual.
- * - Lado derecho: campana de notificaciones (sustituye al botón flotante
- *   que antes chocaba con los botones "+ Nuevo" de las páginas).
+ * Header de sección (solo desktop). Lado izquierdo: trigger sidebar + título.
  *
- * h-14 fijo. shrink-0 para que NUNCA se mueva al hacer scroll del contenido.
+ * NOTA: la campana de notificaciones NO vive aquí — vive en <OsTopBar>
+ * global montado una sola vez en (main)/layout.tsx. Eso garantiza que el
+ * bell está SIEMPRE visible, no importa qué página estés viendo o si esa
+ * página usa este header o no.
  */
 export function ShellHeader({ title }: { title: string }) {
   return (
@@ -18,8 +17,6 @@ export function ShellHeader({ title }: { title: string }) {
       <h1 className="font-heading text-sm font-semibold tracking-wide uppercase text-foreground">
         {title}
       </h1>
-      <div className="flex-1" />
-      <NotificationsBell />
     </header>
   )
 }
