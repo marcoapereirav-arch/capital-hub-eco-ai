@@ -13,12 +13,6 @@ import { useTaskStore } from "@/features/tasks/store/task-store"
 import { cn } from "@/lib/utils"
 import type { ParaItem, ParaStatus, Task } from "@/features/tasks/types/task"
 import { ROOT_AREAS } from "@/features/tasks/types/task"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 type ProjectSortBy = "alpha" | "most_open" | "least_open" | "most_progress" | "least_progress"
 const PROJECT_SORT_LABELS: Record<ProjectSortBy, string> = {
