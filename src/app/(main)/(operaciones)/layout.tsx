@@ -21,7 +21,7 @@ export default function OperacionesLayout({
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full min-h-mobile-content flex-col md:absolute md:inset-0 md:min-h-0">
+    <div className="flex h-full min-h-mobile-content flex-col md:min-h-0">
       <nav
         aria-label="Operaciones"
         className="flex shrink-0 items-center gap-1 border-b border-border bg-background px-2 py-1.5 md:px-4"

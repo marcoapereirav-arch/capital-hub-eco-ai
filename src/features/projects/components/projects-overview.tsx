@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { CheckCircle2, Circle, FolderKanban, ArrowDownUp, LayoutGrid as LayoutGridIcon } from "lucide-react"
+import { CheckCircle2, Circle, FolderKanban, ArrowDownUp, LayoutGrid as LayoutGridIcon, Pause, Play, MoreVertical } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useTaskStore } from "@/features/tasks/store/task-store"
 import { cn } from "@/lib/utils"
 import type { ParaItem, ParaStatus, Task } from "@/features/tasks/types/task"
@@ -115,6 +121,21 @@ export function ProjectsOverview() {
     const nextStatus: ParaStatus = project.status === "completed" ? "active" : "completed"
     try {
       await updateParaItem(project.id, { status: nextStatus })
+    } catch {
+      // store ya hace revert + setea error
+    }
+  }
+
+  /**
+   * Cambia status libremente. El usuario tiene control total: active / paused / completed.
+   * Se invoca desde el menu de la card.
+   */
+  async function setProjectStatus(project: ParaItem, status: ParaStatus, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (project.status === status) return
+    try {
+      await updateParaItem(project.id, { status })
     } catch {
       // store ya hace revert + setea error
     }
@@ -247,6 +268,35 @@ export function ProjectsOverview() {
                     <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs font-mono tabular-nums text-muted-foreground">
                       {pct}%
                     </span>
+
+                    {/* Menú de status: cambia libremente entre active / paused / completed */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                          aria-label="Cambiar estado del proyecto"
+                          title="Cambiar estado del proyecto"
+                          className="shrink-0 p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={(e) => setProjectStatus(p, "active", e as React.MouseEvent)}>
+                          <Play className="h-3.5 w-3.5 mr-2" /> En progreso
+                          {p.status === "active" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => setProjectStatus(p, "paused", e as React.MouseEvent)}>
+                          <Pause className="h-3.5 w-3.5 mr-2" /> En pausa
+                          {p.status === "paused" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => setProjectStatus(p, "completed", e as React.MouseEvent)}>
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Completado
+                          {p.status === "completed" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
