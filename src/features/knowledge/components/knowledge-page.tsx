@@ -77,7 +77,7 @@ export function KnowledgePage({ quadrants }: KnowledgePageProps) {
       : null
 
   return (
-    <div className="flex min-h-mobile-content flex-col md:absolute md:inset-0 md:min-h-0">
+    <div className="flex h-full min-h-mobile-content flex-col md:min-h-0">
       <PageNavHeader
         title="Knowledge"
         groups={groups}

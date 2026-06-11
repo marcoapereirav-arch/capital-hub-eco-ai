@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 export default async function LeadMagnetsAdminRoute() {
   const list = await listLeadMagnetsWithStats()
   return (
-    <div className="flex h-full flex-col md:absolute md:inset-0">
+    <div className="flex h-full flex-col">
       <LeadMagnetsAdmin initialList={list} />
     </div>
   )

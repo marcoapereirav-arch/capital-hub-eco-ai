@@ -65,14 +65,14 @@ export function OperacionesDashboard() {
   const activeFocus = mode === "general" ? null : focuses.find((f) => f.id === mode) ?? null
 
   // === SCOPE: qué proyectos/tasks entran en el dashboard ===
-  // Modo "general": TODO el negocio (active + paused + completed) y TODAS las tareas
-  //                 (incluido someday + inbox) — vista panorámica
-  // Modo "foco":    solo proyectos active del foco + sus tareas (sin someday/inbox)
-  //                 — vista de ejecución
+  // Modo "general": proyectos active + paused (NO completed - regla del usuario:
+  //                 lo completado solo se ve en /projects > Completados).
+  //                 Tareas: las next/waiting/someday/inbox (NO done por la misma regla).
+  // Modo "foco":    solo proyectos active del foco + sus tareas vivas.
   const scopedProjects = useMemo(() => {
     if (mode === "general") {
-      // Todo proyecto que tenga tasks o haya tenido — sin filtro de status
-      return paraItems.filter((p) => p.type === "project")
+      // active + paused. Los completed solo se ven en su sección dedicada.
+      return paraItems.filter((p) => p.type === "project" && p.status !== "completed")
     }
     return paraItems.filter((p) => p.type === "project" && p.status === "active" && p.focusId === mode)
   }, [paraItems, mode])
@@ -80,9 +80,8 @@ export function OperacionesDashboard() {
   const scopedProjectIds = useMemo(() => new Set(scopedProjects.map((p) => p.id)), [scopedProjects])
   const scopedTasks = useMemo(() => {
     if (mode === "general") {
-      // En General: todas las tareas que pertenezcan a proyectos visibles
-      // (cualquier status: next/waiting/someday/inbox/done)
-      return tasks.filter((t) => t.paraId && scopedProjectIds.has(t.paraId))
+      // En General: tareas de proyectos visibles, NO done (regla: lo completado no se ve aquí)
+      return tasks.filter((t) => t.paraId && scopedProjectIds.has(t.paraId) && t.status !== "done")
     }
     // En Foco: excluir someday + inbox para que solo se vea lo "vivo"
     return tasks.filter(

@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, Circle, Eye, EyeOff, Loader2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Circle, Eye, EyeOff, Loader2, Pause, Play } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { TaskList } from "@/features/tasks/components/task-list"
 import { TaskDetail } from "@/features/tasks/components/task-detail"
 import { useTaskStore } from "@/features/tasks/store/task-store"
@@ -52,6 +58,26 @@ export function ProjectDetail({ id }: { id: string }) {
     }
   }
 
+  async function setStatus(status: ParaStatus) {
+    if (!project || project.status === status) return
+    try {
+      await updateParaItem(project.id, { status })
+    } catch {
+      // store revierte y setea error
+    }
+  }
+
+  const STATUS_LABEL: Record<string, string> = {
+    active: "En progreso",
+    paused: "En pausa",
+    completed: "Completado",
+  }
+  const STATUS_COLOR: Record<string, string> = {
+    active: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
+    paused: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
+    completed: "border-green-500/40 text-green-400 bg-green-500/[0.06]",
+  }
+
   if (loading && !initialized) {
     return (
       <div className="p-6 text-sm text-muted-foreground">Cargando…</div>
@@ -98,17 +124,53 @@ export function ProjectDetail({ id }: { id: string }) {
           </button>
 
           <div className="flex-1 min-w-0">
-            <h1
-              className={cn(
-                "text-xl font-semibold leading-tight",
-                isDone && "line-through opacity-70"
-              )}
-            >
-              {project.name}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1
+                className={cn(
+                  "text-xl font-semibold leading-tight",
+                  isDone && "line-through opacity-70"
+                )}
+              >
+                {project.name}
+              </h1>
+
+              {/* Status badge clicable: el usuario cambia libremente desde aquí.
+                  Antes solo podia desde el menu ... de la card en /projects.
+                  Ahora también desde el detail directo. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "shrink-0 inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors hover:opacity-80",
+                      STATUS_COLOR[project.status] ?? "border-border/40 text-muted-foreground"
+                    )}
+                    title="Cambiar estado del proyecto"
+                  >
+                    {project.status === "active" && <Play className="h-3 w-3" />}
+                    {project.status === "paused" && <Pause className="h-3 w-3" />}
+                    {project.status === "completed" && <CheckCircle2 className="h-3 w-3" />}
+                    {STATUS_LABEL[project.status] ?? project.status}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-44">
+                  <DropdownMenuItem onClick={() => setStatus("active")}>
+                    <Play className="h-3.5 w-3.5 mr-2" /> En progreso
+                    {project.status === "active" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatus("paused")}>
+                    <Pause className="h-3.5 w-3.5 mr-2" /> En pausa
+                    {project.status === "paused" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatus("completed")}>
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Completado
+                    {project.status === "completed" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {total} tareas · {doneCount} hechas ({pct}%) · {nextCount} pendientes ahora
-              {isDone && " · proyecto completado"}
             </p>
             <div className="mt-2 h-1 max-w-md overflow-hidden rounded-full bg-muted">
               <div
