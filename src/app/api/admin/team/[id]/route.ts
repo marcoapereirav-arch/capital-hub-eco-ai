@@ -6,7 +6,7 @@ import { createClient } from "@supabase/supabase-js"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const ROLES = ["super_admin", "closer", "formador", "equipo"] as const
+const ROLES = ["super_admin", "marketing", "closer", "setter", "formador", "equipo"] as const
 
 const PatchSchema = z.object({
   role: z.enum(ROLES).optional(),

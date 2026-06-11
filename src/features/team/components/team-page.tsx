@@ -27,14 +27,18 @@ type Invitation = {
 
 const ROLE_OPTIONS = [
   { value: "super_admin", label: "Super Admin", desc: "Acceso total + invitar gente" },
-  { value: "closer", label: "Closer", desc: "CRM (contactos + pipeline), Calendario" },
+  { value: "marketing", label: "Marketing", desc: "Dashboards Ads + Instagram + Content Intel" },
+  { value: "closer", label: "Closer", desc: "CRM (contactos + pipeline), Calendario, Llamadas" },
+  { value: "setter", label: "Setter", desc: "Outreach IG + CRM (solo lectura)" },
   { value: "formador", label: "Formador", desc: "Su formación + alumnos de su producto" },
   { value: "equipo", label: "Equipo", desc: "Lectura básica" },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
   super_admin: "border-purple-500/40 text-purple-400",
+  marketing: "border-pink-500/40 text-pink-400",
   closer: "border-amber-500/40 text-amber-400",
+  setter: "border-orange-500/40 text-orange-400",
   formador: "border-cyan-500/40 text-cyan-400",
   equipo: "border-border/40 text-muted-foreground",
 }
