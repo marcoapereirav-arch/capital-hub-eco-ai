@@ -12,6 +12,8 @@ function getAdminClient() {
   )
 }
 
+// CORS lo maneja src/middleware.ts globalmente. No hace falta OPTIONS aquí.
+
 const ValidateSchema = z.object({
   token: z.string().min(32).max(128),
 })
