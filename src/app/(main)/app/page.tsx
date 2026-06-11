@@ -20,8 +20,9 @@ export default async function AppEmbedPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const appBaseUrl =
-    process.env.NEXT_PUBLIC_APP_ALUMNO_URL ?? "https://app.capitalhubapp.com"
+  // Hardcoded a la URL pública de la App para evitar que un env var antiguo
+  // apuntando a un preview Vercel pase delante.
+  const appBaseUrl = "https://app.capitalhubapp.com"
 
   // Genera magic-link admin para auto-login en la App
   const { createClient: createAdminClient } = await import("@supabase/supabase-js")
