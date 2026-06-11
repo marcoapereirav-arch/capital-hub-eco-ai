@@ -38,8 +38,19 @@ export default async function AppEmbedPage() {
     },
   })
 
-  // Si falla generar magic-link, fallback a URL directa (forzara login manual)
-  const embedUrl = linkData?.properties?.action_link ?? `${appBaseUrl}/training/routes`
+  // El SDK puede ignorar redirectTo y usar el Site URL del proyecto Supabase
+  // (que es el OS). Por eso reescribimos manualmente el query param redirect_to
+  // del action_link para forzar que el verify de Supabase termine en la App.
+  let embedUrl = linkData?.properties?.action_link ?? `${appBaseUrl}/training/routes`
+  if (linkData?.properties?.action_link) {
+    try {
+      const u = new URL(linkData.properties.action_link)
+      u.searchParams.set("redirect_to", `${appBaseUrl}/training/routes`)
+      embedUrl = u.toString()
+    } catch {
+      // si no se puede parsear, dejamos el action_link original
+    }
+  }
 
   if (error) {
     console.error("[app-embed] generateLink error:", error)
