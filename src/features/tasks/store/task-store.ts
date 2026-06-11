@@ -61,7 +61,10 @@ type TaskStore = {
 }
 
 const defaultFilters: TaskFilters = {
-  status: "all",
+  // Default: ocultar tareas done. El usuario las ve solo si cambia el filtro
+  // expreso a "done" o "all". Antes era "all" y veia las tachadas, confundiendo
+  // claridad. Si quieres ver done, cambia el dropdown.
+  status: "next",
   assignee: "all",
   priority: "all",
   paraId: null,

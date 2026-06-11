@@ -19,7 +19,12 @@ const TYPE_ICONS: Record<string, { icon: typeof Bell; color: string }> = {
   default: { icon: Info, color: "text-blue-400" },
 }
 
-export function NotificationsPanel() {
+/**
+ * Botón campana de notificaciones. NO es flotante — se integra en el
+ * ShellHeader (lado derecho) para no chocar con los "+ Nuevo" de las páginas.
+ * Mantiene estado interno + drawer.
+ */
+export function NotificationsBell() {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -49,12 +54,13 @@ export function NotificationsPanel() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-3 right-3 z-30 inline-flex items-center justify-center h-9 w-9 rounded-full border border-border/40 bg-background hover:bg-card transition-colors"
+        className="relative inline-flex items-center justify-center h-8 w-8 rounded-sm hover:bg-card text-muted-foreground hover:text-foreground transition-colors"
         title="Notificaciones"
+        aria-label="Notificaciones"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[9px] font-mono font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-red-500 text-white text-[9px] font-mono font-bold flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
