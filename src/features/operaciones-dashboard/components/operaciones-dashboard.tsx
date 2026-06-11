@@ -55,6 +55,14 @@ export function OperacionesDashboard() {
   // Modo: "general" (todo) o id de foco activo
   const [mode, setMode] = useState<string>("general")
 
+  // FILTRO de status de proyectos (toggle por el usuario):
+  // - abiertos (default): solo active
+  // - pausados: solo paused
+  // - finalizados: solo completed
+  // - todos: active + paused + completed
+  type ProjectStatusFilter = "abiertos" | "pausados" | "finalizados" | "todos"
+  const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatusFilter>("abiertos")
+
   // Cuando llegan focuses, seleccionar el primer activo como default
   useEffect(() => {
     if (focuses.length > 0 && mode === "general") {
@@ -65,17 +73,23 @@ export function OperacionesDashboard() {
   const activeFocus = mode === "general" ? null : focuses.find((f) => f.id === mode) ?? null
 
   // === SCOPE: qué proyectos/tasks entran en el dashboard ===
-  // Modo "general": proyectos active + paused (NO completed - regla del usuario:
-  //                 lo completado solo se ve en /projects > Completados).
-  //                 Tareas: las next/waiting/someday/inbox (NO done por la misma regla).
-  // Modo "foco":    solo proyectos active del foco + sus tareas vivas.
+  // El filtro de status aplica IGUAL en modo General y modo Foco.
+  // Default: solo abiertos (active). El usuario puede ver pausados/completados a demanda
+  // pulsando un botón. NO se ven completados/pausados sin clic explícito.
+  function matchProjectStatus(p: { status: string }): boolean {
+    switch (projectStatusFilter) {
+      case "abiertos": return p.status === "active"
+      case "pausados": return p.status === "paused"
+      case "finalizados": return p.status === "completed"
+      case "todos": return true
+    }
+  }
   const scopedProjects = useMemo(() => {
     if (mode === "general") {
-      // active + paused. Los completed solo se ven en su sección dedicada.
-      return paraItems.filter((p) => p.type === "project" && p.status !== "completed")
+      return paraItems.filter((p) => p.type === "project" && matchProjectStatus(p))
     }
-    return paraItems.filter((p) => p.type === "project" && p.status === "active" && p.focusId === mode)
-  }, [paraItems, mode])
+    return paraItems.filter((p) => p.type === "project" && matchProjectStatus(p) && p.focusId === mode)
+  }, [paraItems, mode, projectStatusFilter])
 
   const scopedProjectIds = useMemo(() => new Set(scopedProjects.map((p) => p.id)), [scopedProjects])
   const scopedTasks = useMemo(() => {
@@ -226,29 +240,48 @@ export function OperacionesDashboard() {
   return (
     <div className="h-full overflow-auto p-4 md:p-6">
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* ============ MODE SWITCHER ============ */}
-        <div className="flex items-center gap-1 rounded-md bg-muted/40 p-0.5 w-fit">
-          <button
-            onClick={() => setMode("general")}
-            className={cn(
-              "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-              mode === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <LayoutGrid className="h-3 w-3" /> General
-          </button>
-          {focuses.filter((f) => f.active).map((f) => (
+        {/* ============ MODE SWITCHER + FILTRO STATUS PROYECTOS ============ */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* General / Focos */}
+          <div className="flex items-center gap-1 rounded-md bg-muted/40 p-0.5 w-fit">
             <button
-              key={f.id}
-              onClick={() => setMode(f.id)}
+              onClick={() => setMode("general")}
               className={cn(
                 "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                mode === f.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                mode === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Flag className="h-3 w-3" /> {f.name}
+              <LayoutGrid className="h-3 w-3" /> General
             </button>
-          ))}
+            {focuses.filter((f) => f.active).map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setMode(f.id)}
+                className={cn(
+                  "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                  mode === f.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Flag className="h-3 w-3" /> {f.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Filtro de status proyectos. Default: abiertos. */}
+          <div className="flex items-center gap-1 rounded-md bg-muted/40 p-0.5 w-fit ml-auto">
+            {(["abiertos", "pausados", "finalizados", "todos"] as const).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setProjectStatusFilter(opt)}
+                className={cn(
+                  "rounded px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition-colors",
+                  projectStatusFilter === opt ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ============ HERO ============ */}
