@@ -95,10 +95,12 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
-        <Link
-          href="/app"
+        <a
+          href="https://app.capitalhubapp.com"
+          target="_blank"
+          rel="noopener noreferrer"
           className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-md border border-border/40 px-2.5 py-2 text-xs hover:bg-card transition-colors group"
-          title="Abre la App de alumno embebida dentro del OS"
+          title="Abre la App en una pestaña nueva (misma sesion)"
         >
           <span className="flex items-center gap-2 min-w-0">
             <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
@@ -106,7 +108,8 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
               Ir a la App
             </span>
           </span>
-        </Link>
+          <span className="text-[9px] font-mono text-muted-foreground/60 shrink-0">↗</span>
+        </a>
         <UserMenu email={userEmail} name={userName} role={userRole} />
       </SidebarFooter>
 

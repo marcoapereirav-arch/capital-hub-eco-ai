@@ -15,7 +15,6 @@ import {
   Shield,
   Mail,
   Zap,
-  GraduationCap,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -52,7 +51,6 @@ export const navSections: NavSection[] = [
   {
     label: "Producto",
     items: [
-      { title: "Contenido", href: "/contenido", icon: GraduationCap },
       { title: "Integraciones", href: "/integrations", icon: Link2 },
       { title: "Misión", href: "/mision", icon: Rocket },
     ],
