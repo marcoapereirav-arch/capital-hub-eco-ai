@@ -237,7 +237,7 @@ export async function GET() {
         "Envía email a Marco",
       ],
       relatedTables: ["email_logs", "meta_events_log"],
-      status: lastFailedEmail ? "live" : "live",
+      status: "live",
       statusReason: lastFailedEmail
         ? "Último error detectado " + (lastFailedEmail.sent_at ? new Date(lastFailedEmail.sent_at).toLocaleDateString("es-ES") : "?")
         : "Sin errores recientes (sano)",
