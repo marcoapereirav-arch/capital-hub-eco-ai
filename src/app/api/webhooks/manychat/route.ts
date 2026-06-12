@@ -150,6 +150,38 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Auto-crear contacto en CRM si no existe ya por manychat_subscriber_id
+    // Stage por defecto: nuevo_seguidor (entra al pipeline en la primera columna).
+    // Closer/setter lo moveran a conversacion / llamada_agendada / etc.
+    const mcId = String(subscriber.id)
+    const igUsername = subscriber.ig_username ?? null
+    const fullName =
+      subscriber.name ??
+      [subscriber.first_name, subscriber.last_name].filter(Boolean).join(' ') ??
+      null
+
+    if (mcId && fullName) {
+      const { data: existing } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('manychat_subscriber_id', mcId)
+        .maybeSingle()
+
+      if (!existing) {
+        const { error: contactError } = await supabase.from('contacts').insert({
+          full_name: fullName,
+          manychat_subscriber_id: mcId,
+          instagram_username: igUsername,
+          stage: 'nuevo_seguidor',
+          origin: 'manychat',
+        })
+        if (contactError) {
+          console.error('[manychat-webhook] contact insert failed:', contactError)
+          // No bloqueamos el webhook por este error
+        }
+      }
+    }
   }
 
   return Response.json({ ok: true })
