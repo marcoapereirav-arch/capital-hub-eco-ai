@@ -70,17 +70,22 @@ export function AdsInsights() {
     return (
       <ErrorBanner
         title="Meta Ads no configurado"
-        message="Falta META_AD_ACCOUNT_ID o META_MARKETING_API_TOKEN en el .env del OS."
+        message="En construcción — pendiente conectar Marketing API."
       />
     )
   }
 
   if (response?.error) {
+    // Errores típicos de Meta cuando el token no tiene permiso correcto
+    const isPermissionError = /permission|ads_read|access_token|capability/i.test(response.error)
     return (
       <ErrorBanner
-        title="Meta API devolvió un error"
-        message={response.error}
-        hint="Asegurate de que META_MARKETING_API_TOKEN tiene permiso ads_read y el ad account es correcto."
+        title={isPermissionError ? "Token Meta sin permiso ads_read" : "Meta API no disponible"}
+        message={
+          isPermissionError
+            ? "El token actual (CAPI) no tiene acceso a Marketing API. Se necesita un token específico con scope ads_read para ver Insights de Ads."
+            : "No se pudo conectar con Meta. Reintentando en próximos minutos."
+        }
       />
     )
   }
