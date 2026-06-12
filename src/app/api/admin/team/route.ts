@@ -7,7 +7,7 @@ import { sendTeamInvite } from "@/lib/email/senders"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const ROLES = ["super_admin", "marketing", "closer", "setter", "formador", "equipo"] as const
+const ROLES = ["super_admin", "marketing", "closer", "setter", "formador"] as const
 
 const InviteSchema = z.object({
   email: z.string().email().max(255),

@@ -25,13 +25,14 @@ type Invitation = {
   created_at: string
 }
 
+// Permisos PENDIENTES de definir por el usuario. Solo super_admin tiene acceso
+// total confirmado. Los demás permisos vacíos hasta que se defina qué ve cada uno.
 const ROLE_OPTIONS = [
-  { value: "super_admin", label: "Super Admin", desc: "Acceso total + invitar gente" },
-  { value: "marketing", label: "Marketing", desc: "Dashboards Ads + Instagram + Content Intel" },
-  { value: "closer", label: "Closer", desc: "CRM (contactos + pipeline), Calendario, Llamadas" },
-  { value: "setter", label: "Setter", desc: "Outreach IG + CRM (solo lectura)" },
-  { value: "formador", label: "Formador", desc: "Su formación + alumnos de su producto" },
-  { value: "equipo", label: "Equipo", desc: "Lectura básica" },
+  { value: "super_admin", label: "Super Admin", desc: "Acceso total a todo el OS" },
+  { value: "marketing", label: "Marketing", desc: "Permisos pendientes de definir" },
+  { value: "closer", label: "Closer", desc: "Permisos pendientes de definir" },
+  { value: "setter", label: "Setter", desc: "Permisos pendientes de definir" },
+  { value: "formador", label: "Formador", desc: "Permisos pendientes de definir" },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
@@ -40,7 +41,6 @@ const ROLE_COLORS: Record<string, string> = {
   closer: "border-amber-500/40 text-amber-400",
   setter: "border-orange-500/40 text-orange-400",
   formador: "border-cyan-500/40 text-cyan-400",
-  equipo: "border-border/40 text-muted-foreground",
 }
 
 export function TeamPage() {
