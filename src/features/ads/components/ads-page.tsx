@@ -6,6 +6,7 @@ import { ShellHeader } from "@/features/shell/components/shell-header"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
+import { AdsInsights } from "./ads-insights"
 
 type AdsTab = "tracker" | "dashboard" | "atribucion" | "config"
 
@@ -91,12 +92,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
             hasTestEventCode={hasTestEventCode}
           />
         )}
-        {tab === "dashboard" && (
-          <ComingSoon
-            title="Dashboard de métricas Meta Ads"
-            desc="Próximamente: spend hoy/7d/30d, ROAS, CTR, CPC, CPM por campaña/adset/ad, top 5 ganadoras y perdedoras, gráfica de tendencia diaria. Datos de Meta Ads Insights API con refresh cada 1h."
-          />
-        )}
+        {tab === "dashboard" && <AdsInsights />}
         {tab === "atribucion" && (
           <ComingSoon
             title="Atribución del funnel"
