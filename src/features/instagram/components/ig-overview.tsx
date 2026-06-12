@@ -52,13 +52,28 @@ function PostThumb({ post }: { post: IgPost }) {
       rel="noreferrer"
       className="group relative block overflow-hidden border border-border bg-muted/30"
     >
-      <div className="aspect-square w-full bg-muted/50">
+      <div className="aspect-square w-full bg-gradient-to-br from-muted/40 to-muted/10">
         {post.thumbnail_url ? (
+          // Las URLs de Instagram CDN expiran tras unos días. onError detecta
+          // el fallo de carga y reemplaza por un placeholder con el icono Film.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={post.thumbnail_url}
             alt={post.caption?.slice(0, 80) ?? ''}
             className="h-full w-full object-cover transition-opacity group-hover:opacity-70"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget
+              target.style.display = 'none'
+              const parent = target.parentElement
+              if (parent && !parent.querySelector('[data-fallback]')) {
+                const fb = document.createElement('div')
+                fb.setAttribute('data-fallback', 'true')
+                fb.className = 'flex h-full w-full items-center justify-center text-muted-foreground bg-card/40'
+                fb.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 opacity-50"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m17 8-5 5-5-5"/></svg>'
+                parent.appendChild(fb)
+              }
+            }}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -201,6 +216,19 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
                       src={overview.topReel.thumbnail_url}
                       alt=""
                       className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const t = e.currentTarget
+                        t.style.display = 'none'
+                        const parent = t.parentElement
+                        if (parent && !parent.querySelector('[data-fallback]')) {
+                          const fb = document.createElement('div')
+                          fb.setAttribute('data-fallback', 'true')
+                          fb.className = 'flex h-full w-full items-center justify-center text-muted-foreground bg-card/40 text-[10px] font-mono uppercase tracking-wider'
+                          fb.innerText = 'Thumbnail expirado'
+                          parent.appendChild(fb)
+                        }
+                      }}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">

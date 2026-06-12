@@ -130,12 +130,13 @@ export function MainDashboard() {
   }, [range])
 
   const kpis = useMemo(() => {
-    const revenue = invites.reduce((sum, inv) => {
-      // Cada invite emitido representa una venta cerrada en el período
-      // El revenue se mira en el contacto vinculado, pero como aproximación
-      // tomamos las invites x precio típico 2990€
-      return sum + (inv.accepted_at ? 2990 : 0)
-    }, 0)
+    // REVENUE REAL: suma de contacts.total_revenue del periodo (los contactos
+    // que efectivamente generaron ingreso). NO inventamos precio - si el campo
+    // total_revenue está null el contacto no aporta al total.
+    const revenue = contacts.reduce(
+      (sum, c) => sum + (c.total_revenue ?? 0),
+      0,
+    )
 
     const cashCollected = contacts.reduce(
       (sum, c) => sum + (c.total_cash_collected ?? 0),
@@ -275,12 +276,12 @@ export function MainDashboard() {
         />
       </section>
 
-      {/* Últimas ventas */}
+      {/* Invitaciones a la App (= ventas cerradas que provisionaron acceso) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            Últimas ventas · {topInvites.length}
+            Invitaciones App · {topInvites.length}
           </h2>
           <a
             href="/crm/contactos?stage=ganado"
@@ -292,7 +293,7 @@ export function MainDashboard() {
         <div className="rounded-md border border-border bg-card/30">
           {topInvites.length === 0 ? (
             <div className="p-4 text-xs text-muted-foreground">
-              {loading ? "Cargando…" : "Sin ventas en este periodo."}
+              {loading ? "Cargando…" : "Sin invitaciones en este periodo."}
             </div>
           ) : (
             <div className="divide-y divide-border">
