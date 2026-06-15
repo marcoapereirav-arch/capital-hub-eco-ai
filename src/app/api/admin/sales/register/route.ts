@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     await admin
       .from("contacts")
       .update({
-        stage: "cliente",
+        stage: "alumno",
         products: mergedProducts,
         total_revenue: (existing?.total_revenue ?? 0) + data.revenue,
         total_cash_collected: (existing?.total_cash_collected ?? 0) + data.cash_collected,
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       await admin
         .from("contacts")
         .update({
-          stage: "cliente",
+          stage: "alumno",
           products: mergedProducts,
           total_revenue: (existing.total_revenue ?? 0) + data.revenue,
           total_cash_collected: (existing.total_cash_collected ?? 0) + data.cash_collected,
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
           email,
           full_name: data.full_name.trim(),
           phone: data.phone?.trim() ?? null,
-          stage: "cliente",
+          stage: "alumno",
           products: data.products,
           total_revenue: data.revenue,
           total_cash_collected: data.cash_collected,

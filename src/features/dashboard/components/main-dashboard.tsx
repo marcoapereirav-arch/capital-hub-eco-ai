@@ -77,31 +77,30 @@ const STAGE_LABELS: Record<string, string> = {
   nuevo_seguidor: "Nuevo seguidor",
   conversacion: "Conversación",
   agendado: "Agendado",
-  atendio: "Atendió llamada",
+  alumno: "Alumno",
   seguimiento: "Seguimiento",
-  cliente: "Cliente",
   no_show: "No show",
   perdido: "Perdido",
+  comento_no_follow: "Comentó · no follow",
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  nuevo_seguidor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  conversacion: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+  nuevo_seguidor: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+  conversacion: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   agendado: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  atendio: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  alumno: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   seguimiento: "bg-violet-500/15 text-violet-400 border-violet-500/30",
-  cliente: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   no_show: "bg-orange-500/15 text-orange-400 border-orange-500/30",
   perdido: "bg-red-500/15 text-red-400 border-red-500/30",
+  comento_no_follow: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30",
 }
 
-// Embudo lineal (camino "feliz"): entrada → caliente → llamada → cliente
+// Embudo lineal (camino "feliz"): nuevo seguidor → conversacion → agendado → alumno
 const FUNNEL_ORDER: string[] = [
   "nuevo_seguidor",
   "conversacion",
   "agendado",
-  "atendio",
-  "cliente",
+  "alumno",
 ]
 
 // Estados terminales / salidas del embudo (mostrados aparte como ramas)
@@ -109,6 +108,7 @@ const FUNNEL_BRANCHES: string[] = [
   "seguimiento",
   "no_show",
   "perdido",
+  "comento_no_follow",
 ]
 
 // Colores del pie chart (origin)
@@ -293,13 +293,12 @@ export function MainDashboard() {
     const prevVentas = previousInvites.length
     const ventasDelta = ventas - prevVentas
 
-    // Conversión: de los que ATENDIERON la llamada, ¿cuántos se convirtieron en CLIENTE?
-    // (incluye "cliente" porque ya pasaron por atendio antes de comprar)
-    const atendieron = contacts.filter(
-      (c) => c.stage === "atendio" || c.stage === "cliente",
+    // Conversión: de los que llegaron a AGENDADO, ¿cuántos se convirtieron en ALUMNO?
+    const agendadosOAlumno = contacts.filter(
+      (c) => c.stage === "agendado" || c.stage === "alumno",
     ).length
-    const clientes = contacts.filter((c) => c.stage === "cliente").length
-    const conversion = atendieron > 0 ? Math.round((clientes / atendieron) * 100) : 0
+    const alumnos = contacts.filter((c) => c.stage === "alumno").length
+    const conversion = agendadosOAlumno > 0 ? Math.round((alumnos / agendadosOAlumno) * 100) : 0
 
     // KPIs secundarios
     const contactosNuevos = contacts.length
@@ -446,7 +445,7 @@ export function MainDashboard() {
           accent="amber"
         />
         <KpiPrincipal
-          label="Conversión atendio→cliente"
+          label="Conversión agendado→alumno"
           value={loading ? "…" : `${kpis.conversion}%`}
           icon={Target}
           accent="purple"
@@ -496,7 +495,7 @@ export function MainDashboard() {
               Pipeline CRM · todos los contactos
             </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Camino del lead: nuevo seguidor → conversacion → agendado → atendió llamada → cliente
+              Camino del lead: nuevo seguidor → conversación → agendado → alumno
             </p>
           </div>
         </div>
@@ -652,7 +651,7 @@ export function MainDashboard() {
             Invitaciones App · {invites.length}
           </h2>
           <a
-            href="/crm/contactos?stage=cliente"
+            href="/crm/contactos?stage=alumno"
             className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
           >
             Ver todas <ArrowUpRight className="h-3 w-3" />

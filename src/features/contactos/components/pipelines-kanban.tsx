@@ -18,14 +18,14 @@ type Contact = {
 type Stage = { value: string; label: string }
 
 const STAGE_COLORS: Record<string, string> = {
-  nuevo_seguidor: "border-border/40",
-  contactado: "border-blue-500/40",
+  nuevo_seguidor: "border-cyan-500/40",
+  conversacion: "border-blue-500/40",
   agendado: "border-amber-500/40",
-  atendio: "border-cyan-500/40",
+  alumno: "border-green-500/40",
   seguimiento: "border-violet-500/40",
-  cliente: "border-green-500/40",
   no_show: "border-orange-500/40",
   perdido: "border-red-500/40",
+  comento_no_follow: "border-zinc-500/40",
 }
 
 export function PipelinesKanban({

@@ -28,17 +28,18 @@ type ContactRow = {
   created_at: string
 }
 
-// Funnel real Capital Hub (en español)
-// Lead viene de IG → setter le escribe (= conversacion) → agenda → llamada → seguimiento o cliente
+// Funnel real Capital Hub (en español) — DEFINICION CANONICA, no inventar valores nuevos.
+// Camino feliz (4): nuevo_seguidor → conversacion → agendado → alumno
+// Salidas (4):     seguimiento · no_show · perdido · comento_no_follow
 const PIPELINE_STAGES = [
-  { value: "nuevo_seguidor", label: "Nuevo seguidor" },  // ManyChat detecta nuevo follower
-  { value: "conversacion", label: "Conversación" },      // Setter/ManyChat inicia DM
-  { value: "agendado", label: "Agendado" },              // Reservó llamada
-  { value: "atendio", label: "Atendió llamada" },        // Entró a la videollamada
-  { value: "seguimiento", label: "Seguimiento" },        // No cerró ahora pero hay potencial
-  { value: "cliente", label: "Cliente" },                // Compró
-  { value: "no_show", label: "No show" },                // No asistió a la llamada
-  { value: "perdido", label: "Perdido" },                // Descartado / no quiere comprar
+  { value: "nuevo_seguidor", label: "Nuevo seguidor" },          // ManyChat detecta nuevo follower
+  { value: "conversacion", label: "Conversación" },              // Setter/ManyChat inicia DM
+  { value: "agendado", label: "Agendado" },                      // Reservó llamada
+  { value: "alumno", label: "Alumno" },                          // Compró (widget Registrar venta dispara esto)
+  { value: "seguimiento", label: "Seguimiento" },                // No cerró ahora pero hay potencial
+  { value: "no_show", label: "No show" },                        // No asistió a la llamada
+  { value: "perdido", label: "Perdido" },                        // Descartado / no quiere comprar
+  { value: "comento_no_follow", label: "Comentó · no follow" },  // Comentó en reel pero no nos sigue
 ]
 
 export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
@@ -227,14 +228,14 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                   {stage && (
                     <span className={cn(
                       "shrink-0 text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border",
-                      stage.value === "cliente" && "border-green-500/40 text-green-400",
+                      stage.value === "alumno" && "border-green-500/40 text-green-400",
                       stage.value === "perdido" && "border-red-500/40 text-red-400",
                       stage.value === "no_show" && "border-red-500/40 text-red-400",
-                      stage.value === "atendio" && "border-cyan-500/40 text-cyan-400",
+                      stage.value === "comento_no_follow" && "border-zinc-500/40 text-muted-foreground",
                       stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
                       stage.value === "agendado" && "border-amber-500/40 text-amber-400",
                       stage.value === "conversacion" && "border-blue-500/40 text-blue-400",
-                      stage.value === "nuevo_seguidor" && "border-border/40 text-muted-foreground"
+                      stage.value === "nuevo_seguidor" && "border-cyan-500/40 text-cyan-400"
                     )}>
                       {stage.label}
                     </span>

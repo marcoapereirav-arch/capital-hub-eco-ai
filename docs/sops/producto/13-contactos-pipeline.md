@@ -19,30 +19,36 @@ Las 2 vistas comparten data pero tienen URLs propias y propósito distinto.
 - `https://ecoai.capitalhubapp.com/crm/pipeline` (kanban)
 - `https://ecoai.capitalhubapp.com/contactos` → redirige a `/crm/contactos` (legacy compat)
 
-## Funnel en español (stages reales)
+## Funnel en español (stages CANONICOS — NO inventar nuevos)
+
+**Decision de Marco 2026-06-15:** la llamada NO es stage (es evento).
+El pipeline tiene 4 stages en camino feliz y 4 salidas. Total 8 stages.
 
 ```
-nuevo_seguidor → contactado → agendado → atendio → cliente
-                                            ↓
-                                       seguimiento ⇄ cliente
-                                            ↓
-                                         perdido
-                                            
-                             no_show ← agendado (si no asiste)
+Camino feliz:
+  nuevo_seguidor → conversacion → agendado → alumno
+
+Salidas (estados terminales o ramas):
+  seguimiento · no_show · perdido · comento_no_follow
 ```
 
 | value (BD) | label UI | Cuándo aplica |
 |------------|----------|---------------|
 | `nuevo_seguidor` | Nuevo seguidor | ManyChat detecta nuevo follower en IG |
-| `contactado` | Contactado | Setter junior envió DM |
+| `conversacion` | Conversación | Setter / ManyChat inicia DM (= contactado) |
 | `agendado` | Agendado | Lead reservó llamada en /agenda |
-| `atendio` | Atendió llamada | Entró a la videollamada (automático cuando entra a la hora) |
-| `seguimiento` | Seguimiento | Post-llamada, no cerró pero hay potencial |
-| `cliente` | Cliente | Compró (widget Registrar venta dispara esto) |
-| `no_show` | No show | No asistió a la llamada |
+| `alumno` | Alumno | Compró (widget Registrar venta dispara esto) |
+| `seguimiento` | Seguimiento | Tras llamada o conversacion sin cierre — hay potencial |
+| `no_show` | No show | Tenía llamada agendada y no asistió |
 | `perdido` | Perdido | Descartado / no quiere comprar |
+| `comento_no_follow` | Comentó · no follow | Comentó en un reel pero no nos sigue ni respondió |
 
 Default al crear contacto: `nuevo_seguidor`.
+
+**Stages eliminados / históricos** (no usar):
+- ~~`contactado`~~ → renombrado a `conversacion` el 2026-06-15
+- ~~`atendio` (Atendió llamada)~~ → eliminado el 2026-06-15. La asistencia a la llamada es un EVENTO que se trackea en `contact_journey_events`, no un stage. Si atendió y compró → `alumno`. Si atendió y no compró → `seguimiento` o `perdido`.
+- ~~`cliente`~~ → renombrado a `alumno` el 2026-06-15.
 
 ## Reglas de UX del CRM
 - **No hay ShellHeader en /crm/contactos ni /crm/pipeline** — el layout del CRM ya pinta el título "CRM" + las 2 sub-pestañas

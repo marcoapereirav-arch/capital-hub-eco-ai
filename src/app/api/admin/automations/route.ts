@@ -169,7 +169,7 @@ export async function GET() {
       description: "Cuando el closer registra una venta, el sistema crea token único + envía email al alumno con magic link para activar su cuenta en la App.",
       trigger: "POST /api/admin/sales/register (widget flotante Registrar venta)",
       actions: [
-        "Upsert contacto con stage='cliente' + sumar revenue + products[]",
+        "Upsert contacto con stage='alumno' + sumar revenue + products[]",
         "Crear contact_journey_event tipo 'sale'",
         "Crear student_invites con token único, expira 7 días",
         "Email template welcome_alumno_ht al alumno con link /accept-invite/<token>",
