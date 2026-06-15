@@ -1,51 +1,60 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Sparkles, Mail, MessageCircle, Calendar, Trophy, ArrowUpRight } from "lucide-react"
+import { Sparkles, ArrowUpRight } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
+import { cn } from "@/lib/utils"
+import type { PeriodRange } from "@/components/ui/period-filter"
 
-type Metrics = {
-  totalOptins: number
-  optins7d: number
-  conConversacion: number
-  conLlamadaAgendada: number
-  conAlumno: number
-}
+type ContactRow = { id: string; stage: string | null; created_at: string }
 
-/** Seccion del Dashboard que mide el funnel test personalidad end-to-end. */
-export function FunnelTestPersonalidadSection() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null)
+const FUNNEL_STAGES = [
+  { key: "lead", label: "Lead", color: "#06b6d4", kind: "active" },
+  { key: "agendado", label: "Agendado", color: "#f59e0b", kind: "active" },
+  { key: "alumno", label: "Alumno", color: "#10b981", kind: "won" },
+] as const
+
+const BRANCH_STAGES = [
+  { key: "seguimiento", label: "Seguimiento", color: "#8b5cf6" },
+  { key: "no_show", label: "No show", color: "#f97316" },
+  { key: "perdido", label: "Perdido", color: "#ef4444" },
+] as const
+
+/**
+ * Seccion del Dashboard que muestra el EMBUDO REAL de los leads que entraron
+ * por la landing /test-personalidad. Sin KPIs inventados — solo el embudo del
+ * pipeline canonico (6 stages).
+ *
+ * Respeta el PeriodFilter global del Dashboard (range prop).
+ */
+export function FunnelTestPersonalidadSection({ range }: { range: PeriodRange | null }) {
+  const [contacts, setContacts] = useState<ContactRow[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!range) return
     ;(async () => {
+      setLoading(true)
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       )
-
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-
-      const [{ data: totalContacts }, { data: recentContacts }] = await Promise.all([
-        supabase.from("contacts").select("id, stage").eq("origin", "landing_test_personalidad"),
-        supabase
-          .from("contacts")
-          .select("id")
-          .eq("origin", "landing_test_personalidad")
-          .gte("created_at", sevenDaysAgo),
-      ])
-
-      const all = (totalContacts ?? []) as Array<{ stage: string | null }>
-      setMetrics({
-        totalOptins: all.length,
-        optins7d: (recentContacts ?? []).length,
-        conConversacion: all.filter((c) => c.stage === "conversacion").length,
-        conLlamadaAgendada: all.filter((c) => c.stage === "agendado").length,
-        conAlumno: all.filter((c) => c.stage === "alumno").length,
-      })
+      const { data } = await supabase
+        .from("contacts")
+        .select("id, stage, created_at")
+        .eq("origin", "landing_test_personalidad")
+        .gte("created_at", range.from.toISOString())
+        .lte("created_at", range.to.toISOString())
+      setContacts((data ?? []) as ContactRow[])
       setLoading(false)
     })()
-  }, [])
+  }, [range])
+
+  function countOf(stage: string) {
+    return contacts.filter((c) => c.stage === stage).length
+  }
+
+  const max = Math.max(...FUNNEL_STAGES.map((s) => countOf(s.key)), 1)
 
   return (
     <section className="bg-card/30 border border-violet-500/30 rounded-md p-4">
@@ -56,7 +65,7 @@ export function FunnelTestPersonalidadSection() {
             Funnel Test Personalidad
           </h2>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Leads que entraron por la landing /test-personalidad — opt-in nombre + email
+            Embudo de los leads que entraron por la landing en el periodo seleccionado
           </p>
         </div>
         <a
@@ -69,45 +78,67 @@ export function FunnelTestPersonalidadSection() {
         </a>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <FunnelKpi label="Opt-ins totales" value={metrics?.totalOptins ?? 0} icon={Mail} loading={loading} accent="violet" />
-        <FunnelKpi label="Opt-ins últimos 7d" value={metrics?.optins7d ?? 0} icon={Mail} loading={loading} accent="violet" />
-        <FunnelKpi label="En Conversación" value={metrics?.conConversacion ?? 0} icon={MessageCircle} loading={loading} accent="blue" />
-        <FunnelKpi label="Agendados" value={metrics?.conLlamadaAgendada ?? 0} icon={Calendar} loading={loading} accent="amber" />
-        <FunnelKpi label="Alumnos" value={metrics?.conAlumno ?? 0} icon={Trophy} loading={loading} accent="emerald" />
-      </div>
-    </section>
-  )
-}
+      {loading ? (
+        <div className="py-8 text-center text-xs text-muted-foreground">Cargando…</div>
+      ) : (
+        <>
+          {/* Embudo lineal */}
+          <div className="space-y-2">
+            {FUNNEL_STAGES.map((s, i) => {
+              const count = countOf(s.key)
+              const widthPct = Math.max(8, (count / max) * 100)
+              const prevCount = i > 0 ? countOf(FUNNEL_STAGES[i - 1].key) : count
+              const conv = prevCount > 0 && i > 0 ? Math.round((count / prevCount) * 100) : null
+              return (
+                <div key={s.key}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">{s.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono tabular-nums text-foreground">{count}</span>
+                      {conv !== null && (
+                        <span className="text-[10px] font-mono text-muted-foreground">({conv}%)</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="h-7 bg-secondary/30 rounded-sm overflow-hidden">
+                    <div
+                      className="h-full transition-all rounded-sm border"
+                      style={{
+                        width: `${widthPct}%`,
+                        backgroundColor: `${s.color}22`,
+                        borderColor: `${s.color}55`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
-function FunnelKpi({
-  label,
-  value,
-  icon: Icon,
-  loading,
-  accent,
-}: {
-  label: string
-  value: number
-  icon: typeof Mail
-  loading: boolean
-  accent: "violet" | "blue" | "amber" | "emerald"
-}) {
-  const colors = {
-    violet: "text-violet-400",
-    blue: "text-blue-400",
-    amber: "text-amber-400",
-    emerald: "text-emerald-400",
-  }
-  return (
-    <div className="rounded-sm border border-border bg-background/40 p-3">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</span>
-        <Icon className={`h-3 w-3 ${colors[accent]}`} />
-      </div>
-      <div className={`text-2xl font-semibold tabular-nums ${colors[accent]}`}>
-        {loading ? "…" : value}
-      </div>
-    </div>
+          {/* Salidas */}
+          <div className="mt-4 pt-3 border-t border-border">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+              Salidas del embudo
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {BRANCH_STAGES.map((b) => (
+                <div
+                  key={b.key}
+                  className={cn("rounded-sm border px-3 py-2")}
+                  style={{
+                    backgroundColor: `${b.color}1a`,
+                    color: b.color,
+                    borderColor: `${b.color}44`,
+                  }}
+                >
+                  <div className="text-[10px] font-mono uppercase tracking-wider opacity-80">{b.label}</div>
+                  <div className="text-lg font-semibold tabular-nums mt-0.5">{countOf(b.key)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </section>
   )
 }

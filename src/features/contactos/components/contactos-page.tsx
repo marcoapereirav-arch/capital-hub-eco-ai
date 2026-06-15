@@ -223,10 +223,8 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                       stage.value === "alumno" && "border-green-500/40 text-green-400",
                       stage.value === "perdido" && "border-red-500/40 text-red-400",
                       stage.value === "no_show" && "border-red-500/40 text-red-400",
-                      stage.value === "comento_no_follow" && "border-zinc-500/40 text-muted-foreground",
                       stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
                       stage.value === "agendado" && "border-amber-500/40 text-amber-400",
-                      stage.value === "conversacion" && "border-blue-500/40 text-blue-400",
                       stage.value === "lead" && "border-cyan-500/40 text-cyan-400"
                     )}>
                       {stage.label}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Check, ExternalLink, Globe, FileDown } from "lucide-react"
+import { Copy, Check, ExternalLink, Globe, FileDown, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { WebWithSteps } from "../types/web"
@@ -26,10 +26,32 @@ const STATUS_STYLES: Record<string, string> = {
 
 export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [copiedStepId, setCopiedStepId] = useState<string | null>(null)
+  const [status, setStatus] = useState(web.status)
+  const [saving, setSaving] = useState(false)
   const Icon = TYPE_ICONS[web.type]
 
   const entryStep = web.steps.find((s) => s.isEntry) ?? web.steps[0]
   const baseUrl = `${publicBaseUrl}/${web.slug}`
+
+  async function togglePublished() {
+    const next = status === "published" ? "draft" : "published"
+    setSaving(true)
+    const previous = status
+    setStatus(next) // optimista
+    try {
+      const res = await fetch(`/api/admin/webs/${web.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      })
+      if (!res.ok) throw new Error("PATCH failed")
+    } catch {
+      setStatus(previous) // rollback
+      alert("No se pudo cambiar el estado. Reintenta.")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function urlForStep(stepSlug: string | undefined): string {
     if (!stepSlug || stepSlug === "landing") return baseUrl
@@ -58,14 +80,22 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
             <h3 className="truncate font-heading text-sm font-semibold text-foreground">
               {web.name}
             </h3>
-            <span
+            <button
+              onClick={togglePublished}
+              disabled={saving}
               className={cn(
-                "shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide",
-                STATUS_STYLES[web.status]
+                "shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide transition-colors hover:opacity-80 disabled:opacity-50",
+                STATUS_STYLES[status]
               )}
+              title={
+                status === "published"
+                  ? "Click para pasar a Draft (link público dejará de funcionar)"
+                  : "Click para Publicar (el link será accesible públicamente)"
+              }
             >
-              {web.status}
-            </span>
+              {saving && <Loader2 className="inline h-2.5 w-2.5 animate-spin mr-1" />}
+              {status === "published" ? "Published" : status === "draft" ? "Draft" : status}
+            </button>
           </div>
           <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">
             /{web.slug}

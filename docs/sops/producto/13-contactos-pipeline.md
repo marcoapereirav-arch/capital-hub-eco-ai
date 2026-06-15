@@ -27,22 +27,24 @@ Las 2 vistas comparten data pero tienen URLs propias y propósito distinto.
 
 ```
 Camino feliz:
-  lead → conversacion → agendado → alumno
+  lead → agendado → alumno
 
 Salidas (estados terminales o ramas):
-  seguimiento · no_show · perdido · comento_no_follow
+  seguimiento · no_show · perdido
 ```
 
 | value (BD) | label UI | Cuándo aplica |
 |------------|----------|---------------|
-| `lead` | Lead | Dejó sus datos (opt-in landing, comentario+keyword auto, story reply, DM keyword) |
-| `conversacion` | Conversación | Setter responde / ManyChat detecta respuesta del lead al bot |
+| `lead` | Lead | Dejó sus datos (opt-in landing /test-personalidad, futuras integraciones ManyChat) |
 | `agendado` | Agendado | Lead reservó llamada en /agenda |
 | `alumno` | Alumno | Compró (widget Registrar venta dispara esto) |
-| `seguimiento` | Seguimiento | Tras llamada o conversacion sin cierre — hay potencial |
+| `seguimiento` | Seguimiento | Tras llamada sin cierre — hay potencial |
 | `no_show` | No show | Tenía llamada agendada y no asistió |
 | `perdido` | Perdido | Descartado / no quiere comprar |
-| `comento_no_follow` | Comentó · no follow | Comentó en un reel pero no nos sigue ni respondió |
+
+**Decisión Marco 2026-06-15 (revisión):** se eliminan `conversacion` y `comento_no_follow` porque:
+- `conversacion` no se podía mover automáticamente (el setter habla en IG nativo, invisible)
+- `comento_no_follow` no aporta al funnel real, queda como tag si hace falta
 
 Default al crear contacto: `lead`.
 

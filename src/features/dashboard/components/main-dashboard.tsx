@@ -649,8 +649,8 @@ export function MainDashboard() {
       </section>
 
 
-      {/* FUNNEL TEST PERSONALIDAD - metricas en vivo */}
-      <FunnelTestPersonalidadSection />
+      {/* FUNNEL TEST PERSONALIDAD - embudo real (6 stages canonicos) */}
+      <FunnelTestPersonalidadSection range={range} />
 
       {/* INVITACIONES con botón eliminar */}
       <section className="space-y-3">
