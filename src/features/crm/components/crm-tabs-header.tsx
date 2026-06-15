@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, Layers } from "lucide-react"
+import { Users, Layers, Tag as TagIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 
@@ -15,6 +15,7 @@ export function CrmTabsHeader() {
   const pathname = usePathname()
   const inContactos = pathname.startsWith("/crm/contactos")
   const inPipeline = pathname.startsWith("/crm/pipeline")
+  const inTags = pathname.startsWith("/crm/tags")
 
   return (
     <>
@@ -23,6 +24,7 @@ export function CrmTabsHeader() {
         <div className="px-4 md:px-6 py-2 flex items-center gap-1">
           <TabLink href="/crm/contactos" active={inContactos} icon={Users} label="Contactos" />
           <TabLink href="/crm/pipeline" active={inPipeline} icon={Layers} label="Pipeline" />
+          <TabLink href="/crm/tags" active={inTags} icon={TagIcon} label="Tags" />
         </div>
       </div>
     </>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { X, Mail, Phone, Calendar, Euro, Tag, MessageSquare, Save, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ContactTagsPanel } from "@/features/tags/components/contact-tags-panel"
 
 type ContactDetail = {
   id: string
@@ -160,6 +161,9 @@ export function ContactDrawer({
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
+
+            {/* Tags */}
+            <ContactTagsPanel contactId={contact.id} />
 
             {/* Tabs */}
             <div className="flex items-center gap-1 border-b border-border px-4">
