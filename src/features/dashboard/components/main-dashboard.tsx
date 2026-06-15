@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useEffect, useMemo, useState } from "react"
 import {
   DollarSign,
@@ -20,6 +21,8 @@ import {
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { createBrowserClient } from "@supabase/ssr"
 import { cn } from "@/lib/utils"
+import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
+import { PipelineSelector } from "@/features/pipelines/components/pipeline-selector"
 import {
   LineChart,
   Line,
@@ -70,46 +73,9 @@ type CalendarBookingRow = {
 // Constantes
 // =============================================================================
 
-// SOURCE OF TRUTH: estos stages deben coincidir EXACTAMENTE con los del CRM
-// (src/features/contactos/components/contactos-page.tsx PIPELINE_STAGES).
-// NO inventar valores nuevos aqui — si se cambia un stage, cambiarlo en ambos sitios.
-const STAGE_LABELS: Record<string, string> = {
-  nuevo_seguidor: "Nuevo seguidor",
-  conversacion: "Conversación",
-  agendado: "Agendado",
-  alumno: "Alumno",
-  seguimiento: "Seguimiento",
-  no_show: "No show",
-  perdido: "Perdido",
-  comento_no_follow: "Comentó · no follow",
-}
-
-const STAGE_COLORS: Record<string, string> = {
-  nuevo_seguidor: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-  conversacion: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  agendado: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  alumno: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-  seguimiento: "bg-violet-500/15 text-violet-400 border-violet-500/30",
-  no_show: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-  perdido: "bg-red-500/15 text-red-400 border-red-500/30",
-  comento_no_follow: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30",
-}
-
-// Embudo lineal (camino "feliz"): nuevo seguidor → conversacion → agendado → alumno
-const FUNNEL_ORDER: string[] = [
-  "nuevo_seguidor",
-  "conversacion",
-  "agendado",
-  "alumno",
-]
-
-// Estados terminales / salidas del embudo (mostrados aparte como ramas)
-const FUNNEL_BRANCHES: string[] = [
-  "seguimiento",
-  "no_show",
-  "perdido",
-  "comento_no_follow",
-]
+// Los stages YA NO se hardcodean aqui — se leen del pipeline activo
+// via usePipelines() + useActivePipelineId(). Cada Dashboard se adapta
+// dinamicamente al pipeline seleccionado por el usuario.
 
 // Colores del pie chart (origin)
 const ORIGIN_COLORS: Record<string, string> = {
@@ -165,6 +131,42 @@ export function MainDashboard() {
   const [loading, setLoading] = useState(true)
   const [deletingInvite, setDeletingInvite] = useState<string | null>(null)
   const [revenueTimeSeries, setRevenueTimeSeries] = useState<{ date: string; revenue: number }[]>([])
+
+  // Pipeline activo: el embudo se adapta a sus stages dinamicamente.
+  const { pipelines } = usePipelines()
+  const { activeId: activePipelineId, setActiveId: setActivePipelineId } = useActivePipelineId(pipelines)
+  const activePipeline = pipelines.find((p) => p.id === activePipelineId) ?? null
+
+  const STAGE_LABELS = useMemo(() => {
+    const out: Record<string, string> = {}
+    activePipeline?.stages.forEach((s) => { out[s.key] = s.name })
+    return out
+  }, [activePipeline])
+
+  const STAGE_HEX = useMemo(() => {
+    const out: Record<string, string> = {}
+    activePipeline?.stages.forEach((s) => { out[s.key] = s.color })
+    return out
+  }, [activePipeline])
+
+  function stageInlineStyle(stage: string): React.CSSProperties {
+    const c = STAGE_HEX[stage] ?? "#71717a"
+    return { backgroundColor: `${c}22`, color: c, borderColor: `${c}55` }
+  }
+
+  const FUNNEL_ORDER = useMemo(
+    () => activePipeline?.stages.filter((s) => s.kind === "active" || s.kind === "won").map((s) => s.key) ?? [],
+    [activePipeline],
+  )
+
+  const FUNNEL_BRANCHES = useMemo(
+    () => activePipeline?.stages.filter((s) => s.kind === "lost" || s.kind === "branch").map((s) => s.key) ?? [],
+    [activePipeline],
+  )
+
+  // Para el calculo de conversion: el primer stage tipo 'active' tras el primero, y el 'won'.
+  const wonStageKey = activePipeline?.stages.find((s) => s.kind === "won")?.key
+  const lastActiveBeforeWonKey = activePipeline?.stages.filter((s) => s.kind === "active").slice(-1)[0]?.key
 
   useEffect(() => {
     if (!range) return
@@ -293,12 +295,13 @@ export function MainDashboard() {
     const prevVentas = previousInvites.length
     const ventasDelta = ventas - prevVentas
 
-    // Conversión: de los que llegaron a AGENDADO, ¿cuántos se convirtieron en ALUMNO?
-    const agendadosOAlumno = contacts.filter(
-      (c) => c.stage === "agendado" || c.stage === "alumno",
+    // Conversión: del ultimo stage activo (ej. agendado) al stage won (ej. alumno).
+    // Se adapta dinamicamente al pipeline elegido.
+    const denom = contacts.filter(
+      (c) => c.stage === lastActiveBeforeWonKey || c.stage === wonStageKey,
     ).length
-    const alumnos = contacts.filter((c) => c.stage === "alumno").length
-    const conversion = agendadosOAlumno > 0 ? Math.round((alumnos / agendadosOAlumno) * 100) : 0
+    const won = contacts.filter((c) => c.stage === wonStageKey).length
+    const conversion = denom > 0 ? Math.round((won / denom) * 100) : 0
 
     // KPIs secundarios
     const contactosNuevos = contacts.length
@@ -327,7 +330,7 @@ export function MainDashboard() {
       showRate,
       ticketMedio,
     }
-  }, [contacts, previousContacts, invites, previousInvites, bookings])
+  }, [contacts, previousContacts, invites, previousInvites, bookings, lastActiveBeforeWonKey, wonStageKey])
 
   // =============================================================================
   // Embudo Pipeline (acumulado total)
@@ -337,19 +340,19 @@ export function MainDashboard() {
     for (const c of allContacts) {
       counts.set(c.stage, (counts.get(c.stage) ?? 0) + 1)
     }
-    const main = FUNNEL_ORDER.map((stage, i) => {
+    const main = FUNNEL_ORDER.map((stage: string, i: number) => {
       const count = counts.get(stage) ?? 0
       const prevCount = i > 0 ? counts.get(FUNNEL_ORDER[i - 1]) ?? 0 : count
       const conversionFromPrev = prevCount > 0 && i > 0 ? Math.round((count / prevCount) * 100) : null
       return { stage, label: STAGE_LABELS[stage] ?? stage, count, conversionFromPrev }
     })
-    const branches = FUNNEL_BRANCHES.map((stage) => ({
+    const branches = FUNNEL_BRANCHES.map((stage: string) => ({
       stage,
       label: STAGE_LABELS[stage] ?? stage,
       count: counts.get(stage) ?? 0,
     }))
     return { main, branches }
-  }, [allContacts])
+  }, [allContacts, FUNNEL_ORDER, FUNNEL_BRANCHES, STAGE_LABELS])
 
   // =============================================================================
   // Pie chart: origen contactos
@@ -412,13 +415,20 @@ export function MainDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
-      {/* Header con filtro periodo */}
+      {/* Header con filtro periodo + selector de pipeline */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-lg font-semibold flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" />
           Capital Hub · Estado del negocio
         </h1>
-        <PeriodFilter onChange={setRange} defaultPreset="30d" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <PipelineSelector
+            pipelines={pipelines}
+            activeId={activePipelineId}
+            onChange={setActivePipelineId}
+          />
+          <PeriodFilter onChange={setRange} defaultPreset="30d" />
+        </div>
       </div>
 
       {/* 4 KPI PRINCIPALES con comparación */}
@@ -445,7 +455,7 @@ export function MainDashboard() {
           accent="amber"
         />
         <KpiPrincipal
-          label="Conversión agendado→alumno"
+          label={`Conversión ${(STAGE_LABELS[lastActiveBeforeWonKey ?? ""] ?? "—").toLowerCase()}→${(STAGE_LABELS[wonStageKey ?? ""] ?? "—").toLowerCase()}`}
           value={loading ? "…" : `${kpis.conversion}%`}
           icon={Target}
           accent="purple"
@@ -492,10 +502,10 @@ export function MainDashboard() {
           <div>
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <Target className="h-4 w-4 text-cyan-400" />
-              Pipeline CRM · todos los contactos
+              {activePipeline?.name ?? "Pipeline"} · todos los contactos
             </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Camino del lead: nuevo seguidor → conversación → agendado → alumno
+              Camino del lead: {FUNNEL_ORDER.map((k) => STAGE_LABELS[k] ?? k).join(" → ") || "(sin stages)"}
             </p>
           </div>
         </div>
@@ -522,11 +532,8 @@ export function MainDashboard() {
                       </div>
                       <div className="h-8 bg-secondary/30 rounded-sm overflow-hidden">
                         <div
-                          className={cn(
-                            "h-full transition-all rounded-sm border",
-                            STAGE_COLORS[s.stage] ?? "bg-card",
-                          )}
-                          style={{ width: `${widthPct}%` }}
+                          className="h-full transition-all rounded-sm border"
+                          style={{ width: `${widthPct}%`, ...stageInlineStyle(s.stage) }}
                         />
                       </div>
                     </div>
@@ -544,10 +551,8 @@ export function MainDashboard() {
                 {funnelData.branches.map((b) => (
                   <div
                     key={b.stage}
-                    className={cn(
-                      "rounded-sm border px-3 py-2",
-                      STAGE_COLORS[b.stage] ?? "bg-card",
-                    )}
+                    className="rounded-sm border px-3 py-2"
+                    style={stageInlineStyle(b.stage)}
                   >
                     <div className="text-[10px] font-mono uppercase tracking-wider opacity-80">{b.label}</div>
                     <div className="text-lg font-semibold tabular-nums mt-0.5">{b.count}</div>

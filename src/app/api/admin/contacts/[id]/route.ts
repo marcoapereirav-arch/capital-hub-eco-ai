@@ -20,6 +20,7 @@ const PatchSchema = z.object({
   instagram_username: z.string().max(60).nullable().optional(),
   company: z.string().max(200).nullable().optional(),
   stage: z.string().max(50).optional(),
+  pipeline_id: z.string().uuid().nullable().optional(),
   source: z.string().max(60).nullable().optional(),
   products: z.array(z.string()).optional(),
   total_revenue: z.number().nonnegative().optional(),

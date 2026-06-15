@@ -10,6 +10,8 @@ import { PipelinesKanban } from "./pipelines-kanban"
 import { TagFilterButton } from "@/features/tags/components/tag-filter-button"
 import { TagChips } from "@/features/tags/components/tag-chips"
 import { useContactTagsMap } from "@/features/tags/hooks/use-contact-tags-map"
+import { PipelineSelector } from "@/features/pipelines/components/pipeline-selector"
+import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
 import { cn } from "@/lib/utils"
 
 type ContactRow = {
@@ -28,19 +30,9 @@ type ContactRow = {
   created_at: string
 }
 
-// Funnel real Capital Hub (en español) — DEFINICION CANONICA, no inventar valores nuevos.
-// Camino feliz (4): nuevo_seguidor → conversacion → agendado → alumno
-// Salidas (4):     seguimiento · no_show · perdido · comento_no_follow
-const PIPELINE_STAGES = [
-  { value: "nuevo_seguidor", label: "Nuevo seguidor" },          // ManyChat detecta nuevo follower
-  { value: "conversacion", label: "Conversación" },              // Setter/ManyChat inicia DM
-  { value: "agendado", label: "Agendado" },                      // Reservó llamada
-  { value: "alumno", label: "Alumno" },                          // Compró (widget Registrar venta dispara esto)
-  { value: "seguimiento", label: "Seguimiento" },                // No cerró ahora pero hay potencial
-  { value: "no_show", label: "No show" },                        // No asistió a la llamada
-  { value: "perdido", label: "Perdido" },                        // Descartado / no quiere comprar
-  { value: "comento_no_follow", label: "Comentó · no follow" },  // Comentó en reel pero no nos sigue
-]
+// Fallback solo si la BD no tiene pipelines (deberia siempre haberlos tras seed).
+// Los stages REALES se leen del pipeline activo via usePipelines().
+const FALLBACK_STAGES = [{ value: "nuevo_seguidor", label: "Nuevo seguidor" }]
 
 export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
   const [contacts, setContacts] = useState<ContactRow[]>([])
@@ -52,12 +44,19 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<"list" | "kanban">(initialView)
   const { byContact: tagsByContact, allTags } = useContactTagsMap()
+  const { pipelines } = usePipelines()
+  const { activeId, setActiveId } = useActivePipelineId(pipelines)
+  const activePipeline = pipelines.find((p) => p.id === activeId) ?? null
+  const PIPELINE_STAGES = activePipeline
+    ? activePipeline.stages.map((s) => ({ value: s.key, label: s.name }))
+    : FALLBACK_STAGES
 
   async function updateStage(contactId: string, newStage: string) {
     await fetch(`/api/admin/contacts/${contactId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stage: newStage }),
+      // pipeline_id se actualiza tambien para que quede asociado al pipeline activo
+      body: JSON.stringify({ stage: newStage, pipeline_id: activeId }),
     })
     load()
   }
@@ -108,6 +107,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
         />
       </div>
+      <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
       <select
         value={stageFilter}
         onChange={(e) => setStageFilter(e.target.value)}
