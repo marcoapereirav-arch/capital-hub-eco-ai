@@ -18,7 +18,7 @@ type Contact = {
 type Stage = { value: string; label: string }
 
 const STAGE_COLORS: Record<string, string> = {
-  nuevo_seguidor: "border-cyan-500/40",
+  lead: "border-cyan-500/40",
   conversacion: "border-blue-500/40",
   agendado: "border-amber-500/40",
   alumno: "border-green-500/40",
@@ -48,7 +48,7 @@ export function PipelinesKanban({
     const map = new Map<string, Contact[]>()
     for (const s of stages) map.set(s.value, [])
     for (const c of contacts) {
-      const stage = c.stage ?? "nuevo_seguidor"
+      const stage = c.stage ?? "lead"
       const arr = map.get(stage) ?? []
       arr.push(c)
       map.set(stage, arr)

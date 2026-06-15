@@ -23,6 +23,7 @@ import { createBrowserClient } from "@supabase/ssr"
 import { cn } from "@/lib/utils"
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
 import { PipelineSelector } from "@/features/pipelines/components/pipeline-selector"
+import { FunnelTestPersonalidadSection } from "@/features/funnel-test-personalidad/components/dashboard-section"
 import {
   LineChart,
   Line,
@@ -647,6 +648,9 @@ export function MainDashboard() {
         </div>
       </section>
 
+
+      {/* FUNNEL TEST PERSONALIDAD - metricas en vivo */}
+      <FunnelTestPersonalidadSection />
 
       {/* INVITACIONES con botón eliminar */}
       <section className="space-y-3">

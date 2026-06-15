@@ -32,7 +32,7 @@ type ContactRow = {
 
 // Fallback solo si la BD no tiene pipelines (deberia siempre haberlos tras seed).
 // Los stages REALES se leen del pipeline activo via usePipelines().
-const FALLBACK_STAGES = [{ value: "nuevo_seguidor", label: "Nuevo seguidor" }]
+const FALLBACK_STAGES = [{ value: "lead", label: "Lead" }]
 
 export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
   const [contacts, setContacts] = useState<ContactRow[]>([])
@@ -227,7 +227,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                       stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
                       stage.value === "agendado" && "border-amber-500/40 text-amber-400",
                       stage.value === "conversacion" && "border-blue-500/40 text-blue-400",
-                      stage.value === "nuevo_seguidor" && "border-cyan-500/40 text-cyan-400"
+                      stage.value === "lead" && "border-cyan-500/40 text-cyan-400"
                     )}>
                       {stage.label}
                     </span>

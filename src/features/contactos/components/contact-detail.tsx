@@ -39,23 +39,25 @@ type Contact = {
 }
 
 const STAGE_LABELS: Record<string, string> = {
-  nuevo_seguidor: "Nuevo seguidor",
+  lead: "Lead",
   conversacion: "Conversación",
-  llamada_agendada: "Llamada agendada",
+  agendado: "Agendado",
+  alumno: "Alumno",
+  seguimiento: "Seguimiento",
   no_show: "No show",
-  ganado: "Ganado",
   perdido: "Perdido",
-  pausado: "Pausado",
+  comento_no_follow: "Comentó · no follow",
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  nuevo_seguidor: "border-blue-500/40 text-blue-400 bg-blue-500/[0.06]",
-  conversacion: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
-  llamada_agendada: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
+  lead: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
+  conversacion: "border-blue-500/40 text-blue-400 bg-blue-500/[0.06]",
+  agendado: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
+  alumno: "border-emerald-500/40 text-emerald-400 bg-emerald-500/[0.06]",
+  seguimiento: "border-violet-500/40 text-violet-400 bg-violet-500/[0.06]",
   no_show: "border-orange-500/40 text-orange-400 bg-orange-500/[0.06]",
-  ganado: "border-emerald-500/40 text-emerald-400 bg-emerald-500/[0.06]",
   perdido: "border-red-500/40 text-red-400 bg-red-500/[0.06]",
-  pausado: "border-zinc-500/40 text-muted-foreground bg-zinc-500/[0.06]",
+  comento_no_follow: "border-zinc-500/40 text-muted-foreground bg-zinc-500/[0.06]",
 }
 
 type Tab = "datos" | "journey" | "notas" | "comunicaciones"

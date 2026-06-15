@@ -9,7 +9,7 @@ export const maxDuration = 10
  * Webhook entrante ManyChat.
  *
  * Flujo completo end-to-end:
- *   1. new_subscriber (nuevo follower IG) → crea contacto stage='nuevo_seguidor'
+ *   1. new_subscriber (lead entra al sistema) → crea contacto stage='lead'
  *      asigna pipeline_id default + tag 'origen:instagram_follow' + journey event
  *   2. user_replied_to_welcome (responde al welcome del bot) → mueve stage a 'conversacion'
  *      anade journey event "Lead respondio al welcome"
@@ -245,7 +245,7 @@ export async function POST(req: NextRequest) {
             slug,
             manychat_subscriber_id: mcId,
             instagram_username: igUsername,
-            stage: 'nuevo_seguidor',
+            stage: 'lead',
             pipeline_id: defaultPipelineId,
             origin: 'manychat',
           })
@@ -301,7 +301,7 @@ export async function POST(req: NextRequest) {
           .select('id, stage, pipeline_id')
           .single()
         if (created) contact = created
-      } else if (contact.stage === 'nuevo_seguidor') {
+      } else if (contact.stage === 'lead') {
         // Solo subir el stage si esta en nuevo_seguidor (no degradar)
         const { error: upErr } = await supabase.from('contacts').update({ stage: 'conversacion' }).eq('id', contact.id)
         if (upErr) {
