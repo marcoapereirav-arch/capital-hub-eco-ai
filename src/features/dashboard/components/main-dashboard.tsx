@@ -70,42 +70,45 @@ type CalendarBookingRow = {
 // Constantes
 // =============================================================================
 
+// SOURCE OF TRUTH: estos stages deben coincidir EXACTAMENTE con los del CRM
+// (src/features/contactos/components/contactos-page.tsx PIPELINE_STAGES).
+// NO inventar valores nuevos aqui — si se cambia un stage, cambiarlo en ambos sitios.
 const STAGE_LABELS: Record<string, string> = {
-  comento_no_sigue: "Comentó · no sigue",
   nuevo_seguidor: "Nuevo seguidor",
-  conversacion: "Conversación",
-  llamada_agendada: "Llamada agendada",
+  contactado: "Contactado",
+  agendado: "Agendado",
+  atendio: "Atendió llamada",
+  seguimiento: "Seguimiento",
+  cliente: "Cliente",
   no_show: "No show",
-  ganado: "Won",
   perdido: "Perdido",
-  pausado: "Seguimiento",
 }
 
 const STAGE_COLORS: Record<string, string> = {
-  comento_no_sigue: "bg-purple-500/15 text-purple-400 border-purple-500/30",
   nuevo_seguidor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  conversacion: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-  llamada_agendada: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  contactado: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+  agendado: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  atendio: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  seguimiento: "bg-violet-500/15 text-violet-400 border-violet-500/30",
+  cliente: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   no_show: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-  ganado: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   perdido: "bg-red-500/15 text-red-400 border-red-500/30",
-  pausado: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30",
 }
 
-// Embudo lineal (camino "feliz"): entrada → calentando → calificado → cierre
+// Embudo lineal (camino "feliz"): entrada → caliente → llamada → cliente
 const FUNNEL_ORDER: string[] = [
   "nuevo_seguidor",
-  "conversacion",
-  "llamada_agendada",
-  "ganado",
+  "contactado",
+  "agendado",
+  "atendio",
+  "cliente",
 ]
 
 // Estados terminales / salidas del embudo (mostrados aparte como ramas)
 const FUNNEL_BRANCHES: string[] = [
+  "seguimiento",
   "no_show",
   "perdido",
-  "pausado",
-  "comento_no_sigue",
 ]
 
 // Colores del pie chart (origin)
@@ -290,12 +293,13 @@ export function MainDashboard() {
     const prevVentas = previousInvites.length
     const ventasDelta = ventas - prevVentas
 
-    // Conversión llamada → ganado del PERIODO actual
-    const llamadasAgendadas = contacts.filter(
-      (c) => c.stage === "llamada_agendada" || c.stage === "ganado",
+    // Conversión: de los que ATENDIERON la llamada, ¿cuántos se convirtieron en CLIENTE?
+    // (incluye "cliente" porque ya pasaron por atendio antes de comprar)
+    const atendieron = contacts.filter(
+      (c) => c.stage === "atendio" || c.stage === "cliente",
     ).length
-    const ganados = contacts.filter((c) => c.stage === "ganado").length
-    const conversion = llamadasAgendadas > 0 ? Math.round((ganados / llamadasAgendadas) * 100) : 0
+    const clientes = contacts.filter((c) => c.stage === "cliente").length
+    const conversion = atendieron > 0 ? Math.round((clientes / atendieron) * 100) : 0
 
     // KPIs secundarios
     const contactosNuevos = contacts.length
@@ -442,7 +446,7 @@ export function MainDashboard() {
           accent="amber"
         />
         <KpiPrincipal
-          label="Conversión llamada→ganado"
+          label="Conversión atendio→cliente"
           value={loading ? "…" : `${kpis.conversion}%`}
           icon={Target}
           accent="purple"
@@ -492,7 +496,7 @@ export function MainDashboard() {
               Pipeline CRM · todos los contactos
             </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Camino del lead: nuevo seguidor → conversación → llamada → ganado
+              Camino del lead: nuevo seguidor → contactado → agendado → atendió llamada → cliente
             </p>
           </div>
         </div>
@@ -648,7 +652,7 @@ export function MainDashboard() {
             Invitaciones App · {invites.length}
           </h2>
           <a
-            href="/crm/contactos?stage=ganado"
+            href="/crm/contactos?stage=cliente"
             className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
           >
             Ver todas <ArrowUpRight className="h-3 w-3" />
