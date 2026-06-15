@@ -303,7 +303,10 @@ export async function POST(req: NextRequest) {
         if (created) contact = created
       } else if (contact.stage === 'nuevo_seguidor') {
         // Solo subir el stage si esta en nuevo_seguidor (no degradar)
-        await supabase.from('contacts').update({ stage: 'conversacion' }).eq('id', contact.id)
+        const { error: upErr } = await supabase.from('contacts').update({ stage: 'conversacion' }).eq('id', contact.id)
+        if (upErr) {
+          console.error('[manychat-webhook] update stage to conversacion failed:', upErr.message)
+        }
       }
 
       if (contact) {
