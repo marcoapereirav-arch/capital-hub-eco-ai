@@ -14,7 +14,6 @@ import {
   Trash2,
   Lock,
   PercentSquare,
-  Clock,
   Trophy,
   Banknote,
   Loader2,
@@ -94,13 +93,20 @@ const STAGE_COLORS: Record<string, string> = {
   pausado: "bg-zinc-500/15 text-muted-foreground border-zinc-500/30",
 }
 
-// Orden del embudo (de arriba a abajo)
+// Embudo lineal (camino "feliz"): entrada → calentando → calificado → cierre
 const FUNNEL_ORDER: string[] = [
-  "comento_no_sigue",
   "nuevo_seguidor",
   "conversacion",
   "llamada_agendada",
   "ganado",
+]
+
+// Estados terminales / salidas del embudo (mostrados aparte como ramas)
+const FUNNEL_BRANCHES: string[] = [
+  "no_show",
+  "perdido",
+  "pausado",
+  "comento_no_sigue",
 ]
 
 // Colores del pie chart (origin)
@@ -329,12 +335,18 @@ export function MainDashboard() {
     for (const c of allContacts) {
       counts.set(c.stage, (counts.get(c.stage) ?? 0) + 1)
     }
-    return FUNNEL_ORDER.map((stage, i) => {
+    const main = FUNNEL_ORDER.map((stage, i) => {
       const count = counts.get(stage) ?? 0
       const prevCount = i > 0 ? counts.get(FUNNEL_ORDER[i - 1]) ?? 0 : count
       const conversionFromPrev = prevCount > 0 && i > 0 ? Math.round((count / prevCount) * 100) : null
       return { stage, label: STAGE_LABELS[stage] ?? stage, count, conversionFromPrev }
     })
+    const branches = FUNNEL_BRANCHES.map((stage) => ({
+      stage,
+      label: STAGE_LABELS[stage] ?? stage,
+      count: counts.get(stage) ?? 0,
+    }))
+    return { main, branches }
   }, [allContacts])
 
   // =============================================================================
@@ -397,7 +409,7 @@ export function MainDashboard() {
   // =============================================================================
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
       {/* Header con filtro periodo */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -472,45 +484,76 @@ export function MainDashboard() {
         </div>
       </section>
 
-      {/* EMBUDO PIPELINE */}
+      {/* PIPELINE CRM */}
       <section className="bg-card/30 border border-border rounded-md p-4">
-        <h2 className="text-sm font-semibold flex items-center gap-2 mb-3">
-          <Target className="h-4 w-4 text-cyan-400" />
-          Embudo Pipeline · acumulado total
-        </h2>
+        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <Target className="h-4 w-4 text-cyan-400" />
+              Pipeline CRM · todos los contactos
+            </h2>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Camino del lead: nuevo seguidor → conversación → llamada → ganado
+            </p>
+          </div>
+        </div>
         {loading ? (
           <CenterLoader />
         ) : (
-          <div className="space-y-2">
-            {(() => {
-              const max = Math.max(...funnelData.map((s) => s.count), 1)
-              return funnelData.map((s) => {
-                const widthPct = Math.max(8, (s.count / max) * 100)
-                return (
-                  <div key={s.stage}>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">{s.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono tabular-nums text-foreground">{s.count}</span>
-                        {s.conversionFromPrev !== null && (
-                          <span className="text-[10px] font-mono text-muted-foreground">({s.conversionFromPrev}%)</span>
-                        )}
+          <>
+            {/* Embudo principal lineal */}
+            <div className="space-y-2">
+              {(() => {
+                const max = Math.max(...funnelData.main.map((s) => s.count), 1)
+                return funnelData.main.map((s) => {
+                  const widthPct = Math.max(8, (s.count / max) * 100)
+                  return (
+                    <div key={s.stage}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">{s.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono tabular-nums text-foreground">{s.count}</span>
+                          {s.conversionFromPrev !== null && (
+                            <span className="text-[10px] font-mono text-muted-foreground">({s.conversionFromPrev}%)</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="h-8 bg-secondary/30 rounded-sm overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full transition-all rounded-sm border",
+                            STAGE_COLORS[s.stage] ?? "bg-card",
+                          )}
+                          style={{ width: `${widthPct}%` }}
+                        />
                       </div>
                     </div>
-                    <div className="h-8 bg-secondary/30 rounded-sm overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full transition-all rounded-sm border",
-                          STAGE_COLORS[s.stage] ?? "bg-card",
-                        )}
-                        style={{ width: `${widthPct}%` }}
-                      />
-                    </div>
+                  )
+                })
+              })()}
+            </div>
+
+            {/* Ramas / estados terminales */}
+            <div className="mt-5 pt-4 border-t border-border">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                Salidas del embudo
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {funnelData.branches.map((b) => (
+                  <div
+                    key={b.stage}
+                    className={cn(
+                      "rounded-sm border px-3 py-2",
+                      STAGE_COLORS[b.stage] ?? "bg-card",
+                    )}
+                  >
+                    <div className="text-[10px] font-mono uppercase tracking-wider opacity-80">{b.label}</div>
+                    <div className="text-lg font-semibold tabular-nums mt-0.5">{b.count}</div>
                   </div>
-                )
-              })
-            })()}
-          </div>
+                ))}
+              </div>
+            </div>
+          </>
         )}
       </section>
 
@@ -524,7 +567,6 @@ export function MainDashboard() {
         <KpiSecundario label="CAC" value="—" icon={PercentSquare} sub="conecta Meta Marketing API" muted />
         <KpiSecundario label="ROAS" value="—" icon={TrendingUp} sub="conecta Meta Marketing API" muted />
         <KpiSecundario label="LTV" value="—" icon={Trophy} sub="pendiente trackear upsells" muted />
-        <KpiSecundario label="Velocidad funnel" value="—" icon={Clock} sub="pendiente cálculo días promedio" muted />
       </section>
 
       {/* GRÁFICOS 3 y 4 lado a lado */}
@@ -598,13 +640,18 @@ export function MainDashboard() {
         </div>
       </section>
 
-      {/* Sección Funnel Test Personalidad (placeholder Bloque 2D) */}
+      {/* Sección Funnel Test Personalidad (placeholder Bloque 2D) — DIFERENTE del Pipeline CRM:
+          mide la conversión paso a paso del Test (pregunta 1 → 2 → 3 → resultado → llamada). */}
       <section className="bg-card/30 border border-dashed border-border rounded-md p-5">
-        <div className="flex items-center gap-3">
-          <Lock className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-start gap-3">
+          <Lock className="h-4 w-4 text-muted-foreground mt-0.5" />
           <div className="flex-1">
-            <h2 className="text-sm font-semibold">Funnel Test Personalidad</h2>
+            <h2 className="text-sm font-semibold">Funnel Test Personalidad · conversión paso a paso</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
+              Mide cuántos completan cada pregunta del Test → resultado → llamada agendada.
+              No confundir con el Pipeline CRM (que es el camino general de cualquier lead).
+            </p>
+            <p className="text-[11px] text-muted-foreground/70 mt-1.5">
               En construcción · disponible cuando se conecte el webhook ManyChat del Bloque 2D
             </p>
           </div>
