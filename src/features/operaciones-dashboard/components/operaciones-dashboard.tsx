@@ -191,27 +191,43 @@ export function OperacionesDashboard() {
   // normal vencidas → 400, normal hoy → 300, normal <=7d → 200
   // sin fecha → priority rank * 100 - 50
   const nextActions = useMemo(() => {
-    const PRIORITY_RANK: Record<string, number> = { urgent: 4, high: 3, normal: 2, low: 1 }
+    // Prioridad del PROYECTO (4 niveles): urgent > important > normal > low
+    const PROJECT_RANK: Record<string, number> = { urgent: 1000, important: 600, normal: 300, low: 100 }
+    // Prioridad de la TAREA (legacy 4 niveles: urgent/high/normal/low)
+    const TASK_RANK: Record<string, number> = { urgent: 40, high: 30, normal: 20, low: 10 }
+
     function score(t: typeof openScoped[0]): number {
-      const prio = PRIORITY_RANK[t.priority] ?? 2
-      if (!t.dueDate) return prio * 100 - 50  // sin fecha: solo por prioridad pero penalizado
-      const due = new Date(t.dueDate)
-      const daysToEnd = Math.floor((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+      // 1) Score base = prioridad del PROYECTO contenedor
+      const project = paraItems.find((p) => p.id === t.paraId)
+      const projectPriorityScore = PROJECT_RANK[project?.priority ?? "normal"]
+
+      // 2) Bonus por urgencia de fecha
       let dueScore = 0
-      if (daysToEnd < 0) dueScore = 1000      // vencida
-      else if (daysToEnd === 0) dueScore = 800 // hoy
-      else if (daysToEnd <= 3) dueScore = 600  // próx 3 días
-      else if (daysToEnd <= 7) dueScore = 400  // esta semana
-      else dueScore = 200                       // futuro lejano
-      return dueScore + prio * 25  // prioridad ajusta dentro del rango de fecha
+      if (t.dueDate) {
+        const due = new Date(t.dueDate)
+        const daysToEnd = Math.floor((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+        if (daysToEnd < 0) dueScore = 500       // vencida
+        else if (daysToEnd === 0) dueScore = 300 // hoy
+        else if (daysToEnd <= 3) dueScore = 200  // próx 3 días
+        else if (daysToEnd <= 7) dueScore = 100
+      }
+
+      // 3) Bonus por prioridad de la propia tarea (ajuste fino dentro del proyecto)
+      const taskScore = TASK_RANK[t.priority] ?? 20
+
+      // 4) Bonus por display_order del proyecto: orden del plan (menor = más alto)
+      const orderBonus = project?.displayOrder ? Math.max(0, 100 - project.displayOrder) : 0
+
+      return projectPriorityScore + dueScore + taskScore + orderBonus
     }
+
     return openScoped
       .filter((t) => t.status === "next")
       .map((t) => ({ task: t, score: score(t) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 8)
       .map((x) => x.task)
-  }, [openScoped, startOfToday])
+  }, [openScoped, startOfToday, paraItems])
 
   const nextTask = nextActions[0] ?? null
   const upNext = nextActions.slice(1, 6)
