@@ -22,6 +22,7 @@ type ParaRow = {
   status: ParaStatus
   parent_id: string | null
   focus_id: string | null
+  display_order: number | null
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -47,6 +48,7 @@ function rowToPara(row: ParaRow): ParaItem {
     status: row.status ?? "active",
     parentId: row.parent_id ?? null,
     focusId: row.focus_id ?? null,
+    displayOrder: row.display_order ?? null,
   }
 }
 

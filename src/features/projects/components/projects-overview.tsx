@@ -14,8 +14,9 @@ import { cn } from "@/lib/utils"
 import type { ParaItem, ParaStatus, Task } from "@/features/tasks/types/task"
 import { ROOT_AREAS } from "@/features/tasks/types/task"
 
-type ProjectSortBy = "alpha" | "most_open" | "least_open" | "most_progress" | "least_progress"
+type ProjectSortBy = "priority" | "alpha" | "most_open" | "least_open" | "most_progress" | "least_progress"
 const PROJECT_SORT_LABELS: Record<ProjectSortBy, string> = {
+  priority: "Prioridad (orden del plan)",
   alpha: "A → Z",
   most_open: "Más tareas abiertas",
   least_open: "Menos tareas abiertas",
@@ -61,7 +62,7 @@ export function ProjectsOverview() {
 
   const [filter, setFilter] = useState<FilterValue>("active")
   const [areaFilter, setAreaFilter] = useState<string | "all">("all")
-  const [sortBy, setSortBy] = useState<ProjectSortBy>("most_open")
+  const [sortBy, setSortBy] = useState<ProjectSortBy>("priority")
 
   useEffect(() => {
     init()
@@ -81,6 +82,14 @@ export function ProjectsOverview() {
       const pctA = ma.total === 0 ? 0 : ma.done / ma.total
       const pctB = mb.total === 0 ? 0 : mb.done / mb.total
       switch (sortBy) {
+        case "priority": {
+          // Orden definido por el usuario en el plan (display_order asc).
+          // Proyectos sin display_order van al final.
+          const oa = (a as ParaItem & { displayOrder?: number | null }).displayOrder ?? 999
+          const ob = (b as ParaItem & { displayOrder?: number | null }).displayOrder ?? 999
+          if (oa !== ob) return oa - ob
+          return a.name.localeCompare(b.name)
+        }
         case "alpha":
           return a.name.localeCompare(b.name)
         case "most_open":

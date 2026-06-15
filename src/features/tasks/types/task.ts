@@ -17,6 +17,7 @@ export type ParaItem = {
   status: ParaStatus
   parentId: string | null
   focusId: string | null
+  displayOrder?: number | null
 }
 
 export type Focus = {
