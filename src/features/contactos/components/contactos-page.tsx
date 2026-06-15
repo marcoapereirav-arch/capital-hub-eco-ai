@@ -108,14 +108,6 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
         />
       </div>
       <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
-      <select
-        value={stageFilter}
-        onChange={(e) => setStageFilter(e.target.value)}
-        className="h-8 rounded-sm border border-border bg-background px-2 text-xs"
-      >
-        <option value="all">Todos los stages</option>
-        {PIPELINE_STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-      </select>
       <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
       <div className="flex-1" />
       <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">

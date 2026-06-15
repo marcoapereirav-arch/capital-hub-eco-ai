@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, Layers, Tag as TagIcon, GitBranch } from "lucide-react"
+import { Users, Layers, Tag as TagIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 
@@ -14,10 +14,11 @@ import { ShellHeader } from "@/features/shell/components/shell-header"
 export function CrmTabsHeader() {
   const pathname = usePathname()
   const inContactos = pathname.startsWith("/crm/contactos")
-  // /crm/pipelines (gestion multi-pipeline) tiene prioridad sobre /crm/pipeline (kanban)
-  const inPipelines = pathname.startsWith("/crm/pipelines")
-  const inPipeline = pathname.startsWith("/crm/pipeline") && !inPipelines
+  const inPipeline = pathname.startsWith("/crm/pipeline")
   const inTags = pathname.startsWith("/crm/tags")
+
+  // La gestion multi-pipeline vive como DRAWER dentro del propio entorno de Pipeline,
+  // no como pestana separada. El boton de Configurar lo dispara desde PipelineSelector.
 
   return (
     <>
@@ -26,7 +27,6 @@ export function CrmTabsHeader() {
         <div className="px-4 md:px-6 py-2 flex items-center gap-1 overflow-x-auto">
           <TabLink href="/crm/contactos" active={inContactos} icon={Users} label="Contactos" />
           <TabLink href="/crm/pipeline" active={inPipeline} icon={Layers} label="Pipeline" />
-          <TabLink href="/crm/pipelines" active={inPipelines} icon={GitBranch} label="Pipelines" />
           <TabLink href="/crm/tags" active={inTags} icon={TagIcon} label="Tags" />
         </div>
       </div>

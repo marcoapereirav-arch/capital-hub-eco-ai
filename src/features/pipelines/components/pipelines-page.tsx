@@ -8,7 +8,7 @@ import { pipelinesService } from "../services/pipelines-service"
 import { STAGE_COLOR_PALETTE, STAGE_KIND_LABEL, type Pipeline, type PipelineStage, type StageKind } from "../types/pipeline"
 import { cn } from "@/lib/utils"
 
-export function PipelinesPage() {
+export function PipelinesPage({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -33,25 +33,38 @@ export function PipelinesPage() {
   const selected = pipelines.find((p) => p.id === selectedId) ?? null
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-24">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
-          <h1 className="text-lg font-semibold flex items-center gap-2">
-            <Layers className="h-4 w-4 text-muted-foreground" />
-            Pipelines · {pipelines.length}
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Crea y gestiona tus pipelines del CRM. Cada uno con sus propios stages, orden y colores.
-          </p>
+    <div className={hideHeader ? "space-y-6" : "mx-auto max-w-7xl space-y-6 pb-24"}>
+      {/* Header (oculto en modo drawer) */}
+      {!hideHeader && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-lg font-semibold flex items-center gap-2">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              Pipelines · {pipelines.length}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              Crea y gestiona tus pipelines del CRM. Cada uno con sus propios stages, orden y colores.
+            </p>
+          </div>
+          <button
+            onClick={() => setCreatingPipeline(true)}
+            className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
+          >
+            <Plus className="h-3 w-3" /> Nuevo pipeline
+          </button>
         </div>
-        <button
-          onClick={() => setCreatingPipeline(true)}
-          className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
-        >
-          <Plus className="h-3 w-3" /> Nuevo pipeline
-        </button>
-      </div>
+      )}
+      {/* En modo drawer mostramos el boton 'Nuevo pipeline' inline arriba del grid */}
+      {hideHeader && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setCreatingPipeline(true)}
+            className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
+          >
+            <Plus className="h-3 w-3" /> Nuevo pipeline
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12 text-muted-foreground">
