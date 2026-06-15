@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTaskStore } from "@/features/tasks/store/task-store"
 import { cn } from "@/lib/utils"
-import type { ParaItem, ParaStatus, Task } from "@/features/tasks/types/task"
-import { ROOT_AREAS } from "@/features/tasks/types/task"
+import type { ParaItem, ParaStatus, ParaPriority, Task } from "@/features/tasks/types/task"
+import { ROOT_AREAS, PARA_PRIORITY_RANK, PARA_PRIORITY_LABELS, PARA_PRIORITY_COLORS } from "@/features/tasks/types/task"
+import { Flame, Star, Minus, Snowflake } from "lucide-react"
 
 type ProjectSortBy = "priority" | "alpha" | "most_open" | "least_open" | "most_progress" | "least_progress"
 const PROJECT_SORT_LABELS: Record<ProjectSortBy, string> = {
@@ -83,10 +84,13 @@ export function ProjectsOverview() {
       const pctB = mb.total === 0 ? 0 : mb.done / mb.total
       switch (sortBy) {
         case "priority": {
-          // Orden definido por el usuario en el plan (display_order asc).
-          // Proyectos sin display_order van al final.
-          const oa = (a as ParaItem & { displayOrder?: number | null }).displayOrder ?? 999
-          const ob = (b as ParaItem & { displayOrder?: number | null }).displayOrder ?? 999
+          // Orden por prioridad MANUAL del usuario (Urgente > Importante > Normal > Baja).
+          // Dentro de la misma prioridad, por display_order asc, después por nombre.
+          const pa = PARA_PRIORITY_RANK[a.priority ?? "normal"]
+          const pb = PARA_PRIORITY_RANK[b.priority ?? "normal"]
+          if (pa !== pb) return pa - pb
+          const oa = a.displayOrder ?? 999
+          const ob = b.displayOrder ?? 999
           if (oa !== ob) return oa - ob
           return a.name.localeCompare(b.name)
         }
@@ -139,6 +143,20 @@ export function ProjectsOverview() {
     if (project.status === status) return
     try {
       await updateParaItem(project.id, { status })
+    } catch {
+      // store ya hace revert + setea error
+    }
+  }
+
+  /**
+   * Cambia prioridad libremente. Se reordena solo (sort actual = "priority" por default).
+   */
+  async function setProjectPriority(project: ParaItem, priority: ParaPriority, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (project.priority === priority) return
+    try {
+      await updateParaItem(project.id, { priority })
     } catch {
       // store ya hace revert + setea error
     }
@@ -271,6 +289,46 @@ export function ProjectsOverview() {
                     <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs font-mono tabular-nums text-muted-foreground">
                       {pct}%
                     </span>
+
+                    {/* Badge de prioridad clicable - cambia la prioridad inline */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                          aria-label="Cambiar prioridad"
+                          title={`Prioridad: ${PARA_PRIORITY_LABELS[p.priority ?? "normal"]}`}
+                          className={cn(
+                            "shrink-0 inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors hover:opacity-80",
+                            PARA_PRIORITY_COLORS[p.priority ?? "normal"]
+                          )}
+                        >
+                          {p.priority === "urgent" && <Flame className="h-3 w-3" />}
+                          {p.priority === "important" && <Star className="h-3 w-3" />}
+                          {(p.priority === "normal" || !p.priority) && <Minus className="h-3 w-3" />}
+                          {p.priority === "low" && <Snowflake className="h-3 w-3" />}
+                          {PARA_PRIORITY_LABELS[p.priority ?? "normal"]}
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onClick={(e) => setProjectPriority(p, "urgent", e as React.MouseEvent)}>
+                          <Flame className="h-3.5 w-3.5 mr-2 text-red-400" /> Urgente
+                          {p.priority === "urgent" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => setProjectPriority(p, "important", e as React.MouseEvent)}>
+                          <Star className="h-3.5 w-3.5 mr-2 text-amber-400" /> Importante
+                          {p.priority === "important" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => setProjectPriority(p, "normal", e as React.MouseEvent)}>
+                          <Minus className="h-3.5 w-3.5 mr-2 text-cyan-400" /> Normal
+                          {(p.priority === "normal" || !p.priority) && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => setProjectPriority(p, "low", e as React.MouseEvent)}>
+                          <Snowflake className="h-3.5 w-3.5 mr-2 text-zinc-400" /> Baja
+                          {p.priority === "low" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
 
                     {/* Menú de status: cambia libremente entre active / paused / completed */}
                     <DropdownMenu>

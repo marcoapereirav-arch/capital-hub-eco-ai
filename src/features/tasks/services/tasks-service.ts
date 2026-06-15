@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Task, ParaItem, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
+import type { Task, ParaItem, ParaPriority, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
 
 type TaskRow = {
   id: string
@@ -23,6 +23,7 @@ type ParaRow = {
   parent_id: string | null
   focus_id: string | null
   display_order: number | null
+  priority: string | null
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -41,6 +42,10 @@ function rowToTask(row: TaskRow): Task {
 }
 
 function rowToPara(row: ParaRow): ParaItem {
+  const validPriorities: ParaPriority[] = ["urgent", "important", "normal", "low"]
+  const priority = validPriorities.includes(row.priority as ParaPriority)
+    ? (row.priority as ParaPriority)
+    : "normal"
   return {
     id: row.id,
     name: row.name,
@@ -49,6 +54,7 @@ function rowToPara(row: ParaRow): ParaItem {
     parentId: row.parent_id ?? null,
     focusId: row.focus_id ?? null,
     displayOrder: row.display_order ?? null,
+    priority,
   }
 }
 
@@ -59,6 +65,8 @@ function paraUpdatesToRow(updates: Partial<ParaItem>): Record<string, unknown> {
   if (updates.status !== undefined) out.status = updates.status
   if (updates.parentId !== undefined) out.parent_id = updates.parentId
   if (updates.focusId !== undefined) out.focus_id = updates.focusId
+  if (updates.displayOrder !== undefined) out.display_order = updates.displayOrder
+  if (updates.priority !== undefined) out.priority = updates.priority
   return out
 }
 

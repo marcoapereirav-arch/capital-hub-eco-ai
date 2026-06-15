@@ -10,6 +10,8 @@ export const PARA_STATUS_LABELS: Record<ParaStatus, string> = {
 }
 export type Assignee = "marco" | "adrian" | "equipo" | "ai"
 
+export type ParaPriority = "urgent" | "important" | "normal" | "low"
+
 export type ParaItem = {
   id: string
   name: string
@@ -18,6 +20,28 @@ export type ParaItem = {
   parentId: string | null
   focusId: string | null
   displayOrder?: number | null
+  priority?: ParaPriority | null
+}
+
+export const PARA_PRIORITY_RANK: Record<ParaPriority, number> = {
+  urgent: 1,
+  important: 2,
+  normal: 3,
+  low: 4,
+}
+
+export const PARA_PRIORITY_LABELS: Record<ParaPriority, string> = {
+  urgent: "Urgente",
+  important: "Importante",
+  normal: "Normal",
+  low: "Baja",
+}
+
+export const PARA_PRIORITY_COLORS: Record<ParaPriority, string> = {
+  urgent: "border-red-500/40 text-red-400 bg-red-500/[0.06]",
+  important: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
+  normal: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
+  low: "border-zinc-500/40 text-muted-foreground bg-zinc-500/[0.06]",
 }
 
 export type Focus = {

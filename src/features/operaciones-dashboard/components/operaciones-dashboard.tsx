@@ -216,7 +216,9 @@ export function OperacionesDashboard() {
   const nextTask = nextActions[0] ?? null
   const upNext = nextActions.slice(1, 6)
 
-  // === Progreso por proyecto ===
+  // === Progreso por proyecto (ordenado por display_order del plan) ===
+  // REGLA #6 Knowledge: los proyectos del OS SIEMPRE se ordenan por display_order
+  // ASC (orden del plan), nunca por métricas internas.
   const projectsProgress = useMemo(() => {
     return scopedProjects
       .map((p) => {
@@ -226,7 +228,12 @@ export function OperacionesDashboard() {
         const open = total - done
         return { ...p, total, done, open, pct: total > 0 ? (done / total) * 100 : 0 }
       })
-      .sort((a, b) => b.open - a.open)
+      .sort((a, b) => {
+        const oa = a.displayOrder ?? 999
+        const ob = b.displayOrder ?? 999
+        if (oa !== ob) return oa - ob
+        return a.name.localeCompare(b.name)
+      })
   }, [scopedProjects, tasks])
 
   if (loading && !initialized) {

@@ -101,6 +101,16 @@ function inDueRange(task: Task, range: DueRange): boolean {
 }
 
 let unsubscribeRealtime: (() => void) | null = null
+let pollInterval: ReturnType<typeof setInterval> | null = null
+
+/**
+ * REGLA #6 del Knowledge: el sistema de tareas SIEMPRE debe estar en LIVE.
+ * Realtime de Supabase cubre updates en caliente. PERO si la fila se inserta
+ * desde otra sesión / Management API / cron (no via cliente conectado),
+ * Realtime puede no dispararse. Por eso añadimos poll cada 30s como red de
+ * seguridad para garantizar que el OS nunca está desactualizado más de 30s.
+ */
+const POLL_INTERVAL_MS = 30_000
 
 export const useTaskStore = create<TaskStore>((set, get) => ({
   tasks: [],
@@ -164,6 +174,20 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
           }))
         },
       })
+
+      // REGLA #6: auto-refresh cada 30s como red de seguridad
+      if (pollInterval) clearInterval(pollInterval)
+      pollInterval = setInterval(async () => {
+        try {
+          const [tasks, paraItems] = await Promise.all([
+            tasksService.listTasks(),
+            tasksService.listParaItems(),
+          ])
+          set({ tasks, paraItems })
+        } catch {
+          // silencio en background poll
+        }
+      }, POLL_INTERVAL_MS)
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Error cargando tareas"
       set({ loading: false, error: msg })
@@ -174,6 +198,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (unsubscribeRealtime) {
       unsubscribeRealtime()
       unsubscribeRealtime = null
+    }
+    if (pollInterval) {
+      clearInterval(pollInterval)
+      pollInterval = null
     }
   },
 

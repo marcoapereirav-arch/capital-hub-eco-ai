@@ -90,6 +90,53 @@ Inventarse nombres de UI es **mentir con confianza falsa**. Es peor que decir "n
 - Si la respuesta es NO → reemplazar por "no conozco la UI exacta, ¿me pasas captura del settings de [contexto] y te indico?"
 - Tampoco vale extrapolar de otros servicios ("Stripe lo llama así, Whop probablemente igual").
 
+---
+
+## REGLA #5 — JAMÁS inventar info NI prometer features sin verificar
+
+Extensión universal de la REGLA #4. Aplica a **CUALQUIER información**, no solo nombres de UI:
+
+- **PROHIBIDO** afirmar que algo "funciona así" / "se puede hacer así" / "tiene tal feature" sin haberlo VERIFICADO en la fuente oficial este turno (doc oficial, API call, curl, screenshot).
+- **PROHIBIDO** describir capacidades de APIs externas (ManyChat, Meta, Whop, Resend, Bunny, Stripe, etc.) de memoria. Si no leí la doc esta sesión, no lo afirmo.
+- **PROHIBIDO** mostrar números, métricas, ejemplos con data fake/demo sin marcarlos claramente como "demo".
+- **PROHIBIDO** prometer "te lo automatizo" / "lo hago vía API" si no verifiqué que la API lo soporta.
+- **PROHIBIDO** rellenar campos de UI con placeholders que parezcan reales.
+
+**Si no estoy 100% seguro:**
+- "No estoy seguro al 100%, déjame verificar la doc oficial X antes de prometer."
+- "Voy a leer developers.manychat.com/reference y vuelvo con respuesta verificada."
+- "Pásame captura/doc/link y confirmo."
+
+**Why:**
+- 2026-06-12: Marco me preguntó si todas las automatizaciones de ManyChat que describí eran reales. Le respondí asumiendo conocimiento de memoria sobre webhooks `conversation_opened`, etc. Marco me cortó: "Tienes prohibido inventar info o recomendarme cosas sin antes saber realmente si se puede hacer."
+- Pasó antes con Meta UI (REGLA #4) y Whop UI. Ahora se generaliza a TODA información.
+
+**How to apply:**
+- Antes de afirmar capacidad de servicio externo: verificar doc oficial este turno o decir "no verificado".
+- Antes de prometer flujo automatizado: confirmar que existe API/webhook para cada paso.
+- Si el usuario me pide certeza ("¿estás 100% seguro?") y no la tengo: decirlo, no fingir.
+
+---
+
+## REGLA #6 — El sistema de tareas del OS SIEMPRE en LIVE
+
+El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **sincronizado y visible en vivo en TODO momento**. Insertar en BD no es suficiente; el usuario tiene que VERLO actualizado sin tocar nada.
+
+- Si añado/modifico tareas en BD durante un turno: el componente de tareas del OS debe refrescar automáticamente (sin F5 manual).
+- Si el orden del plan cambia (display_order): debe verse reflejado al instante en `/projects`, `/operaciones/overview`, `/dashboard`, y CUALQUIER vista que liste proyectos.
+- Si una vista no respeta el orden definido: es bug del producto, se arregla en ese mismo turno.
+- Cada lista de proyectos/tareas del OS debe ordenarse por `display_order ASC` como default (con opciones de re-ordenar adicionales).
+
+**Why:**
+- 2026-06-12: Marco no veía los bloques que yo añadí en BD. Asumía que estaba en chat pero no en producto. Me dijo: "El OS SIEMPRE SIEMPRE debe estar actualizado, IN LIVE SIEMPRE."
+
+**How to apply:**
+- Cada componente que liste proyectos/tareas: query con `ORDER BY display_order ASC NULLS LAST, name`.
+- Cada componente: `useEffect` con poll cada 15-30s O subscribe a Supabase Realtime de las tablas.
+- Si añado un proyecto/tarea via API: el front debe re-fetcharlo en máximo 30s sin acción del usuario.
+
+---
+
 ## Cambios versionados
 
 ### 2026-05-04 — Creación
@@ -97,3 +144,7 @@ Las 3 reglas vivían dispersas: REGLA #1 y #2 en `~/.claude/.../memory/` (memori
 
 ### 2026-05-04 — REGLA #4 añadida
 Aplicación universal de la regla "no inventar UI de servicios externos". Estaba sólo para Meta en `07-tracking-meta.md` (versión 3) — Marco la rompió otra vez con Whop (le di opciones de dashboard que no existen). Ascendida a regla principal del agente, aplica a TODOS los servicios.
+
+### 2026-06-12 — REGLAS #5 y #6 añadidas
+- REGLA #5: generalización de #4. Prohibido inventar info de cualquier tipo (no solo UI). Aplica a APIs externas, métricas, ejemplos, números, promesas de automatización.
+- REGLA #6: el OS de tareas/proyectos debe estar SIEMPRE actualizado en live. Bug visible: yo añadía en BD y Marco no lo veía. Solución: orden por display_order + auto-refresh.
