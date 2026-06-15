@@ -228,10 +228,21 @@ export async function POST(req: NextRequest) {
     case 'subscribed': {
       if (!contact) {
         const defaultPipelineId = await getDefaultPipelineId(supabase)
+        const safeName = fullName ?? igUsername ?? `Lead ${mcId}`
+        // slug es NOT NULL en BD: derivamos de ig_username o nombre, sufijo mcId para unicidad
+        const slug = (igUsername ?? safeName)
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_|_$/g, '')
+          .slice(0, 40) + '_' + mcId.slice(-8)
+
         const { data: created, error: cErr } = await supabase
           .from('contacts')
           .insert({
-            full_name: fullName ?? igUsername ?? `Lead ${mcId}`,
+            full_name: safeName,
+            slug,
             manychat_subscriber_id: mcId,
             instagram_username: igUsername,
             stage: 'nuevo_seguidor',
@@ -267,10 +278,20 @@ export async function POST(req: NextRequest) {
       // Si todavia no tenemos el contacto y llega un reply → algo se perdio, crearlo
       if (!contact) {
         const defaultPipelineId = await getDefaultPipelineId(supabase)
+        const safeName = fullName ?? igUsername ?? `Lead ${mcId}`
+        const slug = (igUsername ?? safeName)
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_|_$/g, '')
+          .slice(0, 40) + '_' + mcId.slice(-8)
+
         const { data: created } = await supabase
           .from('contacts')
           .insert({
-            full_name: fullName ?? igUsername ?? `Lead ${mcId}`,
+            full_name: safeName,
+            slug,
             manychat_subscriber_id: mcId,
             instagram_username: igUsername,
             stage: 'conversacion',
