@@ -7,6 +7,9 @@ import { PageContainer } from "@/components/ui/page-container"
 import { ContactDrawer } from "./contact-drawer"
 import { ContactCreateModal } from "./contact-create-modal"
 import { PipelinesKanban } from "./pipelines-kanban"
+import { TagFilterButton } from "@/features/tags/components/tag-filter-button"
+import { TagChips } from "@/features/tags/components/tag-chips"
+import { useContactTagsMap } from "@/features/tags/hooks/use-contact-tags-map"
 import { cn } from "@/lib/utils"
 
 type ContactRow = {
@@ -43,9 +46,11 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [stageFilter, setStageFilter] = useState<string | "all">("all")
+  const [tagFilter, setTagFilter] = useState<Set<string>>(new Set())
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<"list" | "kanban">(initialView)
+  const { byContact: tagsByContact, allTags } = useContactTagsMap()
 
   async function updateStage(contactId: string, newStage: string) {
     await fetch(`/api/admin/contacts/${contactId}`, {
@@ -70,16 +75,25 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     }
   }
 
-  const filtered = search
-    ? contacts.filter((c) => {
-        const q = search.toLowerCase()
-        return (
-          c.full_name?.toLowerCase().includes(q) ||
-          c.email?.toLowerCase().includes(q) ||
-          c.phone?.toLowerCase().includes(q)
-        )
+  const filtered = (() => {
+    let out = contacts
+    if (search) {
+      const q = search.toLowerCase()
+      out = out.filter((c) => (
+        c.full_name?.toLowerCase().includes(q) ||
+        c.email?.toLowerCase().includes(q) ||
+        c.phone?.toLowerCase().includes(q)
+      ))
+    }
+    if (tagFilter.size > 0) {
+      out = out.filter((c) => {
+        const tags = tagsByContact.get(c.id) ?? []
+        // Logica OR: el contacto debe tener AL MENOS uno de los tags seleccionados
+        return tags.some((t) => tagFilter.has(t.id))
       })
-    : contacts
+    }
+    return out
+  })()
 
   // Toolbar comun a las dos vistas
   const Toolbar = (
@@ -101,6 +115,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
         <option value="all">Todos los stages</option>
         {PIPELINE_STAGES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
       </select>
+      <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
       <div className="flex-1" />
       <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
         {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
@@ -137,6 +152,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                 stages={PIPELINE_STAGES}
                 onUpdateStage={updateStage}
                 onSelect={setSelectedId}
+                tagsByContact={tagsByContact}
               />
             )}
           </div>
@@ -172,6 +188,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           <div className="rounded-md border border-border/40 divide-y divide-border/40 overflow-hidden">
             {filtered.map((c) => {
               const stage = PIPELINE_STAGES.find((s) => s.value === c.stage)
+              const contactTags = tagsByContact.get(c.id) ?? []
               return (
                 <button
                   key={c.id}
@@ -188,6 +205,11 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                         <span className="truncate">{c.email}</span>
                         {c.phone && <span className="truncate">{c.phone}</span>}
                       </div>
+                      {contactTags.length > 0 && (
+                        <div className="mt-1">
+                          <TagChips tags={contactTags} max={4} size="xs" />
+                        </div>
+                      )}
                     </div>
                   </div>
 

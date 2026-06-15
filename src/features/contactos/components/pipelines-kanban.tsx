@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Euro } from "lucide-react"
+import { TagChips } from "@/features/tags/components/tag-chips"
 
 type Contact = {
   id: string
@@ -32,11 +33,13 @@ export function PipelinesKanban({
   stages,
   onUpdateStage,
   onSelect,
+  tagsByContact,
 }: {
   contacts: Contact[]
   stages: Stage[]
   onUpdateStage: (contactId: string, newStage: string) => void
   onSelect: (id: string) => void
+  tagsByContact?: Map<string, import("@/features/tags/types/tag").Tag[]>
 }) {
   const [dragging, setDragging] = useState<string | null>(null)
   const [overStage, setOverStage] = useState<string | null>(null)
@@ -113,6 +116,11 @@ export function PipelinesKanban({
                   >
                     <div className="font-medium truncate">{c.full_name}</div>
                     <div className="text-[10px] font-mono text-muted-foreground truncate">{c.email}</div>
+                    {tagsByContact && (tagsByContact.get(c.id)?.length ?? 0) > 0 && (
+                      <div className="mt-1">
+                        <TagChips tags={tagsByContact.get(c.id) ?? []} max={3} size="xs" />
+                      </div>
+                    )}
                     {c.products.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {c.products.map((p) => (
