@@ -148,6 +148,28 @@ export function ContactDrawer({
                   <Phone className="h-3 w-3" /> Llamar
                 </a>
               )}
+              {contact.manychat_subscriber_id && (
+                <a
+                  href={`https://manychat.com/inbox/${contact.manychat_subscriber_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card"
+                  title="Abrir conversación en panel ManyChat (opcional)"
+                >
+                  <MessageSquare className="h-3 w-3" /> ManyChat
+                </a>
+              )}
+              {contact.instagram_username && (
+                <a
+                  href={`https://instagram.com/${contact.instagram_username.replace(/^@/, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card"
+                  title="Abrir perfil de Instagram"
+                >
+                  <MessageSquare className="h-3 w-3" /> IG
+                </a>
+              )}
               <select
                 value={contact.stage ?? "new"}
                 onChange={(e) => save({ stage: e.target.value })}

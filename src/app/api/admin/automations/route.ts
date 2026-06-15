@@ -248,18 +248,19 @@ export async function GET() {
     {
       id: "manychat_webhook",
       category: "crm",
-      label: "ManyChat → CRM (nuevo seguidor automático)",
-      description: "Cuando ManyChat detecta un nuevo seguidor en el Instagram de Adrián, dispara webhook al OS. El OS crea contacto en stage 'nuevo_seguidor' automáticamente. Si la persona luego agenda usando link con ?mc_id=<id>, se vincula sin duplicar.",
+      label: "ManyChat → CRM (nuevo seguidor + auto-stage Conversación)",
+      description: "Flujo end-to-end IG: cuando alguien empieza a seguir a @adrian, ManyChat envía DM welcome del bot y notifica al OS → crea contacto stage 'nuevo_seguidor' con pipeline + tag origen auto. Cuando el lead responde al welcome → OS mueve stage a 'conversacion' sin que nadie toque nada.",
       trigger: "Webhook entrante: ManyChat → POST /api/webhooks/manychat",
       actions: [
         "Verifica firma MANYCHAT_WEBHOOK_SECRET",
-        "Parsea evento (new_subscriber, provided_email, tagged, etc)",
-        "Busca o crea contacto: instagram_username + manychat_subscriber_id",
-        "Si new_subscriber → stage='nuevo_seguidor'",
-        "Si provided_email/phone → actualiza datos",
-        "Envía push notif al setter asignado",
+        "Loguea evento crudo en manychat_events (auditoría)",
+        "Upsert subscriber en manychat_subscribers_cache",
+        "event_type=new_subscriber → crea contacto stage='nuevo_seguidor' + pipeline_id default + tag 'origen:instagram_follow'",
+        "event_type=user_replied_to_welcome → mueve stage a 'conversacion' (si estaba en nuevo_seguidor)",
+        "Cada evento añade entrada en contact_journey_events para el timeline",
+        "Lookup por manychat_subscriber_id o instagram_username — no duplica contactos",
       ],
-      relatedTables: ["contacts", "manychat_events", "notifications"],
+      relatedTables: ["contacts", "manychat_events", "manychat_subscribers_cache", "contact_journey_events", "contact_tags", "tags"],
       status: ((manychatEventsCount as number | null) ?? 0) > 0 ? "live" : "pending",
       statusReason: ((manychatEventsCount as number | null) ?? 0) > 0
         ? "Webhook recibiendo eventos · " + ((manychatEventsCount as number | null) ?? 0) + " eventos totales"
