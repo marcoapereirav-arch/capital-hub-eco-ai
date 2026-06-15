@@ -12,7 +12,6 @@ import {
   ArrowDownRight,
   AlertCircle,
   Trash2,
-  Lock,
   PercentSquare,
   Trophy,
   Banknote,
@@ -77,9 +76,9 @@ const STAGE_LABELS: Record<string, string> = {
   conversacion: "Conversación",
   llamada_agendada: "Llamada agendada",
   no_show: "No show",
-  ganado: "Ganado",
+  ganado: "Won",
   perdido: "Perdido",
-  pausado: "Pausado",
+  pausado: "Seguimiento",
 }
 
 const STAGE_COLORS: Record<string, string> = {
@@ -409,7 +408,7 @@ export function MainDashboard() {
   // =============================================================================
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 pb-24">
       {/* Header con filtro periodo */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -640,23 +639,6 @@ export function MainDashboard() {
         </div>
       </section>
 
-      {/* Sección Funnel Test Personalidad (placeholder Bloque 2D) — DIFERENTE del Pipeline CRM:
-          mide la conversión paso a paso del Test (pregunta 1 → 2 → 3 → resultado → llamada). */}
-      <section className="bg-card/30 border border-dashed border-border rounded-md p-5">
-        <div className="flex items-start gap-3">
-          <Lock className="h-4 w-4 text-muted-foreground mt-0.5" />
-          <div className="flex-1">
-            <h2 className="text-sm font-semibold">Funnel Test Personalidad · conversión paso a paso</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Mide cuántos completan cada pregunta del Test → resultado → llamada agendada.
-              No confundir con el Pipeline CRM (que es el camino general de cualquier lead).
-            </p>
-            <p className="text-[11px] text-muted-foreground/70 mt-1.5">
-              En construcción · disponible cuando se conecte el webhook ManyChat del Bloque 2D
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* INVITACIONES con botón eliminar */}
       <section className="space-y-3">
