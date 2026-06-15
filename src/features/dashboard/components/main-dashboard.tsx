@@ -75,7 +75,7 @@ type CalendarBookingRow = {
 // NO inventar valores nuevos aqui — si se cambia un stage, cambiarlo en ambos sitios.
 const STAGE_LABELS: Record<string, string> = {
   nuevo_seguidor: "Nuevo seguidor",
-  contactado: "Contactado",
+  conversacion: "Conversación",
   agendado: "Agendado",
   atendio: "Atendió llamada",
   seguimiento: "Seguimiento",
@@ -86,7 +86,7 @@ const STAGE_LABELS: Record<string, string> = {
 
 const STAGE_COLORS: Record<string, string> = {
   nuevo_seguidor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  contactado: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+  conversacion: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
   agendado: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   atendio: "bg-purple-500/15 text-purple-400 border-purple-500/30",
   seguimiento: "bg-violet-500/15 text-violet-400 border-violet-500/30",
@@ -98,7 +98,7 @@ const STAGE_COLORS: Record<string, string> = {
 // Embudo lineal (camino "feliz"): entrada → caliente → llamada → cliente
 const FUNNEL_ORDER: string[] = [
   "nuevo_seguidor",
-  "contactado",
+  "conversacion",
   "agendado",
   "atendio",
   "cliente",
@@ -496,7 +496,7 @@ export function MainDashboard() {
               Pipeline CRM · todos los contactos
             </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Camino del lead: nuevo seguidor → contactado → agendado → atendió llamada → cliente
+              Camino del lead: nuevo seguidor → conversacion → agendado → atendió llamada → cliente
             </p>
           </div>
         </div>

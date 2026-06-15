@@ -26,10 +26,10 @@ type ContactRow = {
 }
 
 // Funnel real Capital Hub (en español)
-// Lead viene de IG → Marco/Adrián/setter le habla → agenda → llamada → seguimiento o cliente
+// Lead viene de IG → setter le escribe (= conversacion) → agenda → llamada → seguimiento o cliente
 const PIPELINE_STAGES = [
   { value: "nuevo_seguidor", label: "Nuevo seguidor" },  // ManyChat detecta nuevo follower
-  { value: "contactado", label: "Contactado" },          // Setter envió DM
+  { value: "conversacion", label: "Conversación" },      // Setter/ManyChat inicia DM
   { value: "agendado", label: "Agendado" },              // Reservó llamada
   { value: "atendio", label: "Atendió llamada" },        // Entró a la videollamada
   { value: "seguimiento", label: "Seguimiento" },        // No cerró ahora pero hay potencial
@@ -211,7 +211,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                       stage.value === "atendio" && "border-cyan-500/40 text-cyan-400",
                       stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
                       stage.value === "agendado" && "border-amber-500/40 text-amber-400",
-                      stage.value === "contactado" && "border-blue-500/40 text-blue-400",
+                      stage.value === "conversacion" && "border-blue-500/40 text-blue-400",
                       stage.value === "nuevo_seguidor" && "border-border/40 text-muted-foreground"
                     )}>
                       {stage.label}
