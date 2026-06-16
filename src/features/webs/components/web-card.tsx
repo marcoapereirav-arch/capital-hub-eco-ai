@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Check, ExternalLink, Globe, FileDown, Loader2 } from "lucide-react"
+import { Copy, Check, ExternalLink, Globe, FileDown, Loader2, Pencil, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { WebWithSteps } from "../types/web"
@@ -28,10 +28,42 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [copiedStepId, setCopiedStepId] = useState<string | null>(null)
   const [status, setStatus] = useState(web.status)
   const [saving, setSaving] = useState(false)
+  const [slug, setSlug] = useState(web.slug)
+  const [editingSlug, setEditingSlug] = useState(false)
+  const [slugDraft, setSlugDraft] = useState(web.slug)
+  const [slugError, setSlugError] = useState<string | null>(null)
   const Icon = TYPE_ICONS[web.type]
 
   const entryStep = web.steps.find((s) => s.isEntry) ?? web.steps[0]
-  const baseUrl = `${publicBaseUrl}/${web.slug}`
+  const baseUrl = `${publicBaseUrl}/${slug}`
+
+  async function saveSlug() {
+    const cleaned = slugDraft.trim().toLowerCase().replace(/^\/+|\/+$/g, "")
+    if (!cleaned || !/^[a-z0-9][a-z0-9-/_]*$/.test(cleaned)) {
+      setSlugError("Solo letras, números, guion y barra. Sin espacios.")
+      return
+    }
+    if (cleaned === slug) { setEditingSlug(false); return }
+    setSaving(true)
+    setSlugError(null)
+    try {
+      const res = await fetch(`/api/admin/webs/${web.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: cleaned }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setSlugError(data?.error ?? "No se pudo guardar")
+        setSaving(false)
+        return
+      }
+      setSlug(cleaned)
+      setEditingSlug(false)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   async function togglePublished() {
     const next = status === "published" ? "draft" : "published"
@@ -97,9 +129,51 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
               {status === "published" ? "Published" : status === "draft" ? "Draft" : status}
             </button>
           </div>
-          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/70">
-            /{web.slug}
-          </p>
+          {editingSlug ? (
+            <div className="mt-1 flex items-center gap-1">
+              <span className="font-mono text-[11px] text-muted-foreground/70">/</span>
+              <input
+                value={slugDraft}
+                onChange={(e) => setSlugDraft(e.target.value)}
+                disabled={saving}
+                autoFocus
+                className="h-6 rounded-sm border border-border bg-background px-1.5 font-mono text-[11px] flex-1 min-w-0 focus:border-foreground/40 focus:outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveSlug()
+                  if (e.key === "Escape") { setEditingSlug(false); setSlugDraft(slug); setSlugError(null) }
+                }}
+              />
+              <button
+                onClick={saveSlug}
+                disabled={saving}
+                className="p-1 rounded-sm hover:bg-secondary text-green-400"
+                title="Guardar"
+              >
+                {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              </button>
+              <button
+                onClick={() => { setEditingSlug(false); setSlugDraft(slug); setSlugError(null) }}
+                className="p-1 rounded-sm hover:bg-secondary text-muted-foreground"
+                title="Cancelar"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ) : (
+            <div className="mt-0.5 flex items-center gap-1.5 group/slug">
+              <p className="font-mono text-[11px] text-muted-foreground/70">/{slug}</p>
+              <button
+                onClick={() => setEditingSlug(true)}
+                className="p-0.5 rounded-sm text-muted-foreground opacity-0 group-hover/slug:opacity-100 hover:bg-secondary transition-opacity"
+                title="Editar slug (path)"
+              >
+                <Pencil className="h-2.5 w-2.5" />
+              </button>
+            </div>
+          )}
+          {slugError && (
+            <p className="mt-1 text-[10px] text-red-400">{slugError}</p>
+          )}
         </div>
       </header>
 

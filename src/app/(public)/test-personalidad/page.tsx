@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation"
+import { unstable_noStore as noStore } from "next/cache"
 import { TestPersonalidadLanding } from "@/features/funnel-test-personalidad/components/landing"
 import { isWebPublished } from "@/lib/webs/check-web-status"
 
 export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export const metadata = {
   title: "Test de personalidad — Capital Hub",
@@ -11,7 +13,7 @@ export const metadata = {
 }
 
 export default async function TestPersonalidadRoute() {
-  // Si el funnel está en 'draft' o no existe → 404 público
+  noStore() // bypass Next.js data cache: el status puede cambiar desde /webs
   if (!(await isWebPublished("test-personalidad"))) {
     notFound()
   }

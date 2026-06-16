@@ -10,6 +10,12 @@ const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   description: z.string().max(500).nullable().optional(),
   status: z.enum(["draft", "published", "archived"]).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9][a-z0-9-/_]*$/, "Solo minúsculas, números, guion y barra")
+    .optional(),
 })
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -33,6 +39,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (parsed.data.name !== undefined) update.name = parsed.data.name
   if (parsed.data.description !== undefined) update.description = parsed.data.description
   if (parsed.data.status !== undefined) update.status = parsed.data.status
+  if (parsed.data.slug !== undefined) update.slug = parsed.data.slug
 
   const { data, error } = await admin
     .from("webs")
@@ -41,6 +48,11 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     .select("*")
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    if (error.code === "23505") {
+      return NextResponse.json({ error: "Ese slug ya está usado por otro funnel" }, { status: 409 })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json(data)
 }

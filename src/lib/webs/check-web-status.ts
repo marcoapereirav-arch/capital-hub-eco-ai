@@ -1,16 +1,23 @@
-import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 
 /**
- * Devuelve el status de una web por slug (funnel / lead_magnet).
- * Si la web no existe o esta en 'draft'/'archived', el caller debe llamar notFound()
- * para que el visitante vea 404 (no debe acceder a contenido no publicado).
+ * Devuelve el status de una web por slug.
+ *
+ * Estrategia:
+ *   La tabla `webs` ya tiene RLS con policy "Public read published webs"
+ *   que permite SELECT solo si status='published'. Usamos el cliente ANON:
+ *   - Si encuentra fila → la web esta publicada
+ *   - Si no encuentra → draft / archived / no existe
+ *
+ * Esto evita falsos positivos de cache y es mas simple que service_role.
  */
 export async function getWebStatusBySlug(slug: string): Promise<"draft" | "published" | "archived" | null> {
-  const admin = createServiceClient(
+  const client = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } },
   )
-  const { data } = await admin.from("webs").select("status").eq("slug", slug).maybeSingle()
+  const { data } = await client.from("webs").select("status").eq("slug", slug).maybeSingle()
   return (data?.status as "draft" | "published" | "archived" | undefined) ?? null
 }
 
