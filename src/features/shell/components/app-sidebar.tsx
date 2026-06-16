@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { navSections } from "./nav-config"
+import { canAccessRoute } from "@/lib/auth/role-access"
 import { UserMenu } from "./user-menu"
 
 function SidebarLogo() {
@@ -56,13 +57,17 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
       <SidebarLogo />
 
       <SidebarContent className="pt-2">
-        {navSections.map((section) => (
+        {navSections.map((section) => {
+          // Filtrar items segun rol del user. Si la seccion queda vacia, no la renderizamos.
+          const visibleItems = section.items.filter((item) => canAccessRoute(userRole, item.href))
+          if (visibleItems.length === 0) return null
+          return (
           <SidebarGroup key={section.label}>
             <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
               {section.label}
             </SidebarGroupLabel>
             <SidebarMenu>
-              {section.items.map((item) => {
+              {visibleItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -91,7 +96,8 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
               })}
             </SidebarMenu>
           </SidebarGroup>
-        ))}
+          )
+        })}
       </SidebarContent>
 
       <SidebarFooter>

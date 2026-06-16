@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { navPrimary, navSecondary } from "./nav-config"
+import { canAccessRoute } from "@/lib/auth/role-access"
 
 interface MobileBottomNavProps {
   userEmail: string
@@ -62,7 +63,7 @@ export function MobileBottomNav({
     <>
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 pb-safe backdrop-blur-md md:hidden">
         <ul className="grid grid-cols-5">
-          {navPrimary.map((item) => {
+          {navPrimary.filter((item) => canAccessRoute(userRole, item.href)).map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/")
             return (
@@ -132,7 +133,7 @@ export function MobileBottomNav({
           </SheetHeader>
 
           <div className="grid grid-cols-2 gap-2 px-4 pb-2">
-            {navSecondary.map((item) => {
+            {navSecondary.filter((item) => canAccessRoute(userRole, item.href)).map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/")
               return (

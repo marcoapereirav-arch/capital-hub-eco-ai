@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { canAccessRoute } from '@/lib/auth/role-access'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -26,12 +27,13 @@ export async function updateSession(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const pathname = request.nextUrl.pathname
 
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
-                           request.nextUrl.pathname.startsWith('/tasks') ||
-                           request.nextUrl.pathname.startsWith('/integrations')
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
-                      request.nextUrl.pathname.startsWith('/callback')
+  const isProtectedRoute = pathname.startsWith('/dashboard') ||
+                           pathname.startsWith('/tasks') ||
+                           pathname.startsWith('/integrations')
+  const isAuthRoute = pathname.startsWith('/login') ||
+                      pathname.startsWith('/callback')
 
   if (isProtectedRoute && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -39,6 +41,23 @@ export async function updateSession(request: NextRequest) {
 
   if (isAuthRoute && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Gate por rol — solo aplica a rutas del OS autenticadas (descarta /api/, /login, etc)
+  // Solo si tenemos user y estamos en una ruta "page" del OS (no public/api/static)
+  if (user && !pathname.startsWith('/api/') && !pathname.startsWith('/auth/') && !isAuthRoute) {
+    // Lee el rol del profile (cookie cache en futuro si pesa; por ahora 1 query)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+    const role = profile?.role ?? null
+
+    if (!canAccessRoute(role, pathname)) {
+      // Redirige a /dashboard (siempre permitido salvo bug de config)
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
   }
 
   return supabaseResponse

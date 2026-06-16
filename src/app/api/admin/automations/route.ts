@@ -8,29 +8,21 @@ export const runtime = "nodejs"
 function getAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 }
 
 /**
  * GET /api/admin/automations
  *
- * Devuelve el estado en vivo de TODAS las automatizaciones del OS.
- * Cada automatizacion tiene:
- *  - id, label, descripcion
- *  - trigger (cuando se dispara)
- *  - acciones (que hace en cadena)
- *  - estado calculado en vivo:
- *    * 'live'    = ejecutandose / ultima ejecucion OK
- *    * 'idle'    = no se ha ejecutado todavia pero esta lista
- *    * 'error'   = ultima ejecucion fallo
- *    * 'pending' = configurada pero falta algo externo (webhook, secret, etc)
- *  - lastRun (timestamp de la ultima ejecucion conocida)
- *  - lastRunStatus (success / failed)
- *  - relatedTables (tablas BD afectadas)
+ * Vista en VIVO con datos REALES (sin fantasmas).
  *
- * Esta es una vista de SOLO LECTURA. No se edita ni se crea desde aqui.
- * Las automatizaciones se crean en codigo (endpoints + crons).
+ * Status calculado:
+ *   - 'live'    = ejecutándose ahora mismo (cron corrió en últimas 24h o
+ *                 webhook recibió evento real en últimos 7d)
+ *   - 'idle'    = registrada y configurada pero sin ejecuciones recientes
+ *   - 'pending' = falta paso externo (token, panel ManyChat, OAuth, etc)
+ *   - 'error'   = última ejecución conocida falló
  */
 export async function GET() {
   const supabase = await createServerClient()
@@ -40,16 +32,37 @@ export async function GET() {
   const admin = getAdminClient()
   const now = new Date()
 
-  // Datos en vivo de BD para calcular estado de cada automatizacion
-  const manychatPromise = (async () => {
+  // 1. CRON JOBS reales — query directa via Management API si SUPABASE_ACCESS_TOKEN disponible.
+  // Si no, los crons quedan como 'idle' (registrados pero sin stats).
+  const cronData: Record<string, { runs: number; lastRun: string | null }> = {}
+  if (process.env.SUPABASE_ACCESS_TOKEN) {
     try {
-      const res = await admin.from("manychat_events").select("id", { count: "exact", head: true })
-      return res.count ?? null
+      const projectRef = process.env.SUPABASE_PROJECT_REF ?? "aglyoyqtzozdnusltjxe"
+      const sql = `SELECT j.jobname, COUNT(d.runid)::int as runs, MAX(d.start_time)::text as last_run
+                   FROM cron.job j
+                   LEFT JOIN cron.job_run_details d
+                     ON d.jobid = j.jobid AND d.start_time > now() - interval '24 hours'
+                   GROUP BY j.jobname;`
+      const resp = await fetch(`https://api.supabase.com/v1/projects/${projectRef}/database/query`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: sql }),
+      })
+      if (resp.ok) {
+        const rows = (await resp.json()) as Array<{ jobname: string; runs: number; last_run: string | null }>
+        for (const r of rows) {
+          cronData[r.jobname] = { runs: r.runs, lastRun: r.last_run }
+        }
+      }
     } catch {
-      return null
+      // ignore, fallback
     }
-  })()
+  }
 
+  // 2. Datos en vivo de tablas reales (paralelos)
   const [
     { count: bookingsCount },
     { data: lastBooking },
@@ -58,8 +71,10 @@ export async function GET() {
     { data: gcalOwner },
     { data: lastFailedEmail },
     { data: lastSale },
-    { data: lastInvite },
-    manychatEventsCount,
+    { count: manychatCount },
+    { data: lastManychatEvent },
+    { count: metaCount },
+    { data: lastMetaEvent },
   ] = await Promise.all([
     admin.from("calendar_bookings").select("id", { count: "exact", head: true }),
     admin.from("calendar_bookings").select("id, created_at").order("created_at", { ascending: false }).limit(1).maybeSingle(),
@@ -68,8 +83,10 @@ export async function GET() {
     admin.from("calendar_owners").select("google_oauth_refresh_token, google_oauth_connected_at, google_oauth_email").eq("id", "adrian").maybeSingle(),
     admin.from("email_logs").select("template, sent_at, error").eq("status", "failed").order("sent_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("contact_journey_events").select("created_at").eq("type", "sale").order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    admin.from("student_invites").select("id, created_at").order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    manychatPromise,
+    admin.from("manychat_events").select("id", { count: "exact", head: true }),
+    admin.from("manychat_events").select("created_at, event_type").order("id", { ascending: false }).limit(1).maybeSingle(),
+    admin.from("meta_events_log").select("id", { count: "exact", head: true }),
+    admin.from("meta_events_log").select("created_at, status").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ])
 
   const hoursSince = (iso: string | null | undefined) => {
@@ -77,26 +94,46 @@ export async function GET() {
     return Math.round((now.getTime() - new Date(iso).getTime()) / (1000 * 60 * 60))
   }
 
+  function cronStatus(jobname: string): { status: "live" | "idle" | "pending"; reason: string; lastRun: string | null; runs: number | null } {
+    const data = cronData[jobname]
+    if (!data) return { status: "idle", reason: "Cron registrado pero sin stats disponibles", lastRun: null, runs: null }
+    if (data.runs > 0 && data.lastRun) {
+      return { status: "live", reason: `pg_cron activo · ${data.runs} ejecuciones últimas 24h`, lastRun: data.lastRun, runs: data.runs }
+    }
+    return { status: "idle", reason: "Cron registrado, sin ejecuciones recientes", lastRun: null, runs: 0 }
+  }
+
+  const reminderStats = cronStatus("mifge_agenda_reminder_24h")
+  const trialEndsStats = cronStatus("mifge_trial_ends_48h")
+  const noShowStats = cronStatus("mifge_no_show_detection")
+  const errorAlertsStats = cronStatus("mifge_error_alerts")
+  const gcalHealthStats = cronStatus("gcal_health_check")
+  const welcomeFollowupStats = cronStatus("welcome_alumno_followup")
+
+  // ManyChat: si solo hay 0-1 eventos en BD = NO está realmente activo (1 era test)
+  const manychatActive = (manychatCount ?? 0) > 1
+  // Resend: cuenta como "live" si hay emails enviados
+  const resendActive = (emailsCount ?? 0) > 0
+
   const automations = [
     {
       id: "agenda_to_calendar",
       category: "calendario",
       label: "Reserva → Google Calendar de Adrián",
-      description: "Cuando alguien reserva slot en /agenda, el sistema crea automáticamente el evento en el Google Calendar de Adrián con Zoom link, datos del lead, y notas.",
-      trigger: "POST /api/calendar/book (formulario público /agenda)",
+      description: "Lead reserva slot en /agenda → el sistema crea evento en Google Calendar de Adrián con Zoom, datos del lead y notas. Mueve stage a 'agendado'.",
+      trigger: "POST /api/calendar/book (form público /agenda)",
       actions: [
-        "Crea row en calendar_bookings con public_token",
-        "Upsert contacto en contacts (stage='agendado')",
-        "Refresh access_token con OAuth refresh_token de Adrián",
-        "POST a Google Calendar API → crea evento",
-        "Envía email confirmación + .ics al lead vía Resend",
-        "Envía email notificación a Adrián",
-        "Crea contact_journey_event tipo 'call_booked'",
+        "Crea row calendar_bookings + public_token",
+        "Upsert contact stage='agendado'",
+        "Refresh access_token con OAuth de Adrián",
+        "POST Google Calendar API → crea evento",
+        "Email confirmación al lead + email notif a Adrián vía Resend",
+        "Inserta contact_journey_event 'call_booked'",
       ],
       relatedTables: ["calendar_bookings", "contacts", "calendar_owners", "email_logs", "contact_journey_events"],
       status: gcalOwner?.google_oauth_refresh_token ? "live" : "pending",
       statusReason: gcalOwner?.google_oauth_refresh_token
-        ? "Google Calendar conectado (" + (gcalOwner?.google_oauth_email ?? "") + ")"
+        ? `Google Calendar conectado (${gcalOwner.google_oauth_email ?? ""})`
         : "Falta conectar Google Calendar en /calendario",
       lastRun: lastBooking?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastBooking?.created_at),
@@ -106,79 +143,112 @@ export async function GET() {
       id: "agenda_reminder_24h",
       category: "calendario",
       label: "Cron recordatorio 24h antes de llamada",
-      description: "Cada 30 min, busca llamadas que van a ocurrir en las próximas 24h y envía email recordatorio al lead.",
-      trigger: "pg_cron cada 30 minutos → GET /api/cron/agenda-reminder-24h",
+      description: "Cada 30 min, busca llamadas en próximas 24h y envía email recordatorio al lead.",
+      trigger: "pg_cron */30min → GET /api/cron/agenda-reminder-24h",
       actions: [
-        "SELECT bookings WHERE start_at entre now()+23h y now()+24.5h",
-        "Para cada uno: render template agenda_reminder_24h",
+        "SELECT bookings WHERE start_at en próximas 24h",
+        "Render template agenda_reminder_24h",
         "Envía email vía Resend con Zoom link",
         "Marca metadata.reminder_sent_at",
       ],
       relatedTables: ["calendar_bookings", "email_logs"],
-      status: "live",
-      statusReason: "pg_cron activo (jobid 1)",
-      lastRun: null,
-      lastRunHoursAgo: null,
-      totalExecutions: null,
+      status: reminderStats.status,
+      statusReason: reminderStats.reason,
+      lastRun: reminderStats.lastRun,
+      lastRunHoursAgo: hoursSince(reminderStats.lastRun),
+      totalExecutions: reminderStats.runs,
+    },
+    {
+      id: "trial_ends_48h",
+      category: "ventas",
+      label: "Cron trial_ends_48h (MIFGE legacy)",
+      description: "Cada hora, busca usuarios cuyo trial termina en 48h y envía email recordatorio antes de cobrar.",
+      trigger: "pg_cron 0 * * * * → GET /api/cron/trial-ends-48h",
+      actions: [
+        "SELECT users cuyo trial termina entre +47h y +48h",
+        "Envía email aviso antes del cobro",
+      ],
+      relatedTables: ["users", "email_logs"],
+      status: trialEndsStats.status,
+      statusReason: trialEndsStats.reason,
+      lastRun: trialEndsStats.lastRun,
+      lastRunHoursAgo: hoursSince(trialEndsStats.lastRun),
+      totalExecutions: trialEndsStats.runs,
     },
     {
       id: "no_show_detection",
       category: "calendario",
       label: "Cron detección no-show + email retargeting",
-      description: "Cada 30 min, detecta llamadas con start_at en pasado (1-25h) sin marcar attended. Las marca como no_show y envía email retargeting al lead.",
-      trigger: "pg_cron cada 30 minutos → GET /api/cron/no-show-detection",
+      description: "Cada 30 min, detecta llamadas pasadas (1-25h) sin attended. Marca no_show + email re-agenda al lead.",
+      trigger: "pg_cron */30min → GET /api/cron/no-show-detection",
       actions: [
-        "SELECT bookings WHERE status='booked' AND start_at BETWEEN now()-25h AND now()-1h",
-        "UPDATE bookings SET status='no_show'",
-        "UPDATE contact SET stage='no_show'",
-        "Envía email template no_show con link a re-agendar",
-        "Crea contact_journey_event 'no_show_detected'",
+        "SELECT bookings status='booked' AND start_at hace 1-25h",
+        "UPDATE bookings status='no_show' + contact stage='no_show'",
+        "Envía email template no_show con link re-agendar",
+        "Inserta contact_journey_event 'no_show_detected'",
       ],
       relatedTables: ["calendar_bookings", "contacts", "email_logs", "contact_journey_events"],
-      status: "live",
-      statusReason: "pg_cron activo (jobid 2)",
-      lastRun: null,
-      lastRunHoursAgo: null,
-      totalExecutions: null,
+      status: noShowStats.status,
+      statusReason: noShowStats.reason,
+      lastRun: noShowStats.lastRun,
+      lastRunHoursAgo: hoursSince(noShowStats.lastRun),
+      totalExecutions: noShowStats.runs,
     },
     {
       id: "gcal_health_check",
       category: "calendario",
       label: "Cron salud Google Calendar",
-      description: "Cada hora, verifica que el refresh_token de Adrián sigue funcionando contra Google. Si falla, envía email + push notification a Marco y Adrián.",
-      trigger: "pg_cron cada hora → GET /api/cron/gcal-health-check",
+      description: "Cada hora, verifica que el refresh_token de Adrián sigue vivo. Si falla, alerta a Marco y Adrián.",
+      trigger: "pg_cron 0 * * * * → GET /api/cron/gcal-health-check",
       actions: [
         "Lee refresh_token de calendar_owners",
         "Intenta refresh contra oauth2.googleapis.com/token",
-        "Si OK: actualiza access_token + expires_at",
-        "Si falla: marca disconnected en BD, envía email alert + push",
+        "Si OK: actualiza access_token",
+        "Si falla: marca disconnected + email alert + push",
       ],
-      relatedTables: ["calendar_owners", "calls_availability", "email_logs", "notifications"],
-      status: gcalOwner?.google_oauth_refresh_token ? "live" : "idle",
+      relatedTables: ["calendar_owners", "email_logs", "notifications"],
+      status: gcalHealthStats.status,
       statusReason: gcalOwner?.google_oauth_refresh_token
-        ? "Token OK · última conexión " + (gcalOwner.google_oauth_connected_at ? new Date(gcalOwner.google_oauth_connected_at).toLocaleDateString("es-ES") : "?")
-        : "Sin token (Google Calendar no conectado)",
-      lastRun: gcalOwner?.google_oauth_connected_at ?? null,
-      lastRunHoursAgo: hoursSince(gcalOwner?.google_oauth_connected_at),
-      totalExecutions: null,
+        ? `${gcalHealthStats.reason} · Token OK`
+        : "OAuth no conectado",
+      lastRun: gcalHealthStats.lastRun,
+      lastRunHoursAgo: hoursSince(gcalHealthStats.lastRun),
+      totalExecutions: gcalHealthStats.runs,
     },
     {
-      id: "sale_to_alumno",
+      id: "error_alerts_digest",
+      category: "sistema",
+      label: "Cron alert digest 30min",
+      description: "Cada 30 min, recopila errores críticos del OS (emails fallidos, webhooks rotos, crons que petaron) y envía digest a Marco.",
+      trigger: "pg_cron */30min → GET /api/cron/error-alerts",
+      actions: [
+        "SELECT email_logs WHERE status='failed' últimos 30min",
+        "Si hay errores: render digest + envía a Marco",
+      ],
+      relatedTables: ["email_logs", "notifications"],
+      status: errorAlertsStats.status,
+      statusReason: errorAlertsStats.reason,
+      lastRun: lastFailedEmail?.sent_at ?? errorAlertsStats.lastRun,
+      lastRunHoursAgo: hoursSince(lastFailedEmail?.sent_at ?? errorAlertsStats.lastRun),
+      totalExecutions: errorAlertsStats.runs,
+    },
+    {
+      id: "register_sale",
       category: "ventas",
       label: "Registrar venta → email magic link al alumno",
-      description: "Cuando el closer registra una venta, el sistema crea token único + envía email al alumno con magic link para activar su cuenta en la App.",
-      trigger: "POST /api/admin/sales/register (widget flotante Registrar venta)",
+      description: "El closer registra una venta desde el widget flotante. El sistema crea token + envía email con magic link para activar la App.",
+      trigger: "POST /api/admin/sales/register (widget Registrar venta)",
       actions: [
-        "Upsert contacto con stage='alumno' + sumar revenue + products[]",
-        "Crear contact_journey_event tipo 'sale'",
-        "Crear student_invites con token único, expira 7 días",
-        "Email template welcome_alumno_ht al alumno con link /accept-invite/<token>",
-        "Email notificación a Marco con purchase details",
-        "(futuro) Meta CAPI Purchase event",
+        "Upsert contact stage='alumno' + suma revenue + products[]",
+        "Crea contact_journey_event 'sale'",
+        "Crea student_invite con token único (expira 7d)",
+        "Email welcome_alumno_ht al alumno con magic link",
       ],
-      relatedTables: ["contacts", "contact_journey_events", "student_invites", "email_logs"],
-      status: "live",
-      statusReason: lastSale?.created_at ? "Última venta " + new Date(lastSale.created_at).toLocaleDateString("es-ES") : "Sin ventas registradas todavía",
+      relatedTables: ["contacts", "student_invites", "contact_journey_events", "email_logs"],
+      status: lastSale ? "live" : "idle",
+      statusReason: lastSale
+        ? "Última venta hace " + (hoursSince(lastSale.created_at) ?? "?") + "h"
+        : "Endpoint listo · sin ventas todavía",
       lastRun: lastSale?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastSale?.created_at),
       totalExecutions: null,
@@ -187,91 +257,81 @@ export async function GET() {
       id: "welcome_alumno_followup",
       category: "alumno",
       label: "Cron welcome alumno followup 3 días",
-      description: "Cada día a las 10am UTC, busca student_invites no aceptadas con más de 3 días desde envío. Reenvía el email de bienvenida (una sola vez).",
-      trigger: "pg_cron diario 10am UTC → GET /api/cron/welcome-alumno-followup",
+      description: "Diario 10am UTC, busca alumnos que aceptaron invitación hace 3 días y aún no entraron a la App. Envía email recordatorio.",
+      trigger: "pg_cron 0 10 * * * → GET /api/cron/welcome-alumno-followup",
       actions: [
-        "SELECT student_invites WHERE accepted_at IS NULL AND created_at < now()-3d AND metadata->>'followup_sent_at' IS NULL",
-        "Para cada uno: render welcome_alumno_ht con tono recordatorio",
-        "Envía email vía Resend",
-        "UPDATE metadata.followup_sent_at = now()",
+        "SELECT student_invites accepted hace 3d sin actividad",
+        "Envía email followup",
       ],
       relatedTables: ["student_invites", "email_logs"],
-      status: "live",
-      statusReason: "pg_cron activo (jobid 6)",
-      lastRun: lastInvite?.created_at ?? null,
-      lastRunHoursAgo: hoursSince(lastInvite?.created_at),
-      totalExecutions: null,
+      status: welcomeFollowupStats.status,
+      statusReason: welcomeFollowupStats.reason,
+      lastRun: welcomeFollowupStats.lastRun,
+      lastRunHoursAgo: hoursSince(welcomeFollowupStats.lastRun),
+      totalExecutions: welcomeFollowupStats.runs,
     },
     {
       id: "resend_webhook_tracking",
       category: "email",
-      label: "Resend webhook → tracking real de aperturas y clicks",
+      label: "Resend webhook → tracking aperturas y clicks",
       description: "Cuando un destinatario abre o clica un email, Resend nos avisa via webhook. Actualizamos email_logs con timestamps.",
       trigger: "Webhook entrante: Resend → POST /api/email/webhooks/resend",
       actions: [
-        "Verifica firma svix-* contra RESEND_WEBHOOK_SECRET",
-        "Parsea evento (sent, delivered, opened, clicked, bounced, complained)",
-        "Busca email_log por resend_id",
-        "Actualiza timestamp correspondiente (opened_at, clicked_at, delivered_at)",
-        "Si bounce/complaint marca status=failed",
+        "Verifica firma Svix",
+        "UPDATE email_logs.opened_at / clicked_at por message_id",
       ],
       relatedTables: ["email_logs"],
-      status: process.env.RESEND_WEBHOOK_SECRET ? "live" : "pending",
-      statusReason: process.env.RESEND_WEBHOOK_SECRET
-        ? "Secret configurado · webhook activo en Resend"
-        : "Falta RESEND_WEBHOOK_SECRET en Vercel",
+      status: resendActive ? "live" : "idle",
+      statusReason: resendActive
+        ? `Resend activo · ${emailsCount} emails enviados · último: ${lastEmail?.template ?? "?"}`
+        : "Resend configurado · sin emails todavía",
       lastRun: lastEmail?.sent_at ?? null,
       lastRunHoursAgo: hoursSince(lastEmail?.sent_at),
       totalExecutions: emailsCount ?? 0,
     },
     {
-      id: "error_alerts",
-      category: "operacion",
-      label: "Cron alert digest 30min",
-      description: "Cada 30 min revisa email_logs y meta_events_log fallidos en los últimos 30 min. Envía digest a Marco si hay errores.",
-      trigger: "pg_cron cada 30 minutos → GET /api/cron/error-alerts",
+      id: "meta_capi_tracking",
+      category: "ads",
+      label: "Meta Pixel + CAPI → tracking conversiones",
+      description: "Eventos de conversión (Lead, Purchase, etc) se envían a Meta vía Pixel (browser) + CAPI (server). Audit trail en meta_events_log.",
+      trigger: "Múltiples endpoints internos disparan CAPI",
       actions: [
-        "COUNT email_logs WHERE status='failed' AND sent_at > now()-30min",
-        "COUNT meta_events_log WHERE status='failed' AND created_at > now()-30min",
-        "Si suma > 0: render internal_error_alert con detalles",
-        "Envía email a Marco",
+        "Lead clica CTA → fbq() + fetch /api/meta/capi",
+        "Venta registrada → CAPI Purchase event",
+        "Log de cada evento en meta_events_log con status",
       ],
-      relatedTables: ["email_logs", "meta_events_log"],
-      status: "live",
-      statusReason: lastFailedEmail
-        ? "Último error detectado " + (lastFailedEmail.sent_at ? new Date(lastFailedEmail.sent_at).toLocaleDateString("es-ES") : "?")
-        : "Sin errores recientes (sano)",
-      lastRun: lastFailedEmail?.sent_at ?? null,
-      lastRunHoursAgo: hoursSince(lastFailedEmail?.sent_at),
-      totalExecutions: null,
+      relatedTables: ["meta_events_log"],
+      status: (metaCount ?? 0) > 0 ? "live" : "idle",
+      statusReason: (metaCount ?? 0) > 0
+        ? `CAPI activo · ${metaCount} eventos · último: ${lastMetaEvent?.status ?? "?"}`
+        : "Pixel configurado · sin eventos todavía",
+      lastRun: lastMetaEvent?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastMetaEvent?.created_at),
+      totalExecutions: metaCount ?? 0,
     },
     {
       id: "manychat_webhook",
       category: "crm",
-      label: "ManyChat → CRM (nuevo seguidor + auto-stage Conversación)",
-      description: "Flujo end-to-end IG: cuando alguien empieza a seguir a @adrian, ManyChat envía DM welcome del bot y notifica al OS → crea contacto stage 'lead' con pipeline + tag origen auto. Cuando el lead responde al welcome → OS mueve stage a 'conversacion' sin que nadie toque nada.",
+      label: "ManyChat → CRM (auto-crear lead + auto-stage)",
+      description:
+        "Flow IG: cuando alguien interactúa (comment/story reply/DM keyword), ManyChat dispara webhook al OS → crea contacto stage='lead'. Cuando el lead responde al welcome del bot → mueve a 'conversación'.",
       trigger: "Webhook entrante: ManyChat → POST /api/webhooks/manychat",
       actions: [
         "Verifica firma MANYCHAT_WEBHOOK_SECRET",
-        "Loguea evento crudo en manychat_events (auditoría)",
-        "Upsert subscriber en manychat_subscribers_cache",
-        "event_type=new_subscriber → crea contacto stage='lead' + pipeline_id default + tag 'origen:instagram_follow'",
-        "event_type=user_replied_to_welcome → mueve stage a 'conversacion' (si estaba en nuevo_seguidor)",
-        "Cada evento añade entrada en contact_journey_events para el timeline",
-        "Lookup por manychat_subscriber_id o instagram_username — no duplica contactos",
+        "Routing por event_type (new_subscriber, user_replied_to_welcome, etc)",
+        "Crea contacto / mueve stage / asigna tag origen / inserta journey event",
       ],
-      relatedTables: ["contacts", "manychat_events", "manychat_subscribers_cache", "contact_journey_events", "contact_tags", "tags"],
-      status: ((manychatEventsCount as number | null) ?? 0) > 0 ? "live" : "pending",
-      statusReason: ((manychatEventsCount as number | null) ?? 0) > 0
-        ? "Webhook recibiendo eventos · " + ((manychatEventsCount as number | null) ?? 0) + " eventos totales"
-        : "Endpoint listo · falta configurar External Request en panel ManyChat",
-      lastRun: null,
-      lastRunHoursAgo: null,
-      totalExecutions: (manychatEventsCount as number | null) ?? null,
+      relatedTables: ["contacts", "manychat_events", "manychat_subscribers_cache", "contact_journey_events", "contact_tags"],
+      status: manychatActive ? "live" : "pending",
+      statusReason: manychatActive
+        ? `Webhook recibiendo · ${manychatCount} eventos · último ${lastManychatEvent?.event_type ?? "?"}`
+        : "Endpoint listo · FALTA configurar External Request en panel ManyChat (tarea Marco/Adrián)",
+      lastRun: lastManychatEvent?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastManychatEvent?.created_at),
+      totalExecutions: manychatCount ?? 0,
     },
   ]
 
-  // Estadísticas resumen
   const summary = {
     total: automations.length,
     live: automations.filter((a) => a.status === "live").length,
