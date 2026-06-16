@@ -38,12 +38,7 @@ Inyecta autenticacion B2B production-ready con Supabase + Next.js 16.
 
 ## Archivos a Crear
 
-### 1. `proxy.ts` (al mismo nivel que `app/`)
-
-> **IMPORTANTE**: Si el proyecto usa `src/app/`, `proxy.ts` va en `src/proxy.ts` (NO en la raíz). Si usa `app/` en raíz, va en la raíz.
-> Next.js 16 ignora silenciosamente `proxy.ts` en la raíz cuando existe `src/app/`. No hay error, simplemente no se ejecuta el middleware.
-> Además: NO añadir `runtime` al `config` — Proxy siempre corre en Node.js, y declararlo causa: *"Route segment config is not allowed in Proxy file"*.
-
+### 1. `proxy.ts` (root)
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server'
@@ -596,9 +591,6 @@ export { UpdatePasswordForm } from './UpdatePasswordForm'
 
 ### 11. `src/app/(auth)/login/page.tsx`
 
-> **IMPORTANTE**: `LoginForm` usa `useSearchParams()` para leer el `?error=auth_callback_failed`. En Next.js 16 con prerender estático, esto requiere envolver `<LoginForm />` en `<Suspense>`, o el build falla con: *"useSearchParams() should be wrapped in a suspense boundary at page /login"*.
-
-
 ```tsx
 import Link from 'next/link'
 import { LoginForm } from '@/features/auth/components'
@@ -926,3 +918,31 @@ Configurar credenciales:
 
 Listo para probar en /login (Email/Password + Google)
 ```
+
+---
+
+## REGLA OBLIGATORIA — Auto-actualizar BUSINESS_LOGIC.md
+
+Al final de la ejecución exitosa, ANTES de mostrar el mensaje final al usuario:
+
+1. Lee `BUSINESS_LOGIC.md` en la raíz del proyecto.
+2. Localiza la sección `## 6. Plugins instalados`.
+3. Añade una entrada nueva con este formato:
+
+```
+### [Nombre del plugin]
+- **Activado:** [fecha YYYY-MM-DD]
+- **Cuadrante principal:** [Marketing / Ventas / Producto / Finanzas]
+- **Carpeta:** `src/features/[plugin]`
+- **Tablas Supabase:** [si aplica]
+- **Knowledges asociados:** [si aplica]
+- **Integraciones externas:** [si aplica]
+- **Variables de entorno:** [si aplica]
+- **Qué hace:** [una frase descriptiva]
+```
+
+4. Si el plugin requiere tablas Supabase nuevas, añade también el detalle en `## 5.2 Tablas añadidas por plugins` (sub-sección de "Arquitectura de Datos").
+
+5. Guarda el archivo.
+
+Esta regla es **no negociable**. Si no se actualiza el BL, el plugin se considera "no documentado" y rompe la regla de "single source of truth" del proyecto.

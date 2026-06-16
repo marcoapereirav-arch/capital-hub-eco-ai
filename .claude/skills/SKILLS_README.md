@@ -1,24 +1,25 @@
-# Skills System - SaaS Factory V4
+# Skills System - NVISION® V4
 
 > Todo es un Skill. Hot reload. Auto-discovery. Zero config.
 
 ---
 
-## Inventario de Skills (25 total)
+## Inventario de Skills (26 total)
 
 ### Invocables por el Usuario (/)
 
 | Skill | Comando | Descripcion |
 |-------|---------|-------------|
-| `new-app` | `/new-app` | Entrevista de negocio → BUSINESS_LOGIC.md |
+| `new-ecoai` | `/new-ecoai` | Entrevista de negocio → BUSINESS_LOGIC.md |
 | `landing` | `/landing` | Landing cinematica: scroll-driven video + copy AIDA/PAS + glass-morphism |
 | `primer` | `/primer` | Inicializar contexto del proyecto |
 | `add-login` | `/add-login` | Auth completo Supabase (login, signup, password reset, profiles, RLS) |
 | `add-payments` | `/add-payments` | Pagos con Polar (MoR): checkout, webhooks, suscripciones, acceso |
 | `add-emails` | `/add-emails` | Emails transaccionales: Resend + React Email + batch + unsubscribe |
+| `email-token-based` | `/email-token-based` | Emails SIN Supabase (custom token flow): Resend + tokens propios (auth_tokens), reset password + confirmacion |
 | `add-mobile` | `/add-mobile` | PWA instalable + push notifications (iOS compatible) |
-| `eject-sf` | `/eject-sf` | Remover SaaS Factory del proyecto (DESTRUCTIVO) |
-| `update-sf` | `/update-sf` | Actualizar a ultima version |
+| `eject-ecoai` | `/eject-ecoai` | Remover NVISION® del proyecto (DESTRUCTIVO) |
+| `update-ecoai` | `/update-ecoai` | Actualizar a ultima version |
 | `bucle-agentico` | `/bucle-agentico` | Bucle Agentico para sistemas complejos (por fases) |
 | `sprint` | `/sprint` | Bucle Agentico para tareas rapidas |
 | `prp` | `/prp [feature]` | Generar Product Requirements Proposal |
@@ -89,7 +90,7 @@ agent: Explore                      # Tipo de agente (opcional)
 
 ## Memoria Persistente (.claude/memory/)
 
-SaaS Factory incluye un sistema de memoria persistente POR PROYECTO que reemplaza la auto-memory de Claude Code.
+NVISION® incluye un sistema de memoria persistente POR PROYECTO que reemplaza la auto-memory de Claude Code.
 
 **Por que?** La auto-memory de Claude Code guarda notas en `~/.claude/projects/` (local a tu maquina). Eso significa que no viaja con el repo, no es versionado, no es compartido con tu equipo, y Claude decide que guardar sin tu control.
 
@@ -149,5 +150,5 @@ mkdir .claude/skills/mi-skill
 
 ---
 
-*SaaS Factory V4: Todo es un Skill.*
+*NVISION® V4: Todo es un Skill.*
 *Basado en Claude Code Skills 2.0 (CC 2.1.0+)*

@@ -63,7 +63,7 @@ Cada imagen debe contar una historia completa:
 - **Anotaciones laterales** con flechas apuntando a detalles
 - **Iconos decorativos** rellenando espacios vacios (estrellas, rayos, flechas pequeñas)
 
-## Sistema de Colores — SaaS Factory Brand
+## Sistema de Colores — NVISION® Brand
 
 **Regla fundamental:** Los colores de marca son para CONTORNOS y BORDES. Los rellenos son versiones pastel/suaves del mismo color, con textura de lapiz de color o marcatextos (trazos visibles, no plano).
 
@@ -83,9 +83,9 @@ Cada imagen debe contar una historia completa:
 - El sombreado agrega profundidad: mas intenso en bordes, mas suave en centro.
 - Los contornos fuertes contrastan contra los rellenos suaves = efecto educativo profesional.
 
-## Personaje Levy — Mascota AI de SaaS Factory
+## Personaje Levy — Mascota AI de NVISION®
 
-Cuando una imagen necesite un personaje o mascota, usar a **Levy** (el agente AI de SaaS Factory).
+Cuando una imagen necesite un personaje o mascota, usar a **Levy** (el agente AI de NVISION®).
 
 **Asset:** `.claude/skills/video-visuals/assets/levy.png`
 

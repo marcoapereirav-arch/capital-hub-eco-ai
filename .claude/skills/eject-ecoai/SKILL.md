@@ -1,10 +1,10 @@
 ---
-name: eject-sf
-description: "DESTRUCTIVO: Eliminar SaaS Factory del proyecto y dejar solo el software funcional. Activar cuando el usuario dice: quiero quitar SaaS Factory, eject, remover el template, limpiar el proyecto, o distribuir el codigo sin la fabrica. SIEMPRE confirmar antes de ejecutar."
+name: eject-ecoai
+description: "DESTRUCTIVO: Eliminar NVISION® del proyecto y dejar solo el software funcional. Activar cuando el usuario dice: quiero quitar NVISION®, eject, remover el template, limpiar el proyecto, o distribuir el codigo sin la fabrica. SIEMPRE confirmar antes de ejecutar."
 allowed-tools: Read, Write, Edit, Bash
 ---
 
-# Eject SaaS Factory
+# Eject NVISION®
 
 ## ADVERTENCIA
 
@@ -20,13 +20,13 @@ Este comando eliminara PERMANENTEMENTE:
 - .claude/PRPs/ (templates PRP)
 - .mcp.json (configuracion de MCPs)
 - CLAUDE.md (system prompt)
-- Referencias a "SaaS Factory" en el codigo
+- Referencias a "NVISION®" en el codigo
 
 El proyecto quedara como una aplicacion Next.js generica,
 lista para distribuir SIN las herramientas de desarrollo.
 
 Esta accion es IRREVERSIBLE.
-No podras usar update-sf despues de esto.
+No podras usar update-ecoai despues de esto.
 
 Para confirmar, escribe exactamente: EJECT
 ```
@@ -39,12 +39,12 @@ Para confirmar, escribe exactamente: EJECT
 
 ### Paso 1: Limpiar referencias en codigo
 
-Modifica estos archivos para quitar referencias a SaaS Factory:
+Modifica estos archivos para quitar referencias a NVISION®:
 
 **`src/app/page.tsx`** - Cambiar el titulo:
 ```tsx
 // ANTES
-<h1>SaaS Factory</h1>
+<h1>NVISION®</h1>
 
 // DESPUES
 <h1>Mi Aplicacion</h1>
@@ -54,8 +54,8 @@ Modifica estos archivos para quitar referencias a SaaS Factory:
 ```tsx
 // ANTES
 export const metadata: Metadata = {
-  title: 'SaaS Factory App',
-  description: 'Built with SaaS Factory',
+  title: 'NVISION® App',
+  description: 'Built with NVISION®',
 }
 
 // DESPUES
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
 **`package.json`** - Cambiar el nombre:
 ```json
 // ANTES
-"name": "saas-factory-app"
+"name": "nvision-app"
 
 // DESPUES
 "name": "mi-aplicacion"
@@ -138,7 +138,7 @@ vercel
 ### Paso 3: Eliminar archivos de configuracion
 
 ```bash
-# Eliminar archivos de SaaS Factory
+# Eliminar archivos de NVISION®
 rm -f .mcp.json
 rm -f CLAUDE.md
 rm -rf src/features/.template/
@@ -175,7 +175,7 @@ Actualizado:
 - README.md (documentacion basica)
 
 Tu proyecto esta listo para distribuir.
-No queda rastro de SaaS Factory.
+No queda rastro de NVISION®.
 ```
 
 ---
@@ -183,5 +183,5 @@ No queda rastro de SaaS Factory.
 ## Notas Importantes
 
 1. **Este skill se auto-destruye** - Despues de ejecutarlo, no existira mas
-2. **No hay vuelta atras** - Para recuperar SF, tendrias que volver a ejecutar el alias `saas-factory`
+2. **No hay vuelta atras** - Para recuperar SF, tendrias que volver a ejecutar el alias `nvision`
 3. **El codigo funcional NO se toca** - Solo se eliminan herramientas de desarrollo

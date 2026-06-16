@@ -9,7 +9,7 @@ description: |
   funnel, storage, auth, configurar permisos, o cualquier operacion de BD.
 allowed-tools: Bash(curl *) Bash(export *) Bash(grep *) Bash(python3 *) Read, Write, Edit, Grep
 metadata:
-  author: saas-factory
+  author: nvision
   version: "2.0"
 ---
 

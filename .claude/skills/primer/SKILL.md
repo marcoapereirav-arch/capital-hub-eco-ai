@@ -4,11 +4,11 @@ description: "Cargar contexto completo del proyecto al inicio de una conversacio
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
-# Primer: Contexto SaaS Factory
+# Primer: Contexto NVISION®
 
-Este proyecto fue creado con **SaaS Factory**, una template optimizada para desarrollo Agent-First. Al ejecutar este skill, el agente entiende inmediatamente que tiene disponible y como trabajar.
+Este proyecto fue creado con **NVISION®**, una template optimizada para desarrollo Agent-First. Al ejecutar este skill, el agente entiende inmediatamente que tiene disponible y como trabajar.
 
-## Lo Que Ya Sabes (SaaS Factory DNA)
+## Lo Que Ya Sabes (NVISION® DNA)
 
 ### Golden Path (Stack Fijo)
 No hay decisiones tecnicas que tomar. El stack esta definido:
@@ -64,23 +64,85 @@ Delega tareas complejas usando los skills especializados:
 ### Skills Slash Disponibles
 - `primer` - Este skill (contexto inicial)
 - `prp` - Generar Product Requirements Proposal
-- `new-app` - Crear nueva aplicacion desde cero
+- `new-ecoai` - Crear nueva aplicacion desde cero
 - `landing` - Crear landing page de alta conversion
 - `add-login` - Inyectar sistema de autenticacion completo
-- `eject-sf` - Eliminar configuracion SaaS Factory
-- `update-sf` - Actualizar a la ultima version
+- `eject-ecoai` - Eliminar configuracion NVISION®
+- `update-ecoai` - Actualizar a la ultima version
+
+---
+
+## ANTES DE EMPEZAR — pregunta al dueño qué nivel de contexto cargar
+
+Muestra exactamente este mensaje y espera respuesta:
+
+```
+Voy a cargar el contexto del proyecto. ¿Cómo lo quieres?
+
+  (1) LIGERO
+      Leo lo esencial para ayudarte: las reglas duras del
+      proyecto, su ficha técnica, qué hay construido, los
+      últimos cambios. Es rápido.
+
+  (2) COMPLETO
+      Leo todo lo anterior + extras: configs, migraciones,
+      estructura completa, todos tus .md y knowledges. Tengo
+      contexto absoluto pero consume más tokens.
+
+Cualquiera que elijas, te voy a ayudar igual con lo que pidas
+después. La diferencia es solo cuánto contexto cargo ahora al
+inicio. Si dudas, elige LIGERO — para la mayoría de tareas es
+suficiente.
+
+Responde 1 o 2.
+```
+
+Espera la respuesta. Luego ejecuta el flujo correspondiente (modo 1 lee solo los pasos 0, 1, 2, 3, 4 abajo; modo 2 lee todo + extras).
+
+Si el dueño responde algo distinto a 1/2, vuelve a mostrar el mensaje.
 
 ---
 
 ## Proceso de Contextualizacion
 
-### 1. Leer Identidad del Proyecto
+### 0. Leer el concepto del Ecosistema de IA (PRIMERO)
 
-Lee `CLAUDE.md` y extrae:
+**ANTES de cualquier otro paso**, lee el knowledge **"Sobre el Ecosistema de IA"** del cuadrante Producto (tabla `knowledges` en Supabase, o archivo espejo en `.claude/knowledges/producto/sobre-el-ecosistema-de-ia.md`). Ese texto contiene el manual completo del concepto que define la arquitectura del proyecto. Sin esto, no entiendes qué tipo de proyecto es ni cómo trabajar.
+
+Después, lee también los demás knowledges seed del cuadrante Producto (especialmente "Manual del Proyecto") para entender el negocio específico del dueño.
+
+### 1. Leer Identidad del Proyecto + TODOS los archivos sueltos en raíz
+
+**Archivos que SIEMPRE existen en la plantilla** (léelos siempre):
+
+1. `CLAUDE.md` (raíz) — reglas duras del proyecto.
+2. `BUSINESS_LOGIC.md` (raíz) — ficha técnica del proyecto + plugins instalados (sección 6).
+
+**Cualquier OTRO archivo `.md` que el dueño haya creado** (léelos también si existen, sea cual sea su nombre):
+
+Descubrirlos con:
+
+```bash
+find . -maxdepth 2 -name "*.md" -not -path "./node_modules/*" -not -path "./.next/*" -not -path "./.git/*" -not -path "./.claude/*" -not -path "./supabase/*"
+```
+
+Si aparece cualquier `.md` extra (un STATE, un PENDING, un ROADMAP, un MANUAL, lo que sea que el dueño haya creado), **léelo como contexto adicional**. No asumas que existe — solo léelo si lo encuentras.
+
+**Historial reciente** (siempre lo lees):
+
+```bash
+git log --oneline -20
+```
+
+Te da la lista de cambios recientes del proyecto para saber qué se ha estado haciendo.
+
+Extrae de toda esta lectura:
 - **Nombre del proyecto**
-- **Problema que resuelve** (propuesta de valor)
-- **Usuario target** (avatar)
-- **Reglas de negocio especificas**
+- **Stack técnico**
+- **Plugins instalados** (sección 6 de BUSINESS_LOGIC.md)
+- **Reglas duras del proyecto** (CLAUDE.md)
+- **Contexto adicional** que el dueño haya documentado a mano (en cualquier `.md` extra)
+- **Cambios recientes** (de `git log`)
 
 ### 2. Mapear Estado de BD (via Supabase MCP)
 
@@ -103,7 +165,7 @@ Revisa `src/app/` y `src/features/` para entender:
 # [Nombre del Proyecto]
 
 ## Template
-SaaS Factory v4.0 (Next.js 16 + Supabase)
+NVISION® v4.0 (Next.js 16 + Supabase)
 
 ## Proposito
 [Que problema resuelve en 1-2 lineas]
@@ -137,7 +199,7 @@ En que te ayudo?
 
 ---
 
-## Filosofia SaaS Factory
+## Filosofia NVISION®
 
 ### El Humano Decide QUE, Tu Ejecutas COMO
 - El humano define el problema de negocio
@@ -158,4 +220,4 @@ En que te ayudo?
 
 **Objetivo**: De 5-10 minutos de explicacion a 30 segundos de contexto automatico.
 
-*SaaS Factory: Agent-First Development*
+*NVISION®: Agent-First Development*

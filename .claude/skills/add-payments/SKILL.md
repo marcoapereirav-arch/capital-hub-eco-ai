@@ -511,3 +511,31 @@ Pasos siguientes:
   6. Prueba con tarjeta: 4242 4242 4242 4242
   7. Cuando estes listo: POLAR_ENVIRONMENT=production
 ```
+
+---
+
+## REGLA OBLIGATORIA — Auto-actualizar BUSINESS_LOGIC.md
+
+Al final de la ejecución exitosa, ANTES de mostrar el mensaje final al usuario:
+
+1. Lee `BUSINESS_LOGIC.md` en la raíz del proyecto.
+2. Localiza la sección `## 6. Plugins instalados`.
+3. Añade una entrada nueva con este formato:
+
+```
+### [Nombre del plugin]
+- **Activado:** [fecha YYYY-MM-DD]
+- **Cuadrante principal:** [Marketing / Ventas / Producto / Finanzas]
+- **Carpeta:** `src/features/[plugin]`
+- **Tablas Supabase:** [si aplica]
+- **Knowledges asociados:** [si aplica]
+- **Integraciones externas:** [si aplica]
+- **Variables de entorno:** [si aplica]
+- **Qué hace:** [una frase descriptiva]
+```
+
+4. Si el plugin requiere tablas Supabase nuevas, añade también el detalle en `## 5.2 Tablas añadidas por plugins` (sub-sección de "Arquitectura de Datos").
+
+5. Guarda el archivo.
+
+Esta regla es **no negociable**. Si no se actualiza el BL, el plugin se considera "no documentado" y rompe la regla de "single source of truth" del proyecto.
