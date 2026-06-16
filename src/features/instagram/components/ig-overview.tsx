@@ -57,6 +57,15 @@ function PostThumb({ post }: { post: IgPost }) {
         {post.thumbnail_url ? (
           <IgThumb
             src={post.thumbnail_url}
+            mediaId={post.external_id}
+            alt={post.caption?.slice(0, 80) ?? ''}
+            className="transition-opacity group-hover:opacity-70"
+          />
+        ) : post.external_id ? (
+          // Sin thumbnail_url pero con external_id → usar proxy directo
+          <IgThumb
+            src={`/api/instagram/thumbnail/${post.external_id}`}
+            mediaId={post.external_id}
             alt={post.caption?.slice(0, 80) ?? ''}
             className="transition-opacity group-hover:opacity-70"
           />
@@ -198,7 +207,14 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
                   {overview.topReel.thumbnail_url ? (
                     <IgThumb
                       src={overview.topReel.thumbnail_url}
-                      fallbackText="Thumbnail expirado"
+                      mediaId={overview.topReel.external_id}
+                      fallbackText="Sin thumbnail"
+                    />
+                  ) : overview.topReel.external_id ? (
+                    <IgThumb
+                      src={`/api/instagram/thumbnail/${overview.topReel.external_id}`}
+                      mediaId={overview.topReel.external_id}
+                      fallbackText="Sin thumbnail"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">

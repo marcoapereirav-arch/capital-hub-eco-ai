@@ -4,25 +4,39 @@ import { useState } from "react"
 import { Film } from "lucide-react"
 
 /**
- * Thumbnail de un post/reel con fallback elegante cuando la imagen falla
- * (URLs de Instagram CDN expiran tras unos días).
+ * Thumbnail de un post/reel con fallback en cascada:
+ *   1. URL original (rapido, no consume API)
+ *   2. Si falla → proxy nuestro (/api/instagram/thumbnail/<mediaId>) que
+ *      refresca la URL desde Graph API. Nunca expira.
+ *   3. Si tambien falla → fallback visual con icono
  *
- * Componente CLIENT para poder usar onError (event handler).
+ * El proxy se activa solo cuando hay mediaId (external_id del post).
  */
 export function IgThumb({
   src,
+  mediaId,
   alt,
   className,
   fallbackText,
 }: {
   src: string
+  /** ID externo del post en Instagram (ci_videos.external_id). Activa el proxy refresh. */
+  mediaId?: string | null
   alt?: string
   className?: string
   fallbackText?: string
 }) {
-  const [errored, setErrored] = useState(false)
+  const [stage, setStage] = useState<"original" | "proxy" | "failed">("original")
 
-  if (errored) {
+  function onError() {
+    if (stage === "original" && mediaId) {
+      setStage("proxy")
+    } else {
+      setStage("failed")
+    }
+  }
+
+  if (stage === "failed") {
     return (
       <div className={`flex h-full w-full items-center justify-center bg-card/40 text-muted-foreground ${className ?? ""}`}>
         {fallbackText ? (
@@ -34,14 +48,19 @@ export function IgThumb({
     )
   }
 
+  const effectiveSrc = stage === "proxy" && mediaId
+    ? `/api/instagram/thumbnail/${mediaId}`
+    : src
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      key={stage}
+      src={effectiveSrc}
       alt={alt ?? ""}
       className={`h-full w-full object-cover ${className ?? ""}`}
       referrerPolicy="no-referrer"
-      onError={() => setErrored(true)}
+      onError={onError}
     />
   )
 }
