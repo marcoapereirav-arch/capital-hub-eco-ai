@@ -51,6 +51,7 @@ export const navSections: NavSection[] = [
   {
     label: "Producto",
     items: [
+      { title: "Invitaciones App", href: "/invitaciones", icon: Mail },
       { title: "Integraciones", href: "/integrations", icon: Link2 },
       { title: "Misión", href: "/mision", icon: Rocket },
     ],
