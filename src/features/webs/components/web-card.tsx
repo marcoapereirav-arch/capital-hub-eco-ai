@@ -164,7 +164,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
               <p className="font-mono text-[11px] text-muted-foreground/70">/{slug}</p>
               <button
                 onClick={() => setEditingSlug(true)}
-                className="p-0.5 rounded-sm text-muted-foreground opacity-0 group-hover/slug:opacity-100 hover:bg-secondary transition-opacity"
+                className="p-0.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                 title="Editar slug (path)"
               >
                 <Pencil className="h-2.5 w-2.5" />
