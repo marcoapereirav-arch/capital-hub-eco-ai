@@ -1,6 +1,3 @@
 export { LoginForm } from './LoginForm'
-
-export { GoogleSignInButton } from './GoogleSignInButton'
-export { AuthDivider } from './AuthDivider'
 export { ForgotPasswordForm } from './ForgotPasswordForm'
 export { UpdatePasswordForm } from './UpdatePasswordForm'

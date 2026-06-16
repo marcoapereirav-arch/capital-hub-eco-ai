@@ -36,7 +36,8 @@ export function AcceptInvitePage({ token }: { token: string }) {
         return
       }
       setSuccess(data.email)
-      setTimeout(() => router.push("/login"), 2000)
+      // Tras crear contraseña → bienvenida con confetti (luego dashboard)
+      setTimeout(() => router.push("/welcome"), 1500)
     } finally {
       setSubmitting(false)
     }

@@ -66,14 +66,33 @@ export async function updatePassword(formData: FormData) {
   const supabase = await createClient()
   const password = formData.get('password') as string
 
+  const { data: { user } } = await supabase.auth.getUser()
   const { error } = await supabase.auth.updateUser({ password })
 
   if (error) {
     return { error: error.message }
   }
 
+  // Email confirmacion via Resend (NUNCA por Supabase SMTP propio)
+  if (user?.email) {
+    try {
+      const { sendPasswordChanged } = await import('@/lib/email/senders')
+      const { data: profile } = await supabase
+        .from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+      await sendPasswordChanged({
+        email: user.email,
+        fullName: profile?.full_name ?? user.email,
+        changedAt: new Date(),
+      })
+    } catch (e) {
+      console.error('[updatePassword] email confirmacion fallo:', e)
+      // No bloqueamos el flujo si el email falla — la contraseña ya esta cambiada
+    }
+  }
+
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  // El cliente (UpdatePasswordForm) redirige a /login?reset=ok despues del success
+  return { ok: true }
 }
 
 export async function updateProfile(formData: FormData) {

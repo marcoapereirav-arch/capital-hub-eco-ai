@@ -18,6 +18,7 @@ import { InternalErrorAlert, type ErrorAlertItem } from "./templates/internal-er
 import { WelcomeAlumnoHTEmail } from "./templates/welcome-alumno-ht"
 import { TeamInviteEmail } from "./templates/team-invite"
 import { InternalGCalAlert } from "./templates/internal-gcal-alert"
+import { PasswordChangedEmail } from "./templates/password-changed"
 
 const ADRIAN_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_ADRIAN ?? "adrianvillanuevarios@gmail.com"
 const MARCO_EMAIL = process.env.INTERNAL_NOTIF_EMAIL_MARCO ?? "marcoapereirav@gmail.com"
@@ -406,5 +407,28 @@ export async function notifyMarcoPurchase(input: {
     subject: `${input.amount ? `${input.amount}${input.currency === "EUR" || !input.currency ? "€" : input.currency} · ` : ""}${input.eventLabel} — ${input.fullName}`,
     html,
     leadId: input.leadId,
+  })
+}
+
+export async function sendPasswordChanged(input: {
+  email: string
+  fullName: string
+  changedAt: Date
+}) {
+  const changedAtFormatted = input.changedAt.toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    day: '2-digit', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+  const html = await render(PasswordChangedEmail({
+    fullName: input.fullName,
+    changedAtFormatted,
+  }))
+  return sendEmail({
+    template: 'password_changed',
+    to: input.email,
+    toName: input.fullName,
+    subject: 'Tu contraseña de Capital Hub OS se cambió',
+    html,
   })
 }
