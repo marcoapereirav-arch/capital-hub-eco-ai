@@ -89,3 +89,25 @@ src/features/
 6. [ ] Feature: Dashboard de metricas (MVP)
 7. [ ] Testing E2E
 8. [ ] Deploy Vercel
+
+---
+
+## 7. Plugins instalados
+
+### Email Token-Based (custom token-based auth flow)
+- **Activado:** 2026-06-17
+- **Cuadrante principal:** Producto
+- **Carpeta:** `src/lib/email` + `src/app/api/auth` + `src/app/api/webhooks/resend`
+- **Tablas Supabase:** `auth_tokens`, `email_messages`, `email_events`, `email_suppressions`
+- **Integraciones externas:** Resend (envío + webhook vía svix)
+- **Variables de entorno:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `EMAIL_FROM`, `EMAIL_REPLY_TO`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_SITE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (alias soportado: `SUPABASE_SERVICE_KEY`)
+- **Qué hace:** todos los emails de autenticación (reset, confirmación, signup) salen por Resend con tokens propios; Supabase Auth NO envía nada; webhook maneja bounces/complaints y auto-suprime emails que rebotan.
+
+### 7.1 Tablas añadidas por plugins
+
+| Tabla | Origen | Notas |
+|---|---|---|
+| `auth_tokens` | email-token-based | tokens single-use + TTL para reset/confirmacion/invitacion/magic-link |
+| `email_messages` | email-token-based | log de cada envío con status (sent/delivered/bounced/...) |
+| `email_events` | email-token-based | historial bruto de webhook de Resend |
+| `email_suppressions` | email-token-based | emails bloqueados (bounce/complaint) — gate previo a cada envío |

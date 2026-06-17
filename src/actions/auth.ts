@@ -21,20 +21,14 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
-  })
+  const { signUpWithEmailConfirmation } = await import('@/app/auth/signup-actions')
+  const result = await signUpWithEmailConfirmation(email, password)
 
-  if (error) {
-    return { error: error.message }
+  if (!result.ok) {
+    return { error: result.error || 'No se pudo crear la cuenta' }
   }
 
   redirect('/check-email')
@@ -48,18 +42,26 @@ export async function signout() {
 }
 
 export async function resetPassword(formData: FormData) {
-  const supabase = await createClient()
-  const email = formData.get('email') as string
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/update-password`,
-  })
-
-  if (error) {
-    return { error: error.message }
+  const email = (formData.get('email') as string).trim().toLowerCase()
+  if (!email || !/^.+@.+\..+$/.test(email)) {
+    return { error: 'Email inválido' }
   }
 
-  return { success: true }
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || ''
+  try {
+    const res = await fetch(`${baseUrl}/api/auth/reset-password/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+      cache: 'no-store',
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { error: data?.error || 'No se pudo enviar el email' }
+    return { success: true }
+  } catch (e) {
+    console.error('[resetPassword] fetch error:', e)
+    return { error: 'No se pudo enviar el email' }
+  }
 }
 
 export async function updatePassword(formData: FormData) {
