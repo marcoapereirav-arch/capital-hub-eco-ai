@@ -17,6 +17,7 @@ import {
   Trophy,
   Banknote,
   Loader2,
+  Filter,
 } from "lucide-react"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { createBrowserClient } from "@supabase/ssr"
@@ -30,11 +31,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
   CartesianGrid,
 } from "recharts"
 
@@ -73,19 +69,9 @@ type CalendarBookingRow = {
 // Constantes
 // =============================================================================
 
-// Los stages YA NO se hardcodean aqui — se leen del pipeline activo
-// via usePipelines() + useActivePipelineId(). Cada Dashboard se adapta
-// dinamicamente al pipeline seleccionado por el usuario.
-
-// Colores del pie chart (origin)
-const ORIGIN_COLORS: Record<string, string> = {
-  instagram: "#ec4899",
-  organico: "#3b82f6",
-  ads: "#f59e0b",
-  manychat: "#a855f7",
-  referido: "#10b981",
-  otro: "#71717a",
-}
+// 4 KPIs principales = del NEGOCIO COMPLETO (no del pipeline filtrado).
+// El selector de pipeline solo afecta a la sección "Vista por funnel" (abajo).
+// Decisión Marco 2026-06-17 — SOP 05 sprint arreglos.
 
 // =============================================================================
 // Helpers
@@ -295,18 +281,15 @@ export function MainDashboard() {
     const prevVentas = previousInvites.length
     const ventasDelta = ventas - prevVentas
 
-    // Conversión: del ultimo stage activo (ej. agendado) al stage won (ej. alumno).
-    // Se adapta dinamicamente al pipeline elegido.
-    const denom = contacts.filter(
-      (c) => c.stage === lastActiveBeforeWonKey || c.stage === wonStageKey,
-    ).length
-    const won = contacts.filter((c) => c.stage === wonStageKey).length
-    const conversion = denom > 0 ? Math.round((won / denom) * 100) : 0
+    // Conversión GLOBAL del negocio: ventas / llamadas completadas del periodo.
+    // No se sesga por pipeline. Es la métrica canónica del funnel principal
+    // (lead → agenda → llamada → venta). Decisión Marco SOP 05.
+    const llamadasCompletadas = bookings.filter((b) => b.status === "completed").length
+    const conversion = llamadasCompletadas > 0 ? Math.round((ventas / llamadasCompletadas) * 100) : 0
 
     // KPIs secundarios
     const contactosNuevos = contacts.length
     const llamadas = bookings.length
-    const llamadasCompletadas = bookings.filter((b) => b.status === "completed").length
     const noShows = bookings.filter((b) => b.status === "no_show").length
     const showRate = llamadas > 0 ? Math.round(((llamadas - noShows) / llamadas) * 100) : 0
 
@@ -330,7 +313,7 @@ export function MainDashboard() {
       showRate,
       ticketMedio,
     }
-  }, [contacts, previousContacts, invites, previousInvites, bookings, lastActiveBeforeWonKey, wonStageKey])
+  }, [contacts, previousContacts, invites, previousInvites, bookings])
 
   // =============================================================================
   // Embudo Pipeline (acumulado total)
@@ -353,43 +336,6 @@ export function MainDashboard() {
     }))
     return { main, branches }
   }, [allContacts, FUNNEL_ORDER, FUNNEL_BRANCHES, STAGE_LABELS])
-
-  // =============================================================================
-  // Pie chart: origen contactos
-  // =============================================================================
-  const originPieData = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const c of allContacts) {
-      const key = c.origin?.toLowerCase() || "otro"
-      counts.set(key, (counts.get(key) ?? 0) + 1)
-    }
-    return Array.from(counts.entries())
-      .map(([origin, count]) => ({ origin, count, color: ORIGIN_COLORS[origin] ?? ORIGIN_COLORS.otro }))
-      .sort((a, b) => b.count - a.count)
-  }, [allContacts])
-
-  // =============================================================================
-  // Barras: ventas por día de la semana (del periodo)
-  // =============================================================================
-  const salesByWeekday = useMemo(() => {
-    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
-    const counts = [0, 0, 0, 0, 0, 0, 0]
-    for (const inv of invites) {
-      const wd = new Date(inv.created_at).getDay()
-      counts[wd]++
-    }
-    // Reordenar a Lunes-primero
-    const reordered = [
-      { day: dayNames[1], ventas: counts[1] },
-      { day: dayNames[2], ventas: counts[2] },
-      { day: dayNames[3], ventas: counts[3] },
-      { day: dayNames[4], ventas: counts[4] },
-      { day: dayNames[5], ventas: counts[5] },
-      { day: dayNames[6], ventas: counts[6] },
-      { day: dayNames[0], ventas: counts[0] },
-    ]
-    return reordered
-  }, [invites])
 
   // =============================================================================
   // Eliminar invitación
@@ -415,18 +361,13 @@ export function MainDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-24">
-      {/* Header con filtro periodo + selector de pipeline */}
+      {/* Header con filtro periodo. El selector de pipeline se mueve a la sección Vista por funnel. */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-lg font-semibold flex items-center gap-2">
           <Target className="h-4 w-4 text-muted-foreground" />
           Capital Hub · Estado del negocio
         </h1>
         <div className="flex items-center gap-2 flex-wrap">
-          <PipelineSelector
-            pipelines={pipelines}
-            activeId={activePipelineId}
-            onChange={setActivePipelineId}
-          />
           <PeriodFilter onChange={setRange} defaultPreset="30d" />
         </div>
       </div>
@@ -455,7 +396,7 @@ export function MainDashboard() {
           accent="amber"
         />
         <KpiPrincipal
-          label={`Conversión ${(STAGE_LABELS[lastActiveBeforeWonKey ?? ""] ?? "—").toLowerCase()}→${(STAGE_LABELS[wonStageKey ?? ""] ?? "—").toLowerCase()}`}
+          label="Conversión llamada → venta"
           value={loading ? "…" : `${kpis.conversion}%`}
           icon={Target}
           accent="purple"
@@ -496,18 +437,32 @@ export function MainDashboard() {
         </div>
       </section>
 
-      {/* PIPELINE CRM */}
+      {/* VISTA POR FUNNEL — selector de pipeline + embudo del pipeline elegido */}
       <section className="bg-card/30 border border-border rounded-md p-4">
-        <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+        <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
           <div>
             <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Target className="h-4 w-4 text-cyan-400" />
-              {activePipeline?.name ?? "Pipeline"} · todos los contactos
+              <Filter className="h-4 w-4 text-cyan-400" />
+              Vista por funnel
             </h2>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Camino del lead: {FUNNEL_ORDER.map((k) => STAGE_LABELS[k] ?? k).join(" → ") || "(sin stages)"}
+              Selecciona un funnel para ver su pipeline y conversiones específicas. Las 4 métricas de arriba son del negocio completo y no se ven afectadas.
             </p>
           </div>
+          <PipelineSelector
+            pipelines={pipelines}
+            activeId={activePipelineId}
+            onChange={setActivePipelineId}
+          />
+        </div>
+        <div className="mb-4">
+          <h3 className="text-xs font-semibold flex items-center gap-2 text-muted-foreground">
+            <Target className="h-3.5 w-3.5 text-cyan-400" />
+            {activePipeline?.name ?? "Pipeline"} · todos los contactos
+          </h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Camino del lead: {FUNNEL_ORDER.map((k) => STAGE_LABELS[k] ?? k).join(" → ") || "(sin stages)"}
+          </p>
         </div>
         {loading ? (
           <CenterLoader />
@@ -575,78 +530,6 @@ export function MainDashboard() {
         <KpiSecundario label="ROAS" value="—" icon={TrendingUp} sub="conecta Meta Marketing API" muted />
         <KpiSecundario label="LTV" value="—" icon={Trophy} sub="pendiente trackear upsells" muted />
       </section>
-
-      {/* GRÁFICOS 3 y 4 lado a lado */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Pie origen contactos */}
-        <div className="bg-card/30 border border-border rounded-md p-4">
-          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <Users className="h-4 w-4 text-pink-400" />
-            Origen de contactos
-          </h2>
-          <div className="h-56">
-            {loading ? (
-              <CenterLoader />
-            ) : originPieData.length === 0 ? (
-              <CenterEmpty msg="Sin contactos con origen registrado" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={originPieData}
-                    dataKey="count"
-                    nameKey="origin"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={70}
-                    label={(props) => {
-                      const p = props as { origin?: string; count?: number }
-                      return `${p.origin ?? ""} · ${p.count ?? 0}`
-                    }}
-                    labelLine={false}
-                    fontSize={10}
-                  >
-                    {originPieData.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 4 }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Barras ventas por día de la semana */}
-        <div className="bg-card/30 border border-border rounded-md p-4">
-          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-amber-400" />
-            Ventas por día de la semana
-          </h2>
-          <div className="h-56">
-            {loading ? (
-              <CenterLoader />
-            ) : kpis.ventas === 0 ? (
-              <CenterEmpty msg="Sin ventas en este periodo" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesByWeekday}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <YAxis allowDecimals={false} stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <Tooltip
-                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 4 }}
-                  />
-                  <Bar dataKey="ventas" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-      </section>
-
 
       {/* INVITACIONES con botón eliminar */}
       <section className="space-y-3">
