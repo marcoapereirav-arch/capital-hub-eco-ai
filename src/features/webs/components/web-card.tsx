@@ -161,9 +161,14 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
     }
   }
 
+  // step.slug es ahora un PATH ABSOLUTO desde la raíz del dominio.
+  // Decisión Marco 2026-06-17 para eliminar el bug de doble-concatenacion
+  // (que generaba /login/login, /test-personalidad/thanks → 404).
   function urlForStep(stepSlug: string | undefined): string {
-    if (!stepSlug || stepSlug === "landing") return baseUrl
-    return `${baseUrl}/${stepSlug}`
+    if (!stepSlug) return publicBaseUrl
+    // Permite slug con o sin barra inicial
+    const clean = stepSlug.startsWith("/") ? stepSlug.slice(1) : stepSlug
+    return `${publicBaseUrl}/${clean}`
   }
 
   async function copyToClipboard(url: string, stepId: string) {
