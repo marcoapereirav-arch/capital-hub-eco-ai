@@ -1,10 +1,10 @@
-# SaaS Factory V4 - Template Documentation
+# NVISION® V4 - Template Documentation
 
 > **Fuente de verdad del template.** Guardada en `.claude/` para preservarla durante el desarrollo de proyectos.
 
 ---
 
-## Que es SaaS Factory?
+## Que es NVISION®?
 
 Template **production-ready** para crear aplicaciones SaaS modernas con desarrollo asistido por IA. Filosofia Henry Ford: un solo stack perfeccionado.
 
@@ -135,12 +135,12 @@ npm run typecheck    # TypeScript check
 
 | Skill | Comando | Descripcion |
 |-------|---------|-------------|
-| `new-app` | `/new-app` | Entrevista de negocio → BUSINESS_LOGIC.md |
+| `new-ecoai` | `/new-ecoai` | Entrevista de negocio → BUSINESS_LOGIC.md |
 | `landing` | `/landing` | Landing page de alta conversion (entrevista + ejecucion) |
 | `primer` | `/primer` | Inicializar contexto del proyecto |
 | `add-login` | `/add-login` | Auth completo Supabase (login, signup, password reset, profiles, RLS) |
-| `eject-sf` | `/eject-sf` | Remover SaaS Factory del proyecto (DESTRUCTIVO) |
-| `update-sf` | `/update-sf` | Actualizar a ultima version |
+| `eject-ecoai` | `/eject-ecoai` | Remover NVISION® del proyecto (DESTRUCTIVO) |
+| `update-ecoai` | `/update-ecoai` | Actualizar a ultima version |
 | `bucle-agentico` | `/bucle-agentico` | Bucle Agentico para sistemas complejos (por fases) |
 | `sprint` | `/sprint` | Bucle Agentico para tareas rapidas |
 | `prp` | `/prp [feature]` | Generar Product Requirements Proposal |
@@ -243,12 +243,12 @@ Sistemas de diseno visuales en `.claude/design-systems/`.
 ```
 .claude/
 ├── skills/                    # Skills 2.0 (V4) - 19 skills
-│   ├── new-app/              # Entrevista de negocio
+│   ├── new-ecoai/              # Entrevista de negocio
 │   ├── landing/              # Landing pages
 │   ├── primer/               # Context initialization
 │   ├── add-login/            # Auth completo
-│   ├── eject-sf/             # Remover SF
-│   ├── update-sf/            # Actualizar SF
+│   ├── eject-ecoai/             # Remover SF
+│   ├── update-ecoai/            # Actualizar SF
 │   ├── bucle-agentico/       # Bucle Agentico BLUEPRINT
 │   ├── sprint/               # Bucle Agentico SPRINT
 │   ├── prp/                  # Generar PRPs
@@ -354,4 +354,4 @@ En tu dashboard de Vercel:
 
 ---
 
-*SaaS Factory V4: Todo es un Skill. Hot reload. Auto-discovery. Zero config.*
+*NVISION® V4: Todo es un Skill. Hot reload. Auto-discovery. Zero config.*
