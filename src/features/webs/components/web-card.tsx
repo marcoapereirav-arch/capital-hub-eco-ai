@@ -24,10 +24,47 @@ const STATUS_STYLES: Record<string, string> = {
   archived: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
 }
 
+type StepLocal = WebWithSteps["steps"][0]
+
 export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [copiedStepId, setCopiedStepId] = useState<string | null>(null)
   const [status, setStatus] = useState(web.status)
   const [saving, setSaving] = useState(false)
+  const [steps, setSteps] = useState<StepLocal[]>(web.steps)
+  const [editingStepId, setEditingStepId] = useState<string | null>(null)
+  const [stepDraft, setStepDraft] = useState<string>("")
+  const [stepError, setStepError] = useState<string | null>(null)
+
+  async function saveStepSlug(step: StepLocal) {
+    const cleaned = stepDraft.trim().toLowerCase().replace(/^\/+|\/+$/g, "")
+    if (cleaned && !/^[a-z0-9][a-z0-9-/_]*$/.test(cleaned)) {
+      setStepError("Solo letras, números, guion y barra. Sin espacios.")
+      return
+    }
+    if (cleaned === step.slug) {
+      setEditingStepId(null)
+      return
+    }
+    setSaving(true)
+    setStepError(null)
+    try {
+      const res = await fetch(`/api/admin/webs/${web.id}/steps/${step.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: cleaned }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setStepError(data?.error ?? "No se pudo guardar")
+        return
+      }
+      const updated = await res.json()
+      setSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, slug: updated.slug } : s)))
+      setEditingStepId(null)
+    } finally {
+      setSaving(false)
+    }
+  }
   const [slug, setSlug] = useState(web.slug)
   const [editingSlug, setEditingSlug] = useState(false)
   const [slugDraft, setSlugDraft] = useState(web.slug)
@@ -186,45 +223,87 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
       {/* Steps */}
       <div className="space-y-1.5">
         <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground/60">
-          {web.steps.length} {web.steps.length === 1 ? "step" : "steps"}
+          {steps.length} {steps.length === 1 ? "step" : "steps"} · click ✎ para editar el path de cada landing
         </p>
         <ul className="space-y-1">
-          {web.steps.map((step) => {
+          {steps.map((step) => {
             const url = urlForStep(step.slug)
             const isCopied = copiedStepId === step.id
+            const isEditing = editingStepId === step.id
             return (
               <li
                 key={step.id}
-                className="group flex items-center justify-between gap-2 rounded-sm border border-border/50 bg-secondary/30 px-2.5 py-1.5"
+                className="rounded-sm border border-border/50 bg-secondary/30 px-2.5 py-2"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-foreground">{step.name}</p>
-                  <p className="truncate font-mono text-[10px] text-muted-foreground/60">
-                    {url.replace(/^https?:\/\//, "")}
-                  </p>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="truncate text-xs text-foreground font-medium">{step.name}</p>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(url, step.id)}
+                      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      title="Copiar link"
+                    >
+                      {isCopied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
+                      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      title="Abrir en navegador"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+
+                {isEditing ? (
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono text-[10px] text-muted-foreground">/</span>
+                    <input
+                      value={stepDraft}
+                      onChange={(e) => setStepDraft(e.target.value)}
+                      autoFocus
+                      disabled={saving}
+                      className="h-6 flex-1 min-w-0 rounded-sm border border-foreground/30 bg-background px-1.5 font-mono text-[10px] focus:border-foreground focus:outline-none"
+                      placeholder="nuevo-path"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveStepSlug(step)
+                        if (e.key === "Escape") { setEditingStepId(null); setStepDraft(step.slug); setStepError(null) }
+                      }}
+                    />
+                    <button
+                      onClick={() => saveStepSlug(step)}
+                      disabled={saving}
+                      className="p-1 rounded-sm hover:bg-secondary text-green-400"
+                      title="Guardar"
+                    >
+                      {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                    </button>
+                    <button
+                      onClick={() => { setEditingStepId(null); setStepDraft(step.slug); setStepError(null) }}
+                      className="p-1 rounded-sm hover:bg-secondary text-muted-foreground"
+                      title="Cancelar"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    type="button"
-                    onClick={() => copyToClipboard(url, step.id)}
-                    className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    title="Copiar link"
+                    onClick={() => { setEditingStepId(step.id); setStepDraft(step.slug); setStepError(null) }}
+                    className="flex w-full items-center gap-1.5 rounded-sm border border-border/30 bg-background/40 px-2 py-1 text-left hover:border-foreground/40 hover:bg-background/70 transition-colors group/edit"
+                    title="Click para editar el path de esta landing"
                   >
-                    {isCopied ? (
-                      <Check className="h-3.5 w-3.5 text-green-400" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
+                    <p className="truncate font-mono text-[10px] text-foreground/70 group-hover/edit:text-foreground flex-1">
+                      {url.replace(/^https?:\/\//, "")}
+                    </p>
+                    <Pencil className="h-3 w-3 text-muted-foreground group-hover/edit:text-foreground shrink-0" />
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 group-hover/edit:text-muted-foreground shrink-0">Editar</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
-                    className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                    title="Abrir en navegador (fuera de la app)"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                )}
+                {isEditing && stepError && (
+                  <p className="mt-1 text-[10px] text-red-400">{stepError}</p>
+                )}
               </li>
             )
           })}
