@@ -59,10 +59,13 @@ RLS habilitado en las cuatro. **Ninguna policy** → solo el service role (que b
 - Usado desde `src/actions/auth.ts` → `signup()` (que actualmente NO se llama porque `/signup` está eliminado, pero queda disponible para invitaciones u onboarding self-service futuro).
 
 ### Webhook de Resend
-- `POST /api/webhooks/resend` — firma verificada con `svix` + `RESEND_WEBHOOK_SECRET`.
-- Loguea evento en `email_events`.
-- Mapea `email.delivered/bounced/complained` → actualiza `email_messages.status`.
-- Bounce/complaint → upsert en `email_suppressions` (el siguiente envío a ese email queda bloqueado).
+- **Endpoint único:** `POST /api/email/webhooks/resend` (consolidado con el sistema legacy de emails transaccionales).
+- Firma verificada con HMAC SHA256 manual (compatible svix) + `RESEND_WEBHOOK_SECRET`.
+- Actualiza dos sistemas en paralelo:
+  - **Legacy (`email_logs`):** delivered_at, opened_at, clicked_at, bounce/complaint → status='failed'
+  - **Token-based (`email_messages` + `email_events` + `email_suppressions`):** persistencia de evento crudo + status + auto-suppression de bounces/complaints
+
+> **Decisión de consolidación:** existe un único endpoint para todos los webhooks de Resend. NO crear `/api/webhooks/resend` (path duplicado eliminado en commit posterior). Razón: el webhook actual en el dashboard de Resend ya apunta a `/api/email/webhooks/resend` desde 2026-06-08.
 
 ## Motor de envío único: `src/lib/email/server.ts`
 

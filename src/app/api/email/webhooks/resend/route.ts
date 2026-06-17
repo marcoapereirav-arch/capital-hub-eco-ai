@@ -130,5 +130,38 @@ export async function POST(req: NextRequest) {
     await supabase.from("email_logs").update(update).eq("id", existing.id)
   }
 
+  // === SISTEMA TOKEN-BASED (email_messages + email_events + email_suppressions) ===
+  // Persistir el evento crudo
+  await supabase
+    .from("email_events")
+    .insert({ resend_id: resendId, type, payload: event })
+    .then(() => null, () => null)
+
+  // Actualizar status de email_messages cuando aplique
+  const statusMap: Record<string, string> = {
+    "email.delivered": "delivered",
+    "email.bounced": "bounced",
+    "email.complained": "complained",
+  }
+  const newStatus = statusMap[type]
+  if (newStatus) {
+    await supabase
+      .from("email_messages")
+      .update({ status: newStatus })
+      .eq("resend_id", resendId)
+      .then(() => null, () => null)
+  }
+
+  // Auto-suppression en bounce / complaint
+  if (type === "email.bounced" || type === "email.complained") {
+    const tos = Array.isArray(event.data?.to) ? event.data!.to! : []
+    for (const addr of tos) {
+      await supabase
+        .from("email_suppressions")
+        .upsert({ email: addr.toLowerCase(), reason: type }, { onConflict: "email" })
+        .then(() => null, () => null)
+    }
+  }
+
   return NextResponse.json({ ok: true, type, resend_id: resendId })
 }
