@@ -4,24 +4,23 @@ import { useEffect } from "react"
 import Link from "next/link"
 import confetti from "canvas-confetti"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 /**
  * Pantalla de bienvenida tras aceptar invitación o tras login inicial.
- * Confetti animado + mensaje simple + botón a /dashboard.
- *
- * Copy aprobado por Marco: simple, sin fliparse.
+ * Brandkit Capital Hub aplicado: minimalista b&w.
+ * Confetti animado en blanco/grays (sin neón).
  */
 export function WelcomePage() {
   useEffect(() => {
-    // Disparo de confetti al montar — 3 ráfagas para efecto cinético
+    // Confetti en paleta del brandkit (whites + grays — sin neón)
     const fire = (originX: number, delay: number) => {
       setTimeout(() => {
         confetti({
           particleCount: 80,
           spread: 70,
           origin: { x: originX, y: 0.6 },
-          colors: ["#8b5cf6", "#06b6d4", "#f59e0b", "#10b981", "#ec4899"],
+          colors: ["#FFFFFF", "#F5F6F7", "#D1D5DB", "#9CA3AF"],
           startVelocity: 35,
           decay: 0.92,
         })
@@ -33,30 +32,36 @@ export function WelcomePage() {
   }, [])
 
   return (
-    <main className="min-h-[100dvh] bg-black text-white flex items-center justify-center relative overflow-hidden px-4">
-      {/* Fondo: gradiente sutil */}
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-black to-cyan-900/10 pointer-events-none" />
-      <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+    <main
+      className="min-h-[100dvh] flex items-center justify-center px-4 text-[#F5F6F7]"
+      style={{ backgroundColor: "#0F0F12", fontFamily: "'Inter', sans-serif" }}
+    >
+      <div className="max-w-md w-full text-center space-y-7">
+        <span
+          className="block text-[11px] uppercase tracking-[0.3em] text-[#9CA3AF] mb-2"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          Capital Hub
+        </span>
 
-      <div className="relative z-10 max-w-md w-full text-center space-y-6">
-        <div className="inline-flex items-center gap-2 text-violet-400 mb-2">
-          <Sparkles className="h-4 w-4" />
-          <span className="text-[11px] font-mono uppercase tracking-[0.2em]">
-            Capital Hub
-          </span>
-        </div>
-
-        <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-          Bienvenido a <span className="text-violet-400">Capital Hub OS</span>
+        <h1
+          className="text-4xl md:text-5xl font-medium leading-tight tracking-tight text-white"
+          style={{ fontFamily: "'Inter Tight', sans-serif" }}
+        >
+          Bienvenido a Capital Hub OS
         </h1>
 
-        <p className="text-base text-zinc-400 max-w-sm mx-auto">
+        <p className="text-base text-[#D1D5DB] max-w-sm mx-auto">
           Ya tienes acceso al sistema operativo del negocio.
         </p>
 
         <div className="pt-4">
-          <Button asChild size="lg" className="bg-violet-500 hover:bg-violet-400 text-white">
+          <Button
+            asChild
+            size="lg"
+            className="rounded-none bg-white text-[#0F0F12] hover:bg-[#F5F6F7]"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+          >
             <Link href="/dashboard">
               Entrar al dashboard
               <ArrowRight className="ml-2 h-4 w-4" />

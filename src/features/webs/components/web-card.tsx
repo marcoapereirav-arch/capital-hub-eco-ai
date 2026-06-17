@@ -32,26 +32,64 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [saving, setSaving] = useState(false)
   const [steps, setSteps] = useState<StepLocal[]>(web.steps)
   const [editingStepId, setEditingStepId] = useState<string | null>(null)
+  const [editingStepField, setEditingStepField] = useState<"slug" | "name">("slug")
   const [stepDraft, setStepDraft] = useState<string>("")
   const [stepError, setStepError] = useState<string | null>(null)
 
-  async function saveStepSlug(step: StepLocal) {
-    const cleaned = stepDraft.trim().toLowerCase().replace(/^\/+|\/+$/g, "")
-    if (cleaned && !/^[a-z0-9][a-z0-9-/_]*$/.test(cleaned)) {
+  // Editar nombre del funnel
+  const [webName, setWebName] = useState(web.name)
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState(web.name)
+  const [nameError, setNameError] = useState<string | null>(null)
+
+  async function saveWebName() {
+    const cleaned = nameDraft.trim()
+    if (!cleaned) { setNameError("El nombre no puede estar vacío"); return }
+    if (cleaned === webName) { setEditingName(false); return }
+    setSaving(true)
+    setNameError(null)
+    try {
+      const res = await fetch(`/api/admin/webs/${web.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: cleaned }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setNameError(data?.error ?? "No se pudo guardar")
+        return
+      }
+      setWebName(cleaned)
+      setEditingName(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function saveStepField(step: StepLocal, field: "name" | "slug") {
+    const cleaned = field === "slug"
+      ? stepDraft.trim().toLowerCase().replace(/^\/+|\/+$/g, "")
+      : stepDraft.trim()
+    if (field === "slug" && cleaned && !/^[a-z0-9][a-z0-9-/_]*$/.test(cleaned)) {
       setStepError("Solo letras, números, guion y barra. Sin espacios.")
       return
     }
-    if (cleaned === step.slug) {
+    if (field === "name" && !cleaned) {
+      setStepError("El nombre no puede estar vacío")
+      return
+    }
+    if (cleaned === (field === "slug" ? step.slug : step.name)) {
       setEditingStepId(null)
       return
     }
     setSaving(true)
     setStepError(null)
     try {
+      const body = field === "slug" ? { slug: cleaned } : { name: cleaned }
       const res = await fetch(`/api/admin/webs/${web.id}/steps/${step.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: cleaned }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -59,12 +97,13 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
         return
       }
       const updated = await res.json()
-      setSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, slug: updated.slug } : s)))
+      setSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, [field]: updated[field] } : s)))
       setEditingStepId(null)
     } finally {
       setSaving(false)
     }
   }
+
   const [slug, setSlug] = useState(web.slug)
   const [editingSlug, setEditingSlug] = useState(false)
   const [slugDraft, setSlugDraft] = useState(web.slug)
@@ -146,9 +185,37 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="truncate font-heading text-sm font-semibold text-foreground">
-              {web.name}
-            </h3>
+            {editingName ? (
+              <div className="flex items-center gap-1 flex-1 min-w-0">
+                <input
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  autoFocus
+                  disabled={saving}
+                  className="h-7 flex-1 min-w-0 rounded-sm border border-foreground/40 bg-background px-2 text-sm font-semibold focus:border-foreground focus:outline-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveWebName()
+                    if (e.key === "Escape") { setEditingName(false); setNameDraft(webName); setNameError(null) }
+                  }}
+                />
+                <button onClick={saveWebName} disabled={saving} className="p-1 rounded-sm hover:bg-secondary text-green-400" title="Guardar">
+                  {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                </button>
+                <button onClick={() => { setEditingName(false); setNameDraft(webName); setNameError(null) }} className="p-1 rounded-sm hover:bg-secondary text-muted-foreground" title="Cancelar">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setEditingName(true); setNameDraft(webName); setNameError(null) }}
+                className="truncate flex items-center gap-1.5 text-left font-heading text-sm font-semibold text-foreground hover:text-foreground group/wn"
+                title="Click para editar el nombre del funnel"
+              >
+                <span className="truncate">{webName}</span>
+                <Pencil className="h-3 w-3 text-muted-foreground/60 group-hover/wn:text-foreground shrink-0" />
+              </button>
+            )}
+            {!editingName && (
             <button
               onClick={togglePublished}
               disabled={saving}
@@ -165,7 +232,9 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
               {saving && <Loader2 className="inline h-2.5 w-2.5 animate-spin mr-1" />}
               {status === "published" ? "Published" : status === "draft" ? "Draft" : status}
             </button>
+            )}
           </div>
+          {nameError && <p className="text-[10px] text-red-400 mt-1">{nameError}</p>}
           {editingSlug ? (
             <div className="mt-1 flex items-center gap-1">
               <span className="font-mono text-[11px] text-muted-foreground/70">/</span>
@@ -223,41 +292,63 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
       {/* Steps */}
       <div className="space-y-1.5">
         <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground/60">
-          {steps.length} {steps.length === 1 ? "step" : "steps"} · click ✎ para editar el path de cada landing
+          {steps.length} {steps.length === 1 ? "step" : "steps"} · click ✎ para editar nombre o path de cada landing
         </p>
-        <ul className="space-y-1">
+        <ul className="space-y-1.5">
           {steps.map((step) => {
             const url = urlForStep(step.slug)
             const isCopied = copiedStepId === step.id
-            const isEditing = editingStepId === step.id
+            const isEditingThis = editingStepId === step.id
+            const isEditingName = isEditingThis && editingStepField === "name"
+            const isEditingSlug = isEditingThis && editingStepField === "slug"
             return (
-              <li
-                key={step.id}
-                className="rounded-sm border border-border/50 bg-secondary/30 px-2.5 py-2"
-              >
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <p className="truncate text-xs text-foreground font-medium">{step.name}</p>
-                  <div className="flex shrink-0 items-center gap-1">
+              <li key={step.id} className="rounded-sm border border-border/50 bg-secondary/30 px-2.5 py-2 space-y-1.5">
+                {/* Nombre del step: clickeable para editar */}
+                <div className="flex items-center justify-between gap-2">
+                  {isEditingName ? (
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <input
+                        value={stepDraft}
+                        onChange={(e) => setStepDraft(e.target.value)}
+                        autoFocus
+                        disabled={saving}
+                        className="h-6 flex-1 min-w-0 rounded-sm border border-foreground/40 bg-background px-2 text-xs font-medium focus:border-foreground focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveStepField(step, "name")
+                          if (e.key === "Escape") { setEditingStepId(null); setStepError(null) }
+                        }}
+                      />
+                      <button onClick={() => saveStepField(step, "name")} disabled={saving} className="p-1 rounded-sm hover:bg-secondary text-green-400" title="Guardar">
+                        {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                      </button>
+                      <button onClick={() => { setEditingStepId(null); setStepError(null) }} className="p-1 rounded-sm hover:bg-secondary text-muted-foreground" title="Cancelar">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      type="button"
-                      onClick={() => copyToClipboard(url, step.id)}
-                      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                      title="Copiar link"
+                      onClick={() => { setEditingStepId(step.id); setEditingStepField("name"); setStepDraft(step.name); setStepError(null) }}
+                      className="flex items-center gap-1.5 text-left text-xs text-foreground font-medium group/sn truncate flex-1 min-w-0"
+                      title="Click para editar el nombre de esta landing"
                     >
-                      {isCopied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                      <span className="truncate">{step.name}</span>
+                      <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover/sn:text-foreground shrink-0" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
-                      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                      title="Abrir en navegador"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </button>
-                  </div>
+                  )}
+                  {!isEditingThis && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button type="button" onClick={() => copyToClipboard(url, step.id)} className="rounded-sm p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" title="Copiar link">
+                        {isCopied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                      </button>
+                      <button type="button" onClick={() => window.open(url, "_blank", "noopener,noreferrer")} className="rounded-sm p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" title="Abrir landing">
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {isEditing ? (
+                {/* Path / slug del step: clickeable para editar */}
+                {isEditingSlug ? (
                   <div className="flex items-center gap-1">
                     <span className="font-mono text-[10px] text-muted-foreground">/</span>
                     <input
@@ -265,44 +356,37 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
                       onChange={(e) => setStepDraft(e.target.value)}
                       autoFocus
                       disabled={saving}
-                      className="h-6 flex-1 min-w-0 rounded-sm border border-foreground/30 bg-background px-1.5 font-mono text-[10px] focus:border-foreground focus:outline-none"
+                      className="h-6 flex-1 min-w-0 rounded-sm border border-foreground/40 bg-background px-1.5 font-mono text-[10px] focus:border-foreground focus:outline-none"
                       placeholder="nuevo-path"
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") saveStepSlug(step)
-                        if (e.key === "Escape") { setEditingStepId(null); setStepDraft(step.slug); setStepError(null) }
+                        if (e.key === "Enter") saveStepField(step, "slug")
+                        if (e.key === "Escape") { setEditingStepId(null); setStepError(null) }
                       }}
                     />
-                    <button
-                      onClick={() => saveStepSlug(step)}
-                      disabled={saving}
-                      className="p-1 rounded-sm hover:bg-secondary text-green-400"
-                      title="Guardar"
-                    >
+                    <button onClick={() => saveStepField(step, "slug")} disabled={saving} className="p-1 rounded-sm hover:bg-secondary text-green-400" title="Guardar">
                       {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
                     </button>
-                    <button
-                      onClick={() => { setEditingStepId(null); setStepDraft(step.slug); setStepError(null) }}
-                      className="p-1 rounded-sm hover:bg-secondary text-muted-foreground"
-                      title="Cancelar"
-                    >
+                    <button onClick={() => { setEditingStepId(null); setStepError(null) }} className="p-1 rounded-sm hover:bg-secondary text-muted-foreground" title="Cancelar">
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => { setEditingStepId(step.id); setStepDraft(step.slug); setStepError(null) }}
-                    className="flex w-full items-center gap-1.5 rounded-sm border border-border/30 bg-background/40 px-2 py-1 text-left hover:border-foreground/40 hover:bg-background/70 transition-colors group/edit"
-                    title="Click para editar el path de esta landing"
-                  >
-                    <p className="truncate font-mono text-[10px] text-foreground/70 group-hover/edit:text-foreground flex-1">
-                      {url.replace(/^https?:\/\//, "")}
-                    </p>
-                    <Pencil className="h-3 w-3 text-muted-foreground group-hover/edit:text-foreground shrink-0" />
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 group-hover/edit:text-muted-foreground shrink-0">Editar</span>
-                  </button>
+                  !isEditingName && (
+                    <button
+                      onClick={() => { setEditingStepId(step.id); setEditingStepField("slug"); setStepDraft(step.slug); setStepError(null) }}
+                      className="flex w-full items-center gap-1.5 rounded-sm border border-border/30 bg-background/40 px-2 py-1 text-left hover:border-foreground/40 hover:bg-background/70 transition-colors group/spath"
+                      title="Click para editar el path"
+                    >
+                      <p className="truncate font-mono text-[10px] text-foreground/70 group-hover/spath:text-foreground flex-1">
+                        {url.replace(/^https?:\/\//, "")}
+                      </p>
+                      <Pencil className="h-3 w-3 text-muted-foreground group-hover/spath:text-foreground shrink-0" />
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 shrink-0">Path</span>
+                    </button>
+                  )
                 )}
-                {isEditing && stepError && (
-                  <p className="mt-1 text-[10px] text-red-400">{stepError}</p>
+                {isEditingThis && stepError && (
+                  <p className="text-[10px] text-red-400">{stepError}</p>
                 )}
               </li>
             )

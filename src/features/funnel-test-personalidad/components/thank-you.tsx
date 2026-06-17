@@ -1,44 +1,50 @@
 "use client"
 
-import { Sparkles, Camera, MessageCircle, ExternalLink, CheckCircle2 } from "lucide-react"
+import { Camera, MessageCircle, ExternalLink, CheckCircle2 } from "lucide-react"
 import { FUNNEL_TEST_PERSONALIDAD, whatsappLink, instagramDmLink } from "../config"
 
 /**
- * Thank you page del Funnel Test Personalidad.
- *
- * Flujo que comunica al lead:
- *  1. Abrir el test (botón principal, abre en nueva pestaña)
- *  2. Cuando termines → mandanos screenshot por IG (preferido) o WhatsApp
- *
- * Decision Marco: preferimos Instagram porque ahi se sigue la conversacion natural
- * con el setter. WhatsApp queda como segunda opcion.
+ * Thank you del Funnel Test Personalidad.
+ * Brandkit Capital Hub aplicado: paleta minimalista B&W.
+ * Botón principal: Instagram. Secundario: WhatsApp. Link al test externo arriba.
  */
 export function TestPersonalidadThankYou() {
   return (
-    <main className="min-h-[100dvh] bg-black text-white relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 via-black to-violet-900/10 pointer-events-none" />
-      <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-violet-500/10 blur-3xl pointer-events-none" />
-
-      <div className="relative max-w-2xl mx-auto px-5 py-12 md:py-16 flex flex-col min-h-[100dvh]">
-        <div className="flex items-center gap-2 mb-12 md:mb-16">
-          <Sparkles className="h-4 w-4 text-violet-400" />
-          <span className="text-xs font-mono uppercase tracking-[0.2em] text-zinc-400">
+    <main
+      className="min-h-[100dvh] text-[#F5F6F7]"
+      style={{ backgroundColor: "#0F0F12", fontFamily: "'Inter', sans-serif" }}
+    >
+      <div className="max-w-2xl mx-auto px-5 py-12 md:py-20 flex flex-col min-h-[100dvh]">
+        {/* Marca */}
+        <div className="mb-12 md:mb-16">
+          <span
+            className="text-[11px] uppercase tracking-[0.25em] text-[#9CA3AF]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
             Capital Hub
           </span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center">
-          {/* Confirmacion */}
-          <div className="inline-flex items-center gap-2 text-emerald-400 mb-4">
+          {/* Confirmación */}
+          <div className="inline-flex items-center gap-2 text-white mb-5">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="text-[11px] font-mono uppercase tracking-[0.2em]">Listo</span>
+            <span
+              className="text-[10px] uppercase tracking-[0.3em] text-[#9CA3AF]"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              Listo
+            </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-semibold leading-[1.15] tracking-tight mb-4">
+
+          <h1
+            className="text-3xl md:text-4xl font-medium leading-[1.15] tracking-tight mb-4 text-white"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+          >
             Tu test está esperando.
           </h1>
-          <p className="text-base md:text-lg text-zinc-300 leading-relaxed mb-10 max-w-xl">
-            Pulsa el botón de abajo para abrir el test. Tarda 3 minutos. Cuando termines,
+          <p className="text-base md:text-lg text-[#D1D5DB] leading-relaxed mb-10 max-w-xl">
+            Pulsa el botón para abrir el test. Tarda 3 minutos. Cuando termines,
             <strong className="text-white"> mándanos la captura del resultado por Instagram</strong> y
             te decimos qué camino encaja contigo.
           </p>
@@ -48,18 +54,25 @@ export function TestPersonalidadThankYou() {
             href={FUNNEL_TEST_PERSONALIDAD.TEST_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full max-w-md h-12 rounded-md bg-violet-500 hover:bg-violet-400 text-white font-semibold inline-flex items-center justify-center gap-2 transition-colors text-base mb-3"
+            className="block w-full max-w-md h-12 rounded-none bg-white hover:bg-[#F5F6F7] text-[#0F0F12] font-semibold inline-flex items-center justify-center gap-2 transition-colors text-base mb-3"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
             Abrir el test
             <ExternalLink className="h-4 w-4" />
           </a>
-          <p className="text-[11px] text-zinc-500 mb-10 max-w-md">
+          <p
+            className="text-[10px] uppercase tracking-[0.2em] text-[#6B7280] mb-10 max-w-md"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
             Se abre en una pestaña nueva — vuelve aquí cuando lo termines.
           </p>
 
-          {/* Como enviar el resultado */}
-          <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-5 max-w-md">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 mb-3">
+          {/* Cómo enviar el resultado */}
+          <div className="border border-[#2A2D34] bg-[#18181B] p-5 max-w-md">
+            <p
+              className="text-[10px] uppercase tracking-[0.25em] text-[#9CA3AF] mb-3"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
               Cuando termines, escríbenos
             </p>
 
@@ -67,26 +80,35 @@ export function TestPersonalidadThankYou() {
               href={instagramDmLink()}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 h-12 rounded-md bg-white text-black font-semibold hover:bg-zinc-200 transition-colors mb-2"
+              className="flex items-center gap-3 px-4 h-12 bg-white text-[#0F0F12] font-semibold hover:bg-[#F5F6F7] transition-colors mb-2"
+              style={{ fontFamily: "'Inter Tight', sans-serif" }}
             >
               <Camera className="h-4 w-4" />
               <span className="flex-1 text-left text-sm">Mándanos screenshot por Instagram</span>
-              <span className="text-[10px] font-mono text-zinc-500">recomendado</span>
+              <span
+                className="text-[9px] uppercase tracking-[0.2em] text-[#6B7280]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                recomendado
+              </span>
             </a>
 
             <a
               href={whatsappLink()}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 h-11 rounded-md border border-zinc-700 hover:bg-zinc-900/70 transition-colors text-sm"
+              className="flex items-center gap-3 px-4 h-11 border border-[#3F3F46] hover:border-white hover:bg-[#2A2D34]/40 transition-colors text-sm text-[#F5F6F7]"
             >
-              <MessageCircle className="h-4 w-4 text-emerald-400" />
+              <MessageCircle className="h-4 w-4" />
               <span className="flex-1 text-left">O por WhatsApp si prefieres</span>
             </a>
           </div>
         </div>
 
-        <footer className="pt-12 text-[10px] font-mono uppercase tracking-widest text-zinc-600">
+        <footer
+          className="pt-12 text-[10px] uppercase tracking-[0.2em] text-[#6B7280]"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
           © Capital Hub · Adrián Villanueva
         </footer>
       </div>
