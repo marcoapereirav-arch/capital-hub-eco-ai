@@ -160,16 +160,15 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
               </button>
             </div>
           ) : (
-            <div className="mt-0.5 flex items-center gap-1.5 group/slug">
-              <p className="font-mono text-[11px] text-muted-foreground/70">/{slug}</p>
-              <button
-                onClick={() => setEditingSlug(true)}
-                className="p-0.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Editar slug (path)"
-              >
-                <Pencil className="h-2.5 w-2.5" />
-              </button>
-            </div>
+            <button
+              onClick={() => setEditingSlug(true)}
+              className="mt-0.5 inline-flex items-center gap-1.5 rounded-sm border border-border/40 bg-secondary/30 px-2 py-1 text-left hover:border-foreground/40 hover:bg-secondary/60 transition-colors group/edit"
+              title="Click para editar el path de esta landing"
+            >
+              <p className="font-mono text-[11px] text-foreground/80 group-hover/edit:text-foreground">/{slug}</p>
+              <Pencil className="h-3 w-3 text-muted-foreground group-hover/edit:text-foreground" />
+              <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground/60 group-hover/edit:text-muted-foreground">Editar</span>
+            </button>
           )}
           {slugError && (
             <p className="mt-1 text-[10px] text-red-400">{slugError}</p>
