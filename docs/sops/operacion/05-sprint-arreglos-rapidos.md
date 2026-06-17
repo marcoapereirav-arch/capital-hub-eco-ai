@@ -60,9 +60,24 @@ Lead llega →
 - Show rate
 - Camino del lead (funnel principal)
 
-### 1.6 Card "Invitaciones App" — pendiente decidir
+### 1.6 Card "Invitaciones App" — SE QUEDA
 
-Marco pidió explicación antes de quitarla. Ver respuesta en chat (es el log de `student_invites` enviadas por venta).
+Log de `student_invites` enviadas al alumno por cada venta registrada. Permite:
+- Ver a quién se le mandó magic link y cuándo
+- Distinguir aceptadas vs pendientes
+- Eliminar (solo super_admin) si una venta fue por error
+
+Útil cuando empiecen las ventas reales para monitoreo + debug.
+
+### 1.7 Alcance del sprint vs smoke test del widget de venta
+
+**Lo que SÍ entra en este sprint:** los 3 arreglos UI (dashboard + pipeline + roles).
+
+**Lo que NO entra en este sprint:** el smoke test e2e del widget de venta (closer registra venta → email magic link → alumno activa → entra a App).
+
+**Razón:** el código del widget de venta existe (`POST /api/admin/sales/register`, modal, drawer del contacto), pero **NUNCA se probó end-to-end con un alumno real** (`student_invites = 0` en BD). Si lo metemos aquí, cualquier bug encontrado abre scope y rompe la promesa "rápido y al grano" de este sprint.
+
+**Decisión:** el smoke test e2e es el **primer paso del Bloque #2 (producto end-to-end)**, que arranca inmediatamente después de cerrar este sprint. Lo trato como tarea separada con su propia disciplina.
 
 ## 2. Pipeline CRM — visión de Marco
 
@@ -76,13 +91,19 @@ Marco pidió explicación antes de quitarla. Ver respuesta en chat (es el log de
 
 ## 3. Roles — permisos exactos
 
-| Rol | Acceso |
-|---|---|
-| `super_admin` / `admin` | TODO el OS + dropdown "Ver como Rol" (ver 3.1) |
-| `marketing` | dashboard · operaciones · CRM · webs |
-| `formador` | **(pendiente confirmar con Marco)** |
-| `closer` | dashboard · operaciones · CRM |
-| `setter` | dashboard · operaciones · CRM |
+| Rol | OS (qué ve) | App (qué rol/permiso tiene) |
+|---|---|---|
+| `super_admin` / `admin` | TODO el OS + dropdown "Ver como Rol" (ver 3.1) | ADMIN total |
+| `marketing` | dashboard · operaciones · CRM · webs | (sin acceso o lectura, por confirmar) |
+| `formador` | dashboard · operaciones · CRM | **ADMIN** — puede editar su formación |
+| `closer` | dashboard · operaciones · CRM | (sin acceso o lectura, por confirmar) |
+| `setter` | dashboard · operaciones · CRM | (sin acceso o lectura, por confirmar) |
+
+**Nota sobre formador en App:**
+- Cuando un usuario `formador` clica "Ir a App" desde el OS, debe entrar con el mismo email + sesión (vía Magic Link Bridge cuando Adrián termine la Edge Function)
+- En la App tiene rol **ADMIN** porque graba/edita el contenido de su formación
+- Mapeo necesario: `profiles.role = 'formador'` (OS) → `auth.users.raw_user_meta_data.role = 'ADMIN'` (App)
+- El Magic Link Bridge debe propagar el rol correcto al crear/actualizar al user en el espacio App
 
 ### 3.1 Feature "Ver como Rol" — admin only
 

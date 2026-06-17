@@ -6,12 +6,12 @@
  *   1. Sidebar: filtra items mostrados según el rol del user
  *   2. Proxy/middleware: redirige a /dashboard si intenta abrir ruta no permitida
  *
- * Roles definidos por Marco (2026-06-16):
- *   - super_admin / admin: acceso total
- *   - marketing: 8 secciones (dashboard, operaciones, CRM, calendario,
- *     email marketing, webs, automatizaciones, instagram)
- *   - formador: MISMAS 8 secciones que marketing
- *   - closer / setter: pendientes de definir (acceso vacío de momento)
+ * Roles definidos por Marco (2026-06-17) — SOP 05 sprint arreglos:
+ *   - super_admin / admin: acceso total + dropdown "Ver como Rol"
+ *   - marketing: dashboard · operaciones · CRM · webs
+ *   - formador: dashboard · operaciones · CRM (en App tiene rol ADMIN para editar su formación)
+ *   - closer: dashboard · operaciones · CRM
+ *   - setter: dashboard · operaciones · CRM
  */
 
 export type Role = "super_admin" | "admin" | "marketing" | "closer" | "setter" | "formador"
@@ -28,30 +28,29 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
     "/overview",
     "/operaciones",
     "/crm",
-    "/calendario",
-    "/email-marketing",
+    "/contactos",
     "/webs",
-    "/automatizaciones",
-    "/instagram",
   ],
   formador: [
     "/dashboard",
     "/overview",
     "/operaciones",
     "/crm",
-    "/calendario",
-    "/email-marketing",
-    "/webs",
-    "/automatizaciones",
-    "/instagram",
+    "/contactos",
   ],
   closer: [
-    // Pendiente definir por Marco. De momento solo dashboard.
     "/dashboard",
+    "/overview",
+    "/operaciones",
+    "/crm",
+    "/contactos",
   ],
   setter: [
-    // Pendiente definir por Marco. De momento solo dashboard.
     "/dashboard",
+    "/overview",
+    "/operaciones",
+    "/crm",
+    "/contactos",
   ],
 }
 
