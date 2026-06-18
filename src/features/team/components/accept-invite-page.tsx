@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Lock, AlertCircle, Check } from "lucide-react"
+import { Lock, AlertCircle, Check, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function AcceptInvitePage({ token }: { token: string }) {
@@ -57,7 +57,17 @@ export function AcceptInvitePage({ token }: { token: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F12] flex items-center justify-center px-6">
+    <div className="min-h-screen bg-[#0F0F12] flex items-center justify-center px-6 relative">
+      {submitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(15,15,18,0.7)" }}>
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-7 w-7 animate-spin text-white" />
+            <span className="text-xs font-mono uppercase tracking-wider text-white">
+              Activando tu cuenta…
+            </span>
+          </div>
+        </div>
+      )}
       <form onSubmit={submit} className="max-w-md w-full bg-[#16161B] border border-[#2A2D34] rounded-md p-6 space-y-4">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 border border-[#2A2D34] px-3 py-1 rounded-sm mb-4">
@@ -107,9 +117,16 @@ export function AcceptInvitePage({ token }: { token: string }) {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-[#37CA37] text-black font-mono uppercase tracking-wider py-3 rounded-sm hover:opacity-90 disabled:opacity-30"
+          className="w-full bg-white text-[#0F0F12] font-mono uppercase tracking-wider py-3 rounded-sm hover:opacity-90 disabled:opacity-30 inline-flex items-center justify-center gap-2"
         >
-          {submitting ? "Activando…" : "Activar mi cuenta"}
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Activando…
+            </>
+          ) : (
+            "Activar mi cuenta"
+          )}
         </button>
       </form>
     </div>

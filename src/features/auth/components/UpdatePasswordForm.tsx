@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { updatePassword } from '@/actions/auth'
@@ -63,46 +63,68 @@ export function UpdatePasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-1.5">
-        <label htmlFor="password" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Nueva contraseña
-        </label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Mínimo 8 caracteres"
-        />
-      </div>
+    <div className="relative space-y-4">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-[2px]"
+             style={{ background: 'rgba(15,15,18,0.6)' }}>
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" style={{ color: '#F5F6F7' }} />
+            <span className="text-xs font-mono uppercase tracking-wider" style={{ color: '#F5F6F7' }}>
+              Guardando contraseña…
+            </span>
+          </div>
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="password" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            Nueva contraseña
+          </label>
+          <Input
+            id="password"
+            name="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mínimo 8 caracteres"
+            disabled={loading}
+          />
+        </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor="confirm" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Repite la contraseña
-        </label>
-        <Input
-          id="confirm"
-          name="confirm"
-          type="password"
-          required
-          minLength={8}
-          autoComplete="new-password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          placeholder="Tiene que ser idéntica"
-        />
-      </div>
+        <div className="space-y-1.5">
+          <label htmlFor="confirm" className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            Repite la contraseña
+          </label>
+          <Input
+            id="confirm"
+            name="confirm"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="Tiene que ser idéntica"
+            disabled={loading}
+          />
+        </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" disabled={loading || !password || !confirm} className="w-full">
-        {loading ? 'Guardando…' : 'Guardar contraseña'}
-      </Button>
-    </form>
+        <Button type="submit" disabled={loading || !password || !confirm} className="w-full">
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Guardando…
+            </span>
+          ) : (
+            'Guardar contraseña'
+          )}
+        </Button>
+      </form>
+    </div>
   )
 }
