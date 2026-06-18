@@ -189,7 +189,9 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_ALUMNO_URL ?? "https://app.capitalhubapp.com"
+  // URL fija al dominio canónico de la App (NEXT_PUBLIC_APP_ALUMNO_URL puede estar mal seteada
+  // a una preview URL de Vercel; forzamos app.capitalhubapp.com).
+  const appUrl = "https://app.capitalhubapp.com"
   const acceptUrl = `${appUrl}/accept-invite/${token}`
 
   // Email al alumno
