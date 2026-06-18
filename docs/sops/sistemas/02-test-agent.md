@@ -1,7 +1,7 @@
 ---
 title: Test Agent · cuenta interna del agente Claude
 order: 2
-area: operacion
+area: sistemas
 ---
 
 # Test Agent — cuenta interna del agente Claude

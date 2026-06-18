@@ -1,7 +1,7 @@
 ---
 title: Prioridad actual — junio 2026
 order: 4
-area: operacion
+area: sistemas
 ---
 
 # Prioridad actual del proyecto — junio 2026

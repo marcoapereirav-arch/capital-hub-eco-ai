@@ -1,7 +1,7 @@
 ---
 title: Feedback visual — toda acción >1s muestra spinner/overlay
 order: 6
-area: operacion
+area: sistemas
 ---
 
 # Regla fundamental — feedback visual en acciones lentas

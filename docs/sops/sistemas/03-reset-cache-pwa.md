@@ -1,7 +1,7 @@
 ---
 title: Reset cache PWA — limpiar Service Worker del navegador
 order: 3
-area: operacion
+area: sistemas
 ---
 
 # Reset cache de PWA del OS

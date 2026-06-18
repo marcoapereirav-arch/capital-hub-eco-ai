@@ -1,7 +1,7 @@
 ---
 title: Repos separados OS y App — JAMÁS mezclar commits
 order: 7
-area: operacion
+area: sistemas
 ---
 
 # Repos separados OS y App — regla absoluta

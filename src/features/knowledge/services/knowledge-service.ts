@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path"
 import matter from "gray-matter"
 
-export type Quadrant = "marketing" | "producto" | "ventas" | "finanzas" | "operacion"
+export type Quadrant = "marketing" | "producto" | "ventas" | "finanzas" | "sistemas"
 
 export type Sop = {
   slug: string
@@ -44,9 +44,9 @@ const QUADRANTS: { id: Quadrant; label: string; description: string }[] = [
     description: "Pricing, comisiones, modelo de negocio",
   },
   {
-    id: "operacion",
-    label: "Operación",
-    description: "Runbooks, protocolos del agente, prioridades, reglas operativas, sprints",
+    id: "sistemas",
+    label: "Sistemas",
+    description: "SOPs internos, procesos, runbooks, protocolos del agente, reglas operativas, sprints",
   },
 ]
 

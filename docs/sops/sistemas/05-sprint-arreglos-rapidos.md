@@ -1,7 +1,7 @@
 ---
 title: Sprint de arreglos rápidos — junio 2026 (dashboard + pipeline CRM + roles)
 order: 5
-area: operacion
+area: sistemas
 ---
 
 # Sprint de arreglos rápidos — 2026-06-17

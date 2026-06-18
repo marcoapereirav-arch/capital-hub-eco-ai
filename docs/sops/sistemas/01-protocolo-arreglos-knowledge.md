@@ -1,7 +1,7 @@
 ---
 title: Protocolo de arreglos → Knowledge siempre actualizado
 order: 1
-area: operacion
+area: sistemas
 ---
 
 # Protocolo · cada arreglo se documenta en docs/sops/
