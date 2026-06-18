@@ -99,17 +99,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Error creando usuario", detail: createErr?.message }, { status: 500 })
   }
 
-  // Profile (trigger handle_new_user lo crea — actualizamos rol)
-  await admin
+  // Profile: UPSERT explícito. El trigger handle_new_auth_user existe pero escribe en
+  // public.users (tabla de la App, schema legacy), NO en public.profiles (tabla del OS).
+  // Si confiábamos en él, profile quedaba vacío → role=null → loop infinito en login.
+  const { error: profileErr } = await admin
     .from("profiles")
-    .update({
+    .upsert({
+      id: created.user.id,
+      email,
       role: data.role,
       full_name: data.full_name,
       invited_by: user.id,
       invited_at: new Date().toISOString(),
       active: false,  // se activa al aceptar invitación
-    })
-    .eq("id", created.user.id)
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" })
+  if (profileErr) {
+    console.error("[team/invite] profile upsert failed", profileErr)
+    // Si falla el profile, borramos el user auth para no dejar huérfano
+    await admin.auth.admin.deleteUser(created.user.id).catch(() => null)
+    return NextResponse.json({ error: "Error creando perfil", detail: profileErr.message }, { status: 500 })
+  }
 
   // Token nuestro
   const token = generateToken()

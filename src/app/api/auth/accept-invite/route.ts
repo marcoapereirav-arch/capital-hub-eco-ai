@@ -49,8 +49,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No se pudo establecer la contraseña", detail: updErr.message }, { status: 500 })
   }
 
-  // Marca profile como activo
-  await admin.from("profiles").update({ active: true, updated_at: new Date().toISOString() }).eq("id", invite.user_id)
+  // Marca profile como activo. UPSERT por defensa: si por alguna razón el profile no existe
+  // (bug histórico cuando se confiaba en el trigger handle_new_auth_user que escribía solo en
+  // public.users, no en profiles), lo creamos aquí desde los datos de la invitación.
+  await admin
+    .from("profiles")
+    .upsert({
+      id: invite.user_id,
+      email: invite.email,
+      full_name: invite.full_name,
+      role: invite.role,
+      active: true,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" })
 
   // Marca invitación como aceptada
   await admin

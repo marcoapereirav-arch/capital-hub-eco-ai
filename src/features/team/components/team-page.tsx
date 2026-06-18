@@ -71,6 +71,12 @@ export function TeamPage() {
     load()
   }
 
+  async function cancelInvitation(id: string, email: string) {
+    if (!confirm(`¿Cancelar invitación a ${email}? Se borrará y el email quedará libre para reinvitar.`)) return
+    await fetch(`/api/admin/team/invitations/${id}`, { method: "DELETE" })
+    load()
+  }
+
   async function deactivate(id: string) {
     if (!confirm("¿Desactivar este miembro? No podrá entrar al OS.")) return
     await fetch(`/api/admin/team/${id}`, { method: "DELETE" })
@@ -170,6 +176,13 @@ export function TeamPage() {
                     <span className="text-[10px] font-mono text-muted-foreground">
                       caduca en {expiresIn}d
                     </span>
+                    <button
+                      onClick={() => cancelInvitation(inv.id, inv.email)}
+                      className="text-muted-foreground hover:text-red-400 transition-colors"
+                      title="Cancelar invitación"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 )
               })}
