@@ -63,6 +63,18 @@ if (user && !pathname.startsWith('/api/') && !pathname.startsWith('/auth/') && !
 
 Esto significa que aunque alguien intente abrir `/equipo` siendo `marketing`, el server lo redirige a `/dashboard`. Defensa en server-side, no solo cosmética en cliente.
 
+## 🚨 Checklist al cambiar permisos de un rol (regla operativa)
+
+Cada vez que se cambia un permiso en `ROLE_ROUTES`, hay que sincronizar TODOS los lugares donde la descripción del rol aparece. Si no, el usuario ve algo en `/team` distinto a lo que realmente puede hacer.
+
+Lugares a actualizar en el mismo commit:
+1. `src/lib/auth/role-access.ts` — `ROLE_ROUTES` (la fuente de verdad)
+2. `src/features/team/components/team-page.tsx` — `ROLE_OPTIONS` (descripciones visibles al invitar / cambiar rol)
+3. `docs/sops/producto/41-sistema-roles-permisos.md` (este SOP)
+4. Cualquier otro componente que liste roles humanos (ej. mobile-bottom-nav si filtra)
+
+Antípatrón: cambiar solo `role-access.ts` y dejar `team-page.tsx` con descripciones viejas. El usuario verá "Permisos pendientes de definir" o información incorrecta al invitar.
+
 ## Cómo añadir un rol nuevo
 
 1. Editar `src/lib/auth/role-access.ts`:
