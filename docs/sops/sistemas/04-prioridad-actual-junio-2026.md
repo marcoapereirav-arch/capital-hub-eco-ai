@@ -88,4 +88,34 @@ El flow canónico está en [`producto/12-sistema-end-to-end.md`](../producto/12-
 - **2026-06-17 16:00:** Marco re-prioriza. Acceso al equipo PRIMERO ("que entren y vean"), producto e2e después.
 - **2026-06-17 17:30:** Marco mueve Calendly arriba del todo ("sin agenda no hay venta"). Yo lo había puesto al final. Corregido.
 - **2026-06-17 18:00:** Calendly queda en pausa (depende de Adrián). Instrucciones cargadas en SOP 45. Arranca Bloque #1 acceso equipo.
-- **2026-06-18:** Sprint corto de arreglos rápidos (dashboard + pipelines + roles + filtros) hecho dentro del Bloque #1. Estado tracking en BD (proj_blockA1_dashboard completed, proj_blockA3_roles en marcha).
+- **2026-06-18 09:00:** Bloque #1 ACCESO EQUIPO completo (permisos + dashboard + filtros + roles + View as Role + invitar + reenviar + cancelar + spinners + SSO). Verificado en producción.
+- **2026-06-18 14:00:** Bloque #2 PRODUCTO end-to-end completo (SSO + onboarding profesión + perfil público + comunidades Skool 3 herméticas + posts/reacciones/comentarios + Q&A + chat 1-a-1 + permisos formador + smoke test venta verificado).
+- **2026-06-18 18:00:** Sprint brandkit canonical (paleta + Inter Tight + letter-spacing 0.45em del HTML oficial) aplicado a HomePage + SkoolPage + LoginPage + AuthLayout + AcceptInvite + Onboarding. SOP 08 (end-to-end completo) creado.
+
+## Estado HOY (2026-06-18)
+
+### Cerrado y verificado en producción
+- Bloque #1 ACCESO EQUIPO completo
+- Bloque #2 PRODUCTO end-to-end completo
+- Brandkit canonical aplicado a layouts críticos (auth + home + skool)
+- Smoke test e2e venta → alumno pasado (2 bugs encontrados + arreglados)
+
+### Pendiente del Bloque actual
+- Barrido brandkit canonical en tabs internos Skool (Calendar/Members/Leaderboards) y Admin pages legacy
+- Endpoint reenviar invitación de equipo (`/api/admin/team/[id]/resend`)
+- PWA install + Service Worker fetch (notif push real cuando pestaña cerrada)
+
+### En pausa (decisión Marco — después de producto)
+- Funnel test personalidad placeholders + integración
+- ManyChat flows
+- Bolsa de trabajo (post 8/8)
+- Email Marketing dashboard
+- Tracker Ads completo
+- Calendario propio (post Calendly API)
+
+### Bloqueado por Adrián
+- Bunny Stream (Marco lo hace ahora — Library ID + CDN Hostname al .env.local del repo App)
+- Calendly API (PAT + plan Standard + webhook signing key)
+- Token Meta IG + Ads
+- Webinar 8/8 formato + scripts cierre
+- Contenido formativo grabado 3 rutas
