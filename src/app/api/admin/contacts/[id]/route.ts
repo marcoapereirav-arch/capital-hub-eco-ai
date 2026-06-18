@@ -80,6 +80,18 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   return NextResponse.json({ ok: true })
 }
 
+/**
+ * DELETE /api/admin/contacts/[id]
+ * Borra el contacto + TODO lo asociado (cascade controlado):
+ * - student_invites pendientes con su email (libera el UNIQUE constraint para futuros invites)
+ * - contact_journey_events del contact_id (FK contact_id on delete cascade, pero hacemos explícito)
+ *
+ * NO borra auth.users / public.users si el alumno ya activó su cuenta.
+ * Esa decisión es separada y se hace desde /admin/users → "Eliminar cuenta".
+ *
+ * Decisión Marco 2026-06-18: cuando borro un contacto, quiero que se libere el email
+ * para poder registrar la venta de nuevo sin chocar con invites huérfanos.
+ */
 export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -87,6 +99,22 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
 
   const { id } = await ctx.params
   const admin = getAdminClient()
+
+  const { data: contact } = await admin
+    .from("contacts")
+    .select("email")
+    .eq("id", id)
+    .maybeSingle()
+
+  if (contact?.email) {
+    await admin
+      .from("student_invites")
+      .delete()
+      .ilike("email", contact.email.toLowerCase().trim())
+  }
+
+  await admin.from("contact_journey_events").delete().eq("contact_id", id)
+
   const { error } = await admin.from("contacts").delete().eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

@@ -172,7 +172,17 @@ export async function POST(req: NextRequest) {
 
   const { data: caller } = await admin.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle()
 
-  await admin.from("student_invites").insert({
+  // ⚠️ student_invites tiene UNIQUE index sobre lower(email) WHERE accepted_at IS NULL.
+  // Si ya hay un invite pendiente para este email (alumno reactivado, etc), invalidamos
+  // el viejo antes de crear el nuevo — sino el INSERT falla silenciosamente y se envía
+  // un email con un token huérfano que NO existe en BD (bug verificado 2026-06-18).
+  await admin
+    .from("student_invites")
+    .update({ expires_at: new Date(Date.now() - 1000).toISOString() })
+    .ilike("email", email)
+    .is("accepted_at", null)
+
+  const { error: inviteInsertError } = await admin.from("student_invites").insert({
     contact_id: contactId,
     email,
     full_name: data.full_name.trim(),
@@ -188,6 +198,13 @@ export async function POST(req: NextRequest) {
       close_type: data.close_type,
     },
   })
+  if (inviteInsertError) {
+    console.error("[sales/register] student_invite INSERT failed", inviteInsertError)
+    return NextResponse.json({
+      error: "No se pudo generar la invitación. Revisa si el alumno ya tiene cuenta activa.",
+      detail: inviteInsertError.message,
+    }, { status: 500 })
+  }
 
   // URL fija al dominio canónico de la App (NEXT_PUBLIC_APP_ALUMNO_URL puede estar mal seteada
   // a una preview URL de Vercel; forzamos app.capitalhubapp.com).
