@@ -303,7 +303,7 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
             className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
           >
             {ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>
+              <option key={r.value} value={r.value}>{r.label}</option>
             ))}
           </select>
         </label>
