@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Search, Plus, ChevronRight, LayoutGrid, List } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Search, Plus, ChevronRight, LayoutGrid, List, X } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
 import { ContactDrawer } from "./contact-drawer"
@@ -40,6 +40,12 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [search, setSearch] = useState("")
   const [stageFilter, setStageFilter] = useState<string | "all">("all")
   const [tagFilter, setTagFilter] = useState<Set<string>>(new Set())
+  const [pipelineFilter, setPipelineFilter] = useState<string | "all">("all")
+  const [originFilter, setOriginFilter] = useState<string | "all">("all")
+  const [ownerFilter, setOwnerFilter] = useState<string | "all">("all")
+  const [productFilter, setProductFilter] = useState<string | "all">("all")
+  const [dateRange, setDateRange] = useState<"all" | "7d" | "30d" | "90d">("all")
+  const [hasCallFilter, setHasCallFilter] = useState<"all" | "yes" | "no">("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<"list" | "kanban">(initialView)
@@ -50,6 +56,24 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const PIPELINE_STAGES = activePipeline
     ? activePipeline.stages.map((s) => ({ value: s.key, label: s.name }))
     : FALLBACK_STAGES
+
+  // Opciones únicas derivadas de los contactos cargados (para los dropdowns de filtro)
+  const filterOptions = useMemo(() => {
+    const origins = new Set<string>()
+    const owners = new Set<string>()
+    const products = new Set<string>()
+    for (const c of contacts) {
+      if (c.source) origins.add(c.source)
+      const ownerStr = (c as ContactRow & { owner_assignee?: string | null }).owner_assignee
+      if (ownerStr) owners.add(ownerStr)
+      ;(c.products ?? []).forEach((p) => products.add(p))
+    }
+    return {
+      origins: Array.from(origins).sort(),
+      owners: Array.from(owners).sort(),
+      products: Array.from(products).sort(),
+    }
+  }, [contacts])
 
   async function updateStage(contactId: string, newStage: string) {
     await fetch(`/api/admin/contacts/${contactId}`, {
@@ -82,47 +106,158 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
       out = out.filter((c) => (
         c.full_name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
-        c.phone?.toLowerCase().includes(q)
+        c.phone?.toLowerCase().includes(q) ||
+        c.instagram_username?.toLowerCase().includes(q)
       ))
     }
     if (tagFilter.size > 0) {
       out = out.filter((c) => {
         const tags = tagsByContact.get(c.id) ?? []
-        // Logica OR: el contacto debe tener AL MENOS uno de los tags seleccionados
         return tags.some((t) => tagFilter.has(t.id))
       })
+    }
+    if (pipelineFilter !== "all") {
+      out = out.filter((c) => (c as ContactRow & { pipeline_id?: string | null }).pipeline_id === pipelineFilter)
+    }
+    if (originFilter !== "all") {
+      out = out.filter((c) => c.source === originFilter)
+    }
+    if (ownerFilter !== "all") {
+      out = out.filter((c) => (c as ContactRow & { owner_assignee?: string | null }).owner_assignee === ownerFilter)
+    }
+    if (productFilter !== "all") {
+      out = out.filter((c) => (c.products ?? []).includes(productFilter))
+    }
+    if (dateRange !== "all") {
+      const days = dateRange === "7d" ? 7 : dateRange === "30d" ? 30 : 90
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+      out = out.filter((c) => new Date(c.created_at).getTime() >= cutoff)
+    }
+    if (hasCallFilter !== "all") {
+      out = out.filter((c) => hasCallFilter === "yes" ? !!c.last_call_at : !c.last_call_at)
     }
     return out
   })()
 
+  const activeFiltersCount =
+    (stageFilter !== "all" ? 1 : 0) +
+    (pipelineFilter !== "all" ? 1 : 0) +
+    (originFilter !== "all" ? 1 : 0) +
+    (ownerFilter !== "all" ? 1 : 0) +
+    (productFilter !== "all" ? 1 : 0) +
+    (dateRange !== "all" ? 1 : 0) +
+    (hasCallFilter !== "all" ? 1 : 0) +
+    (tagFilter.size > 0 ? 1 : 0)
+
+  function clearAllFilters() {
+    setStageFilter("all")
+    setPipelineFilter("all")
+    setOriginFilter("all")
+    setOwnerFilter("all")
+    setProductFilter("all")
+    setDateRange("all")
+    setHasCallFilter("all")
+    setTagFilter(new Set())
+    setSearch("")
+  }
+
   // Toolbar adaptado a la pestaña. Cada pestaña respeta su ecosistema:
-  // - Contactos (list): solo filtros de contacto (buscar + tags). Sin pipeline.
+  // - Contactos (list): set completo de filtros para buscar/filtrar por lo que sea.
   // - Pipeline (kanban): selector de pipeline + filtros del pipeline activo.
+  const filterSelectClass = "h-8 rounded-sm border border-border bg-background px-2 text-xs"
   const Toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="relative flex-1 min-w-[200px] max-w-md">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar nombre, email, teléfono, Instagram…"
-          className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
-        />
+    <div className="flex flex-col gap-2">
+      {/* Fila 1: búsqueda + acción principal */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar nombre, email, teléfono, Instagram…"
+            className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
+          />
+        </div>
+        {view === "kanban" && (
+          <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
+        )}
+        <div className="flex-1" />
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
+        </span>
+        <button
+          onClick={() => setCreating(true)}
+          className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
+        >
+          <Plus className="h-3 w-3" /> Nuevo
+        </button>
       </div>
-      {view === "kanban" && (
-        <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
+
+      {/* Fila 2: filtros (solo en pestaña Contactos · list). En kanban el filtrado vive en el pipeline. */}
+      {view === "list" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
+
+          <select value={pipelineFilter} onChange={(e) => setPipelineFilter(e.target.value)} className={filterSelectClass}>
+            <option value="all">Pipeline · todos</option>
+            {pipelines.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+
+          <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={filterSelectClass}>
+            <option value="all">Stage · todos</option>
+            {PIPELINE_STAGES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+
+          <select value={originFilter} onChange={(e) => setOriginFilter(e.target.value)} className={filterSelectClass}>
+            <option value="all">Origen · todos</option>
+            {filterOptions.origins.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+
+          <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className={filterSelectClass}>
+            <option value="all">Owner · todos</option>
+            {filterOptions.owners.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+
+          <select value={productFilter} onChange={(e) => setProductFilter(e.target.value)} className={filterSelectClass}>
+            <option value="all">Producto · todos</option>
+            {filterOptions.products.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+
+          <select value={dateRange} onChange={(e) => setDateRange(e.target.value as typeof dateRange)} className={filterSelectClass}>
+            <option value="all">Fecha · cualquiera</option>
+            <option value="7d">Últimos 7 días</option>
+            <option value="30d">Últimos 30 días</option>
+            <option value="90d">Últimos 90 días</option>
+          </select>
+
+          <select value={hasCallFilter} onChange={(e) => setHasCallFilter(e.target.value as typeof hasCallFilter)} className={filterSelectClass}>
+            <option value="all">Llamada · cualquiera</option>
+            <option value="yes">Con llamada</option>
+            <option value="no">Sin llamada</option>
+          </select>
+
+          {activeFiltersCount > 0 && (
+            <button
+              onClick={clearAllFilters}
+              className="inline-flex items-center gap-1 h-8 rounded-sm border border-border bg-background px-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+              title="Limpiar todos los filtros"
+            >
+              <X className="h-3 w-3" />
+              <span>Limpiar ({activeFiltersCount})</span>
+            </button>
+          )}
+        </div>
       )}
-      <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
-      <div className="flex-1" />
-      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-        {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
-      </span>
-      <button
-        onClick={() => setCreating(true)}
-        className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
-      >
-        <Plus className="h-3 w-3" /> Nuevo
-      </button>
     </div>
   )
 

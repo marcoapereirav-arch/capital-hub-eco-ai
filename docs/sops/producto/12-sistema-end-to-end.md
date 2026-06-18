@@ -202,6 +202,54 @@ new → contacted → booked → attended → won
 | `won` | Cerró venta |
 | `lost` | No cerró + decisión de no seguir |
 
+## 🚨 Asignación de pipeline al lead (REGLA SÓLIDA — no cambiar)
+
+Cada contacto tiene **UN solo `pipeline_id`**. El pipeline refleja **el camino por el que entró al sistema**, no su estado actual. El stage cambia, el pipeline_id NO.
+
+### Los dos pipelines actuales
+
+| Pipeline | Slug | is_default | ¿Quién va aquí? |
+|---|---|---|---|
+| **General** | `general` | **true** | Lead que llega SIN contexto (link de agenda directo, DM, referral, alguien le pasa el calendario sin más) |
+| **Test Personalidad** | `test-personalidad` | false | Lead que pasó por la landing del test, dejó email en el optin, vino con ese contexto |
+
+### Reglas de asignación (cableadas en código)
+
+| Endpoint | Comportamiento |
+|---|---|
+| `POST /api/optin/test-personalidad` | Lead **nuevo** → `pipeline_id = Test Personalidad`. Lead **existente sin pipeline** → asigna Test Personalidad. Lead **existente CON pipeline** → PRESERVA el suyo. |
+| `POST /api/calendar/book` | Lead **nuevo** → `pipeline_id = General` (default). Lead **existente** → PRESERVA el suyo. Si entró por Test Personalidad y ahora agenda → sigue en Test Personalidad (no salta). |
+
+### Por qué esta regla
+
+- El lead que pasó por Test Personalidad **se tiene que medir en su funnel**, no en el General. Su conversión, su show rate, su cierre van al Test Personalidad pipeline.
+- El lead que llega frío (sin pasar por funnel específico) cae al General. Esa es su realidad: vino sin contexto.
+- El dashboard general SUMA todos los pipelines (los 2 actuales y los 80 futuros). Las KPIs principales NO se sesgan por filtro de funnel.
+- La sección "Vista por funnel" filtra por uno para ver el detalle de ese funnel.
+
+### Cómo agregar un funnel nuevo
+
+1. Crear pipeline en `public.pipelines` con su slug y stages propios si los necesita
+2. En el endpoint que captura el lead (optin, formulario, webhook), asignar `pipeline_id` = ese pipeline
+3. Si el contacto ya tenía pipeline, PRESERVARLO (no sobreescribir)
+4. El dashboard general automáticamente lo cuenta. La sección "Vista por funnel" lo lista en el dropdown.
+
+### Decisión arquitectónica anterior (revertida)
+
+Marco dejó claro 2026-06-18: NO hay "Principal agregado virtual" — el agregado es la suma del dashboard. Los pipelines son contextos de funnel. El default (General) es para los que entran sin contexto.
+
+## Ecosistemas por pestaña en /crm
+
+Cada pestaña tiene sus propios filtros y configuraciones. NO se mezclan.
+
+| Pestaña | Ruta | Filtros propios |
+|---|---|---|
+| **Contactos** | `/crm/contactos` | Búsqueda · Tags · Pipeline · Stage · Origen · Owner · Producto · Fecha · Llamada |
+| **Pipeline** | `/crm/pipeline` | Búsqueda · Selector de pipeline · Tags · Configurar |
+| **Tags** | `/crm/tags` | Gestión de tags |
+
+El selector de pipeline NO aparece en Contactos (es un filtro más). El kanban del Pipeline sí lo necesita arriba porque define qué columnas mostrar.
+
 ## Monitoreo del sistema
 
 - Cron `mifge_no_show_detection` cada 30 min: detecta llamadas sin marcar attended en ventana 1-25h post → marca `no_show` + email retargeting

@@ -86,16 +86,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Crear/asociar contacto en BD (estilo GHL): si existe por email, actualiza last_call_at;
-    // si no, lo crea con stage=booked y vincula la booking
+    // si no, lo crea con stage=agendado y vincula la booking.
+    //
+    // REGLA DE PIPELINE (SOP 12):
+    // - Si el contacto YA existe y tiene pipeline_id → PRESERVAR (no sobreescribir).
+    //   Esto mantiene el contexto del funnel por el que llegó (test personalidad, etc).
+    // - Si el contacto es NUEVO (agenda directa sin contexto previo) → asignar pipeline default (General).
     try {
       const { data: existingContact } = await supabase
         .from("contacts")
-        .select("id")
+        .select("id, pipeline_id")
         .eq("email", data.attendee_email.toLowerCase().trim())
         .maybeSingle()
 
       let contactId = existingContact?.id
       if (!contactId) {
+        // Lead nuevo sin contexto → pipeline General (default)
+        const { data: defaultPipeline } = await supabase
+          .from("pipelines").select("id").eq("is_default", true).maybeSingle()
         const { data: created } = await supabase
           .from("contacts")
           .insert({
@@ -105,6 +113,7 @@ export async function POST(req: NextRequest) {
             stage: "agendado",
             source: "agenda_publica",
             notes: data.notes ?? null,
+            pipeline_id: defaultPipeline?.id ?? null,
           })
           .select("id")
           .single()
