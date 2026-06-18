@@ -179,6 +179,22 @@ export function ContactDrawer({
                 {stages.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
               <div className="flex-1" />
+              {(contact.stage === "won" || contact.stage === "alumno") && (
+                <button
+                  onClick={async () => {
+                    const res = await fetch(`/api/admin/contacts/${contact.id}/resend-invite`, { method: "POST" })
+                    const data = await res.json()
+                    alert(res.ok
+                      ? `Magic link reenviado a ${data.sent_to}`
+                      : (data.error ?? "No se pudo reenviar"),
+                    )
+                  }}
+                  className="text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card hover:border-foreground/40 transition-colors"
+                  title="Reenviar magic link de acceso a la App"
+                >
+                  ↻ Reenviar acceso
+                </button>
+              )}
               <button onClick={deleteContact} className="text-muted-foreground hover:text-red-400">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
