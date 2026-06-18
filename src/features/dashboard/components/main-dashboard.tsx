@@ -200,19 +200,22 @@ export function MainDashboard() {
           .select("id, total_revenue, total_cash_collected")
           .gte("created_at", prevFromIso)
           .lte("created_at", prevToIso),
-        // Invitaciones del periodo
+        // Invitaciones del periodo — solo las que tienen contact_id válido
+        // (huérfanos con contact_id=null son ruido y NO cuentan como ventas reales).
         supabase
           .from("student_invites")
-          .select("id, email, full_name, products, accepted_at, created_at")
+          .select("id, email, full_name, products, accepted_at, created_at, contact_id")
           .gte("created_at", fromIso)
           .lte("created_at", toIso)
+          .not("contact_id", "is", null)
           .order("created_at", { ascending: false }),
-        // Invitaciones del periodo anterior
+        // Invitaciones del periodo anterior — mismo criterio
         supabase
           .from("student_invites")
-          .select("id, created_at, accepted_at")
+          .select("id, created_at, accepted_at, contact_id")
           .gte("created_at", prevFromIso)
-          .lte("created_at", prevToIso),
+          .lte("created_at", prevToIso)
+          .not("contact_id", "is", null),
         // Bookings del periodo
         supabase
           .from("calendar_bookings")
@@ -233,7 +236,7 @@ export function MainDashboard() {
       setAllContacts((allContactsRes.data ?? []) as ContactRow[])
       setPreviousContacts((prevContactsRes.data ?? []) as ContactRow[])
       setInvites((invitesRes.data ?? []) as StudentInviteRow[])
-      setPreviousInvites((prevInvitesRes.data ?? []) as StudentInviteRow[])
+      setPreviousInvites((prevInvitesRes.data ?? []) as unknown as StudentInviteRow[])
       setBookings((bookingsRes.data ?? []) as CalendarBookingRow[])
 
       // Construir serie temporal Revenue por día
