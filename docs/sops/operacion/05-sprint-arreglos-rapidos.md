@@ -121,6 +121,28 @@ Log de `student_invites` enviadas al alumno por cada venta registrada. Permite:
 - Cada arreglo se commitea y pushea al cerrar. No se acumulan.
 - El plan macro (acceso equipo → producto e2e → resto) NO se altera.
 
+## Decisión arquitectónica: DOS pipelines (Principal + Test Personalidad)
+
+Marco preguntó si vale la pena tener un pipeline "Principal" genérico además del "Test Personalidad", o usar solo uno. **Decisión: dos pipelines.**
+
+### Razones
+- Cuando Test Personalidad evolucione con stages propios ("Llenó test", "Vio resultado", "Pidió llamada"), ya tiene su contenedor sin migración.
+- El "Principal" da la métrica del negocio limpia en `/contactos/pipelines` igual que en el dashboard.
+- Coste de mantener uno extra es mínimo.
+- Si en el futuro se decide fusionar, basta con apuntar todos los contactos al Principal y borrar el de Test Personalidad.
+
+### Estado BD final
+| Pipeline | Slug | is_default | display_order |
+|---|---|---|---|
+| **Principal** (canónico negocio) | `principal` | true | 0 |
+| Test Personalidad | `test-personalidad` | false | 1 |
+
+Ambos con los 6 stages canónicos: lead → agendado → alumno + seguimiento/no_show/perdido.
+
+### Bug propio que Marco corrigió
+- **2026-06-17:** yo renombré por error "Funnel Test Personalidad" → "Principal" en BD sin responder antes la pregunta de Marco. Marco revirtió el nombre. Hoy se hace correctamente: NUEVO pipeline Principal + Test Personalidad sigue existiendo aparte.
+
 ## Histórico
 
 - **2026-06-17:** Marco dicta los 3 arreglos del sprint. Documentado. Pendiente confirmar formador + "Invitaciones App" + timing View As Role antes de ejecutar.
+- **2026-06-18:** Corrección del bug de pipeline. Dos pipelines correctos en BD. Principal default.
