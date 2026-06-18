@@ -42,16 +42,30 @@ export async function POST(req: NextRequest) {
   }
   if (!invite.user_id) return NextResponse.json({ error: "Invitación corrupta" }, { status: 500 })
 
-  // Actualiza contraseña del user (usa service role)
-  const { error: updErr } = await admin.auth.admin.updateUserById(invite.user_id, { password })
+  // Mapeo de rol OS → rol App. Necesario para que el user_metadata.role propague el rol
+  // correcto a la App al activar la cuenta.
+  const appRole = (invite.role === "super_admin" || invite.role === "admin" || invite.role === "formador") ? "ADMIN" : "USER"
+
+  // Actualiza contraseña + propaga metadata role (defensa por si el endpoint /team falló en setearlo)
+  const { error: updErr } = await admin.auth.admin.updateUserById(invite.user_id, {
+    password,
+    user_metadata: { full_name: invite.full_name, role: appRole },
+  })
   if (updErr) {
     console.error("[accept-invite] updateUserById failed", updErr)
     return NextResponse.json({ error: "No se pudo establecer la contraseña", detail: updErr.message }, { status: 500 })
   }
 
+  // Lee formacion_asignada del profile (si es formador)
+  const { data: existingProfile } = await admin
+    .from("profiles")
+    .select("formacion_asignada")
+    .eq("id", invite.user_id)
+    .maybeSingle()
+  const formacionAsignada = (existingProfile as { formacion_asignada?: string | null } | null)?.formacion_asignada ?? null
+
   // Marca profile como activo. UPSERT por defensa: si por alguna razón el profile no existe
-  // (bug histórico cuando se confiaba en el trigger handle_new_auth_user que escribía solo en
-  // public.users, no en profiles), lo creamos aquí desde los datos de la invitación.
+  // (bug histórico), lo creamos aquí desde los datos de la invitación.
   await admin
     .from("profiles")
     .upsert({
@@ -59,9 +73,18 @@ export async function POST(req: NextRequest) {
       email: invite.email,
       full_name: invite.full_name,
       role: invite.role,
+      formacion_asignada: formacionAsignada,
       active: true,
       updated_at: new Date().toISOString(),
     }, { onConflict: "id" })
+
+  // public.users (App): sincronizar role + formacion_asignada por si el trigger handle_new_auth_user
+  // no propagó el role (race condition cuando user_metadata se setea después del insert inicial).
+  await admin
+    .from("users")
+    .update({ role: appRole, formacion_asignada: formacionAsignada })
+    .eq("auth_user_id", invite.user_id)
+    .then(() => null, () => null)
 
   // Marca invitación como aceptada
   await admin

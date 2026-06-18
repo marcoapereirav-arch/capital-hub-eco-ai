@@ -8,12 +8,33 @@ export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 const ROLES = ["super_admin", "marketing", "closer", "setter", "formador"] as const
+const FORMACIONES = ["ia-integrator", "media-buyer-digital", "comercial-closing"] as const
 
 const InviteSchema = z.object({
   email: z.string().email().max(255),
   full_name: z.string().min(2).max(120),
   role: z.enum(ROLES),
-})
+  // Solo requerido si role=formador. Ignorado para los demás roles.
+  formacion_asignada: z.enum(FORMACIONES).optional().nullable(),
+}).refine(
+  (data) => data.role !== "formador" || !!data.formacion_asignada,
+  { message: "El formador debe tener una formacion_asignada", path: ["formacion_asignada"] },
+)
+
+/**
+ * Mapea el rol del OS al rol que se setea en auth.users.user_metadata.role
+ * y en public.users.role (tabla de la App). La App lee este valor para decidir
+ * si el user puede editar (ADMIN) o solo ver (USER).
+ *
+ * Decisión Marco 2026-06-18:
+ * - super_admin/admin → ADMIN (edita todo en la App)
+ * - formador → ADMIN (edita solo SU formación, gate por formacion_asignada)
+ * - marketing/closer/setter → USER (ve todo, no edita nada)
+ */
+function osRoleToAppRole(osRole: typeof ROLES[number]): "ADMIN" | "USER" {
+  if (osRole === "super_admin" || osRole === "formador") return "ADMIN"
+  return "USER"
+}
 
 function getAdminClient() {
   return createClient(
@@ -88,20 +109,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ese email ya está en el equipo" }, { status: 409 })
   }
 
-  // Crear user en Supabase Auth SIN mandar email
+  const appRole = osRoleToAppRole(data.role)
+
+  // Crear user en Supabase Auth SIN mandar email.
+  // user_metadata.role es CRÍTICO: la App lo lee para gate de permisos (ADMIN/USER).
+  // Sin este metadata el user cae a USER por default y los formadores/admins no podrían editar.
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
-    user_metadata: { full_name: data.full_name },
+    user_metadata: { full_name: data.full_name, role: appRole },
   })
   if (createErr || !created.user) {
     console.error("[team/invite] createUser failed", createErr)
     return NextResponse.json({ error: "Error creando usuario", detail: createErr?.message }, { status: 500 })
   }
 
-  // Profile: UPSERT explícito. El trigger handle_new_auth_user existe pero escribe en
-  // public.users (tabla de la App, schema legacy), NO en public.profiles (tabla del OS).
-  // Si confiábamos en él, profile quedaba vacío → role=null → loop infinito en login.
+  // Profile OS: UPSERT explícito. El trigger handle_new_auth_user escribe en public.users
+  // (tabla App), no en public.profiles (tabla OS). Si confiábamos en él, profile quedaba
+  // vacío → role=null → loop infinito en login.
   const { error: profileErr } = await admin
     .from("profiles")
     .upsert({
@@ -109,6 +134,7 @@ export async function POST(req: NextRequest) {
       email,
       role: data.role,
       full_name: data.full_name,
+      formacion_asignada: data.role === "formador" ? data.formacion_asignada : null,
       invited_by: user.id,
       invited_at: new Date().toISOString(),
       active: false,  // se activa al aceptar invitación
@@ -116,9 +142,19 @@ export async function POST(req: NextRequest) {
     }, { onConflict: "id" })
   if (profileErr) {
     console.error("[team/invite] profile upsert failed", profileErr)
-    // Si falla el profile, borramos el user auth para no dejar huérfano
     await admin.auth.admin.deleteUser(created.user.id).catch(() => null)
     return NextResponse.json({ error: "Error creando perfil", detail: profileErr.message }, { status: 500 })
+  }
+
+  // public.users (App): propagar formacion_asignada si es formador.
+  // El trigger handle_new_auth_user ya creó el row con role del metadata (ADMIN/USER).
+  // Aquí le añadimos formacion_asignada para que la App pueda hacer gate de edición.
+  if (data.role === "formador" && data.formacion_asignada) {
+    await admin
+      .from("users")
+      .update({ formacion_asignada: data.formacion_asignada })
+      .eq("auth_user_id", created.user.id)
+      .then(() => null, () => null)
   }
 
   // Token nuestro

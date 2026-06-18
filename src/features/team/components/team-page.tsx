@@ -214,10 +214,21 @@ export function TeamPage() {
   )
 }
 
+const FORMACION_OPTIONS = [
+  { value: "ia-integrator", label: "IA Integrator" },
+  { value: "media-buyer-digital", label: "Media Buyer Digital" },
+  { value: "comercial-closing", label: "Comercial Closing" },
+] as const
+
 function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: () => void }) {
   // Default 'marketing' porque es el rol más común para invitaciones nuevas (el equipo
   // operativo). super_admin se selecciona manualmente para admins reales.
-  const [form, setForm] = useState({ full_name: "", email: "", role: "marketing" })
+  const [form, setForm] = useState<{ full_name: string; email: string; role: string; formacion_asignada: string }>({
+    full_name: "",
+    email: "",
+    role: "marketing",
+    formacion_asignada: "ia-integrator",  // se ignora si role !== formador
+  })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successUrl, setSuccessUrl] = useState<string | null>(null)
@@ -227,10 +238,19 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
     setError(null)
     setSubmitting(true)
     try {
+      // Solo enviar formacion_asignada si rol = formador (el endpoint la ignora si no)
+      const payload: Record<string, string | null> = {
+        full_name: form.full_name,
+        email: form.email,
+        role: form.role,
+      }
+      if (form.role === "formador") {
+        payload.formacion_asignada = form.formacion_asignada
+      }
       const res = await fetch("/api/admin/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -307,6 +327,25 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
             ))}
           </select>
         </label>
+
+        {form.role === "formador" && (
+          <label className="block">
+            <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Formación que gestiona *</span>
+            <select
+              value={form.formacion_asignada}
+              onChange={(e) => setForm({ ...form, formacion_asignada: e.target.value })}
+              required
+              className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
+            >
+              {FORMACION_OPTIONS.map((f) => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+            <span className="block text-[10px] text-muted-foreground mt-1">
+              El formador podrá editar SOLO esta formación. Ve todo lo demás en lectura.
+            </span>
+          </label>
+        )}
 
         <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
           <Mail className="h-3 w-3" /> Recibirá email con link para configurar contraseña (caduca en 7 días)
