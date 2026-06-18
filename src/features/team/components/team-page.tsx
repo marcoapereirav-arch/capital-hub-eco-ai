@@ -25,14 +25,14 @@ type Invitation = {
   created_at: string
 }
 
-// Permisos PENDIENTES de definir por el usuario. Solo super_admin tiene acceso
-// total confirmado. Los demás permisos vacíos hasta que se defina qué ve cada uno.
+// Permisos por rol según SOP 41 (sistema de roles y permisos del OS).
+// Fuente de verdad: src/lib/auth/role-access.ts → ROLE_ROUTES.
 const ROLE_OPTIONS = [
-  { value: "super_admin", label: "Super Admin", desc: "Acceso total a todo el OS" },
-  { value: "marketing", label: "Marketing", desc: "Permisos pendientes de definir" },
-  { value: "closer", label: "Closer", desc: "Permisos pendientes de definir" },
-  { value: "setter", label: "Setter", desc: "Permisos pendientes de definir" },
-  { value: "formador", label: "Formador", desc: "Permisos pendientes de definir" },
+  { value: "super_admin", label: "Super Admin", desc: "Acceso total a todo el OS + Equipo + Knowledge + 'Ver como rol'" },
+  { value: "marketing", label: "Marketing", desc: "Dashboard · Operaciones · CRM · Webs" },
+  { value: "closer", label: "Closer", desc: "Dashboard · Operaciones · CRM" },
+  { value: "setter", label: "Setter", desc: "Dashboard · Operaciones · CRM" },
+  { value: "formador", label: "Formador", desc: "Dashboard · Operaciones · CRM · En la App es ADMIN para editar su formación" },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
@@ -202,7 +202,9 @@ export function TeamPage() {
 }
 
 function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: () => void }) {
-  const [form, setForm] = useState({ full_name: "", email: "", role: "equipo" })
+  // Default 'marketing' porque es el rol más común para invitaciones nuevas (el equipo
+  // operativo). super_admin se selecciona manualmente para admins reales.
+  const [form, setForm] = useState({ full_name: "", email: "", role: "marketing" })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successUrl, setSuccessUrl] = useState<string | null>(null)
