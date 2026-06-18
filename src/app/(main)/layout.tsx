@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/features/shell/components/app-sidebar"
 import { MobileHeader } from "@/features/shell/components/mobile-header"
@@ -7,7 +8,9 @@ import { PushNotificationPrompt } from "@/features/notifications/components/Push
 import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { RegistrarVentaWidget } from "@/features/sales/components/registrar-venta-widget"
 import { OsTopBar } from "@/features/shell/components/os-top-bar"
+import { ViewAsRoleBanner } from "@/features/shell/components/view-as-role-banner"
 import { createClient } from "@/lib/supabase/server"
+import { getEffectiveRole, VIEW_AS_COOKIE_NAME } from "@/lib/auth/role-access"
 
 export default async function MainLayout({
   children,
@@ -29,16 +32,23 @@ export default async function MainLayout({
 
   const userEmail = user.email ?? ""
   const userName = profile?.full_name ?? null
-  const userRole = profile?.role ?? null
+  const realRole = profile?.role ?? null
+  const cookieStore = await cookies()
+  const viewAs = cookieStore.get(VIEW_AS_COOKIE_NAME)?.value ?? null
+  const userRole = getEffectiveRole(realRole, viewAs)
+  const isImpersonating = realRole !== userRole
 
   return (
     <SidebarProvider>
       {/* Desktop sidebar — invisible en movil (md:flex en su contenedor) */}
-      <AppSidebar userEmail={userEmail} userName={userName} userRole={userRole} />
+      <AppSidebar userEmail={userEmail} userName={userName} userRole={userRole} realRole={realRole} />
 
       {/* Contenedor principal: en movil renderiza chrome nativo, en desktop usa Sidebar */}
       <SidebarInset>
         <MobileHeader userEmail={userEmail} userName={userName} />
+        {isImpersonating && typeof userRole === "string" && (
+          <ViewAsRoleBanner viewingAs={userRole} />
+        )}
 
         {/* Wrapper del contenido principal:
             - min-w-0: en flex children, el min-width por defecto es auto = ancho del contenido.

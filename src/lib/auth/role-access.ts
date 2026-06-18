@@ -71,3 +71,30 @@ export function allowedPrefixesFor(role: Role | string | null | undefined): stri
   const r = ROLE_ROUTES[role as Role]
   return r ?? []
 }
+
+/**
+ * Devuelve el rol "efectivo" para gates de UI (sidebar, proxy gate).
+ *
+ * Si el usuario real es admin/super_admin y tiene cookie `view_as_role` con un rol válido,
+ * la UI se renderiza con ese rol — útil para que el admin vea exactamente lo que ve un
+ * marketing/closer/setter/formador.
+ *
+ * IMPORTANTE: esto es un override de UI READ-ONLY. Las mutaciones server-side siguen
+ * verificándose contra el rol REAL del admin. No es impersonación real, es preview visual.
+ */
+export function getEffectiveRole(
+  realRole: Role | string | null | undefined,
+  viewAsCookie: string | null | undefined,
+): Role | string | null {
+  const isAdmin = realRole === "super_admin" || realRole === "admin"
+  if (!isAdmin) return realRole ?? null
+  if (!viewAsCookie) return realRole ?? null
+  // Solo permitir impersonar roles no-admin
+  const allowedImpersonations: Role[] = ["marketing", "formador", "closer", "setter"]
+  if (allowedImpersonations.includes(viewAsCookie as Role)) {
+    return viewAsCookie
+  }
+  return realRole ?? null
+}
+
+export const VIEW_AS_COOKIE_NAME = "view_as_role"

@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { navSections } from "./nav-config"
 import { canAccessRoute } from "@/lib/auth/role-access"
 import { UserMenu } from "./user-menu"
+import { ViewAsRoleDropdown } from "./view-as-role-dropdown"
 
 function SidebarLogo() {
   const { state } = useSidebar()
@@ -46,11 +47,16 @@ function SidebarLogo() {
 interface AppSidebarProps {
   userEmail: string
   userName: string | null
+  /** Rol efectivo (puede ser el real o el impersonado por view_as). Filtra sidebar. */
   userRole: string | null
+  /** Rol real del user (sin impersonación). Si es admin se muestra el dropdown View as Role. */
+  realRole?: string | null
 }
 
-export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
+export function AppSidebar({ userEmail, userName, userRole, realRole }: AppSidebarProps) {
   const pathname = usePathname()
+  const isAdmin = realRole === "super_admin" || realRole === "admin"
+  const currentViewAs = realRole !== userRole && typeof userRole === "string" ? userRole : null
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -101,6 +107,11 @@ export function AppSidebar({ userEmail, userName, userRole }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
+        {isAdmin && (
+          <div className="mx-2 mb-1">
+            <ViewAsRoleDropdown currentViewAs={currentViewAs} />
+          </div>
+        )}
         <a
           href="https://app.capitalhubapp.com"
           target="_blank"

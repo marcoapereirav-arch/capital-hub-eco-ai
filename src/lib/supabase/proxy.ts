@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { canAccessRoute } from '@/lib/auth/role-access'
+import { canAccessRoute, getEffectiveRole, VIEW_AS_COOKIE_NAME } from '@/lib/auth/role-access'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -52,9 +52,12 @@ export async function updateSession(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .maybeSingle()
-    const role = profile?.role ?? null
+    const realRole = profile?.role ?? null
+    // Si admin está impersonando un rol, el gate de UI usa ese rol efectivo.
+    const viewAs = request.cookies.get(VIEW_AS_COOKIE_NAME)?.value ?? null
+    const effectiveRole = getEffectiveRole(realRole, viewAs)
 
-    if (!canAccessRoute(role, pathname)) {
+    if (!canAccessRoute(effectiveRole, pathname)) {
       // Redirige a /dashboard (siempre permitido salvo bug de config)
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }

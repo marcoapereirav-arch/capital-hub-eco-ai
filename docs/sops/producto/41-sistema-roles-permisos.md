@@ -80,6 +80,28 @@ Esto significa que aunque alguien intente abrir `/equipo` siendo `marketing`, el
 
 Documentado en SOP separado: ver `42-flow-invitaciones-equipo.md`.
 
+## "Ver como Rol" (admin impersona UI)
+
+Cualquier `super_admin` / `admin` puede impersonar visualmente un rol no-admin para ver el OS exactamente como lo vería un marketing/formador/closer/setter.
+
+### Cómo se usa
+- Sidebar (footer, solo visible si rol real es admin) → dropdown "Ver como rol"
+- Seleccionas: Marketing / Formador / Closer / Setter
+- La UI se renderiza con los permisos de ese rol (sidebar filtrado, gate del proxy aplicado)
+- Banner persistente arriba: "Vista impersonada · estás viendo el OS como X" + botón "Volver a vista admin"
+
+### Cómo está implementado
+- Cookie HttpOnly `view_as_role` (24h TTL) seteada por `POST /api/admin/view-as`
+- Endpoint valida que el caller sea super_admin/admin → 403 si no
+- Helper `getEffectiveRole(realRole, viewAsCookie)` en `src/lib/auth/role-access.ts`
+- `proxy.ts` calcula el rol efectivo y aplica `canAccessRoute(effectiveRole, pathname)`
+- `app/(main)/layout.tsx` calcula el rol efectivo y se lo pasa al sidebar como `userRole`. También pasa `realRole` para que el sidebar sepa si debe mostrar el dropdown.
+
+### ⚠️ READ-ONLY de UI
+- El override afecta SOLO el render del OS: sidebar visible, redirects del proxy, gates cosméticos.
+- **Las mutaciones server-side (escritura en BD, endpoints admin) siguen verificándose contra el rol REAL del usuario.** Esto NO es impersonación real — es preview visual.
+- Eso protege contra usar "Ver como Rol" para hacer cosas que no debería poder hacer un admin (ninguna, porque admin tiene acceso total, pero es buena disciplina).
+
 ## Decisiones tomadas
 
 - **2026-06-16:** Roles definidos. Primera versión: marketing y formador con 8 secciones, closer/setter solo dashboard.
