@@ -54,6 +54,40 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
   ],
 }
 
+/**
+ * Lista completa de hrefs del sidebar (todos los items independientes).
+ * Se usa para resolver QUÉ item del nav corresponde a un pathname dado y aplicar el
+ * permiso de ESE item específico, no del padre por convención de URL.
+ *
+ * Ejemplo: /webs/sistema NO es sub-ruta de /webs aunque la URL lo parezca — es un item
+ * independiente del sidebar con su propio permiso. Marketing tiene /webs pero NO /webs/sistema.
+ *
+ * Las sub-rutas DINÁMICAS sí heredan del padre. Ejemplo: /webs/[funnelId] hereda de /webs;
+ * /contactos/[id] hereda de /contactos.
+ */
+const ALL_NAV_HREFS = [
+  "/dashboard",
+  "/overview",
+  "/operaciones",
+  "/knowledge",
+  "/team",
+  "/crm",
+  "/contactos",
+  "/calendario",
+  "/email-marketing",
+  "/webs",
+  "/webs/sistema",
+  "/webs/lead-magnets",
+  "/automatizaciones",
+  "/ads",
+  "/content-intel",
+  "/instagram",
+  "/manychat",
+  "/invitaciones",
+  "/integrations",
+  "/mision",
+].sort((a, b) => b.length - a.length)
+
 /** True si el rol puede acceder al pathname. */
 export function canAccessRoute(role: Role | string | null | undefined, pathname: string): boolean {
   if (!role) return false
@@ -62,6 +96,19 @@ export function canAccessRoute(role: Role | string | null | undefined, pathname:
   const allowed = ROLE_ROUTES[role as Role]
   if (!allowed) return false
   if (allowed === "*") return true
+
+  // Encontrar el item del nav más específico que matchee este pathname (longest match wins).
+  // Si la ruta coincide con un item del nav → ese item específico debe estar en allowed.
+  // Si NO coincide con ningún item → es sub-ruta dinámica y hereda del padre permitido.
+  const matchedNav = ALL_NAV_HREFS.find(
+    (href) => pathname === href || pathname.startsWith(href + "/"),
+  )
+  if (matchedNav) {
+    return allowed.includes(matchedNav)
+  }
+
+  // Sub-ruta dinámica no mapeada en el nav (ej. /perfil/abc, /reporte/xyz)
+  // Heredar del prefijo permitido más cercano.
   return allowed.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
 }
 

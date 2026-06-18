@@ -37,7 +37,10 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
 }
 ```
 
-**Nota:** lo que en sidebar se llama "Operaciones" mapea a la ruta `/overview`. `/contactos` se incluye junto a `/crm` porque es sub-CRM.
+**Notas importantes:**
+- Lo que en sidebar se llama "Operaciones" mapea a la ruta `/overview`. `/contactos` se incluye junto a `/crm` porque es sub-CRM.
+- **Cada item del sidebar es independiente.** Si `/webs/sistema` es un item separado en `nav-config`, NO se hereda del permiso de `/webs`. Marketing tiene `/webs` pero NO `/webs/sistema` ni `/webs/lead-magnets` — esos son items propios y necesitan estar explícitamente en la lista del rol.
+- **Sub-rutas dinámicas SÍ heredan del padre.** `/webs/[funnelId]` (ficha de un funnel concreto) hereda del permiso de `/webs`. `/contactos/[id]` hereda de `/contactos`. Solo se considera "ítem hijo independiente" si tiene un href propio en el sidebar.
 
 ### 2. Sidebar filtra items
 
