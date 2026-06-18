@@ -95,7 +95,9 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     return out
   })()
 
-  // Toolbar comun a las dos vistas
+  // Toolbar adaptado a la pestaña. Cada pestaña respeta su ecosistema:
+  // - Contactos (list): solo filtros de contacto (buscar + tags). Sin pipeline.
+  // - Pipeline (kanban): selector de pipeline + filtros del pipeline activo.
   const Toolbar = (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -107,7 +109,9 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
         />
       </div>
-      <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
+      {view === "kanban" && (
+        <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
+      )}
       <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
       <div className="flex-1" />
       <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">

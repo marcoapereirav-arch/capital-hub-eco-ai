@@ -131,16 +131,40 @@ Marco preguntó si vale la pena tener un pipeline "Principal" genérico además 
 - Coste de mantener uno extra es mínimo.
 - Si en el futuro se decide fusionar, basta con apuntar todos los contactos al Principal y borrar el de Test Personalidad.
 
-### Estado BD final
+### Estado BD final (2026-06-18)
 | Pipeline | Slug | is_default | display_order |
 |---|---|---|---|
-| **Principal** (canónico negocio) | `principal` | true | 0 |
+| **General** (canónico negocio) | `general` | false | 0 |
 | Test Personalidad | `test-personalidad` | false | 1 |
 
 Ambos con los 6 stages canónicos: lead → agendado → alumno + seguimiento/no_show/perdido.
 
-### Bug propio que Marco corrigió
-- **2026-06-17:** yo renombré por error "Funnel Test Personalidad" → "Principal" en BD sin responder antes la pregunta de Marco. Marco revirtió el nombre. Hoy se hace correctamente: NUEVO pipeline Principal + Test Personalidad sigue existiendo aparte.
+**Ninguno tiene `is_default = true`.** El UI elige el primero (display_order=0 → General) cuando el usuario no ha seleccionado nada, pero no lo marca como "default" visualmente.
+
+### Modelo correcto (cómo se asigna lead → pipeline)
+
+- Cada contacto tiene **UN solo `pipeline_id`**. No vive en dos pipelines a la vez.
+- **Pipeline General**: lead que llega sin pasar por un funnel específico (link de agenda directo, DM, referral) → `pipeline_id = General`.
+- **Pipeline Test Personalidad**: lead que entró por el funnel `/test-personalidad` → `pipeline_id = Test Personalidad`.
+- **Dashboard general**: las 4 KPIs principales suman TODOS los contactos sin filtrar por pipeline. Si hay 80 funnels, suma los 80.
+- **Sección Vista por funnel del dashboard**: filtra por un pipeline específico (selecciona del dropdown).
+
+### Ecosistemas de las pestañas CRM (decisión Marco 2026-06-18)
+
+Cada pestaña en `/crm` tiene su propia configuración y filtros:
+
+| Pestaña | Filtros propios |
+|---|---|
+| **Contactos** (`/crm/contactos`, list) | Búsqueda + filtro tags + botón Nuevo. SIN selector de pipeline. |
+| **Pipeline** (`/crm/pipeline`, kanban) | Búsqueda + selector de pipeline + filtro tags + Configurar + Nuevo. |
+| **Tags** (`/crm/tags`) | Gestión propia de tags. |
+
+El selector de pipeline NO aparece en la pestaña Contactos porque ahí solo se filtran/buscan contactos. El kanban del pipeline sí necesita saber qué pipeline mostrar.
+
+### Bugs propios reconocidos (orden cronológico)
+- **2026-06-17:** yo renombré por error "Funnel Test Personalidad" → "Principal" en BD sin responder antes la pregunta de Marco. Marco revirtió el nombre.
+- **2026-06-17 noche:** creé un segundo pipeline "Principal" sin entender el modelo real (un contacto = un solo pipeline_id, no two).
+- **2026-06-18:** corregido. Renombrado "Principal" → "General" (el mítico). Ambos sin is_default. PipelineSelector quitado de la pestaña Contactos.
 
 ## Histórico
 
