@@ -43,7 +43,8 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState<Form>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<{ contact_id: string; invite_url: string; revenue: number } | null>(null)
+  const [success, setSuccess] = useState<{ contact_id: string; invite_url: string; revenue: number; email_sent?: boolean; email_error?: string | null } | null>(null)
+  const [showMagicLink, setShowMagicLink] = useState(false)
 
   useEffect(() => {
     fetch("/api/admin/sales/register")
@@ -71,9 +72,14 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!form.full_name.trim()) { setError("Falta el nombre completo del alumno"); return }
+    if (!form.email.trim()) { setError("Falta el email del alumno"); return }
+    if (!form.phone.trim() || form.phone.trim().length < 6) { setError("El teléfono es obligatorio"); return }
     if (form.products.length === 0) { setError("Selecciona al menos 1 producto"); return }
-    if (!form.closer_user_id) { setError("Selecciona quién cerró"); return }
+    if (!form.revenue) { setError("Falta el revenue"); return }
+    if (!form.cash_collected) { setError("Falta el cash collected"); return }
     if (!form.payment_method) { setError("Selecciona método de pago"); return }
+    if (!form.closer_user_id) { setError("Selecciona quién cerró"); return }
 
     setSubmitting(true)
     try {
@@ -110,20 +116,57 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
   }
 
   if (success) {
+    const emailFailed = success.email_sent === false
     return (
       <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-background border border-green-500/40 rounded-lg p-6 max-w-md w-full text-center space-y-4">
-          <Check className="h-12 w-12 mx-auto text-green-400" />
+        <div className={cn(
+          "bg-background border rounded-lg p-6 max-w-md w-full text-center space-y-4",
+          emailFailed ? "border-amber-500/50" : "border-green-500/40"
+        )}>
+          <Check className={cn("h-12 w-12 mx-auto", emailFailed ? "text-amber-400" : "text-green-400")} />
           <div>
             <h2 className="text-xl font-semibold">Venta registrada ✓</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {success.revenue.toLocaleString("es-ES")}€ · email enviado al alumno
+              {success.revenue.toLocaleString("es-ES")}€
+              {emailFailed ? (
+                <> · <span className="text-amber-300">email NO enviado — copia el link</span></>
+              ) : (
+                <> · email enviado al alumno</>
+              )}
             </p>
           </div>
-          <div className="rounded-sm bg-card/40 p-3 text-left space-y-1">
-            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Magic link enviado:</p>
-            <p className="text-xs font-mono break-all text-muted-foreground">{success.invite_url}</p>
-          </div>
+
+          {emailFailed && success.email_error && (
+            <div className="rounded-sm bg-amber-500/[0.08] border border-amber-500/30 p-3 text-left">
+              <p className="text-[10px] font-mono uppercase tracking-wider text-amber-300">Error Resend</p>
+              <p className="text-xs text-amber-200/80 mt-0.5">{success.email_error}</p>
+            </div>
+          )}
+
+          {(emailFailed || showMagicLink) ? (
+            <div className="rounded-sm bg-card/40 border border-border/40 p-3 text-left space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Magic link</p>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(success.invite_url)}
+                  className="text-[10px] font-mono uppercase tracking-wider text-green-400 hover:text-green-300"
+                >
+                  Copiar
+                </button>
+              </div>
+              <p className="text-xs font-mono break-all text-muted-foreground">{success.invite_url}</p>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowMagicLink(true)}
+              className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              Ver magic link (debug)
+            </button>
+          )}
+
           <div className="flex gap-2">
             <button onClick={onClose} className="flex-1 rounded-sm bg-foreground text-background px-3 py-2 text-xs font-mono uppercase tracking-wider">
               Cerrar
@@ -181,7 +224,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
             <Input placeholder="Nombre completo" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required />
             <Input placeholder="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
             <div className="grid grid-cols-2 gap-2">
-              <Input placeholder="Teléfono" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} icon={Phone} />
+              <Input placeholder="Teléfono" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} icon={Phone} required />
               <Input placeholder="Origen (instagram, ads, referral...)" value={form.source} onChange={(v) => setForm({ ...form, source: v })} />
             </div>
           </section>
@@ -296,9 +339,9 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
   )
 }
 
-const fieldBase = "w-full rounded-sm border bg-background/60 px-3 py-2.5 text-sm transition-colors focus:outline-none focus:border-green-500/70 focus:bg-background"
-const fieldOk = "border-white/25 hover:border-white/40"
-const fieldRequiredEmpty = "border-red-500/45 hover:border-red-500/65"
+const fieldBase = "w-full rounded-sm border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:bg-white/[0.08] focus:border-green-500/70"
+const fieldOk = "border-white/25 bg-white/[0.04] hover:bg-white/[0.06] hover:border-white/40 text-foreground placeholder:text-muted-foreground/70"
+const fieldRequiredEmpty = "border-red-500/50 bg-red-500/[0.06] hover:bg-red-500/[0.08] text-foreground placeholder:text-red-300/60"
 
 function Input({
   value,

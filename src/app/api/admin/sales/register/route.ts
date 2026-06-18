@@ -37,7 +37,7 @@ const Schema = z.object({
   contact_id: z.string().uuid().optional(),
   full_name: z.string().min(2).max(120),
   email: z.string().email().max(255),
-  phone: z.string().max(40).optional(),
+  phone: z.string().min(6).max(40),
   source: z.string().max(60).optional(),
   // Producto
   products: z.array(z.enum(PRODUCTS)).min(1),
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         total_cash_collected: (existing?.total_cash_collected ?? 0) + data.cash_collected,
         owner_assignee: data.closer_name,
         full_name: data.full_name.trim(),
-        phone: data.phone?.trim() ?? null,
+        phone: data.phone.trim(),
         last_call_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
           total_cash_collected: (existing.total_cash_collected ?? 0) + data.cash_collected,
           owner_assignee: data.closer_name,
           full_name: data.full_name.trim(),
-          phone: data.phone?.trim() ?? null,
+          phone: data.phone.trim(),
           last_call_at: new Date().toISOString(),
           source: data.source ?? null,
           updated_at: new Date().toISOString(),
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
           email,
           slug,
           full_name: data.full_name.trim(),
-          phone: data.phone?.trim() ?? null,
+          phone: data.phone.trim(),
           stage: "alumno",
           products: data.products,
           total_revenue: data.revenue,
@@ -194,25 +194,36 @@ export async function POST(req: NextRequest) {
   const appUrl = "https://app.capitalhubapp.com"
   const acceptUrl = `${appUrl}/accept-invite/${token}`
 
-  // Email al alumno
-  sendWelcomeAlumnoHT({
-    fullName: data.full_name,
-    email,
-    product: data.products.join(" + "),
-    inviteUrl: acceptUrl,
-    closerName: data.closer_name,
-    contactId,
-  }).catch((e) => console.error("[sales/register] welcome alumno email failed", e))
+  // Emails: AWAIT obligatorio. Sin await la función serverless de Vercel termina
+  // antes de que el fetch a Resend complete y se aborta con
+  // "Unable to fetch data. The request could not be resolved." (verificado en BD).
+  const [welcomeResult, notifResult] = await Promise.allSettled([
+    sendWelcomeAlumnoHT({
+      fullName: data.full_name,
+      email,
+      product: data.products.join(" + "),
+      inviteUrl: acceptUrl,
+      closerName: data.closer_name,
+      contactId,
+    }),
+    notifyMarcoPurchase({
+      eventLabel: data.close_type === "sales_call" ? "Cierre tras llamada" : "Cierre directo (sin llamada)",
+      fullName: data.full_name,
+      email,
+      amount: data.revenue,
+      currency: "EUR",
+      productName: data.products.join(" + "),
+    }),
+  ])
 
-  // Notif a Marco
-  notifyMarcoPurchase({
-    eventLabel: data.close_type === "sales_call" ? "Cierre tras llamada" : "Cierre directo (sin llamada)",
-    fullName: data.full_name,
-    email,
-    amount: data.revenue,
-    currency: "EUR",
-    productName: data.products.join(" + "),
-  }).catch((e) => console.error("[sales/register] notif Marco failed", e))
+  const welcomeOk = welcomeResult.status === "fulfilled" && welcomeResult.value.ok
+  if (!welcomeOk) {
+    const err = welcomeResult.status === "fulfilled" ? welcomeResult.value.error : (welcomeResult.reason as Error)?.message
+    console.error("[sales/register] welcome alumno email failed", err)
+  }
+  if (notifResult.status === "rejected") {
+    console.error("[sales/register] notif Marco failed", notifResult.reason)
+  }
 
   return NextResponse.json({
     ok: true,
@@ -221,6 +232,8 @@ export async function POST(req: NextRequest) {
     products: data.products,
     revenue: data.revenue,
     cash_collected: data.cash_collected,
+    email_sent: welcomeOk,
+    email_error: welcomeOk ? null : (welcomeResult.status === "fulfilled" ? welcomeResult.value.error : (welcomeResult.reason as Error)?.message ?? "unknown"),
   })
 }
 
