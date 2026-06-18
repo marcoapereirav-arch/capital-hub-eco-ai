@@ -63,17 +63,27 @@ if (user && !pathname.startsWith('/api/') && !pathname.startsWith('/auth/') && !
 
 Esto significa que aunque alguien intente abrir `/equipo` siendo `marketing`, el server lo redirige a `/dashboard`. Defensa en server-side, no solo cosmética en cliente.
 
-## 🚨 Checklist al cambiar permisos de un rol (regla operativa)
+## 🚨 Checklist al añadir / cambiar un rol (regla operativa)
 
-Cada vez que se cambia un permiso en `ROLE_ROUTES`, hay que sincronizar TODOS los lugares donde la descripción del rol aparece. Si no, el usuario ve algo en `/team` distinto a lo que realmente puede hacer.
+Cada vez que se añade un rol nuevo o se cambia un permiso, hay que sincronizar TODOS los lugares donde el rol aparece, INCLUYENDO la BD. Si no, el usuario verá descripciones viejas o las invitaciones fallarán silenciosamente.
 
 Lugares a actualizar en el mismo commit:
-1. `src/lib/auth/role-access.ts` — `ROLE_ROUTES` (la fuente de verdad)
-2. `src/features/team/components/team-page.tsx` — `ROLE_OPTIONS` (descripciones visibles al invitar / cambiar rol)
-3. `docs/sops/producto/41-sistema-roles-permisos.md` (este SOP)
-4. Cualquier otro componente que liste roles humanos (ej. mobile-bottom-nav si filtra)
 
-Antípatrón: cambiar solo `role-access.ts` y dejar `team-page.tsx` con descripciones viejas. El usuario verá "Permisos pendientes de definir" o información incorrecta al invitar.
+1. **Código frontend / backend**
+   - `src/lib/auth/role-access.ts` — `ROLE_ROUTES` (la fuente de verdad)
+   - `src/features/team/components/team-page.tsx` — `ROLE_OPTIONS` (descripciones visibles al invitar / cambiar rol)
+   - `src/app/api/admin/team/route.ts` — array `ROLES` del Zod schema (acepta el rol)
+   - Cualquier otro componente que liste roles humanos
+2. **BD constraints**
+   - `public.profiles` → CHECK constraint `profiles_role_check` debe incluir el rol
+   - `public.team_invitations` → CHECK constraint `team_invitations_role_check` debe incluir el rol
+3. **Documentación**
+   - Este SOP (lista de roles + permisos)
+
+### Antípatrones que YA pasaron
+
+- **2026-06-17:** cambié `role-access.ts` y dejé `team-page.tsx` con "Permisos pendientes de definir". Marco veía descripciones viejas al invitar.
+- **2026-06-18:** mismo error pero con BD. Añadí `marketing` y `setter` al código pero el CHECK constraint de la BD solo aceptaba `super_admin/closer/formador/equipo`. Invitar a `marketing` fallaba con "Error guardando invitación" + dejaba un user huérfano en `auth.users` que bloqueaba reintentos. Migración `20260618093434_fix_role_check_constraints.sql` arregló el constraint. Cuando esto ocurra, **borrar el user huérfano** del intento fallido para que Marco pueda reintentar.
 
 ## Cómo añadir un rol nuevo
 
