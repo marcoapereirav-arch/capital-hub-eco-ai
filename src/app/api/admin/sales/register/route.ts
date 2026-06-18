@@ -115,10 +115,16 @@ export async function POST(req: NextRequest) {
         })
         .eq("id", existing.id)
     } else {
-      const { data: created } = await admin
+      // Slug: slugified name + sufijo aleatorio (NOT NULL sin default en BD)
+      const slugBase = data.full_name.trim().toLowerCase()
+        .normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "alumno"
+      const slug = `${slugBase}-${Math.random().toString(36).slice(2, 8)}`
+      const { data: created, error: insErr } = await admin
         .from("contacts")
         .insert({
           email,
+          slug,
           full_name: data.full_name.trim(),
           phone: data.phone?.trim() ?? null,
           stage: "alumno",
@@ -131,6 +137,10 @@ export async function POST(req: NextRequest) {
         })
         .select("id")
         .single()
+      if (insErr) {
+        console.error("[sales/register] contact insert failed", insErr)
+        return NextResponse.json({ error: "Could not upsert contact", detail: insErr.message }, { status: 500 })
+      }
       contactId = created?.id
     }
   }
