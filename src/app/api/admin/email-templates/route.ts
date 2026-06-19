@@ -17,44 +17,60 @@ function getAdminClient() {
 }
 
 /**
- * Catálogo de templates editables.
- * defaultSubject + defaultHtml se renderean a partir del componente React con datos
- * dummy de preview. Las variables {{...}} se sustituyen al enviar el email real.
+ * Catálogo de templates editables desde /email-marketing → tab Plantillas.
+ * Cada uno define variables disponibles para placeholder substitution
+ * ({{key}}) que sustituye el sender al enviar el email real.
+ *
+ * Para añadir más templates al editor: importar el componente React,
+ * añadir su entry con variables relevantes. El renderDefault produce
+ * el HTML demo que el editor muestra cuando NO hay override custom.
  */
-const TEMPLATES = [
+const TEMPLATES: Array<{
+  key: string
+  label: string
+  description: string
+  category: string
+  variables: string[]
+  defaultSubject: string
+  renderDefault: () => Promise<string>
+}> = [
   {
     key: "welcome_alumno_ht",
-    label: "Bienvenida alumno tras venta",
-    description: "Se manda al alumno cuando se cierra una venta y se genera la invitación de acceso a la App.",
+    label: "Bienvenida alumno (post venta)",
+    description: "Email que recibe el alumno tras cerrar la venta. Contiene el magic link de acceso a la App.",
+    category: "lifecycle",
     variables: ["firstName", "fullName", "product", "inviteUrl", "closerName"],
-    renderDefault: async () => render(WelcomeAlumnoHTEmail({
+    defaultSubject: "{{firstName}}, entras hoy a Capital Hub",
+    renderDefault: () => render(WelcomeAlumnoHTEmail({
       fullName: "{{fullName}}",
       product: "{{product}}",
       inviteUrl: "{{inviteUrl}}",
       closerName: "{{closerName}}",
     })),
-    defaultSubject: "{{firstName}}, entras hoy a Capital Hub",
   },
   {
     key: "team_invite",
-    label: "Invitación al equipo (OS)",
-    description: "Se manda a un nuevo miembro del equipo (closer/setter/marketing/formador/super_admin).",
+    label: "Invitación equipo (OS)",
+    description: "Email a un nuevo miembro del equipo (super_admin, closer, setter, marketing, formador) para que configure su contraseña.",
+    category: "auth",
     variables: ["fullName", "invitedByName", "role", "acceptUrl"],
-    renderDefault: async () => render(TeamInviteEmail({
+    defaultSubject: "{{invitedByName}} te invita al OS de Capital Hub",
+    renderDefault: () => render(TeamInviteEmail({
       fullName: "{{fullName}}",
       invitedByName: "{{invitedByName}}",
       role: "{{role}}",
       acceptUrl: "{{acceptUrl}}",
       expiresIn: "7 días",
     })),
-    defaultSubject: "{{invitedByName}} te invita al OS de Capital Hub",
   },
   {
     key: "internal_purchase_alert_marco",
     label: "Notif venta interna (Marco)",
-    description: "Se manda a Marco cada vez que entra una venta en el OS.",
+    description: "Notificación interna a Marco cada vez que se cierra una venta en el OS.",
+    category: "internal",
     variables: ["fullName", "email", "amount", "currency", "productName", "eventLabel"],
-    renderDefault: async () => render(InternalPurchaseAlert({
+    defaultSubject: "{{amount}}€ · {{eventLabel}} — {{fullName}}",
+    renderDefault: () => render(InternalPurchaseAlert({
       eventLabel: "{{eventLabel}}",
       fullName: "{{fullName}}",
       email: "{{email}}",
@@ -62,14 +78,15 @@ const TEMPLATES = [
       currency: "{{currency}}",
       productName: "{{productName}}",
     })),
-    defaultSubject: "{{amount}}€ · {{eventLabel}} — {{fullName}}",
   },
   {
     key: "internal_purchase_alert_adrian",
     label: "Notif venta interna (Adrián)",
-    description: "Igual que la de Marco pero a Adrián.",
+    description: "Igual que la de Marco pero a Adrián. Se envía a la vez para ambos founders.",
+    category: "internal",
     variables: ["fullName", "email", "amount", "currency", "productName", "eventLabel"],
-    renderDefault: async () => render(InternalPurchaseAlert({
+    defaultSubject: "{{amount}}€ · {{eventLabel}} — {{fullName}}",
+    renderDefault: () => render(InternalPurchaseAlert({
       eventLabel: "{{eventLabel}}",
       fullName: "{{fullName}}",
       email: "{{email}}",
@@ -77,13 +94,12 @@ const TEMPLATES = [
       currency: "{{currency}}",
       productName: "{{productName}}",
     })),
-    defaultSubject: "{{amount}}€ · {{eventLabel}} — {{fullName}}",
   },
 ]
 
 /**
  * GET /api/admin/email-templates
- * Devuelve los templates con su contenido actual (override si existe, default si no).
+ * Devuelve los templates editables con su contenido actual (override si existe, default si no).
  */
 export async function GET() {
   const supabase = await createServerClient()
@@ -104,6 +120,7 @@ export async function GET() {
       key: t.key,
       label: t.label,
       description: t.description,
+      category: t.category,
       variables: t.variables,
       defaultSubject: t.defaultSubject,
       defaultHtml,
@@ -119,8 +136,7 @@ export async function GET() {
 
 /**
  * PUT /api/admin/email-templates
- * Body: { template_key, subject, html_body }
- * Upsert del override. Solo super_admin (chequeado por RLS de la tabla).
+ * Body: { template_key, subject, html_body }. Upsert override. Solo super_admin (RLS).
  */
 export async function PUT(req: NextRequest) {
   const supabase = await createServerClient()
@@ -156,7 +172,7 @@ export async function PUT(req: NextRequest) {
 
 /**
  * DELETE /api/admin/email-templates?key=...
- * Borra el override → vuelve al default hardcoded del template React.
+ * Borra el override → vuelve al default hardcoded.
  */
 export async function DELETE(req: NextRequest) {
   const supabase = await createServerClient()

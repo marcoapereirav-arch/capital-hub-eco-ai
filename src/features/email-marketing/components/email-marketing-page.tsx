@@ -43,6 +43,13 @@ type Template = {
   label: string
   description: string
   category: string
+  variables?: string[]
+  defaultSubject?: string
+  defaultHtml?: string
+  currentSubject?: string
+  currentHtml?: string
+  hasOverride?: boolean
+  updatedAt?: string | null
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -179,18 +186,20 @@ function DashboardTab() {
 function TemplatesTab() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
-  const [preview, setPreview] = useState<Template | null>(null)
+  const [editing, setEditing] = useState<Template | null>(null)
 
-  useEffect(() => {
-    fetch("/api/admin/email/templates")
-      .then((r) => r.json())
-      .then((d) => setTemplates(d.templates ?? []))
-      .finally(() => setLoading(false))
-  }, [])
+  async function load() {
+    setLoading(true)
+    const res = await fetch("/api/admin/email-templates")
+    const data = await res.json()
+    setTemplates(data.templates ?? [])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
 
   if (loading) return <div className="text-sm text-muted-foreground py-6">Cargando…</div>
 
-  // Agrupar por category
   const byCategory = new Map<string, Template[]>()
   for (const t of templates) {
     const arr = byCategory.get(t.category) ?? []
@@ -201,8 +210,9 @@ function TemplatesTab() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        {templates.length} templates registrados. Click en cualquiera para previsualizar con datos demo.
-        Para editar el copy modifica el archivo TSX en <code className="font-mono">src/lib/email/templates/</code>.
+        {templates.length} templates editables. Click en cualquiera para editar el asunto y el HTML
+        directamente desde aquí. Los cambios se aplican al siguiente envío sin redeploy. Variables
+        dinámicas con sintaxis <code className="font-mono text-[11px] bg-white/[0.05] px-1 py-0.5 rounded">{`{{nombre}}`}</code>.
       </p>
 
       {Array.from(byCategory.entries()).map(([cat, list]) => (
@@ -212,22 +222,29 @@ function TemplatesTab() {
             {list.map((t) => (
               <button
                 key={t.key}
-                onClick={() => setPreview(t)}
+                onClick={() => setEditing(t)}
                 className="rounded-md border border-border/40 p-3 hover:border-border hover:bg-card/40 transition-colors text-left"
               >
-                <div className="flex items-start justify-between mb-1">
+                <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="text-sm font-medium">{t.label}</div>
-                  <span className={cn(
-                    "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border shrink-0",
-                    CATEGORY_COLORS[t.category] ?? "border-border/40"
-                  )}>
-                    {t.category}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {t.hasOverride && (
+                      <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400 border border-green-500/30">
+                        editado
+                      </span>
+                    )}
+                    <span className={cn(
+                      "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
+                      CATEGORY_COLORS[t.category] ?? "border-border/40"
+                    )}>
+                      {t.category}
+                    </span>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">{t.description}</p>
                 <div className="flex items-center justify-between">
                   <div className="text-[10px] font-mono text-muted-foreground">key: {t.key}</div>
-                  <div className="text-[10px] font-mono text-foreground/60 underline">Ver preview →</div>
+                  <div className="text-[10px] font-mono text-foreground/60 underline">Editar →</div>
                 </div>
               </button>
             ))}
@@ -235,29 +252,156 @@ function TemplatesTab() {
         </section>
       ))}
 
-      {preview && <PreviewModal template={preview} onClose={() => setPreview(null)} />}
+      {editing && (
+        <TemplateEditor
+          template={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load() }}
+        />
+      )}
     </div>
   )
 }
 
-function PreviewModal({ template, onClose }: { template: Template; onClose: () => void }) {
+function TemplateEditor({ template, onClose, onSaved }: { template: Template; onClose: () => void; onSaved: () => void }) {
+  const [subject, setSubject] = useState(template.currentSubject ?? template.defaultSubject ?? "")
+  const [html, setHtml] = useState(template.currentHtml ?? template.defaultHtml ?? "")
+  const [tab, setTab] = useState<"editor" | "preview">("editor")
+  const [saving, setSaving] = useState(false)
+  const [reset, setReset] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function save() {
+    setSaving(true); setErr(null)
+    try {
+      const res = await fetch("/api/admin/email-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ template_key: template.key, subject, html_body: html }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Error")
+      onSaved()
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function deleteOverride() {
+    if (!confirm("¿Borrar tu versión y volver al texto original del código? No se puede deshacer.")) return
+    setReset(true); setErr(null)
+    try {
+      const res = await fetch(`/api/admin/email-templates?key=${encodeURIComponent(template.key)}`, { method: "DELETE" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Error")
+      onSaved()
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setReset(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-background border border-border rounded-lg w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
-        <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold">{template.label}</h3>
-            <p className="text-[10px] font-mono text-muted-foreground">key: {template.key}</p>
+      <div onClick={(e) => e.stopPropagation()} className="bg-background border border-border rounded-lg w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden">
+        <div className="border-b border-border px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold truncate">{template.label}</h3>
+            <p className="text-[10px] font-mono text-muted-foreground truncate">key: {template.key}</p>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs font-mono uppercase tracking-wider">
-            Cerrar ✕
+          <div className="flex items-center gap-2 shrink-0">
+            {template.hasOverride && (
+              <button
+                onClick={deleteOverride}
+                disabled={reset}
+                className="rounded-sm border border-amber-500/40 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-300 hover:bg-amber-500/10 disabled:opacity-40"
+              >
+                {reset ? "Restaurando…" : "Volver al original"}
+              </button>
+            )}
+            <button
+              onClick={save}
+              disabled={saving || !subject.trim() || !html.trim()}
+              className="rounded-sm bg-gradient-to-br from-green-500 to-green-600 text-black px-4 py-1.5 text-[10px] font-mono uppercase tracking-wider font-bold disabled:opacity-30"
+            >
+              {saving ? "Guardando…" : "Guardar cambios"}
+            </button>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs font-mono uppercase tracking-wider px-2">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {template.variables && template.variables.length > 0 && (
+          <div className="px-4 py-2 border-b border-border/60 bg-card/30 flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Variables · click para copiar:</span>
+            {template.variables.map((v) => (
+              <code
+                key={v}
+                onClick={() => navigator.clipboard.writeText(`{{${v}}}`)}
+                className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/[0.05] border border-white/15 text-foreground cursor-pointer hover:border-white/35"
+                title="Click para copiar"
+              >
+                {`{{${v}}}`}
+              </code>
+            ))}
+          </div>
+        )}
+
+        <div className="px-4 py-3 border-b border-border/60">
+          <label className="text-[10px] font-mono uppercase tracking-wider text-foreground/80 block mb-1.5">
+            Asunto del email <span className="text-red-400">*</span>
+          </label>
+          <input
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="w-full rounded-sm border border-white/25 bg-white/[0.04] px-3 py-2 text-sm focus:bg-white/[0.08] focus:border-green-500/70 focus:outline-none transition-colors"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 px-4 pt-3 border-b border-border/60">
+          <button
+            onClick={() => setTab("editor")}
+            className={cn(
+              "text-[10px] font-mono uppercase tracking-wider pb-2 border-b-2 px-2",
+              tab === "editor" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"
+            )}
+          >
+            Editor HTML
+          </button>
+          <button
+            onClick={() => setTab("preview")}
+            className={cn(
+              "text-[10px] font-mono uppercase tracking-wider pb-2 border-b-2 px-2",
+              tab === "preview" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"
+            )}
+          >
+            Vista previa
           </button>
         </div>
-        <iframe
-          src={`/api/admin/email/preview/${template.key}`}
-          className="flex-1 w-full bg-white"
-          title={`Preview ${template.label}`}
-        />
+
+        <div className="flex-1 overflow-hidden">
+          {tab === "editor" ? (
+            <textarea
+              value={html}
+              onChange={(e) => setHtml(e.target.value)}
+              spellCheck={false}
+              className="w-full h-full px-4 py-3 text-[11px] font-mono leading-relaxed bg-background focus:outline-none resize-none"
+            />
+          ) : (
+            <iframe title="preview" srcDoc={html} className="w-full h-full bg-white" />
+          )}
+        </div>
+
+        {err && (
+          <div className="px-4 py-2 border-t border-red-500/40 bg-red-500/[0.06] text-xs text-red-300">
+            {err}
+          </div>
+        )}
       </div>
     </div>
   )
