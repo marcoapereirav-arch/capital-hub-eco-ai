@@ -301,6 +301,14 @@ export async function sendWelcomeAlumnoHT(input: {
     html,
     leadId: input.leadId,
     metadata: { product: input.product, contactId: input.contactId },
+    vars: {
+      firstName: input.fullName.split(" ")[0] ?? "",
+      fullName: input.fullName,
+      email: input.email,
+      product: input.product,
+      inviteUrl: input.inviteUrl,
+      closerName: input.closerName ?? "Capital Hub",
+    },
   })
 }
 
@@ -407,6 +415,14 @@ export async function notifyMarcoPurchase(input: {
     productName: input.productName,
   }))
   const subject = `${input.amount ? `${input.amount}${input.currency === "EUR" || !input.currency ? "€" : input.currency} · ` : ""}${input.eventLabel} — ${input.fullName}`
+  const vars = {
+    fullName: input.fullName,
+    email: input.email,
+    amount: input.amount ?? 0,
+    currency: input.currency ?? "EUR",
+    productName: input.productName ?? "",
+    eventLabel: input.eventLabel,
+  }
   const results = await Promise.allSettled([
     sendEmail({
       template: "internal_purchase_alert_marco",
@@ -415,6 +431,7 @@ export async function notifyMarcoPurchase(input: {
       subject,
       html,
       leadId: input.leadId,
+      vars,
     }),
     sendEmail({
       template: "internal_purchase_alert_adrian",
@@ -423,6 +440,7 @@ export async function notifyMarcoPurchase(input: {
       subject,
       html,
       leadId: input.leadId,
+      vars,
     }),
   ])
   const okCount = results.filter((r) => r.status === "fulfilled" && r.value.ok).length

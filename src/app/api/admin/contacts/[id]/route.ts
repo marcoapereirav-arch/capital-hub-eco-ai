@@ -107,10 +107,26 @@ export async function DELETE(_req: NextRequest, ctx: { params: Promise<{ id: str
     .maybeSingle()
 
   if (contact?.email) {
-    await admin
-      .from("student_invites")
-      .delete()
-      .ilike("email", contact.email.toLowerCase().trim())
+    const emailLower = contact.email.toLowerCase().trim()
+
+    await admin.from("student_invites").delete().ilike("email", emailLower)
+
+    // Cleanup Supabase Storage: si el alumno activó cuenta y subió avatar,
+    // borra la foto del bucket 'avatars/{auth_user_id}/' para no acumular basura.
+    // Decisión Marco 2026-06-19: hacer cleanup automático al borrar contacto.
+    const { data: appUser } = await admin
+      .from("users")
+      .select("auth_user_id")
+      .eq("email", emailLower)
+      .maybeSingle()
+
+    if (appUser?.auth_user_id) {
+      const { data: files } = await admin.storage.from("avatars").list(appUser.auth_user_id)
+      if (files && files.length > 0) {
+        const paths = files.map((f) => `${appUser.auth_user_id}/${f.name}`)
+        await admin.storage.from("avatars").remove(paths)
+      }
+    }
   }
 
   await admin.from("contact_journey_events").delete().eq("contact_id", id)

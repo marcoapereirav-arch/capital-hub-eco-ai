@@ -73,8 +73,8 @@ const STEPS: Step[] = [
     subtitle: "Resend + token BYOE",
     icon: Mail,
     status: "live",
-    href: "/email-marketing",
-    description: "El sistema genera un token único + manda email Resend brandeado al alumno con link app.capitalhubapp.com/accept-invite/<token>. NO usa los emails de Supabase (BYOE pattern), permite escalar sin límite.",
+    href: "/webs/sistema/emails",
+    description: "El sistema genera un token único + manda email Resend brandeado al alumno con link app.capitalhubapp.com/accept-invite/<token>. NO usa los emails de Supabase (BYOE pattern), permite escalar sin límite. Edita el copy de cualquier template desde /webs/sistema/emails sin tocar código.",
   },
   {
     id: "app-onboarding",
