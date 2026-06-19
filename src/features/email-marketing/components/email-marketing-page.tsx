@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Mail, Send, FileText, Settings, BarChart3, Search, Filter, CheckCircle2, XCircle, Eye, MousePointerClick } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
@@ -265,19 +265,60 @@ function TemplatesTab() {
 
 function TemplateEditor({ template, onClose, onSaved }: { template: Template; onClose: () => void; onSaved: () => void }) {
   const [subject, setSubject] = useState(template.currentSubject ?? template.defaultSubject ?? "")
-  const [html, setHtml] = useState(template.currentHtml ?? template.defaultHtml ?? "")
-  const [tab, setTab] = useState<"editor" | "preview">("editor")
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [saving, setSaving] = useState(false)
   const [reset, setReset] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // srcDoc inicial — incluye scripts que activan contentEditable.
+  // Solo se recalcula al abrir un template distinto (sino el iframe se reset).
+  const initialSrcDoc = useMemo(() => {
+    const html = template.currentHtml ?? template.defaultHtml ?? ""
+    const editorScript = `
+      <style>
+        body { outline: none !important; cursor: text; }
+        body:focus, *:focus { outline: 1px dashed rgba(55, 202, 55, 0.4) !important; outline-offset: 2px; }
+        a { pointer-events: none !important; }
+        [contenteditable=true]:hover { background: rgba(55, 202, 55, 0.04); }
+      </style>
+      <script>
+        document.body.contentEditable = 'true';
+        document.body.style.outline = 'none';
+        // Evita que enter haga doble párrafo
+        document.execCommand('defaultParagraphSeparator', false, 'br');
+      </script>
+    `
+    if (html.includes("</body>")) {
+      return html.replace("</body>", `${editorScript}</body>`)
+    }
+    return html + editorScript
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [template.key])
+
+  function readHtml(): string {
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return template.currentHtml ?? template.defaultHtml ?? ""
+    const clone = doc.documentElement.cloneNode(true) as HTMLElement
+    // Limpia los scripts/estilos de edición antes de guardar
+    clone.querySelectorAll("script").forEach((s) => {
+      if (s.textContent?.includes("contentEditable") || s.textContent?.includes("execCommand")) s.remove()
+    })
+    clone.querySelectorAll("style").forEach((s) => {
+      if (s.textContent?.includes("contenteditable") || s.textContent?.includes("cursor: text")) s.remove()
+    })
+    const body = clone.querySelector("body")
+    if (body) body.removeAttribute("contenteditable")
+    return "<!DOCTYPE html>\n" + clone.outerHTML
+  }
+
   async function save() {
     setSaving(true); setErr(null)
     try {
+      const html_body = readHtml()
       const res = await fetch("/api/admin/email-templates", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ template_key: template.key, subject, html_body: html }),
+        body: JSON.stringify({ template_key: template.key, subject, html_body }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? "Error")
@@ -304,13 +345,25 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
     }
   }
 
+  function applyCommand(cmd: string) {
+    iframeRef.current?.contentDocument?.execCommand(cmd, false)
+    iframeRef.current?.contentWindow?.focus()
+  }
+
+  function insertText(text: string) {
+    iframeRef.current?.contentWindow?.focus()
+    iframeRef.current?.contentDocument?.execCommand("insertText", false, text)
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-background border border-border rounded-lg w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden">
+      <div onClick={(e) => e.stopPropagation()} className="bg-background border border-border rounded-lg w-full max-w-5xl h-[94vh] flex flex-col overflow-hidden">
         <div className="border-b border-border px-4 py-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold truncate">{template.label}</h3>
-            <p className="text-[10px] font-mono text-muted-foreground truncate">key: {template.key}</p>
+            <p className="text-[10px] font-mono text-muted-foreground truncate">
+              Haz click sobre cualquier texto del email y escribe directamente.
+            </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {template.hasOverride && (
@@ -324,7 +377,7 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
             )}
             <button
               onClick={save}
-              disabled={saving || !subject.trim() || !html.trim()}
+              disabled={saving || !subject.trim()}
               className="rounded-sm bg-gradient-to-br from-green-500 to-green-600 text-black px-4 py-1.5 text-[10px] font-mono uppercase tracking-wider font-bold disabled:opacity-30"
             >
               {saving ? "Guardando…" : "Guardar cambios"}
@@ -335,66 +388,66 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
           </div>
         </div>
 
-        {template.variables && template.variables.length > 0 && (
-          <div className="px-4 py-2 border-b border-border/60 bg-card/30 flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Variables · click para copiar:</span>
-            {template.variables.map((v) => (
-              <code
-                key={v}
-                onClick={() => navigator.clipboard.writeText(`{{${v}}}`)}
-                className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/[0.05] border border-white/15 text-foreground cursor-pointer hover:border-white/35"
-                title="Click para copiar"
-              >
-                {`{{${v}}}`}
-              </code>
-            ))}
-          </div>
-        )}
-
-        <div className="px-4 py-3 border-b border-border/60">
-          <label className="text-[10px] font-mono uppercase tracking-wider text-foreground/80 block mb-1.5">
-            Asunto del email <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            className="w-full rounded-sm border border-white/25 bg-white/[0.04] px-3 py-2 text-sm focus:bg-white/[0.08] focus:border-green-500/70 focus:outline-none transition-colors"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 px-4 pt-3 border-b border-border/60">
-          <button
-            onClick={() => setTab("editor")}
-            className={cn(
-              "text-[10px] font-mono uppercase tracking-wider pb-2 border-b-2 px-2",
-              tab === "editor" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"
-            )}
-          >
-            Editor HTML
-          </button>
-          <button
-            onClick={() => setTab("preview")}
-            className={cn(
-              "text-[10px] font-mono uppercase tracking-wider pb-2 border-b-2 px-2",
-              tab === "preview" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"
-            )}
-          >
-            Vista previa
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-hidden">
-          {tab === "editor" ? (
-            <textarea
-              value={html}
-              onChange={(e) => setHtml(e.target.value)}
-              spellCheck={false}
-              className="w-full h-full px-4 py-3 text-[11px] font-mono leading-relaxed bg-background focus:outline-none resize-none"
+        <div className="px-4 py-3 border-b border-border/60 space-y-2.5">
+          <label className="block">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-foreground/80">
+              Asunto del email <span className="text-red-400">*</span>
+            </span>
+            <input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="mt-1 w-full rounded-sm border border-white/25 bg-white/[0.04] px-3 py-2 text-sm focus:bg-white/[0.08] focus:border-green-500/70 focus:outline-none transition-colors"
             />
-          ) : (
-            <iframe title="preview" srcDoc={html} className="w-full h-full bg-white" />
-          )}
+          </label>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Toolbar formato */}
+            <div className="flex items-center gap-1 mr-2">
+              <button
+                onClick={() => applyCommand("bold")}
+                className="w-7 h-7 rounded-sm border border-white/15 text-foreground hover:bg-white/[0.06] font-bold text-xs"
+                title="Negrita (Ctrl+B)"
+              >B</button>
+              <button
+                onClick={() => applyCommand("italic")}
+                className="w-7 h-7 rounded-sm border border-white/15 text-foreground hover:bg-white/[0.06] italic text-xs"
+                title="Itálica (Ctrl+I)"
+              >I</button>
+              <button
+                onClick={() => applyCommand("underline")}
+                className="w-7 h-7 rounded-sm border border-white/15 text-foreground hover:bg-white/[0.06] underline text-xs"
+                title="Subrayado (Ctrl+U)"
+              >U</button>
+            </div>
+            {/* Variables */}
+            {template.variables && template.variables.length > 0 && (
+              <>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+                  Insertar variable:
+                </span>
+                {template.variables.map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => insertText(`{{${v}}}`)}
+                    className="text-[11px] font-mono px-2 py-1 rounded bg-white/[0.05] border border-white/15 text-foreground hover:border-white/35"
+                    title="Insertar en la posición del cursor"
+                  >
+                    {`{{${v}}}`}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-hidden bg-zinc-200">
+          <iframe
+            ref={iframeRef}
+            title="editor"
+            srcDoc={initialSrcDoc}
+            className="w-full h-full bg-white"
+          />
         </div>
 
         {err && (

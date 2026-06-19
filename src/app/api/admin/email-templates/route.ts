@@ -5,6 +5,20 @@ import { render } from "@react-email/render"
 import { WelcomeAlumnoHTEmail } from "@/lib/email/templates/welcome-alumno-ht"
 import { TeamInviteEmail } from "@/lib/email/templates/team-invite"
 import { InternalPurchaseAlert } from "@/lib/email/templates/internal-purchase-alert"
+import { InternalBookingAlert } from "@/lib/email/templates/internal-booking-alert"
+import { InternalErrorAlert } from "@/lib/email/templates/internal-error-alert"
+import { InternalGCalAlert } from "@/lib/email/templates/internal-gcal-alert"
+import { WelcomeTrialEmail } from "@/lib/email/templates/welcome-trial"
+import { WelcomeAnualEmail } from "@/lib/email/templates/welcome-anual"
+import { AgendaConfirmedEmail } from "@/lib/email/templates/agenda-confirmed"
+import { AgendaReminder24hEmail } from "@/lib/email/templates/agenda-reminder-24h"
+import { NoShowEmail } from "@/lib/email/templates/no-show"
+import { PostCallFollowupEmail } from "@/lib/email/templates/post-call-followup"
+import { TrialEnds48hEmail } from "@/lib/email/templates/trial-ends-48h"
+import { PaymentFailedEmail } from "@/lib/email/templates/payment-failed"
+import { BumpConfirmedEmail } from "@/lib/email/templates/bump-confirmed"
+import { BetaRetargetingEmail } from "@/lib/email/templates/beta-retargeting"
+import { PasswordChangedEmail } from "@/lib/email/templates/password-changed"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -17,13 +31,11 @@ function getAdminClient() {
 }
 
 /**
- * Catálogo de templates editables desde /email-marketing → tab Plantillas.
- * Cada uno define variables disponibles para placeholder substitution
- * ({{key}}) que sustituye el sender al enviar el email real.
+ * Catálogo de TODOS los templates editables desde /email-marketing → Plantillas.
  *
- * Para añadir más templates al editor: importar el componente React,
- * añadir su entry con variables relevantes. El renderDefault produce
- * el HTML demo que el editor muestra cuando NO hay override custom.
+ * Cada entry usa SUS Props reales del componente React. Las {{variables}}
+ * son lo que el sender sustituye al enviar. El render demo se hace con datos
+ * ejemplo (string '{{x}}' o valor demo).
  */
 const TEMPLATES: Array<{
   key: string
@@ -37,7 +49,7 @@ const TEMPLATES: Array<{
   {
     key: "welcome_alumno_ht",
     label: "Bienvenida alumno (post venta)",
-    description: "Email que recibe el alumno tras cerrar la venta. Contiene el magic link de acceso a la App.",
+    description: "El email que recibe el alumno tras cerrar la venta. Incluye el magic link de acceso a la App.",
     category: "lifecycle",
     variables: ["firstName", "fullName", "product", "inviteUrl", "closerName"],
     defaultSubject: "{{firstName}}, entras hoy a Capital Hub",
@@ -51,7 +63,7 @@ const TEMPLATES: Array<{
   {
     key: "team_invite",
     label: "Invitación equipo (OS)",
-    description: "Email a un nuevo miembro del equipo (super_admin, closer, setter, marketing, formador) para que configure su contraseña.",
+    description: "Email al nuevo miembro del equipo (super_admin/closer/setter/marketing/formador) para configurar su contraseña.",
     category: "auth",
     variables: ["fullName", "invitedByName", "role", "acceptUrl"],
     defaultSubject: "{{invitedByName}} te invita al OS de Capital Hub",
@@ -66,7 +78,7 @@ const TEMPLATES: Array<{
   {
     key: "internal_purchase_alert_marco",
     label: "Notif venta interna (Marco)",
-    description: "Notificación interna a Marco cada vez que se cierra una venta en el OS.",
+    description: "Notif a Marco cada vez que entra una venta en el OS.",
     category: "internal",
     variables: ["fullName", "email", "amount", "currency", "productName", "eventLabel"],
     defaultSubject: "{{amount}}€ · {{eventLabel}} — {{fullName}}",
@@ -82,7 +94,7 @@ const TEMPLATES: Array<{
   {
     key: "internal_purchase_alert_adrian",
     label: "Notif venta interna (Adrián)",
-    description: "Igual que la de Marco pero a Adrián. Se envía a la vez para ambos founders.",
+    description: "Misma notif a Adrián. Se envía a la vez para ambos founders.",
     category: "internal",
     variables: ["fullName", "email", "amount", "currency", "productName", "eventLabel"],
     defaultSubject: "{{amount}}€ · {{eventLabel}} — {{fullName}}",
@@ -95,11 +107,234 @@ const TEMPLATES: Array<{
       productName: "{{productName}}",
     })),
   },
+  {
+    key: "internal_booking_alert",
+    label: "Notif booking interno (Adrián)",
+    description: "Notif a Adrián cada vez que se reserva llamada en /agenda.",
+    category: "internal",
+    variables: ["fullName", "email", "phone", "slotStartIso", "notes"],
+    defaultSubject: "Nueva llamada agendada — {{fullName}}",
+    renderDefault: () => render(InternalBookingAlert({
+      fullName: "{{fullName}}",
+      email: "{{email}}",
+      phone: "{{phone}}",
+      slotStartIso: new Date().toISOString(),
+      notes: "{{notes}}",
+    })),
+  },
+  {
+    key: "agenda_confirmed",
+    label: "Reserva confirmada (lead)",
+    description: "Confirmación al lead que reservó llamada — incluye datos cita + cancel/reschedule.",
+    category: "calendar",
+    variables: ["fullName", "slotStartIso", "meetingUrl", "cancelUrl", "rescheduleUrl"],
+    defaultSubject: "Confirmada tu llamada",
+    renderDefault: () => render(AgendaConfirmedEmail({
+      fullName: "{{fullName}}",
+      slotStartIso: new Date().toISOString(),
+      meetingUrl: "{{meetingUrl}}",
+      cancelUrl: "{{cancelUrl}}",
+      rescheduleUrl: "{{rescheduleUrl}}",
+    })),
+  },
+  {
+    key: "agenda_reminder_24h",
+    label: "Recordatorio 24h antes de llamada",
+    description: "Cron envía 24h antes de la llamada agendada.",
+    category: "calendar",
+    variables: ["fullName", "slotStartIso", "meetingUrl"],
+    defaultSubject: "Mañana hablamos",
+    renderDefault: () => render(AgendaReminder24hEmail({
+      fullName: "{{fullName}}",
+      slotStartIso: new Date().toISOString(),
+      meetingUrl: "{{meetingUrl}}",
+    })),
+  },
+  {
+    key: "no_show",
+    label: "No show (no apareció)",
+    description: "Recovery cuando el lead no apareció a la llamada.",
+    category: "calendar",
+    variables: ["fullName", "agendaUrl"],
+    defaultSubject: "Te esperamos — reagenda en 1 click",
+    renderDefault: () => render(NoShowEmail({
+      fullName: "{{fullName}}",
+      agendaUrl: "{{agendaUrl}}",
+    })),
+  },
+  {
+    key: "post_call_followup",
+    label: "Post-call followup",
+    description: "Resumen + push upsell tras marcar la llamada como attended.",
+    category: "calendar",
+    variables: ["fullName", "upgradeUrl", "appUrl"],
+    defaultSubject: "Resumen de nuestra llamada",
+    renderDefault: () => render(PostCallFollowupEmail({
+      fullName: "{{fullName}}",
+      upgradeUrl: "{{upgradeUrl}}",
+      appUrl: "{{appUrl}}",
+    })),
+  },
+  {
+    key: "welcome_trial",
+    label: "Welcome trial (MIFGE)",
+    description: "Empieza trial 14d. Push a agendar llamada de diagnóstico.",
+    category: "lifecycle",
+    variables: ["fullName", "appUrl", "agendaUrl"],
+    defaultSubject: "Bienvenido — tu trial empieza ahora",
+    renderDefault: () => render(WelcomeTrialEmail({
+      fullName: "{{fullName}}",
+      appUrl: "{{appUrl}}",
+      agendaUrl: "{{agendaUrl}}",
+    })),
+  },
+  {
+    key: "welcome_anual",
+    label: "Welcome anual (MIFGE)",
+    description: "Convirtió a anual. Push a agendar sesión 1:1 de onboarding.",
+    category: "lifecycle",
+    variables: ["fullName", "appUrl", "agendaUrl"],
+    defaultSubject: "Bienvenido al plan anual",
+    renderDefault: () => render(WelcomeAnualEmail({
+      fullName: "{{fullName}}",
+      appUrl: "{{appUrl}}",
+      agendaUrl: "{{agendaUrl}}",
+    })),
+  },
+  {
+    key: "trial_ends_48h",
+    label: "Trial ends en 48h",
+    description: "Cron 48h antes del cobro recurrente. Recordatorio + push a quedarse.",
+    category: "lifecycle",
+    variables: ["fullName", "cancelUrl", "appUrl"],
+    defaultSubject: "Tu prueba termina en 48h",
+    renderDefault: () => render(TrialEnds48hEmail({
+      fullName: "{{fullName}}",
+      cancelUrl: "{{cancelUrl}}",
+      appUrl: "{{appUrl}}",
+    })),
+  },
+  {
+    key: "payment_failed",
+    label: "Cobro fallido",
+    description: "Recovery cuando el cobro recurrente falla. 3 días para actualizar tarjeta.",
+    category: "lifecycle",
+    variables: ["fullName", "updateCardUrl"],
+    defaultSubject: "No pudimos cobrarte — actualiza tu método",
+    renderDefault: () => render(PaymentFailedEmail({
+      fullName: "{{fullName}}",
+      updateCardUrl: "{{updateCardUrl}}",
+    })),
+  },
+  {
+    key: "bump_confirmed",
+    label: "Order bump confirmado",
+    description: "Confirmación order bump 19€ (Bonus Bundle Express).",
+    category: "transactional",
+    variables: ["fullName", "appUrl"],
+    defaultSubject: "Bonus activado · acceso inmediato",
+    renderDefault: () => render(BumpConfirmedEmail({
+      fullName: "{{fullName}}",
+      appUrl: "{{appUrl}}",
+    })),
+  },
+  {
+    key: "beta_retargeting_trial",
+    label: "Win-back (canceló trial)",
+    description: "Beta retargeting a quien canceló desde trial.",
+    category: "retargeting",
+    variables: ["fullName", "rejoinUrl"],
+    defaultSubject: "¿Te interesa probar de nuevo?",
+    renderDefault: () => render(BetaRetargetingEmail({
+      fullName: "{{fullName}}",
+      rejoinUrl: "{{rejoinUrl}}",
+      cancelOrigin: "trial",
+    })),
+  },
+  {
+    key: "beta_retargeting_monthly",
+    label: "Win-back (canceló mensual)",
+    description: "Beta retargeting a quien canceló plan mensual.",
+    category: "retargeting",
+    variables: ["fullName", "rejoinUrl"],
+    defaultSubject: "Te echamos de menos",
+    renderDefault: () => render(BetaRetargetingEmail({
+      fullName: "{{fullName}}",
+      rejoinUrl: "{{rejoinUrl}}",
+      cancelOrigin: "monthly",
+    })),
+  },
+  {
+    key: "beta_retargeting_annual",
+    label: "Win-back (canceló anual)",
+    description: "Beta retargeting a quien canceló plan anual.",
+    category: "retargeting",
+    variables: ["fullName", "rejoinUrl"],
+    defaultSubject: "Te echamos de menos",
+    renderDefault: () => render(BetaRetargetingEmail({
+      fullName: "{{fullName}}",
+      rejoinUrl: "{{rejoinUrl}}",
+      cancelOrigin: "annual",
+    })),
+  },
+  {
+    key: "internal_error_alert",
+    label: "Internal: Error alert (Marco)",
+    description: "Digest cada 30 min de fallos email/CAPI.",
+    category: "internal",
+    variables: ["windowMinutes", "emailFails", "capiFails"],
+    defaultSubject: "⚠️ Fallos en MIFGE — últimos {{windowMinutes}}min",
+    renderDefault: () => render(InternalErrorAlert({
+      windowMinutes: 30,
+      emailFails: 0,
+      capiFails: 0,
+      items: [],
+    })),
+  },
+  {
+    key: "internal_gcal_alert_marco",
+    label: "Internal: GCal alert (Marco)",
+    description: "Aviso a Marco cuando Google Calendar se desconecta.",
+    category: "internal",
+    variables: ["reason"],
+    defaultSubject: "⚠️ Google Calendar desconectado del OS",
+    renderDefault: () => render(InternalGCalAlert({
+      reason: "{{reason}}",
+      detail: "",
+      lastConnectedAt: null,
+      ownerEmail: null,
+    })),
+  },
+  {
+    key: "internal_gcal_alert_adrian",
+    label: "Internal: GCal alert (Adrián)",
+    description: "Aviso a Adrián cuando su Calendar se desconecta.",
+    category: "internal",
+    variables: ["reason"],
+    defaultSubject: "⚠️ Tu Google Calendar se desconectó del OS",
+    renderDefault: () => render(InternalGCalAlert({
+      reason: "{{reason}}",
+      detail: "",
+      lastConnectedAt: null,
+      ownerEmail: null,
+    })),
+  },
+  {
+    key: "password_changed",
+    label: "Contraseña cambiada (notif)",
+    description: "Aviso al usuario tras cambiar su contraseña.",
+    category: "auth",
+    variables: ["fullName", "changedAtFormatted"],
+    defaultSubject: "Tu contraseña ha cambiado",
+    renderDefault: () => render(PasswordChangedEmail({
+      fullName: "{{fullName}}",
+      changedAtFormatted: "{{changedAtFormatted}}",
+    })),
+  },
 ]
 
 /**
- * GET /api/admin/email-templates
- * Devuelve los templates editables con su contenido actual (override si existe, default si no).
+ * GET /api/admin/email-templates — lista templates editables con su contenido actual.
  */
 export async function GET() {
   const supabase = await createServerClient()
@@ -134,10 +369,6 @@ export async function GET() {
   return NextResponse.json({ templates: result })
 }
 
-/**
- * PUT /api/admin/email-templates
- * Body: { template_key, subject, html_body }. Upsert override. Solo super_admin (RLS).
- */
 export async function PUT(req: NextRequest) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -170,10 +401,6 @@ export async function PUT(req: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-/**
- * DELETE /api/admin/email-templates?key=...
- * Borra el override → vuelve al default hardcoded.
- */
 export async function DELETE(req: NextRequest) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
