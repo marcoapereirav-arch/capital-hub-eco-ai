@@ -383,6 +383,12 @@ export async function notifyMarcoErrors(input: {
   })
 }
 
+/**
+ * Notif venta — manda alerta a Marco Y Adrián en paralelo.
+ * Decisión Marco 2026-06-19: ambos founders deben recibir notif cada venta.
+ * Si uno falla el otro sigue (Promise.allSettled). El nombre del helper se
+ * mantiene como notifyMarcoPurchase por compat con sales/register endpoint.
+ */
 export async function notifyMarcoPurchase(input: {
   eventLabel: string
   fullName: string
@@ -400,14 +406,27 @@ export async function notifyMarcoPurchase(input: {
     currency: input.currency,
     productName: input.productName,
   }))
-  return sendEmail({
-    template: "internal_purchase_alert",
-    to: MARCO_EMAIL,
-    toName: "Marco",
-    subject: `${input.amount ? `${input.amount}${input.currency === "EUR" || !input.currency ? "€" : input.currency} · ` : ""}${input.eventLabel} — ${input.fullName}`,
-    html,
-    leadId: input.leadId,
-  })
+  const subject = `${input.amount ? `${input.amount}${input.currency === "EUR" || !input.currency ? "€" : input.currency} · ` : ""}${input.eventLabel} — ${input.fullName}`
+  const results = await Promise.allSettled([
+    sendEmail({
+      template: "internal_purchase_alert_marco",
+      to: MARCO_EMAIL,
+      toName: "Marco",
+      subject,
+      html,
+      leadId: input.leadId,
+    }),
+    sendEmail({
+      template: "internal_purchase_alert_adrian",
+      to: ADRIAN_EMAIL,
+      toName: "Adrián",
+      subject,
+      html,
+      leadId: input.leadId,
+    }),
+  ])
+  const okCount = results.filter((r) => r.status === "fulfilled" && r.value.ok).length
+  return { ok: okCount > 0, sent: okCount, total: 2 }
 }
 
 export async function sendPasswordChanged(input: {
