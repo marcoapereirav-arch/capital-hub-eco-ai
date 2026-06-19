@@ -190,23 +190,8 @@ export function TeamPage() {
           </section>
         )}
 
-        {/* Roles legend */}
-        <section className="space-y-2">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Roles</h2>
-          <div className="rounded-md border border-border/40 p-3 space-y-1.5">
-            {ROLE_OPTIONS.map((r) => (
-              <div key={r.value} className="flex items-center gap-3 text-xs">
-                <span className={cn(
-                  "text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border shrink-0 w-24",
-                  ROLE_COLORS[r.value] ?? "border-border/40"
-                )}>
-                  {r.label}
-                </span>
-                <span className="text-muted-foreground">{r.desc}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Matriz permisos editable */}
+        <RolePermissionsMatrix />
       </PageContainer>
 
       {inviting && <InviteModal onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load() }} />}
@@ -362,5 +347,175 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
         </button>
       </form>
     </div>
+  )
+}
+
+type NavSection = { href: string; label: string; group: string }
+type MatrixData = {
+  sections: NavSection[]
+  roles: string[]
+  allowed: Record<string, string[]>
+}
+
+/**
+ * Matriz checkboxes role × sección del nav.
+ * Click en checkbox → PUT /api/admin/role-permissions inmediato.
+ * Optimistic UI: toggle local + rollback si la API falla.
+ */
+function RolePermissionsMatrix() {
+  const [data, setData] = useState<MatrixData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function load() {
+    setLoading(true)
+    setErr(null)
+    try {
+      const res = await fetch("/api/admin/role-permissions")
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error ?? "Error")
+      setData(j)
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function toggle(role: string, route_href: string, enabled: boolean) {
+    if (!data) return
+    const key = `${role}|${route_href}`
+    setSavingKey(key)
+    // Optimistic
+    setData((prev) => {
+      if (!prev) return prev
+      const set = new Set(prev.allowed[role] ?? [])
+      if (enabled) set.add(route_href)
+      else set.delete(route_href)
+      return { ...prev, allowed: { ...prev.allowed, [role]: Array.from(set) } }
+    })
+    try {
+      const res = await fetch("/api/admin/role-permissions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, route_href, enabled }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j.error ?? "Error")
+      }
+    } catch (e) {
+      setErr((e as Error).message)
+      // Rollback
+      await load()
+    } finally {
+      setSavingKey(null)
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="space-y-2">
+        <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Permisos por rol</h2>
+        <div className="text-xs text-muted-foreground py-4">Cargando matriz…</div>
+      </section>
+    )
+  }
+  if (!data) return null
+
+  // Agrupar sections por group
+  const groups = new Map<string, NavSection[]>()
+  for (const s of data.sections) {
+    const arr = groups.get(s.group) ?? []
+    arr.push(s)
+    groups.set(s.group, arr)
+  }
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+          Permisos por rol — matriz editable
+        </h2>
+        <span className="text-[10px] text-muted-foreground/70">
+          super_admin tiene acceso a todo · checkboxes guardan al instante
+        </span>
+      </div>
+
+      {err && (
+        <div className="text-xs text-red-300 bg-red-500/[0.06] border border-red-500/30 rounded-sm px-3 py-2">
+          {err}
+        </div>
+      )}
+
+      <div className="rounded-md border border-border/40 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-card/40 border-b border-border/40 sticky top-0">
+            <tr>
+              <th className="text-left px-3 py-2 font-mono uppercase tracking-wider text-[10px] text-muted-foreground sticky left-0 bg-card/40 z-10 min-w-[200px]">
+                Sección del nav
+              </th>
+              {data.roles.map((role) => (
+                <th key={role} className="text-center px-3 py-2 font-mono uppercase tracking-wider text-[10px] whitespace-nowrap">
+                  <span className={cn(
+                    "inline-block px-2 py-0.5 rounded-sm border",
+                    ROLE_COLORS[role] ?? "border-border/40"
+                  )}>{role}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(groups.entries()).map(([groupName, sections]) => (
+              <>
+                <tr key={`group-${groupName}`} className="bg-card/20 border-y border-border/30">
+                  <td colSpan={data.roles.length + 1} className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    {groupName}
+                  </td>
+                </tr>
+                {sections.map((sec) => (
+                  <tr key={sec.href} className="border-b border-border/20 hover:bg-card/10">
+                    <td className="px-3 py-2 sticky left-0 bg-background z-10">
+                      <div className="text-sm">{sec.label}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground/60">{sec.href}</div>
+                    </td>
+                    {data.roles.map((role) => {
+                      const isOn = (data.allowed[role] ?? []).includes(sec.href)
+                      const isSaving = savingKey === `${role}|${sec.href}`
+                      return (
+                        <td key={role} className="text-center px-3 py-2">
+                          <button
+                            onClick={() => toggle(role, sec.href, !isOn)}
+                            disabled={isSaving}
+                            className={cn(
+                              "inline-flex items-center justify-center w-5 h-5 rounded-sm border transition-colors",
+                              isOn
+                                ? "bg-green-500/30 border-green-500/60 text-green-300"
+                                : "border-white/15 text-transparent hover:border-white/40",
+                              isSaving && "opacity-40"
+                            )}
+                            title={isOn ? "Click para quitar acceso" : "Click para dar acceso"}
+                          >
+                            {isOn ? "✓" : ""}
+                          </button>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-[10px] text-muted-foreground/70">
+        Los cambios se aplican al siguiente refresh del usuario afectado. Super_admin / admin
+        siempre tienen acceso completo (no aparecen en la matriz).
+      </p>
+    </section>
   )
 }

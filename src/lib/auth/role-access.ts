@@ -19,7 +19,10 @@ export type Role = "super_admin" | "admin" | "marketing" | "closer" | "setter" |
 /** Rutas siempre permitidas para cualquier usuario autenticado (logout, perfil, etc). */
 const ALWAYS_ALLOWED = ["/login", "/logout", "/api/", "/auth/", "/_next/", "/favicon", "/manifest"]
 
-/** Rol → prefijos de ruta permitidos (o "*" para acceso total). */
+/**
+ * Defaults hardcoded — fallback si la BD no responde.
+ * Source of truth runtime: tabla role_permissions (editable desde /team).
+ */
 export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
   super_admin: "*",
   admin: "*",
@@ -88,35 +91,77 @@ const ALL_NAV_HREFS = [
   "/mision",
 ].sort((a, b) => b.length - a.length)
 
+/**
+ * Cache module-level de los permisos de role_permissions.
+ * setCachedRolePerms() lo hidrata desde el layout server component.
+ * Si está null → fallback al ROLE_ROUTES hardcoded.
+ */
+let cachedRolePerms: Record<string, string[]> | null = null
+
+export function setCachedRolePerms(snapshot: Record<string, string[]>): void {
+  cachedRolePerms = snapshot
+}
+
+function getAllowedForRole(role: Role | string | null | undefined): string[] | "*" {
+  if (!role) return []
+  if (role === "super_admin" || role === "admin") return "*"
+  if (cachedRolePerms && cachedRolePerms[role]) return cachedRolePerms[role]
+  const fallback = ROLE_ROUTES[role as Role]
+  return fallback ?? []
+}
+
 /** True si el rol puede acceder al pathname. */
 export function canAccessRoute(role: Role | string | null | undefined, pathname: string): boolean {
   if (!role) return false
-  // Rutas siempre permitidas
   if (ALWAYS_ALLOWED.some((p) => pathname.startsWith(p))) return true
-  const allowed = ROLE_ROUTES[role as Role]
-  if (!allowed) return false
+  const allowed = getAllowedForRole(role)
   if (allowed === "*") return true
+  if (!allowed.length) return false
 
-  // Encontrar el item del nav más específico que matchee este pathname (longest match wins).
-  // Si la ruta coincide con un item del nav → ese item específico debe estar en allowed.
-  // Si NO coincide con ningún item → es sub-ruta dinámica y hereda del padre permitido.
   const matchedNav = ALL_NAV_HREFS.find(
     (href) => pathname === href || pathname.startsWith(href + "/"),
   )
   if (matchedNav) {
     return allowed.includes(matchedNav)
   }
-
-  // Sub-ruta dinámica no mapeada en el nav (ej. /perfil/abc, /reporte/xyz)
-  // Heredar del prefijo permitido más cercano.
   return allowed.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
 }
 
-/** Lista de prefijos permitidos para un rol (para filtrar sidebar). */
+/** Lista de prefijos permitidos para un rol (sidebar filtering). */
 export function allowedPrefixesFor(role: Role | string | null | undefined): string[] | "*" {
   if (!role) return []
-  const r = ROLE_ROUTES[role as Role]
-  return r ?? []
+  return getAllowedForRole(role)
+}
+
+/**
+ * Lee la matriz completa de role_permissions de BD con un service-role client.
+ * Usado por server components / proxy middleware para hidratar el cache.
+ * Si falla, devuelve null (cache NO se actualiza, sigue usando fallback).
+ */
+export async function loadRolePermsFromDb(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+): Promise<Record<string, string[]> | null> {
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/role_permissions?select=role,route_href`, {
+      headers: {
+        "apikey": serviceRoleKey,
+        "Authorization": `Bearer ${serviceRoleKey}`,
+      },
+      // Caching por request: Next.js no cachea automáticamente fetches en server components con auth
+      cache: "no-store",
+    })
+    if (!res.ok) return null
+    const rows = await res.json() as { role: string; route_href: string }[]
+    const out: Record<string, string[]> = {}
+    for (const row of rows) {
+      if (!out[row.role]) out[row.role] = []
+      out[row.role].push(row.route_href)
+    }
+    return out
+  } catch {
+    return null
+  }
 }
 
 /**

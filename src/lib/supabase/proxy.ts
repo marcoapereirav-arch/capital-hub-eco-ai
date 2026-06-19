@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { canAccessRoute, getEffectiveRole, VIEW_AS_COOKIE_NAME } from '@/lib/auth/role-access'
+import { canAccessRoute, getEffectiveRole, VIEW_AS_COOKIE_NAME, loadRolePermsFromDb, setCachedRolePerms } from '@/lib/auth/role-access'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -44,21 +44,25 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Gate por rol — solo aplica a rutas del OS autenticadas (descarta /api/, /login, etc)
-  // Solo si tenemos user y estamos en una ruta "page" del OS (no public/api/static)
   if (user && !pathname.startsWith('/api/') && !pathname.startsWith('/auth/') && !isAuthRoute) {
-    // Lee el rol del profile (cookie cache en futuro si pesa; por ahora 1 query)
+    // Hidrata el cache de role_permissions desde BD para este request.
+    // Si falla la BD, los checks usan ROLE_ROUTES hardcoded (fallback seguro).
+    const snapshot = await loadRolePermsFromDb(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    if (snapshot) setCachedRolePerms(snapshot)
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .maybeSingle()
     const realRole = profile?.role ?? null
-    // Si admin está impersonando un rol, el gate de UI usa ese rol efectivo.
     const viewAs = request.cookies.get(VIEW_AS_COOKIE_NAME)?.value ?? null
     const effectiveRole = getEffectiveRole(realRole, viewAs)
 
     if (!canAccessRoute(effectiveRole, pathname)) {
-      // Redirige a /dashboard (siempre permitido salvo bug de config)
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

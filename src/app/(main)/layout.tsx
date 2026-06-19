@@ -10,7 +10,7 @@ import { RegistrarVentaWidget } from "@/features/sales/components/registrar-vent
 import { OsTopBar } from "@/features/shell/components/os-top-bar"
 import { ViewAsRoleBanner } from "@/features/shell/components/view-as-role-banner"
 import { createClient } from "@/lib/supabase/server"
-import { getEffectiveRole, VIEW_AS_COOKIE_NAME } from "@/lib/auth/role-access"
+import { getEffectiveRole, VIEW_AS_COOKIE_NAME, loadRolePermsFromDb, setCachedRolePerms } from "@/lib/auth/role-access"
 
 export default async function MainLayout({
   children,
@@ -23,6 +23,15 @@ export default async function MainLayout({
   if (!user) {
     redirect("/login")
   }
+
+  // Hidrata el cache de role_permissions desde BD para este request.
+  // El sidebar (server component) usa canAccessRoute que lee este cache.
+  // Si la BD falla, fallback a ROLE_ROUTES hardcoded (seguro).
+  const rolePermsSnapshot = await loadRolePermsFromDb(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+  if (rolePermsSnapshot) setCachedRolePerms(rolePermsSnapshot)
 
   const { data: profile } = await supabase
     .from("profiles")
