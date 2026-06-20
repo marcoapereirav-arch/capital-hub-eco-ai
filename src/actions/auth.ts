@@ -47,19 +47,16 @@ export async function resetPassword(formData: FormData) {
     return { error: 'Email inválido' }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || ''
+  // Ejecuta la lógica directamente en el servidor. NO se hace fetch HTTP a la
+  // propia API route: dependía de NEXT_PUBLIC_SITE_URL (vacío en local → el
+  // fetch revienta y "no pasa nada") y era frágil en producción.
   try {
-    const res = await fetch(`${baseUrl}/api/auth/reset-password/request`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-      cache: 'no-store',
-    })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok) return { error: data?.error || 'No se pudo enviar el email' }
+    const { requestPasswordReset } = await import('@/features/auth/services/request-password-reset')
+    const result = await requestPasswordReset(email)
+    if (!result.ok) return { error: result.error || 'No se pudo enviar el email' }
     return { success: true }
   } catch (e) {
-    console.error('[resetPassword] fetch error:', e)
+    console.error('[resetPassword] error:', e)
     return { error: 'No se pudo enviar el email' }
   }
 }

@@ -158,6 +158,11 @@
   }
   html {
     @apply font-sans;
+    /* La app es SIEMPRE dark (html.dark). Declararlo a nivel de documento hace
+       que el navegador renderice autofill, scrollbars y controles nativos en
+       modo oscuro — sin esto, el autofill de Chrome/Safari pinta un fondo claro
+       bajo los inputs transparentes y el texto blanco del tema queda invisible. */
+    color-scheme: dark;
     /* Evita el zoom automatico de iOS al tipear y autoajuste de texto en rotacion */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
@@ -181,6 +186,25 @@
      NEGRO sobre fondo oscuro = invisible. */
   input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"], input[type="week"] {
     color-scheme: dark;
+  }
+  /* Autofill (Chrome/Safari) en tema oscuro: el navegador pinta su propio fondo
+     claro bajo el input transparente y deja el texto en blanco (foreground del
+     tema) → BLANCO SOBRE BLANCO, ilegible. Forzamos el texto al foreground y
+     repintamos el fondo del tema con un box-shadow inset. Aplica a TODA la app
+     (OS + funnels), que es uniformemente oscura. Regla del proyecto: nunca
+     texto/icono del mismo color que su fondo. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    -webkit-text-fill-color: var(--foreground);
+    caret-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0 1000px var(--card) inset;
+    box-shadow: 0 0 0 1000px var(--card) inset;
+    /* Retrasa el repintado del fondo claro nativo del autofill */
+    transition: background-color 9999s ease-in-out 0s;
   }
   /* Inputs >= 16px en movil para evitar el zoom de iOS al focus */
   @media (max-width: 767px) {
