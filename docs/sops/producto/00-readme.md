@@ -16,3 +16,4 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 05 | [Protocolo de proyectos externos](05-proyectos-externos.md) | Verificar nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / DNS |
 | 06 | [Vercel - deploy y colaboración](06-vercel-deploy-y-colaboracion.md) | Producción en team Pro de Adrian. Workflow diario, env vars, dominios |
 | 07 | [Misión Producto Terminado — dashboard /mision](07-mision-producto-terminado.md) | Dashboard del lanzamiento al 2026-05-31. Reutiliza tasks + para_items, añade fases y bloques. 66 tareas seedeadas |
+| 47 | [Reglas de UI — contraste y legibilidad](47-reglas-ui-contraste-legibilidad.md) | Nunca texto/icono del color del fondo. Fix autofill blanco-sobre-blanco en dark mode + controles nativos |

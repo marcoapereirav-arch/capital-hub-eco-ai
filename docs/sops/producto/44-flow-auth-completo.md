@@ -42,7 +42,9 @@ RLS habilitado en las cuatro. **Ninguna policy** → solo el service role (que b
 ## Endpoints
 
 ### Reset de contraseña
-- `POST /api/auth/reset-password/request` — recibe `{ email }`, throttle 3 req/10min por email, genera token + envía email. Devuelve `{ ok: true }` siempre (anti-leak).
+- **Servicio único:** `src/features/auth/services/request-password-reset.ts` → `requestPasswordReset(email)`. Contiene TODA la lógica (throttle 3 req/10min, lookup de profile enumeration-safe, token en `auth_tokens`, envío Resend). Corre siempre en el servidor.
+- `POST /api/auth/reset-password/request` — endpoint fino: parsea `{ email }` y llama a `requestPasswordReset()`. Devuelve `{ ok: true }` siempre (anti-leak).
+- Server action `resetPassword` (`src/actions/auth.ts`) — llama **directo** a `requestPasswordReset()`. NO hace fetch HTTP a la API route (ver regla crítica #3 y decisión 2026-06-20).
 - `POST /api/auth/reset-password/confirm` — recibe `{ token, password }`, valida + ejecuta `auth.admin.updateUserById`.
 - Página `src/app/auth/reset-password/page.tsx` — form contraseña 2 veces, brandkit aplicado.
 
@@ -86,7 +88,7 @@ RLS habilitado en las cuatro. **Ninguna policy** → solo el service role (que b
    grep -rn "resetPasswordForEmail\|signInWithOtp\|\.signUp(" src/
    ```
 2. **`signup` server action** ya está migrada — usa `signUpWithEmailConfirmation()`.
-3. **`resetPassword` server action** ya está migrada — hace fetch a `/api/auth/reset-password/request`.
+3. **`resetPassword` server action** ejecuta `requestPasswordReset()` DIRECTO (mismo servidor). **PROHIBIDO** que un server action haga `fetch` HTTP a su propia API route: depende de `NEXT_PUBLIC_SITE_URL` (vacío en local → `fetch('')` revienta) y es frágil en producción (round-trip serverless / Attack Challenge Mode de Vercel). La lógica compartida vive en `src/features/auth/services/`, la consumen route + action.
 4. **Email de cambio de contraseña** (`updatePassword`) usa Resend vía `sendPasswordChanged()` — NO Supabase.
 5. **Verificar dominio en Resend** antes de producción (DNS).
 6. **Crear webhook en Resend** apuntando a `https://ecoai.capitalhubapp.com/api/webhooks/resend` y guardar el signing secret en `RESEND_WEBHOOK_SECRET`.
@@ -124,3 +126,4 @@ Siempre token propio + envío por `sendEmail()`. Nunca emails nativos de Supabas
 - **2026-06-17:** Throttle 3 req/10min para reset de contraseña.
 - **2026-06-17:** `email_suppressions` consultada antes de cada envío — evita quemar reputación.
 - **2026-06-17:** Pages auth (`/auth/reset-password`, `/auth/confirm-email`) construidas con paleta brandkit (#0F0F12, #2A2D34, #F5F6F7, #FFFFFF) + Inter Tight.
+- **2026-06-20:** 🐛 **Bug raíz "Olvidé contraseña no hace nada".** Adrián clicaba enviar y no pasaba nada / no llegaba email. Causa: el server action `resetPassword` hacía `fetch(\`${baseUrl}/api/auth/reset-password/request\`)` con `baseUrl = NEXT_PUBLIC_SITE_URL || NEXT_PUBLIC_APP_URL || ''`. La env estaba vacía en `.env.local` (→ `fetch('/api/...')` server-side lanza "Failed to parse URL" → catch → "no se pudo enviar") y en producción el self-fetch es frágil. **Fix:** extraída la lógica a `requestPasswordReset()` (servicio compartido `server-only`); route y action la llaman directo; eliminado el self-fetch. Nueva regla crítica #3. Sin cambios de BD ni de flujo de tokens.
