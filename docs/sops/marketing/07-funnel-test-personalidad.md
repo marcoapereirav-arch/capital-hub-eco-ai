@@ -52,7 +52,7 @@ Fuente del copy: `ch-copy-test-landing-optin.md` (raíz del repo).
 |---|---|
 | `TEST_URL` | `https://pdi.equilibria.com/#/intro` |
 | `WHATSAPP_NUMBER` | `34611874062` (Adrián, sin `+` ni espacios) |
-| `INSTAGRAM_HANDLE` | `adrianvillanueva` |
+| `INSTAGRAM_HANDLE` | `adrianvillanuevarios` |
 
 ## Archivos
 

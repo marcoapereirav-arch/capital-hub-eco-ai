@@ -9,7 +9,7 @@
 export const FUNNEL_TEST_PERSONALIDAD = {
   TEST_URL: "https://pdi.equilibria.com/#/intro",
   WHATSAPP_NUMBER: "34611874062",
-  INSTAGRAM_HANDLE: "adrianvillanueva",
+  INSTAGRAM_HANDLE: "adrianvillanuevarios",
 } as const
 
 export function whatsappLink(message = "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.") {
