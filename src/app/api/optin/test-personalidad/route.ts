@@ -8,6 +8,12 @@ export const runtime = "nodejs"
 const optinSchema = z.object({
   full_name: z.string().min(2).max(120).trim(),
   email: z.string().email().max(180).trim().toLowerCase(),
+  // Teléfono obligatorio: el lead debe ser contactable por WhatsApp para el seguimiento manual.
+  phone: z
+    .string()
+    .trim()
+    .max(40)
+    .refine((v) => v.replace(/\D/g, "").length >= 6, "Teléfono inválido"),
 })
 
 function slugify(s: string): string {
@@ -23,7 +29,7 @@ function slugify(s: string): string {
 /**
  * POST /api/optin/test-personalidad
  *
- * El lead rellena nombre + email en /test-personalidad y este endpoint:
+ * El lead rellena nombre + email + teléfono en /test-personalidad y este endpoint:
  *  - Upsert contacto: si existe por email lo actualiza, si no lo crea con stage='lead'
  *  - Asigna pipeline = 'Test Personalidad' (contexto del funnel — no el default)
  *  - Tag 'origen:test_personalidad'
@@ -47,7 +53,7 @@ export async function POST(req: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
 
-  const { full_name, email } = parsed.data
+  const { full_name, email, phone } = parsed.data
 
   // Pipeline contextual de este funnel: Test Personalidad
   const { data: pipeline } = await admin
@@ -80,7 +86,7 @@ export async function POST(req: Request) {
       contactId = existing.id
       action = "updated"
       // Solo subir a 'lead' si todavia estaba en stage previo "puro" — aqui no degradamos
-      const update: Record<string, unknown> = { full_name, updated_at: new Date().toISOString() }
+      const update: Record<string, unknown> = { full_name, phone, updated_at: new Date().toISOString() }
       if (!existing.stage) update.stage = "lead"
       // Si el contacto NO tenía pipeline_id (lead huérfano), asignar el de Test Personalidad
       // por el contexto de este funnel. Si ya tenía pipeline_id, PRESERVAR (no sobreescribir).
@@ -91,6 +97,7 @@ export async function POST(req: Request) {
       const { data: created, error: cErr } = await admin.from("contacts").insert({
         full_name,
         email,
+        phone,
         slug,
         stage: "lead",
         pipeline_id: pipelineId,

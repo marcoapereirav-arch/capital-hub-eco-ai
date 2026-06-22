@@ -15,3 +15,4 @@ Captación, contenido, ads, funnel hasta checkout, lead magnets.
 | 04 | [Estrategia y KPIs MIFGE](04-estrategia-kpis-mifge.md) | Misión 1.000€/día + KPIs (proyección/objetivo) + pricing |
 | 05 | [Tracking Meta](05-tracking-meta.md) | Pixel + CAPI server-side + eventos custom + Ads Insights API |
 | 06 | [Lead Magnets](06-lead-magnets.md) | Captura desde IG comments → entrega → CRM stage Lead → tracking E2E |
+| 07 | [Funnel Test de Personalidad](07-funnel-test-personalidad.md) | Canal principal de leads: landing opt-in (Equilibria) → gracias → seguimiento manual IG/WhatsApp |
