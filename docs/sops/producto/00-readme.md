@@ -17,3 +17,4 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 06 | [Vercel - deploy y colaboración](06-vercel-deploy-y-colaboracion.md) | Producción en team Pro de Adrian. Workflow diario, env vars, dominios |
 | 07 | [Misión Producto Terminado — dashboard /mision](07-mision-producto-terminado.md) | Dashboard del lanzamiento al 2026-05-31. Reutiliza tasks + para_items, añade fases y bloques. 66 tareas seedeadas |
 | 47 | [Reglas de UI — contraste y legibilidad](47-reglas-ui-contraste-legibilidad.md) | Nunca texto/icono del color del fondo. Fix autofill blanco-sobre-blanco en dark mode + controles nativos |
+| 48 | [Diseño dinámico y efecto WOW](48-diseno-dinamico-wow.md) | Regla principal: funnels/landings dinámicos, con motion y WOW, siempre dentro del brandkit |
