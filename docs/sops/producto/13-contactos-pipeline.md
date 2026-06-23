@@ -147,6 +147,16 @@ Click en una card abre drawer derecho con:
 - Tiempo medio en cada stage
 - LTV por contacto
 
+## No-retroceso de stage (aplicado en código — 2026-06-23)
+
+La regla "el stage solo sube" ahora está **cableada**, no solo escrita. Helper `resolveAutoStage()` en `src/lib/pipeline/stage-guard.ts`:
+
+- Ladder de avance: `lead(1) → agendado(2) → alumno(3)`. Ramas (`no_show`, `perdido`) fuera del ladder.
+- **Nunca degrada a un `alumno`** (won). Las transiciones automáticas solo avanzan o se mantienen.
+- Aplicado en `/api/calendar/book` (al agendar: solo sube a `agendado`, un alumno que reagenda sigue alumno).
+- `/api/calendar/cancel`: al cancelar, si seguía en `agendado` vuelve a `lead`; nunca toca a un alumno. Se eliminó el degradado al stage muerto `contacted`.
+- **NO aplica a movimientos manuales** en el kanban (override humano deliberado).
+
 ## Reportar bugs
 Si una métrica no cuadra: revisar `contact_journey_events` para ese contacto. La timeline es la fuente de verdad.
 

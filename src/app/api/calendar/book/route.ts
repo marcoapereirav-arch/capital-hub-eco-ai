@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { rateLimit, getClientIp } from "@/lib/rate-limit/supabase-rate-limit"
 import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
+import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
     try {
       const { data: existingContact } = await supabase
         .from("contacts")
-        .select("id, pipeline_id")
+        .select("id, pipeline_id, stage")
         .eq("email", data.attendee_email.toLowerCase().trim())
         .maybeSingle()
 
@@ -119,10 +120,12 @@ export async function POST(req: NextRequest) {
           .single()
         contactId = created?.id
       } else {
+        // No-retroceso (SOP 13): solo avanzar a 'agendado'; nunca degradar a un alumno.
+        const nextStage = resolveAutoStage(existingContact?.stage, "agendado")
         await supabase
           .from("contacts")
           .update({
-            stage: "agendado",
+            stage: nextStage,
             last_call_at: startAt.toISOString(),
             updated_at: new Date().toISOString(),
           })
