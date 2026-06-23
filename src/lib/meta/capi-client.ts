@@ -26,6 +26,39 @@ function sha256(value: string): string {
   return crypto.createHash("sha256").update(value.toLowerCase().trim()).digest("hex")
 }
 
+/**
+ * Modo de envío CAPI (test | live), editable desde /ads (tabla app_settings).
+ * - test: añade test_event_code → los eventos van a "Eventos de prueba" de Meta (NO optimizan ads).
+ * - live: NO añade test_event_code → data real que optimiza campañas.
+ * Cacheado a nivel de módulo (TTL corto) para no consultar la BD en cada evento.
+ * Si la BD falla, default a 'live' (la prioridad es no perder conversiones reales).
+ */
+let _capiModeCache: { mode: "test" | "live"; at: number } | null = null
+const CAPI_MODE_TTL_MS = 30_000
+
+export async function getCapiMode(): Promise<"test" | "live"> {
+  if (_capiModeCache && Date.now() - _capiModeCache.at < CAPI_MODE_TTL_MS) return _capiModeCache.mode
+  try {
+    const supabase = getAdminClient()
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "meta_capi_mode")
+      .maybeSingle()
+    const raw = (data?.value as { mode?: string } | null)?.mode
+    const mode: "test" | "live" = raw === "test" ? "test" : "live"
+    _capiModeCache = { mode, at: Date.now() }
+    return mode
+  } catch {
+    return "live"
+  }
+}
+
+/** Invalida el cache del modo (tras cambiar el toggle en /ads). */
+export function invalidateCapiModeCache(): void {
+  _capiModeCache = null
+}
+
 export type CapiEventName =
   | "mifge_lead"
   | "mifge_free_trial_started"
@@ -140,9 +173,11 @@ export async function sendCapiEvent(input: SendCapiInput): Promise<{
     custom_data: customData,
   }
 
+  // El test_event_code SOLO se aplica en modo 'test' (toggle en /ads). En 'live' va data real.
+  const testMode = (await getCapiMode()) === "test"
   const requestBody = {
     data: [eventPayload],
-    ...(TEST_EVENT_CODE && { test_event_code: TEST_EVENT_CODE }),
+    ...(testMode && TEST_EVENT_CODE && { test_event_code: TEST_EVENT_CODE }),
   }
 
   // Log "pending" antes de mandar

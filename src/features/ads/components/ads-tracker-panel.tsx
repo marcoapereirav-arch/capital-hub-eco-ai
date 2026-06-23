@@ -16,6 +16,74 @@ import {
 
 const ALL_STATUSES: EventStatus[] = ["sent", "pending", "failed", "dedup"]
 
+/**
+ * Toggle Test/Live del envío a Meta CAPI (tabla app_settings · key meta_capi_mode).
+ * - TEST: los eventos van a "Eventos de prueba" de Meta (NO optimizan ads). Para probar.
+ * - LIVE: data real que optimiza campañas. Activar antes de encender anuncios.
+ */
+function MetaModeToggle() {
+  const [mode, setMode] = useState<"test" | "live" | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/admin/settings/meta_capi_mode")
+      .then((r) => r.json())
+      .then((d) => setMode(d?.value?.mode === "live" ? "live" : "test"))
+      .catch(() => setMode("test"))
+  }, [])
+
+  async function setTo(next: "test" | "live") {
+    if (saving || mode === next) return
+    setSaving(true)
+    try {
+      const res = await fetch("/api/admin/settings/meta_capi_mode", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: { mode: next } }),
+      })
+      if (res.ok) setMode(next)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-sm border border-border bg-card px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Envío a Meta:</span>
+        {mode === null ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+        ) : (
+          <div className="flex items-center gap-1">
+            {(["test", "live"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setTo(m)}
+                disabled={saving}
+                className={cn(
+                  "rounded-sm border px-2.5 py-1 text-[10px] font-mono uppercase tracking-wide transition-colors disabled:opacity-50",
+                  mode === m
+                    ? m === "live"
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-foreground/60 bg-secondary text-foreground"
+                    : "border-border bg-secondary text-muted-foreground opacity-40 hover:opacity-100"
+                )}
+              >
+                {m === "live" ? "● Live (real)" : "○ Test"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <span className="hidden sm:block text-[11px] text-muted-foreground/70">
+        {mode === "live"
+          ? "Los eventos cuentan para optimizar anuncios."
+          : "Modo prueba: los eventos NO optimizan anuncios."}
+      </span>
+    </div>
+  )
+}
+
 export function AdsTrackerPanel() {
   const [events, setEvents] = useState<MetaEventLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,6 +149,9 @@ export function AdsTrackerPanel() {
 
   return (
     <div className="space-y-4">
+      {/* Toggle Test/Live del envío a Meta */}
+      <MetaModeToggle />
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <StatBox label="Total 200 últimos" value={stats.total} />
