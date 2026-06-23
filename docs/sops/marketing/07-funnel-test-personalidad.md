@@ -64,6 +64,13 @@ Fuente del copy: `ch-copy-test-landing-optin.md` (raíz del repo).
 
 La landing se muestra **siempre** (force-dynamic), sin gate draft/published, hasta nueva orden.
 
+## Tracking Meta (Pixel + CAPI)
+
+El opt-in dispara el evento **`test_personalidad_lead`** (custom) + **`Lead`** (estándar Meta) cuando el lead se guarda OK, usando el helper `track()` (`src/lib/meta/pixel-client.ts`): Pixel browser + Conversions API server-side con el **mismo `event_id`** para deduplicación. Incluye las UTMs (first-touch) automáticamente. Se registra en la tabla `meta_events_log` y es visible en el panel `/ads` (Tracker).
+
+- Evento registrado en: `capi-client.ts` (CapiEventName), `/api/meta/capi/track` (ALLOWED_EVENTS), `ads-events-service.ts` (KNOWN_EVENTS + label).
+- Si Meta falla, NO bloquea la redirección a `/gracias` (catch silencioso).
+
 ## Reglas
 
 - Los 3 campos del opt-in son **obligatorios**. El teléfono es necesario porque el seguimiento es manual por WhatsApp/IG.
@@ -83,3 +90,8 @@ De momento SIN ManyChat: el setter abre IG/WhatsApp manualmente. Cuando se react
 - Página de gracias reescrita: agradecimiento + link al test + protocolo de 3 pasos (captura → Instagram/WhatsApp).
 - Placeholders reemplazados por valores reales: `TEST_URL` = Equilibria, `WHATSAPP_NUMBER` = Adrián.
 - Se lanza **sin vídeo** (pendiente URL de Adrián).
+
+### 2026-06-22 — Tracking Meta CAPI + link Equilibria actualizado
+- El opt-in ahora dispara `test_personalidad_lead` + `Lead` (Pixel + CAPI, dedup por event_id, con UTMs). Antes el funnel NO enviaba nada a Meta.
+- `TEST_URL` actualizado a `https://pdi.equilibria.com/#/instructions/FULLES`.
+- Handle de Instagram corregido a `adrianvillanuevarios`.

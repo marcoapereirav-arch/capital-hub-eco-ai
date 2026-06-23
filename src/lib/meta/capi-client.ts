@@ -37,6 +37,8 @@ export type CapiEventName =
   // Lead magnets (añadidos 2026-05-06 — ver SOP marketing/06-lead-magnets)
   | "mifge_lead_magnet_optin"
   | `mifge_lm_${string}`
+  // Funnel Test de Personalidad (ver SOP marketing/07-funnel-test-personalidad)
+  | "test_personalidad_lead"
   // Eventos estándar de Meta (mejor optimización de campañas)
   | "InitiateCheckout"
   | "Purchase"

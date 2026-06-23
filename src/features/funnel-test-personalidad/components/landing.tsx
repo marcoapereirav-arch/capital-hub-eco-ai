@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowRight, X } from "lucide-react"
+import { track } from "@/lib/meta/pixel-client"
 
 /**
  * Landing del Funnel Test Personalidad (test de Equilibria).
@@ -181,6 +182,16 @@ function OptinModal({ onClose }: { onClose: () => void }) {
         setLoading(false)
         return
       }
+      // Tracking Meta: Pixel (browser) + CAPI (server) con el mismo event_id.
+      // Solo se dispara cuando el lead se guardó OK. Incluye UTMs (first-touch)
+      // automáticamente. No bloquea la redirección si Meta falla.
+      await track({
+        event: "test_personalidad_lead",
+        standardEvent: "Lead",
+        email: email.trim(),
+        phone: phone.trim(),
+        contentName: "Test Personalidad opt-in",
+      }).catch(() => {})
       router.push("/test-personalidad/gracias")
     } catch {
       setError("Sin conexión. Revisa tu internet y vuelve a intentarlo.")

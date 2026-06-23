@@ -36,6 +36,7 @@ export const KNOWN_EVENTS = [
   "mifge_monthly_purchased",
   "mifge_call_attended",
   "mifge_lead_magnet_optin",
+  "test_personalidad_lead",
 ] as const
 
 export const EVENT_LABELS: Record<string, string> = {
@@ -47,6 +48,7 @@ export const EVENT_LABELS: Record<string, string> = {
   mifge_monthly_purchased: "Compra Mensual 97€",
   mifge_call_attended: "Llamada atendida",
   mifge_lead_magnet_optin: "Opt-in Lead Magnet (agregado)",
+  test_personalidad_lead: "Lead (opt-in Test Personalidad)",
 }
 
 /**
