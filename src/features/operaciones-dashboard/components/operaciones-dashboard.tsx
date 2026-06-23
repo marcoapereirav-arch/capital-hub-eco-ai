@@ -63,6 +63,9 @@ export function OperacionesDashboard() {
   type ProjectStatusFilter = "abiertos" | "pausados" | "finalizados" | "todos"
   const [projectStatusFilter, setProjectStatusFilter] = useState<ProjectStatusFilter>("abiertos")
 
+  // Card expandible "todo lo que falta para el foco"
+  const [showAllFocus, setShowAllFocus] = useState(false)
+
   // Cuando llegan focuses, seleccionar el primer activo como default
   useEffect(() => {
     if (focuses.length > 0 && mode === "general") {
@@ -252,6 +255,38 @@ export function OperacionesDashboard() {
       })
   }, [scopedProjects, tasks])
 
+  // === TODO LO QUE FALTA DEL FOCO (card expandible) ===
+  // TODAS las tareas no-done de los proyectos del foco activo, agrupadas por
+  // prioridad. Da la claridad de "qué falta exactamente" para el webinar.
+  const PRIORITY_ORDER = ["urgent", "high", "normal", "low"] as const
+  const PRIORITY_META: Record<string, { label: string; dot: string; text: string }> = {
+    urgent: { label: "Urgentes", dot: "bg-red-400", text: "text-red-400" },
+    high: { label: "Altas", dot: "bg-orange-400", text: "text-orange-400" },
+    normal: { label: "Normales", dot: "bg-blue-400", text: "text-blue-400" },
+    low: { label: "Bajas", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+  }
+  const focusOpenByPriority = useMemo(() => {
+    if (mode === "general") return []
+    const focusProjectIds = new Set(
+      paraItems.filter((p) => p.type === "project" && p.focusId === mode).map((p) => p.id)
+    )
+    const open = tasks.filter((t) => t.paraId && focusProjectIds.has(t.paraId) && t.status !== "done")
+    return PRIORITY_ORDER.map((prio) => ({
+      prio,
+      tasks: open
+        .filter((t) => (t.priority ?? "normal") === prio)
+        .sort((a, b) => {
+          if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate)
+          if (a.dueDate) return -1
+          if (b.dueDate) return 1
+          return 0
+        }),
+    })).filter((g) => g.tasks.length > 0)
+  }, [tasks, paraItems, mode])
+  const focusOpenTotal = focusOpenByPriority.reduce((acc, g) => acc + g.tasks.length, 0)
+  const projectName = (paraId: string | null | undefined) =>
+    paraItems.find((p) => p.id === paraId)?.name ?? ""
+
   if (loading && !initialized) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
@@ -386,6 +421,80 @@ export function OperacionesDashboard() {
                 <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
               </div>
             </div>
+          </section>
+        )}
+
+        {/* ============ TODO LO QUE FALTA DEL FOCO (expandible) ============ */}
+        {activeFocus && focusOpenTotal > 0 && (
+          <section className="rounded-md border border-border bg-card/40">
+            <button
+              onClick={() => setShowAllFocus((v) => !v)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+            >
+              <span className="text-sm font-semibold flex items-center gap-2">
+                <Flag className={cn("h-4 w-4", `text-${activeFocus.color}-400`)} />
+                Todo lo que falta para «{activeFocus.name}»
+              </span>
+              <span className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
+                {focusOpenTotal} pendientes · {showAllFocus ? "ocultar" : "ver todo"}
+                <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", showAllFocus && "rotate-90")} />
+              </span>
+            </button>
+
+            {showAllFocus && (
+              <div className="border-t border-border/40 px-4 py-3 space-y-4">
+                {focusOpenByPriority.map((group) => {
+                  const meta = PRIORITY_META[group.prio]
+                  return (
+                    <div key={group.prio} className="space-y-1">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={cn("h-2 w-2 rounded-full", meta.dot)} />
+                        <span className={cn("text-[10px] font-mono uppercase tracking-widest", meta.text)}>
+                          {meta.label}
+                        </span>
+                        <span className="text-[10px] font-mono text-muted-foreground">({group.tasks.length})</span>
+                        <div className="flex-1 h-px bg-border/40" />
+                      </div>
+                      <div className="space-y-0.5">
+                        {group.tasks.map((t) => {
+                          const due = t.dueDate ? new Date(t.dueDate) : null
+                          const days = due
+                            ? Math.floor((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+                            : null
+                          return (
+                            <button
+                              key={t.id}
+                              onClick={() => setSelectedTask(t.id)}
+                              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-sm hover:bg-card/60 text-left transition-colors"
+                            >
+                              <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", meta.dot)} />
+                              <span className="flex-1 min-w-0 text-sm truncate">{t.title}</span>
+                              {projectName(t.paraId) && (
+                                <span className="hidden sm:block text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60 truncate max-w-[140px]">
+                                  {projectName(t.paraId)}
+                                </span>
+                              )}
+                              <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
+                                {t.status}
+                              </span>
+                              {days !== null && (
+                                <span className={cn(
+                                  "text-[10px] font-mono shrink-0",
+                                  days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"
+                                )}>
+                                  {days < 0 ? `${days}d` : days === 0 ? "hoy" : `+${days}d`}
+                                </span>
+                              )}
+                              <span className="shrink-0 text-muted-foreground">👤 {ASSIGNEE_LABELS[t.assignee] ?? t.assignee}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </section>
         )}
 

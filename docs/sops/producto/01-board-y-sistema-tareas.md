@@ -109,3 +109,7 @@ Yo (el agente IA) mantengo este sistema vivo:
 - Si el alcance de una task cambia significativamente → actualizo su descripción
 
 **Trato el sistema de tareas como código: limpio, actualizado, sin tareas zombi.**
+
+## Operaciones · card "Todo lo que falta para el foco" (2026-06-23)
+
+En `/operaciones/overview`, modo **Foco**, hay una card expandible **"Todo lo que falta para «<foco>»"**: un botón muestra/oculta **TODAS** las tareas no-done de los proyectos del foco, **agrupadas por prioridad** (Urgentes → Altas → Normales → Bajas) y dentro de cada grupo por fecha. Cada tarea muestra proyecto, status, días a deadline y responsable, y abre el detalle al click. Objetivo: claridad total de "qué falta exactamente" para el webinar sin salir del dashboard.
