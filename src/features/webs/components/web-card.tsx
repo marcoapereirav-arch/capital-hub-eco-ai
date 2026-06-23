@@ -1,10 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Copy, Check, ExternalLink, Globe, FileDown, Loader2, Pencil, X } from "lucide-react"
+import { Copy, Check, ExternalLink, Globe, FileDown, Loader2, Pencil, X, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { WebWithSteps } from "../types/web"
+import { getFunnelManifest } from "../lib/funnel-settings-manifest"
+import { FunnelSettingsModal } from "./funnel-settings-modal"
 
 interface WebCardProps {
   web: WebWithSteps
@@ -108,6 +110,8 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [editingSlug, setEditingSlug] = useState(false)
   const [slugDraft, setSlugDraft] = useState(web.slug)
   const [slugError, setSlugError] = useState<string | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const hasSettings = !!getFunnelManifest(slug)
   const Icon = TYPE_ICONS[web.type]
 
   const entryStep = web.steps.find((s) => s.isEntry) ?? web.steps[0]
@@ -410,16 +414,23 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
           <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
           Abrir funnel
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled
-          className="font-mono text-xs"
-          title="Métricas — próximamente (Fase 2)"
-        >
-          Métricas
-        </Button>
+        {hasSettings && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="font-mono text-xs"
+            onClick={() => setShowSettings(true)}
+            title="Configurar los links de los botones de esta landing"
+          >
+            <Settings className="mr-1.5 h-3.5 w-3.5" />
+            Ajustes
+          </Button>
+        )}
       </footer>
+
+      {showSettings && (
+        <FunnelSettingsModal slug={slug} name={webName} onClose={() => setShowSettings(false)} />
+      )}
     </article>
   )
 }

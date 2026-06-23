@@ -71,6 +71,27 @@ El opt-in dispara el evento **`test_personalidad_lead`** (custom) + **`Lead`** (
 - Evento registrado en: `capi-client.ts` (CapiEventName), `/api/meta/capi/track` (ALLOWED_EVENTS), `ads-events-service.ts` (KNOWN_EVENTS + label).
 - Si Meta falla, NO bloquea la redirección a `/gracias` (catch silencioso).
 
+## Atribución de fuente (afiliados)
+
+Cada fuente de tráfico (Paolo, JP…) reparte un **link propio**: `…/test-personalidad?utm_source=<slug>`.
+
+- La captura de UTM ya existe (`src/lib/utm/utm-capture.ts`, first-touch 30d, montada en el layout público). El opt-in lee `utm_source` y lo envía.
+- El endpoint guarda `contacts.affiliate_slug = utm_source` (**first-touch**: no se sobreescribe) y crea/asigna tag **`fuente:<slug>`**.
+- Como la venta vive en el mismo contacto, la atribución viaja sola hasta el revenue.
+- **Subsección Afiliados** (`/ads` → tab Afiliados): tabla `affiliates`, link autogenerado por afiliado y stats (leads/agendados/alumnos/revenue) leídas de `contacts.affiliate_slug`. Endpoint `/api/admin/affiliates` (GET stats + POST crear).
+
+## Tracking Meta — toggle Test/Live
+
+El modo de envío CAPI vive en `app_settings.meta_capi_mode` (`{mode:'test'|'live'}`), editable desde **/ads → Tracker** (toggle). `test` añade `test_event_code` (no optimiza ads); `live` manda data real. El cliente CAPI (`getCapiMode()`) lo lee con cache de 30s. **Antes de encender ads reales: poner Live.**
+
+## Ajustes editables por funnel (popup ⚙️)
+
+En `/webs`, cada funnel con manifiesto muestra botón **Ajustes** → popup para editar los links de sus botones (test_url, whatsapp, instagram) sin deploy.
+
+- Manifiesto: `src/features/webs/lib/funnel-settings-manifest.ts` (define qué campos tiene cada funnel → el popup los detecta).
+- Valores en `app_settings` key `funnel:<slug>` (endpoint `/api/admin/settings/[key]`).
+- La página de gracias los resuelve server-side (`get-settings.ts`) con fallback a `config.ts` → nunca se rompe.
+
 ## Reglas
 
 - Los 3 campos del opt-in son **obligatorios**. El teléfono es necesario porque el seguimiento es manual por WhatsApp/IG.
@@ -90,6 +111,13 @@ De momento SIN ManyChat: el setter abre IG/WhatsApp manualmente. Cuando se react
 - Página de gracias reescrita: agradecimiento + link al test + protocolo de 3 pasos (captura → Instagram/WhatsApp).
 - Placeholders reemplazados por valores reales: `TEST_URL` = Equilibria, `WHATSAPP_NUMBER` = Adrián.
 - Se lanza **sin vídeo** (pendiente URL de Adrián).
+
+### 2026-06-23 — Atribución por afiliados + toggle Test/Live + ajustes editables
+- Atribución: `utm_source` → `contacts.affiliate_slug` (first-touch) + tag `fuente:<slug>`. Tablas `affiliates` + `app_settings`. Subsección Afiliados en `/ads`.
+- Toggle Test/Live de Meta CAPI desde `/ads` (app_settings.meta_capi_mode), reemplaza la dependencia de la env var.
+- Popup ⚙️ por funnel en `/webs` para editar links de botones sin deploy (manifiesto + app_settings + fallback).
+- Stage: cancelar una cita pasa `agendado → seguimiento` (antes `lead`). Orden de columnas: lead, agendado, seguimiento, no_show, alumno, perdido.
+- Colores de tag a neutros del brandkit.
 
 ### 2026-06-22 — Tracking Meta CAPI + link Equilibria actualizado
 - El opt-in ahora dispara `test_personalidad_lead` + `Lead` (Pixel + CAPI, dedup por event_id, con UTMs). Antes el funnel NO enviaba nada a Meta.

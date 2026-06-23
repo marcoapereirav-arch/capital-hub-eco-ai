@@ -1,7 +1,7 @@
 "use client"
 
 import { Camera, MessageCircle, ExternalLink, CheckCircle2 } from "lucide-react"
-import { FUNNEL_TEST_PERSONALIDAD, whatsappLink, instagramDmLink } from "../config"
+import { FUNNEL_TEST_PERSONALIDAD } from "../config"
 
 /**
  * Página de Gracias del Funnel Test Personalidad.
@@ -12,8 +12,24 @@ import { FUNNEL_TEST_PERSONALIDAD, whatsappLink, instagramDmLink } from "../conf
  *   2. Entrega el LINK del test de Equilibria (abre en pestaña nueva).
  *   3. Explica el protocolo: hacer captura del resultado y enviarla por el MISMO
  *      chat de Instagram que ya tenía abierto, o por WhatsApp de Adrián.
+ *
+ * Los links (test/whatsapp/instagram) llegan por props desde el server (editables
+ * desde el popup ⚙️ de /webs); si no, caen al default de config.ts.
  */
-export function TestPersonalidadThankYou() {
+type Props = {
+  testUrl?: string
+  whatsapp?: string
+  instagram?: string
+}
+
+export function TestPersonalidadThankYou({ testUrl, whatsapp, instagram }: Props = {}) {
+  const resolvedTestUrl = testUrl || FUNNEL_TEST_PERSONALIDAD.TEST_URL
+  const resolvedWhatsapp = whatsapp || FUNNEL_TEST_PERSONALIDAD.WHATSAPP_NUMBER
+  const resolvedInstagram = instagram || FUNNEL_TEST_PERSONALIDAD.INSTAGRAM_HANDLE
+  const whatsappHref = `https://wa.me/${resolvedWhatsapp}?text=${encodeURIComponent(
+    "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
+  )}`
+  const instagramHref = `https://instagram.com/${resolvedInstagram}`
   return (
     <main
       className="min-h-[100dvh] text-[#F5F6F7]"
@@ -56,7 +72,7 @@ export function TestPersonalidadThankYou() {
 
           {/* CTA principal: abrir el test */}
           <a
-            href={FUNNEL_TEST_PERSONALIDAD.TEST_URL}
+            href={resolvedTestUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full max-w-md h-13 px-6 py-3.5 rounded-none bg-white hover:bg-[#F5F6F7] text-[#0F0F12] font-semibold inline-flex items-center justify-center gap-2 transition-colors text-base mb-3"
@@ -103,7 +119,7 @@ export function TestPersonalidadThankYou() {
             </ol>
 
             <a
-              href={instagramDmLink()}
+              href={instagramHref}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 h-12 bg-white text-[#0F0F12] font-semibold hover:bg-[#F5F6F7] transition-colors mb-2"
@@ -120,7 +136,7 @@ export function TestPersonalidadThankYou() {
             </a>
 
             <a
-              href={whatsappLink()}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 h-11 border border-[#3F3F46] hover:border-white hover:bg-[#2A2D34]/40 transition-colors text-sm text-[#F5F6F7]"
