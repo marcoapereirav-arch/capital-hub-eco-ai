@@ -92,6 +92,17 @@ En `/webs`, cada funnel con manifiesto muestra botón **Ajustes** → popup para
 - Valores en `app_settings` key `funnel:<slug>` (endpoint `/api/admin/settings/[key]`).
 - La página de gracias los resuelve server-side (`get-settings.ts`) con fallback a `config.ts` → nunca se rompe.
 
+## Contacto recurrente (re-opt-in)
+
+Si un contacto que **ya estaba más allá de `lead`** (agendado, seguimiento, alumno…) vuelve a pasar por el opt-in:
+- **NO se degrada su stage** (se conserva). El opt-in solo pone `lead` si el contacto no tenía stage.
+- Se **notifica al equipo** (tabla `notifications`, una por super_admin, tipo `recurring_optin_test_personalidad`): *"X (que ya estaba en Y) volvió a pasar por la landing"*. Visible en la campana del OS.
+
+## Booking → pipeline (Calendly vs agenda propia)
+
+- **Agenda propia** (`/api/calendar/book`): YA mueve el contacto a `agendado` (con guarda no-retroceso) y cancelar → `seguimiento`.
+- **Calendly** (`/api/webhooks/calendly`): ⚠️ **hoy solo registra en `calendly_scheduled_events`; NO mueve el contacto en el pipeline.** Pendiente cablear: `invitee.created` → matchear contacto por email → `agendado` (guarda); `invitee.canceled` → `seguimiento`; `invitee_no_show.created` → `no_show`. Falta confirmar QUÉ Calendly/event-type se usa para este funnel.
+
 ## Reglas
 
 - Los 3 campos del opt-in son **obligatorios**. El teléfono es necesario porque el seguimiento es manual por WhatsApp/IG.

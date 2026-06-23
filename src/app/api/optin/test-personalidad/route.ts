@@ -93,6 +93,9 @@ export async function POST(req: Request) {
   // Upsert contacto por email
   let contactId: string | null = null
   let action: "created" | "updated" = "created"
+  // Si el contacto YA estaba más allá de 'lead' (agendado, seguimiento, alumno…) y
+  // vuelve a pasar por el opt-in, NO lo degradamos a lead y avisamos al equipo.
+  let recurringFromStage: string | null = null
   {
     const { data: existing } = await admin
       .from("contacts")
@@ -103,7 +106,9 @@ export async function POST(req: Request) {
     if (existing) {
       contactId = existing.id
       action = "updated"
+      if (existing.stage && existing.stage !== "lead") recurringFromStage = existing.stage
       const update: Record<string, unknown> = { full_name, phone, updated_at: new Date().toISOString() }
+      // Solo se pone 'lead' si NO tenía stage. Un contacto ya avanzado conserva su stage.
       if (!existing.stage) update.stage = "lead"
       // pipeline_id: preservar si ya tenía; asignar el del funnel si era huérfano
       if (!existing.pipeline_id && pipelineId) update.pipeline_id = pipelineId
@@ -151,5 +156,31 @@ export async function POST(req: Request) {
     })
   }
 
-  return NextResponse.json({ ok: true, action })
+  // Notificación al equipo: un contacto YA avanzado vuelve a pasar por el opt-in.
+  // "X (que ya estaba en Y) volvió a entrar por el funnel." No se modifica su stage.
+  if (contactId && recurringFromStage) {
+    try {
+      const { data: admins } = await admin.from("profiles").select("id").eq("role", "super_admin")
+      const stageLabels: Record<string, string> = {
+        agendado: "Agendado",
+        seguimiento: "Seguimiento",
+        no_show: "No show",
+        alumno: "Alumno",
+        perdido: "Perdido",
+      }
+      const label = stageLabels[recurringFromStage] ?? recurringFromStage
+      const rows = (admins ?? []).map((a) => ({
+        user_id: a.id,
+        title: "🔁 Contacto recurrente en el funnel del test",
+        body: `${full_name} (${email}) ya estaba en «${label}» y volvió a pasar por la landing del test. Su stage NO se modificó.`,
+        type: "recurring_optin_test_personalidad",
+        data: { contact_id: contactId, email, prior_stage: recurringFromStage, source },
+      }))
+      if (rows.length) await admin.from("notifications").insert(rows)
+    } catch (e) {
+      console.error("[optin/test-personalidad] notif recurrente falló (no bloquea)", e)
+    }
+  }
+
+  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage })
 }
