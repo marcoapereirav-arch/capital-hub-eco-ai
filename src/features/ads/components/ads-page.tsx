@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Activity, BarChart3, GitBranch, Settings as SettingsIcon } from "lucide-react"
+import { Activity, BarChart3, GitBranch, Settings as SettingsIcon, Users } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
 import { AdsInsights } from "./ads-insights"
+import { AdsAffiliatesPanel } from "./ads-affiliates-panel"
 
-type AdsTab = "tracker" | "dashboard" | "atribucion" | "config"
+type AdsTab = "tracker" | "dashboard" | "atribucion" | "afiliados" | "config"
 
 const TABS: { id: AdsTab; label: string; icon: typeof Activity; description: string }[] = [
   {
@@ -28,6 +29,12 @@ const TABS: { id: AdsTab; label: string; icon: typeof Activity; description: str
     label: "Atribución",
     icon: GitBranch,
     description: "Funnel breakdown + cost per stage cruzando Meta + datos propios",
+  },
+  {
+    id: "afiliados",
+    label: "Afiliados",
+    icon: Users,
+    description: "Fuentes de tráfico (Paolo, JP…) con su link único y sus stats (leads, agendados, alumnos, revenue)",
   },
   {
     id: "config",
@@ -93,6 +100,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
           />
         )}
         {tab === "dashboard" && <AdsInsights />}
+        {tab === "afiliados" && <AdsAffiliatesPanel />}
         {tab === "atribucion" && (
           <ComingSoon
             title="Atribución del funnel"
