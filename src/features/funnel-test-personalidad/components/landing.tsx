@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowRight, X } from "lucide-react"
 import { track } from "@/lib/meta/pixel-client"
+import { getStoredUtms } from "@/lib/utm/utm-capture"
 
 /**
  * Landing del Funnel Test Personalidad (test de Equilibria).
@@ -167,6 +168,8 @@ function OptinModal({ onClose }: { onClose: () => void }) {
     }
     setLoading(true)
     try {
+      // Atribución: la fuente (afiliado) viaja en utm_source (first-touch, guardado 30d).
+      const utmSource = getStoredUtms()?.utm_source
       const res = await fetch("/api/optin/test-personalidad", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -174,6 +177,7 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           full_name: fullName.trim(),
           email: email.trim(),
           phone: phone.trim(),
+          utm_source: utmSource,
         }),
       })
       if (!res.ok) {

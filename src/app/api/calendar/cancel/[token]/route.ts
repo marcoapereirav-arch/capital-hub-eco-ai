@@ -57,8 +57,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
       title: "Llamada cancelada por el lead",
       data: { booking_id: booking.id },
     })
-    // No-retroceso (SOP 13): al cancelar, si seguía en 'agendado' vuelve a 'lead'
-    // (ya no tiene cita). Nunca degradar a un alumno u otros stages avanzados.
+    // Stage al cancelar (SOP 13): si estaba en 'agendado', pasa a 'seguimiento'
+    // para decidir qué hacer (re-agendar o perdido). Nunca degradar a un alumno.
     const { data: c } = await supabase
       .from("contacts")
       .select("stage")
@@ -67,7 +67,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     if (c?.stage === "agendado") {
       await supabase
         .from("contacts")
-        .update({ stage: "lead", updated_at: new Date().toISOString() })
+        .update({ stage: "seguimiento", updated_at: new Date().toISOString() })
         .eq("id", booking.contact_id)
     }
   }

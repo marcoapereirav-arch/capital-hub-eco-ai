@@ -14,6 +14,8 @@ const optinSchema = z.object({
     .trim()
     .max(40)
     .refine((v) => v.replace(/\D/g, "").length >= 6, "Teléfono inválido"),
+  // Atribución: de qué fuente/afiliado vino (utm_source del link). Opcional.
+  utm_source: z.string().max(80).trim().optional(),
 })
 
 function slugify(s: string): string {
@@ -32,14 +34,17 @@ function slugify(s: string): string {
  * El lead rellena nombre + email + teléfono en /test-personalidad y este endpoint:
  *  - Upsert contacto: si existe por email lo actualiza, si no lo crea con stage='lead'
  *  - Asigna pipeline = 'Test Personalidad' (contexto del funnel — no el default)
- *  - Tag 'origen:test_personalidad'
+ *  - Tag 'origen:test_personalidad' (de qué funnel vino)
+ *  - Atribución: guarda affiliate_slug (= utm_source, first-touch) + tag 'fuente:<slug>'
  *  - Añade evento al journey
  *  - Devuelve { ok: true } para que la landing redirija a /test-personalidad/gracias
  *
  * Regla de asignación de pipeline (SOP 12):
  * - Lead que pasa por este optin → pipeline_id = Test Personalidad (slug='test-personalidad')
- * - Lead que agenda directamente sin contexto → pipeline_id = General (default)
  * - Si el contacto YA existe con un pipeline_id → SE PRESERVA (no se sobreescribe)
+ *
+ * Atribución (SOP marketing/07): affiliate_slug es first-touch — si el contacto ya
+ * tenía una fuente, NO se sobreescribe (la primera fuente que lo trajo manda).
  */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
@@ -54,43 +59,56 @@ export async function POST(req: Request) {
   )
 
   const { full_name, email, phone } = parsed.data
+  const source = parsed.data.utm_source ? slugify(parsed.data.utm_source) : null
+
+  // Crea el tag si no existe y devuelve su id. Colores del brandkit (neutros).
+  const ensureTag = async (name: string, color: string, description: string): Promise<string | null> => {
+    const { data: existing } = await admin.from("tags").select("id").eq("name", name).maybeSingle()
+    if (existing?.id) return existing.id as string
+    const { data: created } = await admin
+      .from("tags")
+      .insert({ name, color, description })
+      .select("id")
+      .single()
+    return (created?.id as string) ?? null
+  }
 
   // Pipeline contextual de este funnel: Test Personalidad
   const { data: pipeline } = await admin
     .from("pipelines").select("id").eq("slug", "test-personalidad").maybeSingle()
   const pipelineId = pipeline?.id ?? null
 
-  // Tag 'origen:test_personalidad'
-  let tagId: string | null = null
-  {
-    const { data: existing } = await admin.from("tags").select("id").eq("name", "origen:test_personalidad").maybeSingle()
-    if (existing?.id) {
-      tagId = existing.id
-    } else {
-      const { data: created } = await admin.from("tags").insert({
-        name: "origen:test_personalidad",
-        color: "#8b5cf6",
-        description: "Lead que entró por la landing del test de personalidad",
-      }).select("id").single()
-      tagId = created?.id ?? null
-    }
-  }
+  // Tag de origen (de qué funnel vino) — color neutro brandkit
+  const origenTagId = await ensureTag(
+    "origen:test_personalidad",
+    "#2A2D34",
+    "Lead que entró por la landing del test de personalidad",
+  )
+
+  // Tag de fuente (qué afiliado/canal lo trajo) — si hay utm_source
+  const fuenteTagId = source
+    ? await ensureTag(`fuente:${source}`, "#3F3F46", `Lead atribuido a la fuente '${source}'`)
+    : null
 
   // Upsert contacto por email
   let contactId: string | null = null
   let action: "created" | "updated" = "created"
   {
-    const { data: existing } = await admin.from("contacts").select("id, stage, pipeline_id").ilike("email", email).maybeSingle()
+    const { data: existing } = await admin
+      .from("contacts")
+      .select("id, stage, pipeline_id, affiliate_slug")
+      .ilike("email", email)
+      .maybeSingle()
 
     if (existing) {
       contactId = existing.id
       action = "updated"
-      // Solo subir a 'lead' si todavia estaba en stage previo "puro" — aqui no degradamos
       const update: Record<string, unknown> = { full_name, phone, updated_at: new Date().toISOString() }
       if (!existing.stage) update.stage = "lead"
-      // Si el contacto NO tenía pipeline_id (lead huérfano), asignar el de Test Personalidad
-      // por el contexto de este funnel. Si ya tenía pipeline_id, PRESERVAR (no sobreescribir).
+      // pipeline_id: preservar si ya tenía; asignar el del funnel si era huérfano
       if (!existing.pipeline_id && pipelineId) update.pipeline_id = pipelineId
+      // affiliate_slug: first-touch — solo si todavía no tenía fuente
+      if (!existing.affiliate_slug && source) update.affiliate_slug = source
       await admin.from("contacts").update(update).eq("id", existing.id)
     } else {
       const slug = slugify(full_name) + "_" + Math.random().toString(36).slice(2, 8)
@@ -102,7 +120,8 @@ export async function POST(req: Request) {
         stage: "lead",
         pipeline_id: pipelineId,
         origin: "landing_test_personalidad",
-        source: "landing_test_personalidad",
+        source: source ?? "landing_test_personalidad",
+        affiliate_slug: source,
       }).select("id").single()
       if (cErr) {
         return NextResponse.json({ error: "Error guardando el lead. Inténtalo de nuevo." }, { status: 500 })
@@ -111,10 +130,12 @@ export async function POST(req: Request) {
     }
   }
 
-  // Asignar tag
-  if (contactId && tagId) {
-    await admin.from("contact_tags").insert({ contact_id: contactId, tag_id: tagId })
-    // Ignoramos error 23505 (ya asignado)
+  // Asignar tags (origen + fuente). Ignora 23505 (ya asignado).
+  if (contactId) {
+    const tagRows = [origenTagId, fuenteTagId]
+      .filter((id): id is string => !!id)
+      .map((tag_id) => ({ contact_id: contactId as string, tag_id }))
+    if (tagRows.length) await admin.from("contact_tags").insert(tagRows)
   }
 
   // Journey event
@@ -126,7 +147,7 @@ export async function POST(req: Request) {
         action === "created"
           ? "Opt-in en la landing del Test de Personalidad"
           : "Reenvió opt-in en la landing del Test de Personalidad",
-      data: { email, action },
+      data: { email, action, source },
     })
   }
 

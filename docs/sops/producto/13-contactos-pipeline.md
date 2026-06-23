@@ -147,14 +147,23 @@ Click en una card abre drawer derecho con:
 - Tiempo medio en cada stage
 - LTV por contacto
 
-## No-retroceso de stage (aplicado en código — 2026-06-23)
+## Orden de columnas del pipeline (Marco 2026-06-23)
 
-La regla "el stage solo sube" ahora está **cableada**, no solo escrita. Helper `resolveAutoStage()` en `src/lib/pipeline/stage-guard.ts`:
+```
+lead → agendado → seguimiento → no_show → alumno → perdido
+```
 
-- Ladder de avance: `lead(1) → agendado(2) → alumno(3)`. Ramas (`no_show`, `perdido`) fuera del ladder.
-- **Nunca degrada a un `alumno`** (won). Las transiciones automáticas solo avanzan o se mantienen.
-- Aplicado en `/api/calendar/book` (al agendar: solo sube a `agendado`, un alumno que reagenda sigue alumno).
-- `/api/calendar/cancel`: al cancelar, si seguía en `agendado` vuelve a `lead`; nunca toca a un alumno. Se eliminó el degradado al stage muerto `contacted`.
+(`sort_order` 1..6 en `pipeline_stages`, ambos pipelines.) `alumno` es el estado WON; aparece tras `no_show` solo por orden de display — semánticamente es el éxito y está protegido por la guarda.
+
+## Lógica de movimiento automático (aplicado en código — 2026-06-23)
+
+La regla "no perder un alumno" está **cableada**. Helper `resolveAutoStage()` en `src/lib/pipeline/stage-guard.ts`:
+
+- **Nunca degrada a un `alumno`** (won) en transiciones automáticas. Es la única regla dura.
+- `seguimiento`, `no_show`, `perdido` son **ramas**: desde ellas se puede re-enganchar hacia adelante (ej.: `seguimiento` re-agenda → `agendado`).
+- Aplicado en:
+  - `/api/calendar/book` (agendar): pasa a `agendado` salvo que ya sea `alumno`. Un alumno que reagenda sigue alumno; un `seguimiento`/`no_show`/`perdido` que reagenda vuelve a `agendado`.
+  - `/api/calendar/cancel` (cancelar): si estaba en `agendado` pasa a **`seguimiento`** (para decidir: re-agendar o perdido). Nunca toca a un alumno. (Se eliminó el degradado al stage muerto `contacted`.)
 - **NO aplica a movimientos manuales** en el kanban (override humano deliberado).
 
 ## Reportar bugs
