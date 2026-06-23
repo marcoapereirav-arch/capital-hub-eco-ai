@@ -7,7 +7,7 @@
  *   - INSTAGRAM_HANDLE: usuario IG de Adrian (sin @)
  */
 export const FUNNEL_TEST_PERSONALIDAD = {
-  TEST_URL: "https://pdi.equilibria.com/#/intro",
+  TEST_URL: "https://pdi.equilibria.com/#/instructions/FULLES",
   WHATSAPP_NUMBER: "34611874062",
   INSTAGRAM_HANDLE: "adrianvillanuevarios",
 } as const

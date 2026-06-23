@@ -50,7 +50,7 @@ Fuente del copy: `ch-copy-test-landing-optin.md` (raíz del repo).
 
 | Valor | Contenido |
 |---|---|
-| `TEST_URL` | `https://pdi.equilibria.com/#/intro` |
+| `TEST_URL` | `https://pdi.equilibria.com/#/instructions/FULLES` |
 | `WHATSAPP_NUMBER` | `34611874062` (Adrián, sin `+` ni espacios) |
 | `INSTAGRAM_HANDLE` | `adrianvillanuevarios` |
 
