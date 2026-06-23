@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { notifyGCalDisconnected } from "@/lib/email/senders"
+import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -115,12 +116,13 @@ export async function GET(req: NextRequest) {
     ownerEmail: owner.google_oauth_email,
   }).catch((e) => console.error("[gcal-health-check] email failed", e))
 
-  // Push notification interna a Marco + Adrián (1 fila por user)
+  // Push notification interna a Marco + Adrián (1 fila por user). Excluye la cuenta-bot.
   const { data: superAdmins } = await supabase
     .from("profiles")
     .select("id")
     .eq("role", "super_admin")
     .eq("active", true)
+    .neq("email", TEST_AGENT_EMAIL)
   if (superAdmins && superAdmins.length > 0) {
     try {
       await supabase.from("notifications").insert(

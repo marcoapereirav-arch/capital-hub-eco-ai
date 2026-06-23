@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -160,7 +161,11 @@ export async function POST(req: Request) {
   // "X (que ya estaba en Y) volvió a entrar por el funnel." No se modifica su stage.
   if (contactId && recurringFromStage) {
     try {
-      const { data: admins } = await admin.from("profiles").select("id").eq("role", "super_admin")
+      const { data: admins } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("role", "super_admin")
+        .neq("email", TEST_AGENT_EMAIL)
       const stageLabels: Record<string, string> = {
         agendado: "Agendado",
         seguimiento: "Seguimiento",

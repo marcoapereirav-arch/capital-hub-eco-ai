@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
 import { notifyGCalDisconnected } from "@/lib/email/senders"
+import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -60,6 +61,7 @@ export async function POST() {
     .select("id")
     .eq("role", "super_admin")
     .eq("active", true)
+    .neq("email", TEST_AGENT_EMAIL)
   if (superAdmins?.length) {
     try {
       await admin.from("notifications").insert(
