@@ -115,6 +115,30 @@ export async function GET() {
   // Resend: cuenta como "live" si hay emails enviados
   const resendActive = (emailsCount ?? 0) > 0
 
+  // Stats del funnel Test Personalidad (opt-in)
+  const { count: tpOptinCount } = await admin
+    .from("contact_journey_events")
+    .select("*", { count: "exact", head: true })
+    .eq("type", "optin_test_personalidad")
+  const { data: lastTpOptin } = await admin
+    .from("contact_journey_events")
+    .select("created_at")
+    .eq("type", "optin_test_personalidad")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Stats Calendly
+  const { count: calendlyCount } = await admin
+    .from("calendly_scheduled_events")
+    .select("*", { count: "exact", head: true })
+  const { data: lastCalendly } = await admin
+    .from("calendly_scheduled_events")
+    .select("created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   const automations = [
     {
       id: "agenda_to_calendar",
@@ -329,6 +353,50 @@ export async function GET() {
       lastRun: lastManychatEvent?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastManychatEvent?.created_at),
       totalExecutions: manychatCount ?? 0,
+    },
+    {
+      id: "test_personalidad_optin",
+      category: "crm",
+      label: "Funnel Test Personalidad → CRM + atribución + CAPI",
+      description:
+        "Lead hace opt-in en /test-personalidad → crea/actualiza contacto stage='lead', pipeline 'Test Personalidad', tags origen + fuente (afiliado), evento Meta CAPI, y si ya estaba avanzado avisa al equipo sin degradar su stage.",
+      trigger: "POST /api/optin/test-personalidad (form público)",
+      actions: [
+        "Upsert contacto por email (stage='lead' si es nuevo, sin degradar si ya avanzado)",
+        "Asigna pipeline 'Test Personalidad' + tag origen:test_personalidad",
+        "Atribución: affiliate_slug = utm_source (first-touch) + tag fuente:<slug>",
+        "Dispara Meta Pixel + CAPI (test_personalidad_lead + Lead)",
+        "Contacto recurrente ya avanzado → notifica a super_admins (no degrada)",
+        "Inserta contact_journey_event 'optin_test_personalidad'",
+      ],
+      relatedTables: ["contacts", "contact_tags", "tags", "contact_journey_events", "meta_events_log", "affiliates", "notifications"],
+      status: (tpOptinCount ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (tpOptinCount ?? 0) > 0
+          ? `Recibiendo opt-ins · ${tpOptinCount} eventos`
+          : "Funnel publicado · sin opt-ins reales todavía",
+      lastRun: lastTpOptin?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastTpOptin?.created_at),
+      totalExecutions: tpOptinCount ?? 0,
+    },
+    {
+      id: "calendly_webhook",
+      category: "calendario",
+      label: "Calendly → CRM (pendiente cablear pipeline)",
+      description:
+        "Webhook de Calendly con verificación HMAC. Hoy SOLO registra en calendly_scheduled_events; PENDIENTE mover el contacto en el pipeline (agendado/seguimiento/no_show) cuando Adrián defina el evento de los meets.",
+      trigger: "Webhook entrante: Calendly → POST /api/webhooks/calendly",
+      actions: [
+        "Verifica firma HMAC (calendly_config.webhook_signing_key)",
+        "Upsert calendly_scheduled_events (created/canceled/no_show)",
+        "[PENDIENTE] matchear contacto por email + mover stage con guarda no-retroceso",
+      ],
+      relatedTables: ["calendly_scheduled_events", "calendly_config", "contacts"],
+      status: "pending",
+      statusReason: `Webhook listo (HMAC) · ${calendlyCount ?? 0} eventos registrados. FALTA: Adrián crea el evento + cablear movimiento de pipeline.`,
+      lastRun: lastCalendly?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastCalendly?.created_at),
+      totalExecutions: calendlyCount ?? 0,
     },
   ]
 
