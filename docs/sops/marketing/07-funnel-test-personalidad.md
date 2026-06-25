@@ -110,7 +110,7 @@ Funnel `web_reservar` en `/webs`. Cubre los dos caminos (lead que ya hizo el tes
 - **`/reservar`**: embebe el Calendly (online-coffee) inline. Al completar, capturamos `calendly.event_scheduled` (postMessage, doc oficial) y **redirigimos nosotros** a `/reservar/gracias`. **No requiere configurar nada en Calendly.** Acepta prefill `?name=&email=`.
 - **`/reservar/gracias`** (post-agenda): vídeo de Adrián (Bunny) + copy basado en el vídeo ("cómo sacarle el máximo partido": sitio tranquilo/papel+boli/auriculares/100% · llega con tu ruta más o menos clara entre Marketing/Comercial/IA · puntualidad) + botón **"¿Aún no has hecho el test? Hazlo aquí"** → abre el test en ventana nueva.
 - Config: `src/features/funnel-reservar/config.ts` + override `app_settings` key `funnel:reservar` (editable desde ⚙️ de /webs: calendly_url, video_guid, test_path).
-- ⚠️ **Vídeo pendiente de subir a Bunny**: la `BUNNY_STREAM_API_KEY` del `.env.local` está caducada (401) y no está en Vercel. En cuanto haya key válida → subir `assets/videos/Video-Adri-Post-Agenda.MOV` y poner el `video_guid`.
+- ✅ **Vídeo subido a Bunny** (2026-06-25): `assets/videos/Video-Adri-Post-Agenda.MOV` → library `686883`, GUID `86fa2fc6-1d04-473a-bc27-273188bbfea6`. El `video_guid` está en `app_settings` key `funnel:reservar` (editable desde ⚙️). Embed: `iframe.mediadelivery.net/embed/686883/<guid>`. Copy de la gracias en **directo** (sin "de Adrián"); botón del test apunta al **test literal de Equilibria** (no a la landing).
 
 ## Reglas
 
