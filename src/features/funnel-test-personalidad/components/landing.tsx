@@ -131,12 +131,8 @@ export function TestPersonalidadLanding() {
             que nadie te dice cuál encaja contigo. Este test sí, en 15 minutos. Gratis.
           </p>
 
-          <div
-            className="tp-load flex flex-col items-start gap-6 sm:flex-row sm:items-center"
-            style={{ animationDelay: "600ms" }}
-          >
+          <div className="tp-load" style={{ animationDelay: "600ms" }}>
             <MagneticButton onClick={() => setOpen(true)}>Quiero hacer el test gratis</MagneticButton>
-            <Equalizer />
           </div>
         </section>
 
@@ -253,27 +249,6 @@ function MagneticButton({ children, onClick }: { children: React.ReactNode; onCl
       <span className="relative z-10">{children}</span>
       <ArrowRight className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
     </button>
-  )
-}
-
-/* ───────────────────── Ecualizador "4 colores" (mono) ───────────────────── */
-function Equalizer() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-9 items-end gap-1" aria-hidden>
-        {[0, 1, 2, 3].map((i) => (
-          <span key={i} className={`tp-bar tp-bar-${i}`} />
-        ))}
-      </div>
-      <span
-        className="text-[10px] uppercase leading-tight tracking-[0.2em] text-[#6B7280]"
-        style={{ fontFamily: "'JetBrains Mono', monospace" }}
-      >
-        Resultado
-        <br />
-        en 4 colores
-      </span>
-    </div>
   )
 }
 
@@ -408,16 +383,18 @@ function OptinModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="tp-backdrop fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-5"
+      className="tp-backdrop fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-5"
       onClick={() => !loading && onClose()}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="tp-modal relative max-h-[92dvh] w-full overflow-y-auto border border-[#2A2D34] bg-[#0F0F12] p-6 sm:max-w-md sm:p-7"
+        className="tp-modal relative max-h-[90dvh] w-full overflow-y-auto border-t border-[#2A2D34] bg-[#0F0F12] px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-6 sm:max-w-md sm:rounded-none sm:border sm:p-7"
         style={{ fontFamily: "'Inter', sans-serif" }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Asa de bottom-sheet (solo móvil) */}
+        <div aria-hidden className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#2A2D34] sm:hidden" />
         <button
           type="button"
           onClick={() => !loading && onClose()}
@@ -438,7 +415,7 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           className="mb-6 pr-8 text-xl font-medium tracking-[-0.01em] text-white md:text-2xl"
           style={{ fontFamily: "'Inter Tight', sans-serif" }}
         >
-          Déjame tus datos y entra al test
+          Deja tus datos y entra al test
         </h3>
 
         <form onSubmit={onSubmit} className="space-y-3.5">
@@ -551,14 +528,6 @@ function TpStyles() {
       .tp-cta { transition: transform 0.25s cubic-bezier(0.22,0.61,0.36,1); will-change: transform; }
       .tp-cta-fill { position:absolute; inset:0; background:#C7CBD1; transform: scaleX(0); transform-origin:left; transition: transform 0.4s cubic-bezier(0.22,0.61,0.36,1); }
       .tp-cta:hover .tp-cta-fill { transform: scaleX(1); }
-      /* Ecualizador (4 barras, 4 tonos) */
-      .tp-bar { width:5px; border-radius:1px; animation: tp-eq 1.5s ease-in-out infinite; }
-      .tp-bar-0 { background:#F5F6F7; height:60%; animation-delay:0s }
-      .tp-bar-1 { background:#9CA3AF; height:100%; animation-delay:0.18s }
-      .tp-bar-2 { background:#6B7280; height:45%; animation-delay:0.36s }
-      .tp-bar-3 { background:#3F3F46; height:80%; animation-delay:0.54s }
-      @keyframes tp-eq { 0%,100%{transform:scaleY(0.45)} 50%{transform:scaleY(1)} }
-      .tp-bar { transform-origin: bottom; }
       /* 4 swatches */
       .tp-swatch { width:34px; height:6px; border-radius:1px; opacity:0; animation: tp-sw 0.5s ease forwards; }
       .tp-reveal.tp-in .tp-swatch-0 { animation-delay:0.15s } .tp-swatch-0{ background:#F5F6F7 }
