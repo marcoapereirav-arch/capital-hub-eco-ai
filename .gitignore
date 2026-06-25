@@ -72,8 +72,17 @@ supabase/.temp
 
 # Screenshots and snapshots (ephemeral, not code)
 /*.png
+/*.jpeg
+/*.jpg
 /tasks-*.md
 /tasks-snapshot.md
+
+# Media grande — va a Bunny/CDN, NUNCA a git
+*.mov
+*.MOV
+*.mp4
+*.webm
+/assets/videos/
 
 # Backup files
 *.bak
