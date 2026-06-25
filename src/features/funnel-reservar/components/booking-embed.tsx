@@ -72,7 +72,7 @@ export function BookingEmbed() {
       className="min-h-[100dvh] text-[#F5F6F7]"
       style={{ backgroundColor: "#0F0F12", fontFamily: "'Inter', sans-serif" }}
     >
-      <div className="mx-auto max-w-4xl px-5 md:px-8">
+      <div className="mx-auto max-w-xl px-5 md:px-8">
         <header className="pt-8 md:pt-12">
           <span
             className="text-[11px] uppercase tracking-[0.4em] text-[#F5F6F7]"
@@ -97,14 +97,15 @@ export function BookingEmbed() {
           </h1>
         </div>
 
-        {/* Tarjeta blanca limpia que enmarca el Calendly (light) sobre la página oscura */}
+        {/* Tarjeta blanca limpia que enmarca el Calendly (light) sobre la página oscura.
+            max-w-xl ≈ ancho natural de 1 columna de Calendly → llena la tarjeta sin huecos. */}
         <div className="relative mb-14 overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/40 ring-1 ring-white/10">
           {!ready && (
             <div className="absolute inset-0 flex items-center justify-center bg-white text-[#6B7280]">
               <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Cargando calendario…
             </div>
           )}
-          <div ref={ref} style={{ minWidth: 320, height: 760 }} />
+          <div ref={ref} style={{ minWidth: 320, height: 900 }} />
         </div>
 
         <footer
