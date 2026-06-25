@@ -382,18 +382,22 @@ export async function GET() {
     {
       id: "calendly_webhook",
       category: "calendario",
-      label: "Calendly → CRM (pendiente cablear pipeline)",
+      label: "Calendly → CRM (agenda/cancela/no-show → pipeline)",
       description:
-        "Webhook de Calendly con verificación HMAC. Hoy SOLO registra en calendly_scheduled_events; PENDIENTE mover el contacto en el pipeline (agendado/seguimiento/no_show) cuando Adrián defina el evento de los meets.",
+        "Webhook de Calendly (evento online-coffee de Adrián) con verificación HMAC. Registra en calendly_scheduled_events Y mueve la película del contacto en el pipeline: agenda → agendado (crea el contacto si agendó sin pasar por el test), cancela → seguimiento, no-show → no_show. Con guarda no-retroceso (nunca degrada a un alumno).",
       trigger: "Webhook entrante: Calendly → POST /api/webhooks/calendly",
       actions: [
         "Verifica firma HMAC (calendly_config.webhook_signing_key)",
         "Upsert calendly_scheduled_events (created/canceled/no_show)",
-        "[PENDIENTE] matchear contacto por email + mover stage con guarda no-retroceso",
+        "Matchea contacto por email → mueve stage con guarda no-retroceso",
+        "invitee.created sin contacto → crea contacto stage=agendado (pipeline Test Personalidad)",
+        "Inserta contact_journey_event (call_booked/call_cancelled/call_no_show)",
       ],
-      relatedTables: ["calendly_scheduled_events", "calendly_config", "contacts"],
-      status: "pending",
-      statusReason: `Webhook listo (HMAC) · ${calendlyCount ?? 0} eventos registrados. FALTA: Adrián crea el evento + cablear movimiento de pipeline.`,
+      relatedTables: ["calendly_scheduled_events", "calendly_config", "contacts", "contact_journey_events", "pipelines"],
+      status: (calendlyCount ?? 0) > 0 ? "live" : "idle",
+      statusReason: (calendlyCount ?? 0) > 0
+        ? `Webhook activo (HMAC) · ${calendlyCount} reservas registradas · mueve pipeline`
+        : "Webhook activo (HMAC) · sin reservas todavía",
       lastRun: lastCalendly?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastCalendly?.created_at),
       totalExecutions: calendlyCount ?? 0,

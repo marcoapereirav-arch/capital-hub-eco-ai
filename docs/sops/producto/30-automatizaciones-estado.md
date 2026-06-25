@@ -27,7 +27,7 @@ area: producto
 | 🟢 | `agenda_reminder_24h` | `pg_cron` cada 30 min | Cada 30 min (jobid 1) | Email 24h antes con Zoom link |
 | 🟢 | `no_show_detection` | `pg_cron` cada 30 min | Cada 30 min (jobid 3) | Marca `no_show` + email retargeting |
 | 🟢 | `gcal_health_check` | `pg_cron` cada hora | Cada hora (jobid 5) | Alerta si OAuth de Adrián caduca |
-| 🔴 | `calendly_webhook` | Webhook Calendly → POST `/api/webhooks/calendly` | — | **PENDING**: hoy solo registra en `calendly_scheduled_events`. FALTA: Adrián crea el evento + cablear movimiento de pipeline (agendado/seguimiento/no_show) |
+| 🟢/🟡 | `calendly_webhook` | Webhook Calendly → POST `/api/webhooks/calendly` | Cuando alguien reserva online-coffee | **Cableado** (2026-06-25): registra en `calendly_scheduled_events` Y mueve el pipeline — agenda→`agendado` (crea contacto si no existe), cancela→`seguimiento`, no-show→`no_show`, con guarda no-retroceso. Evento: `online-coffee` de Adrián |
 
 ### Ventas / Alumno (3)
 

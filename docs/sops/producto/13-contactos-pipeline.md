@@ -164,6 +164,7 @@ La regla "no perder un alumno" está **cableada**. Helper `resolveAutoStage()` e
 - Aplicado en:
   - `/api/calendar/book` (agendar): pasa a `agendado` salvo que ya sea `alumno`. Un alumno que reagenda sigue alumno; un `seguimiento`/`no_show`/`perdido` que reagenda vuelve a `agendado`.
   - `/api/calendar/cancel` (cancelar): si estaba en `agendado` pasa a **`seguimiento`** (para decidir: re-agendar o perdido). Nunca toca a un alumno. (Se eliminó el degradado al stage muerto `contacted`.)
+  - `/api/webhooks/calendly` (Calendly online-coffee, 2026-06-25): `invitee.created` → `agendado` (crea el contacto si no existe); `invitee.canceled` → `seguimiento`; `invitee_no_show.created` → `no_show` (salvo alumno). Misma guarda.
 - **NO aplica a movimientos manuales** en el kanban (override humano deliberado).
 
 ## Reportar bugs

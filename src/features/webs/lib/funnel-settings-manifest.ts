@@ -1,4 +1,5 @@
 import { FUNNEL_TEST_PERSONALIDAD } from "@/features/funnel-test-personalidad/config"
+import { FUNNEL_RESERVAR } from "@/features/funnel-reservar/config"
 
 /**
  * Manifiesto de ajustes editables por funnel (links de los botones/CTA).
@@ -42,6 +43,29 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
         label: "Instagram de Adrián",
         hint: "Solo el usuario, sin @. Ej: adrianvillanuevarios",
         default: FUNNEL_TEST_PERSONALIDAD.INSTAGRAM_HANDLE,
+      },
+    ],
+  },
+  reservar: {
+    slug: "reservar",
+    fields: [
+      {
+        key: "calendly_url",
+        label: "Calendly — evento de la sesión",
+        hint: "Scheduling URL del evento de Calendly que se embebe en /reservar.",
+        default: FUNNEL_RESERVAR.CALENDLY_URL,
+      },
+      {
+        key: "video_guid",
+        label: "Vídeo post-agenda — GUID de Bunny",
+        hint: "GUID del vídeo en Bunny Stream que se muestra en /reservar/gracias. Vacío = placeholder.",
+        default: FUNNEL_RESERVAR.VIDEO_GUID,
+      },
+      {
+        key: "test_path",
+        label: "Ruta del test de personalidad",
+        hint: "A dónde lleva el botón «¿aún no has hecho el test?».",
+        default: FUNNEL_RESERVAR.TEST_PATH,
       },
     ],
   },

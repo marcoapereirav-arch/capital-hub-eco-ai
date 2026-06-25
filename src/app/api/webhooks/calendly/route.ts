@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { verifyWebhookSignature } from "@/lib/calendly"
+import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -12,15 +13,95 @@ function getAdminClient() {
   )
 }
 
+function slugify(s: string): string {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 50)
+}
+
+type Admin = ReturnType<typeof getAdminClient>
+
+/**
+ * Mueve la película del contacto en el pipeline a partir de un evento de Calendly.
+ * - created: agenda → 'agendado' (guarda no-retroceso, nunca degrada alumno). Si no
+ *   existe el contacto (agendó sin pasar por el test), lo crea.
+ * - canceled: si seguía 'agendado' → 'seguimiento'.
+ * - no_show: → 'no_show' salvo que sea alumno.
+ */
+async function moveContactForCalendly(
+  admin: Admin,
+  kind: "created" | "canceled" | "no_show",
+  inv: { email?: string; name?: string; phone?: string | null },
+  scheduledStart?: string,
+) {
+  const email = inv.email?.toLowerCase().trim()
+  if (!email) return
+
+  const { data: existing } = await admin
+    .from("contacts")
+    .select("id, stage, pipeline_id")
+    .ilike("email", email)
+    .maybeSingle()
+
+  if (kind === "created") {
+    if (existing) {
+      const nextStage = resolveAutoStage(existing.stage, "agendado")
+      await admin.from("contacts").update({
+        stage: nextStage,
+        last_call_at: scheduledStart ?? new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq("id", existing.id)
+      await logJourney(admin, existing.id, "call_booked", "Agendó llamada (Calendly)")
+    } else {
+      // Agendó sin pasar por el test → crear contacto en el funnel
+      const { data: pipeline } = await admin
+        .from("pipelines").select("id").eq("slug", "test-personalidad").maybeSingle()
+      const fullName = inv.name?.trim() || email
+      const { data: created } = await admin.from("contacts").insert({
+        full_name: fullName,
+        email,
+        phone: inv.phone ?? null,
+        slug: slugify(fullName) + "_" + Math.random().toString(36).slice(2, 8),
+        stage: "agendado",
+        pipeline_id: pipeline?.id ?? null,
+        origin: "calendly_online_coffee",
+        source: "calendly_online_coffee",
+      }).select("id").single()
+      if (created?.id) await logJourney(admin, created.id, "call_booked", "Agendó llamada (Calendly, sin test previo)")
+    }
+    return
+  }
+
+  if (!existing) return
+
+  if (kind === "canceled") {
+    if (existing.stage === "agendado") {
+      await admin.from("contacts").update({ stage: "seguimiento", updated_at: new Date().toISOString() }).eq("id", existing.id)
+    }
+    await logJourney(admin, existing.id, "call_cancelled", "Canceló la llamada (Calendly)")
+    return
+  }
+
+  if (kind === "no_show") {
+    // no_show no degrada a un alumno (won)
+    if (existing.stage !== "alumno") {
+      await admin.from("contacts").update({ stage: "no_show", updated_at: new Date().toISOString() }).eq("id", existing.id)
+    }
+    await logJourney(admin, existing.id, "call_no_show", "No se presentó a la llamada (Calendly)")
+  }
+}
+
+async function logJourney(admin: Admin, contactId: string, type: string, title: string) {
+  await admin.from("contact_journey_events").insert({ contact_id: contactId, type, title, data: { source: "calendly" } })
+}
+
 /**
  * POST /api/webhooks/calendly
- * Recibe eventos de Calendly (invitee.created, invitee.canceled, invitee_no_show.created).
+ * Eventos: invitee.created, invitee.canceled, invitee_no_show.created.
  *
  * Flow:
- *   1. Lee signing_key de BD (calendly_config)
- *   2. Verifica HMAC-SHA256 del header Calendly-Webhook-Signature
- *   3. Parsea payload + upsert en calendly_scheduled_events
- *   4. Devuelve 200 OK
+ *   1. Verifica HMAC (calendly_config.webhook_signing_key)
+ *   2. Upsert en calendly_scheduled_events (log)
+ *   3. Mueve la película del contacto en el pipeline (match por email)
  */
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
@@ -48,7 +129,6 @@ export async function POST(req: NextRequest) {
     event: string
     payload: {
       uri?: string
-      event?: string
       name?: string
       email?: string
       text_reminder_number?: string | null
@@ -98,11 +178,20 @@ export async function POST(req: NextRequest) {
         invitee_cancellation_reason: inv.cancellation?.reason ?? null,
         updated_at: new Date().toISOString(),
       }, { onConflict: "uri" })
+
+      await moveContactForCalendly(
+        admin,
+        event === "invitee.created" ? "created" : "canceled",
+        { email: inv.email, name: inv.name, phone: inv.text_reminder_number ?? null },
+        scheduled.start_time,
+      )
     } else if (event === "invitee_no_show.created") {
       await admin.from("calendly_scheduled_events").update({
         status: "no_show",
         updated_at: new Date().toISOString(),
       }).eq("uri", scheduled.uri)
+
+      await moveContactForCalendly(admin, "no_show", { email: inv.email, name: inv.name })
     }
 
     return NextResponse.json({ ok: true, event, uri: scheduled.uri })

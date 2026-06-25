@@ -98,10 +98,19 @@ Si un contacto que **ya estaba más allá de `lead`** (agendado, seguimiento, al
 - **NO se degrada su stage** (se conserva). El opt-in solo pone `lead` si el contacto no tenía stage.
 - Se **notifica al equipo** (tabla `notifications`, una por super_admin, tipo `recurring_optin_test_personalidad`): *"X (que ya estaba en Y) volvió a pasar por la landing"*. Visible en la campana del OS.
 
-## Booking → pipeline (Calendly vs agenda propia)
+## Booking → pipeline (Calendly + agenda propia)
 
-- **Agenda propia** (`/api/calendar/book`): YA mueve el contacto a `agendado` (con guarda no-retroceso) y cancelar → `seguimiento`.
-- **Calendly** (`/api/webhooks/calendly`): ⚠️ **hoy solo registra en `calendly_scheduled_events`; NO mueve el contacto en el pipeline.** Pendiente cablear: `invitee.created` → matchear contacto por email → `agendado` (guarda); `invitee.canceled` → `seguimiento`; `invitee_no_show.created` → `no_show`. Falta confirmar QUÉ Calendly/event-type se usa para este funnel.
+- **Agenda propia** (`/api/calendar/book`): mueve el contacto a `agendado` (guarda no-retroceso); cancelar → `seguimiento`.
+- **Calendly** (`/api/webhooks/calendly`) — **CABLEADO 2026-06-25**: evento **`online-coffee`** de Adrián (`https://calendly.com/adrian-sales-capital/online-coffee`). `invitee.created` → match por email → `agendado` (o **crea** el contacto si agendó sin pasar por el test); `invitee.canceled` → `seguimiento`; `invitee_no_show.created` → `no_show`. Con guarda no-retroceso. Webhook ya suscrito (HMAC).
+
+## Funnel de Reserva (`/reservar` → `/reservar/gracias`)
+
+Funnel `web_reservar` en `/webs`. Cubre los dos caminos (lead que ya hizo el test, y lead que agenda directo sin test).
+
+- **`/reservar`**: embebe el Calendly (online-coffee) inline. Al completar, capturamos `calendly.event_scheduled` (postMessage, doc oficial) y **redirigimos nosotros** a `/reservar/gracias`. **No requiere configurar nada en Calendly.** Acepta prefill `?name=&email=`.
+- **`/reservar/gracias`** (post-agenda): vídeo de Adrián (Bunny) + copy basado en el vídeo ("cómo sacarle el máximo partido": sitio tranquilo/papel+boli/auriculares/100% · llega con tu ruta más o menos clara entre Marketing/Comercial/IA · puntualidad) + botón **"¿Aún no has hecho el test? Hazlo aquí"** → abre el test en ventana nueva.
+- Config: `src/features/funnel-reservar/config.ts` + override `app_settings` key `funnel:reservar` (editable desde ⚙️ de /webs: calendly_url, video_guid, test_path).
+- ⚠️ **Vídeo pendiente de subir a Bunny**: la `BUNNY_STREAM_API_KEY` del `.env.local` está caducada (401) y no está en Vercel. En cuanto haya key válida → subir `assets/videos/Video-Adri-Post-Agenda.MOV` y poner el `video_guid`.
 
 ## Reglas
 
