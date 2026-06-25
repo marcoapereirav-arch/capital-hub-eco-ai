@@ -14,12 +14,12 @@ import { FUNNEL_RESERVAR, bunnyEmbedUrl } from "../config"
  * Vídeo: iframe de Bunny si hay VIDEO_GUID; si no, placeholder (pendiente de subir).
  * Botón: "aún no has hecho el test" → abre el test en ventana nueva.
  */
-type Props = { videoGuid?: string; libraryId?: string; testPath?: string }
+type Props = { videoGuid?: string; libraryId?: string; testUrl?: string }
 
-export function ThanksAgenda({ videoGuid, libraryId, testPath }: Props = {}) {
+export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
   const guid = videoGuid ?? FUNNEL_RESERVAR.VIDEO_GUID
   const lib = libraryId ?? FUNNEL_RESERVAR.BUNNY_LIBRARY_ID
-  const test = testPath ?? FUNNEL_RESERVAR.TEST_PATH
+  const test = testUrl ?? FUNNEL_RESERVAR.TEST_URL
 
   return (
     <main
@@ -54,8 +54,8 @@ export function ThanksAgenda({ videoGuid, libraryId, testPath }: Props = {}) {
           Tu sesión está reservada.
         </h1>
         <p className="mb-8 max-w-xl text-base md:text-lg leading-relaxed text-[#C7CBD1]">
-          Antes de la llamada, mira este vídeo de Adrián. En 2 minutos te explica cómo sacarle el
-          máximo partido a la sesión.
+          Antes de la llamada, mira este vídeo. En 2 minutos tienes todo lo que necesitas para
+          sacarle el máximo partido a la sesión.
         </p>
 
         {/* Vídeo */}

@@ -10,7 +10,7 @@ export type ReservarSettings = {
   calendlyUrl: string
   videoGuid: string
   libraryId: string
-  testPath: string
+  testUrl: string
 }
 
 export async function getReservarSettings(): Promise<ReservarSettings> {
@@ -18,7 +18,7 @@ export async function getReservarSettings(): Promise<ReservarSettings> {
     calendlyUrl: FUNNEL_RESERVAR.CALENDLY_URL,
     videoGuid: FUNNEL_RESERVAR.VIDEO_GUID,
     libraryId: FUNNEL_RESERVAR.BUNNY_LIBRARY_ID,
-    testPath: FUNNEL_RESERVAR.TEST_PATH,
+    testUrl: FUNNEL_RESERVAR.TEST_URL,
   }
   try {
     const admin = createClient(
@@ -35,7 +35,7 @@ export async function getReservarSettings(): Promise<ReservarSettings> {
       calendlyUrl: v.calendly_url?.trim() || fallback.calendlyUrl,
       videoGuid: v.video_guid?.trim() || fallback.videoGuid,
       libraryId: v.bunny_library_id?.trim() || fallback.libraryId,
-      testPath: v.test_path?.trim() || fallback.testPath,
+      testUrl: v.test_url?.trim() || fallback.testUrl,
     }
   } catch {
     return fallback

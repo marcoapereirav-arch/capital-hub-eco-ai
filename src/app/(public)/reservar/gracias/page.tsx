@@ -11,5 +11,5 @@ export const metadata = {
 
 export default async function ReservarGraciasRoute() {
   const s = await getReservarSettings()
-  return <ThanksAgenda videoGuid={s.videoGuid} libraryId={s.libraryId} testPath={s.testPath} />
+  return <ThanksAgenda videoGuid={s.videoGuid} libraryId={s.libraryId} testUrl={s.testUrl} />
 }
