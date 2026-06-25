@@ -65,9 +65,9 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
               <iframe
                 src={bunnyEmbedUrl(guid, lib)}
                 loading="lazy"
+                title="Vídeo — cómo aprovechar la llamada"
                 className="absolute inset-0 h-full w-full"
                 allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-                allowFullScreen
               />
             </div>
           ) : (
