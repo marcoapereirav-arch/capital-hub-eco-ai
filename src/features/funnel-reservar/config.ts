@@ -16,6 +16,7 @@ import { FUNNEL_TEST_PERSONALIDAD } from "@/features/funnel-test-personalidad/co
 export const FUNNEL_RESERVAR = {
   CALENDLY_URL: "https://calendly.com/adrian-sales-capital/online-coffee",
   BUNNY_LIBRARY_ID: "686883",
+  BUNNY_CDN: "vz-6b29b2f5-059.b-cdn.net", // hostname público (poster/thumbnail)
   VIDEO_GUID: "", // ← se rellena tras subir el vídeo a Bunny
   TEST_URL: FUNNEL_TEST_PERSONALIDAD.TEST_URL, // test literal de Equilibria
 } as const

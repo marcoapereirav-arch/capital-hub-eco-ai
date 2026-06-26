@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { CheckCircle2, ExternalLink, Play, Volume2 } from "lucide-react"
 import { FUNNEL_RESERVAR } from "../config"
 
@@ -20,18 +20,28 @@ type Props = { videoGuid?: string; libraryId?: string; testUrl?: string }
 /**
  * Reproductor del vídeo post-agenda.
  * - Arranca AUTOPLAY en MUTED + loop (efecto "animación", sin molestar).
- * - Overlay "Toca para activar el sonido". Al tocar (gesto del usuario → el navegador
- *   permite autoplay con audio), recarga el iframe desde el INICIO con sonido y sin loop.
+ * - Un poster (thumbnail) tapa el gris de buffering de Bunny mientras carga, y se desvanece.
+ * - Overlay "Toca para activar el sonido" (tipografía normal Inter, legible).
+ *   Al tocar (gesto del usuario → el navegador permite audio), recarga desde el INICIO con sonido.
  */
 function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
   const [unmuted, setUnmuted] = useState(false)
+  const [posterGone, setPosterGone] = useState(false)
   const base = `https://iframe.mediadelivery.net/embed/${lib}/${guid}`
+  const poster = `https://${FUNNEL_RESERVAR.BUNNY_CDN}/${guid}/thumbnail.jpg`
   const src = unmuted
     ? `${base}?autoplay=true&muted=false&playsinline=true&preload=true`
     : `${base}?autoplay=true&muted=true&loop=true&playsinline=true&preload=true`
 
+  // Re-muestra el poster en cada (re)carga del iframe y lo desvanece cuando ya hay vídeo.
+  useEffect(() => {
+    setPosterGone(false)
+    const t = setTimeout(() => setPosterGone(true), 1600)
+    return () => clearTimeout(t)
+  }, [src])
+
   return (
-    <div className="relative" style={{ paddingTop: "56.25%" }}>
+    <div className="relative bg-[#0F0F12]" style={{ paddingTop: "56.25%" }}>
       <iframe
         key={src}
         src={src}
@@ -40,19 +50,29 @@ function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
         className="absolute inset-0 h-full w-full"
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
       />
+
+      {/* Poster que tapa el gris de carga de Bunny */}
+      <img
+        src={poster}
+        alt=""
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${posterGone ? "opacity-0" : "opacity-100"}`}
+      />
+
+      {/* Overlay de activar sonido — legible, tipografía normal */}
       {!unmuted && (
         <button
           type="button"
           onClick={() => setUnmuted(true)}
           aria-label="Activar el sonido y reproducir desde el inicio"
-          className="group absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/40 transition-colors hover:bg-black/30"
+          className="group absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-gradient-to-t from-black/70 via-black/25 to-black/45 transition-colors"
         >
-          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/70 bg-black/30 backdrop-blur-sm transition-transform group-hover:scale-105">
-            <Volume2 className="h-6 w-6 text-white" />
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg shadow-black/30 transition-transform group-hover:scale-105">
+            <Volume2 className="h-7 w-7 text-[#0F0F12]" />
           </span>
           <span
-            className="text-[11px] uppercase tracking-[0.25em] text-white"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            className="rounded-full bg-black/65 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm md:text-base"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Toca para activar el sonido
           </span>
