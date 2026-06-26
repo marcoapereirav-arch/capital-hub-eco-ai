@@ -28,10 +28,14 @@ function SidebarLogo() {
   const isCollapsed = state === "collapsed"
 
   return (
-    <SidebarHeader className="h-14 flex-row items-center justify-start px-4 py-0 border-b border-border">
+    <SidebarHeader
+      className={`h-14 flex-row items-center py-0 border-b border-border ${
+        isCollapsed ? "justify-center px-0" : "justify-start px-4"
+      }`}
+    >
       <Link href="/dashboard" className="flex items-center gap-2 overflow-hidden">
         {isCollapsed ? (
-          <span className="font-heading text-base font-semibold text-foreground">
+          <span className="font-heading text-sm font-semibold text-foreground tracking-wide">
             CH
           </span>
         ) : (
@@ -41,6 +45,41 @@ function SidebarLogo() {
         )}
       </Link>
     </SidebarHeader>
+  )
+}
+
+function GoToAppButton({ isCollapsed }: { isCollapsed: boolean }) {
+  // Cuando colapsado: solo icono centrado (mismo patrón que los items del menú).
+  // Cuando expandido: icono + label + flechita.
+  if (isCollapsed) {
+    return (
+      <a
+        href="https://app.capitalhubapp.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mx-auto my-1 flex items-center justify-center w-8 h-8 rounded-md border border-border/40 hover:bg-card transition-colors"
+        title="Ir a la App"
+      >
+        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+      </a>
+    )
+  }
+  return (
+    <a
+      href="https://app.capitalhubapp.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-md border border-border/40 px-2.5 py-2 text-xs hover:bg-card transition-colors group"
+      title="Abre la App en una pestaña nueva (misma sesion)"
+    >
+      <span className="flex items-center gap-2 min-w-0">
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+        <span className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground group-hover:text-foreground truncate">
+          Ir a la App
+        </span>
+      </span>
+      <span className="text-[9px] font-mono text-muted-foreground/60 shrink-0">↗</span>
+    </a>
   )
 }
 
@@ -107,30 +146,50 @@ export function AppSidebar({ userEmail, userName, userRole, realRole }: AppSideb
       </SidebarContent>
 
       <SidebarFooter>
-        {isAdmin && (
-          <div className="mx-2 mb-1">
-            <ViewAsRoleDropdown currentViewAs={currentViewAs} />
-          </div>
-        )}
-        <a
-          href="https://app.capitalhubapp.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-md border border-border/40 px-2.5 py-2 text-xs hover:bg-card transition-colors group"
-          title="Abre la App en una pestaña nueva (misma sesion)"
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
-            <span className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground group-hover:text-foreground truncate">
-              Ir a la App
-            </span>
-          </span>
-          <span className="text-[9px] font-mono text-muted-foreground/60 shrink-0">↗</span>
-        </a>
-        <UserMenu email={userEmail} name={userName} role={userRole} />
+        <AppSidebarFooterInner
+          isAdmin={isAdmin}
+          currentViewAs={currentViewAs}
+          userEmail={userEmail}
+          userName={userName}
+          userRole={userRole}
+        />
       </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+/**
+ * Footer del sidebar — cuando el sidebar está colapsado oculta los textos
+ * y muestra solo los iconos centrados (mismo patrón que los items del menú).
+ * Sin esto los botones se cortaban porque el ancho colapsado es muy estrecho.
+ */
+function AppSidebarFooterInner({
+  isAdmin,
+  currentViewAs,
+  userEmail,
+  userName,
+  userRole,
+}: {
+  isAdmin: boolean
+  currentViewAs: string | null
+  userEmail: string
+  userName: string | null
+  userRole: string | null
+}) {
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
+
+  return (
+    <>
+      {isAdmin && !isCollapsed && (
+        <div className="mx-2 mb-1">
+          <ViewAsRoleDropdown currentViewAs={currentViewAs} />
+        </div>
+      )}
+      <GoToAppButton isCollapsed={isCollapsed} />
+      <UserMenu email={userEmail} name={userName} role={userRole} />
+    </>
   )
 }
