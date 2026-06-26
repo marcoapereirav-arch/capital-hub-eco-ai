@@ -46,7 +46,7 @@ export function TestPersonalidadThankYou({ testUrl, whatsapp, instagram }: Props
       <div className="relative z-10 max-w-2xl mx-auto px-5 md:px-8 py-12 md:py-20 flex flex-col min-h-[100dvh]">
         {/* Marca */}
         <div className="mb-12 md:mb-16">
-          <span className="text-sm font-semibold tracking-[0.02em] text-[#F5F6F7]" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+          <span className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
             Capital Hub
           </span>
         </div>

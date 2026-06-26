@@ -87,10 +87,10 @@ export function TestPersonalidadLanding() {
         {/* Marca */}
         <header className="tp-load flex items-center justify-between pt-8 md:pt-12" style={{ animationDelay: "0ms" }}>
           <span
-            className="text-sm font-semibold tracking-[0.02em] text-[#F5F6F7]"
+            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            Capital&nbsp;Hub
+            Capital Hub
           </span>
           <span className="hidden items-center gap-2 text-[13px] text-[#9CA3AF] sm:inline-flex">
             <span className="tp-dot" /> Orientación profesional

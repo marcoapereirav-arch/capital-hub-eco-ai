@@ -96,22 +96,17 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
       <div className="mx-auto max-w-2xl px-5 md:px-8 py-10 md:py-16">
         <header className="mb-10 md:mb-14">
           <span
-            className="text-[11px] uppercase tracking-[0.4em] text-[#F5F6F7]"
-            style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 500 }}
+            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            CAPITAL&nbsp;HUB
+            Capital Hub
           </span>
         </header>
 
         {/* Confirmación */}
-        <div className="mb-5 inline-flex items-center gap-2 text-white">
-          <CheckCircle2 className="h-5 w-5" />
-          <span
-            className="text-[10px] uppercase tracking-[0.3em] text-[#9CA3AF]"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            Sesión agendada
-          </span>
+        <div className="mb-5 inline-flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-[#22C55E]" />
+          <span className="text-[13px] text-[#9CA3AF]">Sesión agendada</span>
         </div>
 
         <h1
@@ -132,12 +127,7 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
           ) : (
             <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 text-[#6B7280]">
               <Play className="h-8 w-8" />
-              <span
-                className="text-[10px] uppercase tracking-[0.25em]"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
-              >
-                Vídeo en breve
-              </span>
+              <span className="text-[13px]">Vídeo en breve</span>
             </div>
           )}
         </div>
@@ -151,12 +141,9 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
         </h2>
 
         <div className="mb-8 space-y-4">
-          <div className="border-l-2 border-white pl-5">
-            <p
-              className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-[#9CA3AF]"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              01 — Conéctate sin distracciones
+          <div className="border-l-2 border-[#22C55E] pl-5">
+            <p className="mb-1.5 text-[15px] font-medium text-white">
+              <span className="text-[#22C55E]">01</span> · Conéctate sin distracciones
             </p>
             <p className="text-base leading-relaxed text-[#C7CBD1]">
               Busca un sitio tranquilo donde nadie te moleste. Ten papel y boli para tus dudas, ponte
@@ -164,11 +151,8 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
             </p>
           </div>
           <div className="border-l-2 border-[#2A2D34] pl-5">
-            <p
-              className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-[#9CA3AF]"
-              style={{ fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              02 — Llega con tu ruta más o menos clara
+            <p className="mb-1.5 text-[15px] font-medium text-white">
+              <span className="text-[#22C55E]">02</span> · Llega con tu ruta más o menos clara
             </p>
             <p className="text-base leading-relaxed text-[#C7CBD1]">
               Haz el test de personalidad y echa un ojo a las 3 rutas — <strong className="text-white">Marketing</strong>,{" "}
@@ -184,7 +168,7 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
           href={test}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-8 inline-flex h-12 w-full max-w-md items-center justify-center gap-2 rounded-none bg-white px-6 text-[15px] font-semibold text-[#0F0F12] transition-colors hover:bg-[#F5F6F7]"
+          className="mb-8 inline-flex h-12 w-full max-w-md items-center justify-center gap-2 rounded-none bg-white px-6 text-[15px] font-semibold text-[#0F0F12] transition-colors hover:bg-[#22C55E] hover:text-white"
           style={{ fontFamily: "'Inter Tight', sans-serif" }}
         >
           ¿Aún no has hecho el test? Hazlo aquí
@@ -193,22 +177,14 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
 
         {/* Puntualidad */}
         <div className="border border-[#2A2D34] bg-[#141418] p-5">
-          <p
-            className="mb-2 text-[10px] uppercase tracking-[0.25em] text-[#9CA3AF]"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            Importante
-          </p>
+          <p className="mb-2 text-[13px] font-medium text-[#22C55E]">Importante</p>
           <p className="text-sm leading-relaxed text-[#C7CBD1]">
             Sé puntual. Las plazas son limitadas: si no puedes asistir, cancela con tiempo para que
             otra persona pueda cogerla.
           </p>
         </div>
 
-        <footer
-          className="pt-10 text-[10px] uppercase tracking-[0.25em] text-[#4B5159]"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
+        <footer className="pt-10 text-[13px] text-[#6B7280]">
           © Capital Hub · Adrián Villanueva
         </footer>
       </div>
