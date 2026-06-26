@@ -143,3 +143,9 @@ De momento SIN ManyChat: el setter abre IG/WhatsApp manualmente. Cuando se react
 - El opt-in ahora dispara `test_personalidad_lead` + `Lead` (Pixel + CAPI, dedup por event_id, con UTMs). Antes el funnel NO enviaba nada a Meta.
 - `TEST_URL` actualizado a `https://pdi.equilibria.com/#/instructions/FULLES`.
 - Handle de Instagram corregido a `adrianvillanuevarios`.
+
+### 2026-06-26 — Pasada de diseño WOW (tipografía limpia + verde de acento)
+- Landing + gracias rediseñados: fuera los labels mono espaciados en mayúsculas → **Inter normal y legible** (regla [[feedback-tipografia-normal-legible]]).
+- **Verde de marca `#22C55E` como acento** (regla nueva [[feedback-brandkit-absoluto]]): punto de estado, `+500.000` en verde, motivo "4 colores" con el verde de protagonista, CTA que se llena de verde al hover, focus de inputs verde, checks/pasos/"Recomendado" en verde, glow verde sutil.
+- Motion intacto (entrada escalonada, headline con clip, count-up, botón magnético, reveals al scroll). Copy y lógica del opt-in **sin tocar**.
+- Componentes: `src/features/funnel-test-personalidad/components/{landing,thank-you}.tsx`. (`dashboard-section.tsx` es código muerto, no se usa.)
