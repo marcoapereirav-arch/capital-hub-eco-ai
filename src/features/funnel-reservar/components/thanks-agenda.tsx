@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle2, ExternalLink, Play, Volume2 } from "lucide-react"
+import { CheckCircle2, ExternalLink, Play, Volume2, Loader2 } from "lucide-react"
 import { FUNNEL_RESERVAR } from "../config"
 
 /**
@@ -26,22 +26,27 @@ type Props = { videoGuid?: string; libraryId?: string; testUrl?: string }
  */
 function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
   const [unmuted, setUnmuted] = useState(false)
-  const [posterGone, setPosterGone] = useState(false)
+  const [loading, setLoading] = useState(true)
   const base = `https://iframe.mediadelivery.net/embed/${lib}/${guid}`
-  const poster = `https://${FUNNEL_RESERVAR.BUNNY_CDN}/${guid}/thumbnail.jpg`
   const src = unmuted
     ? `${base}?autoplay=true&muted=false&playsinline=true&preload=true`
     : `${base}?autoplay=true&muted=true&loop=true&playsinline=true&preload=true`
 
-  // Re-muestra el poster en cada (re)carga del iframe y lo desvanece cuando ya hay vídeo.
+  // Animación de carga mientras el vídeo bufferea; se desvanece cuando ya está reproduciéndose
+  // (nunca se ve un frame congelado). Se re-muestra en cada recarga (al activar el sonido).
   useEffect(() => {
-    setPosterGone(false)
-    const t = setTimeout(() => setPosterGone(true), 1600)
+    setLoading(true)
+    const t = setTimeout(() => setLoading(false), 1500)
     return () => clearTimeout(t)
   }, [src])
 
   return (
     <div className="relative bg-[#0F0F12]" style={{ paddingTop: "56.25%" }}>
+      <style>{`
+        @keyframes tp-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+        .tp-shimmer { background: linear-gradient(100deg, #0F0F12 28%, #1c1c22 50%, #0F0F12 72%); background-size: 200% 100%; animation: tp-shimmer 1.25s ease-in-out infinite; }
+      `}</style>
+
       <iframe
         key={src}
         src={src}
@@ -51,16 +56,17 @@ function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
       />
 
-      {/* Poster que tapa el gris de carga de Bunny */}
-      <img
-        src={poster}
-        alt=""
+      {/* Animación de carga (cubre el buffering; se desvanece al empezar el vídeo) */}
+      <div
         aria-hidden
-        className={`pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${posterGone ? "opacity-0" : "opacity-100"}`}
-      />
+        className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-500 ${loading ? "opacity-100" : "opacity-0"}`}
+      >
+        <div className="tp-shimmer absolute inset-0" />
+        <Loader2 className="relative h-8 w-8 animate-spin text-white/60" />
+      </div>
 
       {/* Overlay de activar sonido — legible, tipografía normal */}
-      {!unmuted && (
+      {!unmuted && !loading && (
         <button
           type="button"
           onClick={() => setUnmuted(true)}
