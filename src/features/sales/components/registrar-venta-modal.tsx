@@ -1,8 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { X, Check, Loader2, AlertCircle, Phone, ShoppingBag, ChevronRight } from "lucide-react"
+import { X, Check, Loader2, AlertCircle, Phone, ShoppingBag, ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type Closer = { id: string; full_name: string | null; email: string; role: string }
 type CloseType = "sales_call" | "direct"
@@ -278,13 +284,10 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
           {/* Cerró */}
           <section>
             <Label required>Quién cerró</Label>
-            <Select
+            <CloserPicker
+              closers={config?.closers ?? []}
               value={form.closer_user_id}
-              onChange={pickCloser}
-              options={(config?.closers ?? []).map((c) => ({ value: c.id, label: prettifyName(c.full_name, c.email) }))}
-              placeholder="Selecciona quien cerró"
-              className="mt-1.5"
-              required
+              onPick={pickCloser}
             />
           </section>
 
@@ -434,4 +437,94 @@ function prettifyName(fullName: string | null, email: string): string {
     .filter(Boolean)
     .map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
     .join(" ")
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Admin",
+  admin: "Admin",
+  marketing: "Marketing",
+  closer: "Closer",
+  setter: "Setter",
+  formador: "Formador",
+}
+
+function roleLabel(role: string): string {
+  return ROLE_LABELS[role] ?? role
+}
+
+function deriveInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+/**
+ * Selector de "quién cerró". Dropdown brandkit (Radix, portalea a body) en vez
+ * de un <select> nativo: las opciones nativas las pinta el SO y en dark se ven
+ * apretadas/ilegibles. Aquí cada persona se muestra con avatar de iniciales,
+ * nombre y rol, con aire entre filas. La lista la alimenta /api/admin/sales/register
+ * (todas las personas activas del SaaS, sincronizadas en vivo).
+ */
+function CloserPicker({
+  closers,
+  value,
+  onPick,
+}: {
+  closers: Closer[]
+  value: string
+  onPick: (id: string) => void
+}) {
+  const selected = closers.find((c) => c.id === value)
+  return (
+    <div className="mt-1.5">
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              fieldBase,
+              value ? fieldOk : fieldRequiredEmpty,
+              "flex items-center justify-between gap-2 text-left"
+            )}
+          >
+            <span className={cn("truncate", !selected && "text-red-300/60")}>
+              {selected ? prettifyName(selected.full_name, selected.email) : "Selecciona quién cerró"}
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-h-72 min-w-[var(--radix-dropdown-menu-trigger-width)]">
+          {closers.length === 0 ? (
+            <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+              No hay personas en el equipo todavía
+            </div>
+          ) : (
+            closers.map((c) => {
+              const name = prettifyName(c.full_name, c.email)
+              const active = value === c.id
+              return (
+                <DropdownMenuItem
+                  key={c.id}
+                  onSelect={() => onPick(c.id)}
+                  className="flex items-center gap-2.5 py-2"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-mono font-semibold uppercase text-secondary-foreground">
+                    {deriveInitials(name)}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm text-foreground">{name}</span>
+                    <span className="truncate text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      {roleLabel(c.role)}
+                    </span>
+                  </span>
+                  {active && <Check className="ml-auto h-4 w-4 shrink-0 text-green-400" />}
+                </DropdownMenuItem>
+              )
+            })
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
 }

@@ -255,7 +255,12 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET — devuelve los closers disponibles (super_admin + closer)
+ * GET — devuelve las personas que pueden figurar como "quién cerró".
+ *
+ * Fuente única = tabla `profiles` (la MISMA que alimenta /team). Cualquier
+ * persona activa del SaaS, sin importar su rol (super_admin, marketing, closer,
+ * setter, formador…), aparece aquí. Al crear un miembro nuevo en /team se refleja
+ * automáticamente: este endpoint se refetchea cada vez que se abre el modal de venta.
  */
 export async function GET() {
   const supabase = await createServerClient()
@@ -266,9 +271,8 @@ export async function GET() {
   const { data } = await admin
     .from("profiles")
     .select("id, full_name, email, role")
-    .in("role", ["super_admin", "closer"])
     .eq("active", true)
-    .order("full_name")
+    .order("full_name", { nullsFirst: false })
 
   return NextResponse.json({
     closers: data ?? [],

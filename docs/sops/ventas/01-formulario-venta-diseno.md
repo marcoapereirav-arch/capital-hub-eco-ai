@@ -81,12 +81,13 @@ Nota: la BD permite varios productos por contacto, pero la UI default selecciona
 
 ### Sección 5 — Quién cerró
 ```
-* Comercial que cerró    [select]
-  (poblar desde tabla profiles con role='closer' o 'super_admin')
-  · Adrián
-  · Nagai
-  · (futuros closers — aparecen aquí al invitarlos al equipo)
+* Quién cerró    [dropdown brandkit, NO <select> nativo]
+  (poblar desde tabla profiles — TODAS las personas activas del SaaS, cualquier rol)
+  · Cada persona con avatar de iniciales + nombre + rol
+  · (al invitar a alguien nuevo al equipo aparece aquí automáticamente)
 ```
+
+**Regla (2026-06-26):** la lista de "quién cerró" la alimenta `GET /api/admin/sales/register` desde `profiles WHERE active = true` — **sin filtrar por rol**. Cualquiera del equipo (super_admin, marketing, closer, setter, formador) puede figurar como cerrador. Antes filtraba `role IN ('super_admin','closer')` y faltaban nombres. Se sincroniza en vivo: el modal refetchea el endpoint cada vez que se abre, así que un miembro recién invitado aparece sin redeploy. La UI es un `DropdownMenu` de Radix (portaleado, brandkit) en vez de un `<select>` nativo, porque las opciones nativas en dark se ven apretadas/ilegibles ("pegadas").
 
 ### Sección 6 — Notas del closer (opcional)
 ```
