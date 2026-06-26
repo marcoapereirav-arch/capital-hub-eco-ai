@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Calendar, Clock, Trash2, Plus, AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react"
+import { Calendar, Trash2, Plus, AlertTriangle, CheckCircle2, ExternalLink, ExternalLink as ExtLink, XCircle, UserX } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageContainer } from "@/components/ui/page-container"
+import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
 const WEEKDAYS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
@@ -46,7 +47,7 @@ export function CalendarioAdmin() {
   const [rules, setRules] = useState<Rule[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<"bookings" | "rules" | "settings">("bookings")
+  const [tab, setTab] = useState<"calendly" | "bookings" | "rules" | "settings">("calendly")
   const [newRule, setNewRule] = useState<{ weekday: number; start: string; end: string }>({ weekday: 1, start: "10:00", end: "14:00" })
 
   useEffect(() => { load() }, [])
@@ -123,7 +124,8 @@ export function CalendarioAdmin() {
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border">
         {([
-          ["bookings", `Reservas (${upcoming.length})`],
+          ["calendly", "Calendly"],
+          ["bookings", `Calendar propio (${upcoming.length})`],
           ["rules", `Horarios (${rules.length})`],
           ["settings", "Configuración"],
         ] as const).map(([k, label]) => (
@@ -139,6 +141,9 @@ export function CalendarioAdmin() {
           </button>
         ))}
       </div>
+
+      {/* CALENDLY TAB */}
+      {tab === "calendly" && <CalendlyEventsTab />}
 
       {/* BOOKINGS TAB */}
       {tab === "bookings" && (
@@ -331,6 +336,187 @@ function BookingRow({ booking }: { booking: Booking }) {
       )}>
         {booking.status}
       </span>
+    </div>
+  )
+}
+
+type CalendlyEvent = {
+  uri: string
+  name: string | null
+  start_time: string
+  end_time: string | null
+  status: string | null
+  meeting_url: string | null
+  invitee_email: string | null
+  invitee_name: string | null
+  invitee_phone: string | null
+  invitee_cancellation_reason: string | null
+  event_type_uri: string | null
+  event_type_name: string | null
+  event_type_duration: number | null
+}
+
+type CalendlyKpis = { total: number; active: number; canceled: number; no_show: number }
+
+/**
+ * Tab Calendly — reservas sincronizadas vía webhook desde Calendly.
+ * Filtrado por rango de fechas via PeriodFilter (mismo componente que el resto del OS).
+ * KPIs del header dependen del rango activo.
+ */
+function CalendlyEventsTab() {
+  const [range, setRange] = useState<PeriodRange | undefined>(undefined)
+  const [events, setEvents] = useState<CalendlyEvent[]>([])
+  const [kpis, setKpis] = useState<CalendlyKpis>({ total: 0, active: 0, canceled: 0, no_show: 0 })
+  const [eventTypes, setEventTypes] = useState<{ uri: string; name: string }[]>([])
+  const [loading, setLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "canceled" | "no_show">("all")
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all")
+
+  useEffect(() => {
+    if (!range) return
+    setLoading(true)
+    const params = new URLSearchParams({
+      from: range.from.toISOString().slice(0, 10),
+      to: range.to.toISOString().slice(0, 10),
+    })
+    fetch(`/api/admin/calendly/events?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setEvents(d.events ?? [])
+        setKpis(d.kpis ?? { total: 0, active: 0, canceled: 0, no_show: 0 })
+        setEventTypes(d.event_types ?? [])
+      })
+      .finally(() => setLoading(false))
+  }, [range])
+
+  const filtered = events.filter((e) => {
+    if (statusFilter !== "all" && e.status !== statusFilter) return false
+    if (eventTypeFilter !== "all" && e.event_type_uri !== eventTypeFilter) return false
+    return true
+  })
+
+  return (
+    <div className="space-y-4">
+      {/* Filtro de período + filtros */}
+      <div className="flex flex-wrap items-center gap-2 justify-between">
+        <PeriodFilter value={range} onChange={setRange} defaultPreset="30d" />
+        <div className="flex items-center gap-2">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+            className="rounded-sm border border-border/40 bg-background px-2 py-1.5 text-xs"
+          >
+            <option value="all">Todos los estados</option>
+            <option value="active">Activas</option>
+            <option value="canceled">Canceladas</option>
+            <option value="no_show">No show</option>
+          </select>
+          <select
+            value={eventTypeFilter}
+            onChange={(e) => setEventTypeFilter(e.target.value)}
+            className="rounded-sm border border-border/40 bg-background px-2 py-1.5 text-xs"
+          >
+            <option value="all">Todos los event types</option>
+            {eventTypes.map((et) => <option key={et.uri} value={et.uri}>{et.name}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* KPIs del rango */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <KpiCard icon={Calendar} label="Reservas" value={kpis.total} color="text-foreground" />
+        <KpiCard icon={CheckCircle2} label="Activas" value={kpis.active} color="text-green-400" />
+        <KpiCard icon={XCircle} label="Canceladas" value={kpis.canceled} color="text-red-400" />
+        <KpiCard icon={UserX} label="No show" value={kpis.no_show} color="text-amber-400" />
+      </div>
+
+      {/* Tabla */}
+      {loading ? (
+        <div className="text-sm text-muted-foreground py-8 text-center">Cargando…</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border/40">
+          {events.length === 0
+            ? "Sin reservas en este período."
+            : "Ninguna reserva matchea los filtros."}
+        </div>
+      ) : (
+        <div className="rounded-md border border-border/40 divide-y divide-border/40">
+          {filtered.map((e) => <CalendlyEventRow key={e.uri} event={e} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CalendlyEventRow({ event }: { event: CalendlyEvent }) {
+  const d = new Date(event.start_time)
+  const dateStr = d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short", year: "2-digit" })
+  const timeStr = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+  const statusColors: Record<string, string> = {
+    active: "border-green-500/40 text-green-400 bg-green-500/[0.05]",
+    canceled: "border-red-500/40 text-red-400 bg-red-500/[0.05]",
+    no_show: "border-amber-500/40 text-amber-400 bg-amber-500/[0.05]",
+  }
+  const statusLabels: Record<string, string> = {
+    active: "Activa",
+    canceled: "Cancelada",
+    no_show: "No show",
+  }
+  return (
+    <div className="px-3 py-3 flex items-start justify-between gap-3 hover:bg-card/30">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            {dateStr} · {timeStr}
+          </span>
+          {event.event_type_name && (
+            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-border/40 text-muted-foreground">
+              {event.event_type_name} ({event.event_type_duration}min)
+            </span>
+          )}
+          <span className={cn(
+            "text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
+            statusColors[event.status ?? ""] ?? "border-border/40 text-muted-foreground"
+          )}>
+            {statusLabels[event.status ?? ""] ?? event.status}
+          </span>
+        </div>
+        <div className="text-sm">
+          {event.invitee_name ?? "(sin nombre)"}
+          <span className="text-muted-foreground text-xs ml-2">{event.invitee_email}</span>
+          {event.invitee_phone && (
+            <span className="text-muted-foreground text-xs ml-2">· {event.invitee_phone}</span>
+          )}
+        </div>
+        {event.invitee_cancellation_reason && (
+          <div className="text-xs text-red-400/80 mt-1 italic">
+            Razón cancelación: {event.invitee_cancellation_reason}
+          </div>
+        )}
+      </div>
+      {event.meeting_url && (
+        <a
+          href={event.meeting_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          title="Abrir meeting"
+        >
+          <ExtLink className="h-3 w-3" />
+        </a>
+      )}
+    </div>
+  )
+}
+
+function KpiCard({ icon: Icon, label, value, color }: { icon: typeof Calendar; label: string; value: number; color: string }) {
+  return (
+    <div className="rounded-md border border-border/40 bg-card/30 px-3 py-2.5">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
+        <Icon className={cn("h-3.5 w-3.5", color)} />
+      </div>
+      <div className={cn("text-xl font-semibold leading-none", color)}>{value}</div>
     </div>
   )
 }

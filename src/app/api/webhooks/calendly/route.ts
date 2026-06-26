@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { verifyWebhookSignature } from "@/lib/calendly"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
+import { notifyAdrianBooking } from "@/lib/email/senders"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -21,17 +22,104 @@ function slugify(s: string): string {
 type Admin = ReturnType<typeof getAdminClient>
 
 /**
- * Mueve la película del contacto en el pipeline a partir de un evento de Calendly.
- * - created: agenda → 'agendado' (guarda no-retroceso, nunca degrada alumno). Si no
- *   existe el contacto (agendó sin pasar por el test), lo crea.
- * - canceled: si seguía 'agendado' → 'seguimiento'.
- * - no_show: → 'no_show' salvo que sea alumno.
+ * Tags visuales del CRM aplicados por el webhook según el tipo de evento Calendly.
+ * Decisión Marco 2026-06-20: en lugar de "esperar 7 días tras cancelar", mover
+ * al stage final (seguimiento / no_show) inmediato y aplicar un tag de color
+ * para tener referencia visual rápida en el kanban del CRM.
+ */
+const TAG_BY_KIND: Record<string, string> = {
+  created: "agendado_calendly",
+  canceled: "cancelado_llamada",
+  no_show: "no_show",
+}
+
+async function applyTag(admin: Admin, contactId: string, tagName: string) {
+  const { data: tag } = await admin.from("tags").select("id").eq("name", tagName).maybeSingle()
+  if (!tag?.id) return
+  await admin.from("contact_tags").upsert({
+    contact_id: contactId,
+    tag_id: tag.id,
+    assigned_at: new Date().toISOString(),
+  }, { onConflict: "contact_id,tag_id" })
+}
+
+/**
+ * Notifica al host (Adrián u quien tenga el calendario) por DOS canales:
+ *  1. Email transaccional (notifyAdrianBooking — template ya existente)
+ *  2. In-app notification en el OS (tabla `notifications` que la campana lee)
+ *
+ * Para no_show + canceled se notifica también — Adrián debe saber qué pasó con
+ * sus citas reservadas para llamar/reagendar/follow-up al lead.
+ */
+async function notifyHost(
+  admin: Admin,
+  kind: "created" | "canceled" | "no_show",
+  inv: { email: string; name: string; phone?: string | null },
+  scheduledStart: string,
+  eventName: string,
+) {
+  // host = super_admins con cuenta en profiles (Marco + Adrián). Notif a ambos.
+  const { data: hosts } = await admin
+    .from("profiles")
+    .select("id, email, full_name")
+    .eq("role", "super_admin")
+    .eq("active", true)
+
+  if (!hosts || hosts.length === 0) return
+
+  const dt = new Date(scheduledStart).toLocaleString("es-ES", {
+    weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+    timeZone: "Europe/Madrid",
+  })
+  const kindLabel = kind === "created" ? "📅 Nueva reserva" : kind === "canceled" ? "❌ Cancelación" : "🚫 No show"
+  const titles: Record<typeof kind, string> = {
+    created: `${kindLabel} — ${inv.name}`,
+    canceled: `${kindLabel} — ${inv.name}`,
+    no_show: `${kindLabel} — ${inv.name}`,
+  }
+  const bodies: Record<typeof kind, string> = {
+    created: `${inv.name} (${inv.email}) reservó "${eventName}" para el ${dt}.`,
+    canceled: `${inv.name} (${inv.email}) canceló la reserva del ${dt}. Movido a 'seguimiento'.`,
+    no_show: `${inv.name} (${inv.email}) no se presentó a la cita del ${dt}. Movido a 'no_show'.`,
+  }
+
+  // 1) In-app notifications (insert una row por host)
+  const rows = hosts.map((h) => ({
+    user_id: h.id,
+    title: titles[kind],
+    body: bodies[kind],
+    type: `calendly_${kind}`,
+    data: { invitee_email: inv.email, invitee_name: inv.name, scheduled_start: scheduledStart, event_name: eventName },
+  }))
+  await admin.from("notifications").insert(rows).then(() => null, (e) => console.error("[calendly/notif] in-app insert failed", e))
+
+  // 2) Email — solo para 'created' usamos el template existente notifyAdrianBooking;
+  //    para canceled/no_show usamos el mismo template con etiqueta clara en el subject.
+  try {
+    await notifyAdrianBooking({
+      fullName: inv.name,
+      email: inv.email,
+      phone: inv.phone ?? null,
+      slotStartIso: scheduledStart,
+      notes: kind === "created" ? `Reserva Calendly: ${eventName}` : kind === "canceled" ? `CANCELACIÓN ${eventName}` : `NO SHOW ${eventName}`,
+    })
+  } catch (e) {
+    console.error("[calendly/notif] email failed", e)
+  }
+}
+
+/**
+ * Mueve la película del contacto en el pipeline + aplica tag visual + notif al host.
+ *  - created: agenda → 'agendado' (guarda no-retroceso, nunca degrada alumno).
+ *  - canceled: inmediato → 'seguimiento' + tag 'cancelado_llamada' (NO espera 7 días).
+ *  - no_show: → 'no_show' (salvo alumno) + tag 'no_show'.
  */
 async function moveContactForCalendly(
   admin: Admin,
   kind: "created" | "canceled" | "no_show",
   inv: { email?: string; name?: string; phone?: string | null },
-  scheduledStart?: string,
+  scheduledStart: string,
+  eventName: string,
 ) {
   const email = inv.email?.toLowerCase().trim()
   if (!email) return
@@ -41,6 +129,8 @@ async function moveContactForCalendly(
     .select("id, stage, pipeline_id")
     .ilike("email", email)
     .maybeSingle()
+
+  let contactId: string | undefined = existing?.id
 
   if (kind === "created") {
     if (existing) {
@@ -52,7 +142,6 @@ async function moveContactForCalendly(
       }).eq("id", existing.id)
       await logJourney(admin, existing.id, "call_booked", "Agendó llamada (Calendly)")
     } else {
-      // Agendó sin pasar por el test → crear contacto en el funnel
       const { data: pipeline } = await admin
         .from("pipelines").select("id").eq("slug", "test-personalidad").maybeSingle()
       const fullName = inv.name?.trim() || email
@@ -63,30 +152,33 @@ async function moveContactForCalendly(
         slug: slugify(fullName) + "_" + Math.random().toString(36).slice(2, 8),
         stage: "agendado",
         pipeline_id: pipeline?.id ?? null,
-        origin: "calendly_online_coffee",
-        source: "calendly_online_coffee",
+        origin: "calendly_direct",
+        source: "calendly_direct",
       }).select("id").single()
-      if (created?.id) await logJourney(admin, created.id, "call_booked", "Agendó llamada (Calendly, sin test previo)")
+      contactId = created?.id
+      if (contactId) await logJourney(admin, contactId, "call_booked", "Agendó llamada (Calendly, sin test previo)")
     }
-    return
-  }
-
-  if (!existing) return
-
-  if (kind === "canceled") {
+  } else if (kind === "canceled" && existing) {
+    // Decisión Marco 2026-06-20: cancelación → seguimiento INMEDIATO (no 7 días).
+    // El tag 'cancelado_llamada' (rojo) deja la huella visual en el CRM.
     if (existing.stage === "agendado") {
       await admin.from("contacts").update({ stage: "seguimiento", updated_at: new Date().toISOString() }).eq("id", existing.id)
     }
     await logJourney(admin, existing.id, "call_cancelled", "Canceló la llamada (Calendly)")
-    return
-  }
-
-  if (kind === "no_show") {
-    // no_show no degrada a un alumno (won)
+  } else if (kind === "no_show" && existing) {
     if (existing.stage !== "alumno") {
       await admin.from("contacts").update({ stage: "no_show", updated_at: new Date().toISOString() }).eq("id", existing.id)
     }
     await logJourney(admin, existing.id, "call_no_show", "No se presentó a la llamada (Calendly)")
+  }
+
+  // Aplicar tag visual + notif al host
+  if (contactId) {
+    const tagName = TAG_BY_KIND[kind]
+    if (tagName) await applyTag(admin, contactId, tagName)
+  }
+  if (inv.email && inv.name) {
+    await notifyHost(admin, kind, { email: inv.email, name: inv.name, phone: inv.phone ?? null }, scheduledStart, eventName)
   }
 }
 
@@ -184,14 +276,28 @@ export async function POST(req: NextRequest) {
         event === "invitee.created" ? "created" : "canceled",
         { email: inv.email, name: inv.name, phone: inv.text_reminder_number ?? null },
         scheduled.start_time,
+        scheduled.name,
       )
     } else if (event === "invitee_no_show.created") {
+      // status update + read del scheduled_event guardado para tener start_time + name (no vienen completos en este payload)
       await admin.from("calendly_scheduled_events").update({
         status: "no_show",
         updated_at: new Date().toISOString(),
       }).eq("uri", scheduled.uri)
 
-      await moveContactForCalendly(admin, "no_show", { email: inv.email, name: inv.name })
+      const { data: savedEvent } = await admin
+        .from("calendly_scheduled_events")
+        .select("start_time, name")
+        .eq("uri", scheduled.uri)
+        .maybeSingle()
+
+      await moveContactForCalendly(
+        admin,
+        "no_show",
+        { email: inv.email, name: inv.name },
+        savedEvent?.start_time ?? scheduled.start_time ?? new Date().toISOString(),
+        savedEvent?.name ?? scheduled.name ?? "(evento)",
+      )
     }
 
     return NextResponse.json({ ok: true, event, uri: scheduled.uri })
