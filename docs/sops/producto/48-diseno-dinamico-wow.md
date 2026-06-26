@@ -37,3 +37,13 @@ El WOW NUNCA rompe el branding. Todo el movimiento y los efectos viven dentro de
 
 ### 2026-06-22 — Creación
 Marco fija el diseño dinámico/WOW como regla principal para todos los funnels y landings, aprovechando que la base de copy + automatizaciones del funnel Test de Personalidad queda lista. El efecto WOW siempre dentro del brandkit.
+
+## Color de acento: VERDE (Marco, 2026-06-26)
+
+Se levanta el veto al verde. El **verde es el color de acento oficial** de Capital Hub (ya estaba en iconos/estados del OS). La base sigue siendo monocromo b&w; el verde es para detalles, estados, acciones y reproductores.
+
+- `#22C55E` (`green-500`) — verde sólido/acento principal (badges, bordes, **controles de reproductores de vídeo**).
+- `#4ADE80` (`green-400`) — verde claro para iconos/texto sobre fondo oscuro.
+- **TODOS los reproductores de vídeo (Bunny) van en verde**, en OS y App.
+- Cómo se aplica al player de Bunny: Account API `PlayerKeyColor` → requiere `BUNNY_ACCOUNT_API_KEY` en `.env.local` (la stream key da 401). Es un setting por library; aplicar a todas las libraries en uso (OS + App).
+- Otros neones (violet/cyan/ámbar fluor) siguen prohibidos. Ver [[feedback-brandkit-absoluto]].
