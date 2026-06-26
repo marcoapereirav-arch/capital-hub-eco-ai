@@ -30,11 +30,11 @@ const TYPE_ICONS: Record<string, { icon: typeof Bell; color: string }> = {
  *
  * El drawer se renderiza con <Sheet> (Radix Dialog) que SIEMPRE portalea a
  * `document.body`. Esto es deliberado y de raíz: el trigger vive dentro de la
- * píldora global <OsTopBar>, que usa `backdrop-blur`. Un ancestro con
+ * <TopBar>/<MobileHeader>, que usan `backdrop-blur`. Un ancestro con
  * backdrop-filter/transform crea un *containing block* para los hijos `fixed`,
- * así que un drawer `fixed inset-0` anidado quedaría atrapado dentro de esa
- * píldora diminuta (se "expandía toda jodida arriba a la derecha"). Al portalear
- * a body, el panel se ancla SIEMPRE al viewport, encaje perfecto, sin importar
+ * así que un drawer `fixed inset-0` anidado quedaría atrapado dentro de ese
+ * contenedor (se "expandía toda jodida arriba a la derecha"). Al portalear a
+ * body, el panel se ancla SIEMPRE al viewport, encaje perfecto, sin importar
  * dónde viva el botón. Bug recurrente cerrado definitivamente — 2026-06-26.
  */
 export function NotificationsBell() {

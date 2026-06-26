@@ -7,7 +7,7 @@ import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { PushNotificationPrompt } from "@/features/notifications/components/PushNotificationPrompt"
 import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { RegistrarVentaWidget } from "@/features/sales/components/registrar-venta-widget"
-import { OsTopBar } from "@/features/shell/components/os-top-bar"
+import { TopBar } from "@/features/shell/components/top-bar"
 import { ViewAsRoleBanner } from "@/features/shell/components/view-as-role-banner"
 import { createClient } from "@/lib/supabase/server"
 import { getEffectiveRole, VIEW_AS_COOKIE_NAME, loadRolePermsFromDb, setCachedRolePerms } from "@/lib/auth/role-access"
@@ -55,6 +55,9 @@ export default async function MainLayout({
       {/* Contenedor principal: en movil renderiza chrome nativo, en desktop usa Sidebar */}
       <SidebarInset>
         <MobileHeader userEmail={userEmail} userName={userName} />
+        {/* Barra superior única (desktop): trigger + título + campana, coherente
+            en TODAS las secciones. Su línea se alinea con la del sidebar. */}
+        <TopBar />
         {isImpersonating && typeof userRole === "string" && (
           <ViewAsRoleBanner viewingAs={userRole} />
         )}
@@ -83,9 +86,6 @@ export default async function MainLayout({
       <PushNotificationPrompt userId={user.id} />
       <UpdateNotifier />
       <RegistrarVentaWidget />
-      {/* OsTopBar global: la campana de notif vive aquí SIEMPRE, no en cada page header.
-          Visible en todas las rutas del OS. */}
-      <OsTopBar />
     </SidebarProvider>
   )
 }

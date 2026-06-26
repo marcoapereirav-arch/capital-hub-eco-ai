@@ -1,22 +1,14 @@
-"use client"
-
-import { SidebarTrigger } from "@/components/ui/sidebar"
-
 /**
- * Header de sección (solo desktop). Lado izquierdo: trigger sidebar + título.
+ * DEPRECADO — no renderiza nada.
  *
- * NOTA: la campana de notificaciones NO vive aquí — vive en <OsTopBar>
- * global montado una sola vez en (main)/layout.tsx. Eso garantiza que el
- * bell está SIEMPRE visible, no importa qué página estés viendo o si esa
- * página usa este header o no.
+ * El header de sección (trigger del sidebar + título + campana) ahora vive en
+ * una barra superior ÚNICA y global: <TopBar> (src/features/shell/components/top-bar.tsx),
+ * montada una sola vez en (main)/layout.tsx. Así el chrome superior es idéntico y
+ * coherente en TODAS las secciones, y su línea inferior se alinea con la del sidebar.
+ *
+ * Se mantiene este componente como no-op para no romper las páginas/CrmTabsHeader
+ * que todavía lo invocan con `title`. El título lo deriva <TopBar> de la ruta.
  */
-export function ShellHeader({ title }: { title: string }) {
-  return (
-    <header className="hidden h-14 shrink-0 items-center gap-3 border-b border-border px-4 md:flex">
-      <SidebarTrigger className="-ml-1 h-7 w-7 text-muted-foreground hover:text-foreground" />
-      <h1 className="font-heading text-sm font-semibold tracking-wide uppercase text-foreground">
-        {title}
-      </h1>
-    </header>
-  )
+export function ShellHeader(_props: { title: string }) {
+  return null
 }

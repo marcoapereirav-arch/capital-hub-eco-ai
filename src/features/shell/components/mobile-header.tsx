@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-// NotificationsBell vive en <OsTopBar> global (layout principal), no aquí
+import { NotificationsBell } from "@/features/notifications/components/NotificationsPanel"
 import { navAll } from "./nav-config"
 
 interface MobileHeaderProps {
@@ -41,19 +41,21 @@ export function MobileHeader({ userEmail, userName }: MobileHeaderProps) {
       <h1 className="font-heading text-sm font-semibold uppercase tracking-[0.15em] text-foreground">
         {title}
       </h1>
-      {/* Espacio reservado a la derecha para que el OsTopBar global (campana)
-          no se solape con el avatar. Padding-right del header. */}
-      <Link
-        href="/dashboard"
-        className="tap-target flex items-center justify-center mr-12"
-        aria-label="Perfil"
-      >
-        <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-secondary text-[11px] font-mono font-semibold text-secondary-foreground">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-      </Link>
+      {/* Derecha: campana + avatar (perfil), alineados con la línea del header. */}
+      <div className="flex items-center gap-1">
+        <NotificationsBell />
+        <Link
+          href="/dashboard"
+          className="tap-target flex items-center justify-center"
+          aria-label="Perfil"
+        >
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-secondary text-[11px] font-mono font-semibold text-secondary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
+      </div>
     </header>
   )
 }
