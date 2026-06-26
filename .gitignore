@@ -93,3 +93,8 @@ tsconfig.tsbuildinfo
 
 # Remotion source clips (heavy, no commit)
 /public/raw/
+
+# Transcripts privados de reuniones (no commitear)
+Update_task_adrian_y_marco
+*.transcript
+/transcripts/
