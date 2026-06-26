@@ -129,8 +129,20 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
 4. P1: unificar fuente de rol (`app_metadata`), SMTP/`site_url` de prod, gating server-side por `formacion_asignada`.
 5. Limpieza P2: borrar código muerto, arreglar `isOwn`, montar o borrar `ChatBubble`, enlazar Q&A.
 
+## Notas para cuando se construya (recordatorios de Marco, 2026-06-26)
+
+- **Modelo de negocio HOY:** solo **high ticket**, para generar cash flow hasta el lanzamiento. Las
+  suscripciones (mensual/anual) + más llegan en el **futuro**, cuando se active el webinar. NO construir
+  suscripciones ahora. (El checkout Stripe del código es legacy, no es el proceso real.)
+- **Video de formaciones (Bunny):** hoy NO hay ninguna formación subida. Cuando se empiecen a subir, el
+  reproductor de Bunny debe quedar configurado **exactamente igual que el del funnel** (color verde + los
+  mismos ajustes). Misma regla en los dos lados — coincide con el brandkit ("reproductores siempre verdes").
+
 ## Cambios versionados
 
 - **2026-06-26 (v1):** Auditoría inicial completa de la App (build + 6 auditorías de código). Se establece la
   regla de que el estado de la App se refleja en el Knowledge del OS. Caveat de schema drift documentado: los
   hallazgos de RLS/seguridad son riesgos a confirmar contra la BD viva de la App.
+- **2026-06-26 (v2):** Aclaraciones de Marco. (a) Modelo HOY = solo high ticket (suscripciones = futuro, con
+  webinar) → no construir suscripciones ahora. (b) Regla: las formaciones se suben con la misma config verde de
+  Bunny que el funnel. (c) Marketplace, AI chat, Calendario y Leaderboards = futuro, no tocar hasta aviso.
