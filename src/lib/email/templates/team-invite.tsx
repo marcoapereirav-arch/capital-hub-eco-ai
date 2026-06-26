@@ -28,8 +28,8 @@ export function TeamInviteEmail({ fullName, invitedByName, role, acceptUrl, expi
         de <strong>Capital Hub</strong>.
       </P>
 
-      <Section style={{ backgroundColor: "rgba(55, 202, 55, 0.06)", border: `1px solid ${emailColors.accent}`, padding: 16, margin: "20px 0", borderRadius: 4 }}>
-        <Text style={{ fontFamily: "monospace", fontSize: 11, color: emailColors.accent, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 10px" }}>
+      <Section style={{ backgroundColor: emailColors.surface, border: `1px solid ${emailColors.border}`, padding: 16, margin: "20px 0", borderRadius: 4 }}>
+        <Text style={{ fontFamily: "monospace", fontSize: 11, color: emailColors.textDim, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 10px" }}>
           Tu rol
         </Text>
         <Text style={{ fontSize: 16, color: emailColors.text, fontWeight: 600, margin: 0 }}>

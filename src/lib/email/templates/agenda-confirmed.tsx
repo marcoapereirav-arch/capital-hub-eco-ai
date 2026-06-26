@@ -23,8 +23,8 @@ export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cance
         Tu llamada de 20 minutos conmigo está reservada. Te dejo los detalles:
       </P>
 
-      <Section style={{ backgroundColor: "rgba(55, 202, 55, 0.06)", border: `1px solid ${emailColors.accent}`, padding: 18, margin: "20px 0", borderRadius: 4 }}>
-        <Text style={{ fontSize: 12, color: emailColors.accent, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 8px" }}>
+      <Section style={{ backgroundColor: emailColors.surface, border: `1px solid ${emailColors.border}`, padding: 18, margin: "20px 0", borderRadius: 4 }}>
+        <Text style={{ fontSize: 12, color: emailColors.textDim, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 8px" }}>
           Tu cita
         </Text>
         <Text style={{ fontSize: 18, color: emailColors.text, fontWeight: 600, margin: "0 0 4px", textTransform: "capitalize" }}>

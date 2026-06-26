@@ -33,8 +33,8 @@ export function WelcomeAlumnoHTEmail({ fullName, product, inviteUrl, closerName 
         preparado para empezar hoy mismo.
       </P>
 
-      <Section style={{ backgroundColor: "rgba(55, 202, 55, 0.07)", border: `1px solid ${emailColors.accent}`, padding: 18, margin: "24px 0", borderRadius: 4 }}>
-        <Text style={{ fontFamily: "monospace", fontSize: 11, color: emailColors.accent, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 12px" }}>
+      <Section style={{ backgroundColor: emailColors.surface, border: `1px solid ${emailColors.border}`, padding: 18, margin: "24px 0", borderRadius: 4 }}>
+        <Text style={{ fontFamily: "monospace", fontSize: 11, color: emailColors.textDim, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 12px" }}>
           Cómo empezar
         </Text>
         <Text style={{ fontSize: 14, color: emailColors.text, margin: "0 0 6px", lineHeight: 1.55 }}>

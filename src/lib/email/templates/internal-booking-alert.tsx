@@ -18,11 +18,11 @@ export function InternalBookingAlert({ fullName, email, phone, slotStartIso, not
 
   return (
     <EmailLayout preview={`Nueva llamada agendada: ${fullName} el ${dateStr} a las ${timeStr}`}>
-      <Text style={{ fontFamily: "monospace", fontSize: 11, color: emailColors.accent, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 8px" }}>
+      <Text style={{ fontFamily: "monospace", fontSize: 11, color: emailColors.textDim, textTransform: "uppercase", letterSpacing: "0.15em", margin: "0 0 8px" }}>
         🔔 NUEVA LLAMADA AGENDADA
       </Text>
 
-      <Section style={{ backgroundColor: "rgba(55, 202, 55, 0.08)", border: `1px solid ${emailColors.accent}`, padding: 16, margin: "16px 0", borderRadius: 4 }}>
+      <Section style={{ backgroundColor: emailColors.surface, border: `1px solid ${emailColors.border}`, padding: 16, margin: "16px 0", borderRadius: 4 }}>
         <Text style={{ fontSize: 18, color: emailColors.text, fontWeight: 600, margin: "0 0 4px", textTransform: "capitalize" }}>{dateStr}</Text>
         <Text style={{ fontSize: 16, color: emailColors.text, margin: 0 }}>{timeStr} (hora España) · 20 min</Text>
       </Section>
