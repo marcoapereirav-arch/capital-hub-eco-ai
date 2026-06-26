@@ -101,10 +101,12 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
 
   const filtered = (() => {
     let out = contacts
-    // El KANBAN siempre muestra SOLO los contactos del pipeline activo (PipelineSelector arriba).
-    // Antes el kanban mostraba TODOS los contactos sin filtrar por pipeline_id, así "Prueba Marco"
-    // (que es de test-personalidad) aparecía también en el pipeline general — bug verificado 2026-06-20.
-    if (activeId) {
+    // Filtro por pipeline activo SOLO aplica en vista KANBAN (donde existe el PipelineSelector).
+    // En vista LISTA mostramos TODOS los contactos por defecto; si Marco quiere filtrar por pipeline
+    // usa el dropdown 'Pipeline' de la barra de filtros (pipelineFilter mas abajo).
+    // Marco 2026-06-20: el PipelineSelector NO existe en vista lista, asi que aplicar este filtro
+    // ahi hacia desaparecer contactos sin explicacion visible (bug). Fix: scoped a kanban.
+    if (view === "kanban" && activeId) {
       out = out.filter((c) => (c as ContactRow & { pipeline_id?: string | null }).pipeline_id === activeId)
     }
     if (search) {
