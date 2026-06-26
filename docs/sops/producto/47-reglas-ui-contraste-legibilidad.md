@@ -104,8 +104,20 @@ El chrome superior (trigger del sidebar + título de sección + campana) DEBE se
 - `ShellHeader` quedó deprecado (no-op): el título ya no se pinta por página. En móvil la campana vive en `MobileHeader` (derecha, junto al avatar).
 - **Regla:** no volver a crear chrome superior por página ni píldoras flotantes. Todo lo superior pasa por `<TopBar>`.
 
+## Emails — SIEMPRE brandkit monocromo
+
+Los emails son parte del producto: aplican el brandkit igual que la app. Reglas:
+
+- **Dos layouts compartidos, mismo lenguaje visual:** `src/lib/email/templates/_base-layout.ts` (emails token-based: reset, confirmación, cambio de email — HTML string) y `_layout.tsx` (resto, React Email). Cualquier email nuevo usa uno de los dos; NO se inventa un layout suelto.
+- **Monocromo**: fondo `#0F0F12`, texto `#D1D5DB`/`#FAFAFA`, separadores `#2A2D34`, eyebrow "CAPITAL HUB" muted. Botón **blanco** (`#FFFFFF` bg, texto `#0F0F12`). **PROHIBIDO** verde/neon (antes había `#37ca37` y cajas `rgba(55,202,55,...)` — eliminados). Único accent = blanco. Excepción: alertas internas de error a Marco pueden usar rojo semántico.
+- **Tipografía sans** (system/Inter), NUNCA serif (Georgia estaba mal).
+- **Sin caja gris pesada**: contenido limpio sobre el fondo con separadores finos (estilo `password-changed`). Las cajas callout son contenedores sutiles `#18181B` + borde `#2A2D34`.
+- **Emails/URLs sin link azul**: Gmail auto-enlaza en azul el texto que parece email/URL. Para mostrar un email, usar el helper `emailChip()` (lo envuelve en `<a mailto>` con color de marca → Gmail no lo recolorea). Nunca dejar un email/URL como texto plano en el cuerpo.
+- **Verificar render real** antes de cerrar: renderizar el HTML (no solo leer el código) — `npx tsx` + screenshot, o enviar a un inbox propio y mirarlo.
+
 ## Cambios versionados
 
 - **2026-06-20** (v1): creado. Bug raíz: Adrián no veía lo que escribía en los campos de login/forgot-password (autofill blanco-sobre-blanco). Fix global `color-scheme: dark` en `html` + override `:-webkit-autofill`. Regla absoluta "nunca mismo color que el fondo" elevada a Knowledge.
 - **2026-06-26** (v2): añadida Causa raíz #3 — overlays `fixed` atrapados por ancestros con `backdrop-filter`/`transform`. Bug recurrente de la campana (drawer "se expandía toda jodida arriba a la derecha") cerrado de raíz: drawer → `<Sheet>` de Radix (portal a `body`). Regla: overlays SIEMPRE portalean a body.
+- **2026-06-26** (v4): añadida sección "Emails — SIEMPRE brandkit monocromo". Disparador: Marco — el email de cambio de email salía feo (caja gris pesada + link azul de Gmail) y el `_layout.tsx` usaba Georgia serif + botón verde. Alineadas las ~20 plantillas a monocromo (botón blanco, sans, sin caja, `emailChip()` anti-azul, fuera todos los verdes). Regla: emails siempre brandkit, verificar render real.
 - **2026-06-26** (v3): problema SISTÉMICO de contraste atacado de raíz. (1) Tokens subidos en `globals.css`: `--card` 0.153→0.185, `--popover`→0.205, `--border`/`--input` 0.24→0.275, `--muted-foreground` 0.52→0.62. (2) Contrato de tokens + prohibición de diluir tokens semánticos (`bg-card/30`, `border-border/40`, `bg-white/[0.04]`) documentados como ley. (3) Ofensores nombrados corregidos (Card, registrar-venta, pipelines-kanban, contact-drawer). (4) Chrome superior unificado en una `<TopBar>` coherente; eliminada la píldora flotante `OsTopBar` y el `ShellHeader` por página. Disparador: Marco — "este problema está en todo el SaaS, soluciónalo de raíz antes de seguir construyendo; prohibido añadir UI sin contraste".
