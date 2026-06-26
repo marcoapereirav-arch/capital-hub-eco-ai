@@ -38,7 +38,7 @@ export function MobileHeader({ userEmail, userName }: MobileHeaderProps) {
       <div className="flex items-center gap-1">
         <NotificationsBell />
         <Link
-          href="/dashboard"
+          href="/perfil"
           className="tap-target flex items-center justify-center"
           aria-label="Perfil"
         >

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { UserPlus, Mail, Shield, Clock, X, Trash2, Check } from "lucide-react"
+import { UserPlus, Mail, Shield, Clock, X, Trash2, Check, Pencil, Loader2 } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
@@ -48,6 +48,7 @@ export function TeamPage() {
   const [pending, setPending] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
   const [inviting, setInviting] = useState(false)
+  const [editing, setEditing] = useState<Member | null>(null)
 
   useEffect(() => { load() }, [])
 
@@ -141,7 +142,10 @@ export function TeamPage() {
                     >
                       {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                     </select>
-                    <button onClick={() => deactivate(m.id)} className="text-muted-foreground hover:text-red-400">
+                    <button onClick={() => setEditing(m)} className="text-muted-foreground hover:text-foreground" title="Editar nombre / email">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button onClick={() => deactivate(m.id)} className="text-muted-foreground hover:text-red-400" title="Desactivar">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -195,7 +199,75 @@ export function TeamPage() {
       </PageContainer>
 
       {inviting && <InviteModal onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load() }} />}
+      {editing && <EditMemberModal member={editing} onClose={() => setEditing(null)} onSaved={load} />}
     </>
+  )
+}
+
+/**
+ * Editar un miembro: nombre (se guarda directo) + email (flujo seguro con
+ * confirmación al email NUEVO, igual que el perfil propio — no se cambia a ciegas).
+ */
+function EditMemberModal({ member, onClose, onSaved }: { member: Member; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(member.full_name ?? "")
+  const [newEmail, setNewEmail] = useState("")
+  const [savingName, setSavingName] = useState(false)
+  const [emailSaving, setEmailSaving] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  const inputCls = "w-full rounded-sm border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none"
+
+  async function saveName() {
+    setSavingName(true); setMsg(null)
+    try {
+      const res = await fetch(`/api/admin/team/${member.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: name.trim() }) })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setMsg({ ok: false, text: d.error ?? "Error al guardar el nombre" }); return }
+      setMsg({ ok: true, text: "Nombre guardado ✓" })
+      onSaved()
+    } finally { setSavingName(false) }
+  }
+
+  async function requestEmail() {
+    setEmailSaving(true); setMsg(null)
+    try {
+      const res = await fetch(`/api/admin/team/${member.id}/email`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newEmail: newEmail.trim() }) })
+      const d = await res.json().catch(() => ({}))
+      setMsg({ ok: res.ok, text: res.ok ? `Confirmación enviada a ${newEmail.trim()}. El cambio se aplica cuando se confirme.` : (d.error ?? "Error") })
+      if (res.ok) setNewEmail("")
+    } finally { setEmailSaving(false) }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-md border border-border bg-background p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold flex items-center gap-2"><Pencil className="h-4 w-4" /> Editar miembro</h2>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="space-y-1.5">
+          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Nombre completo</span>
+          <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="Nombre" />
+          <button onClick={saveName} disabled={savingName || name.trim().length < 2} className="mt-1 inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30">
+            {savingName ? <><Loader2 className="h-3 w-3 animate-spin" /> Guardando…</> : "Guardar nombre"}
+          </button>
+        </div>
+
+        <div className="space-y-1.5 border-t border-border pt-4">
+          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Email actual</span>
+          <div className="rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground break-all">{member.email}</div>
+          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-2">Nuevo email</span>
+          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className={inputCls} placeholder="nuevo@email.com" />
+          <p className="text-[10px] text-muted-foreground">Se envía un enlace de confirmación al email nuevo. El cambio se aplica al confirmarlo.</p>
+          <button onClick={requestEmail} disabled={emailSaving || !newEmail.trim()} className="mt-1 inline-flex items-center gap-1 rounded-sm border border-border px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:bg-card disabled:opacity-30">
+            {emailSaving ? <><Loader2 className="h-3 w-3 animate-spin" /> Enviando…</> : "Enviar confirmación"}
+          </button>
+        </div>
+
+        {msg && <p className={cn("text-xs", msg.ok ? "text-green-400" : "text-red-400")}>{msg.text}</p>}
+      </div>
+    </div>
   )
 }
 

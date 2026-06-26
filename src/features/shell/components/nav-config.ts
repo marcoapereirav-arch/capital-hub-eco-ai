@@ -73,6 +73,7 @@ const OPERACIONES_ROUTES = ["/overview", "/areas", "/projects", "/tasks", "/boar
  * derivado de la ruta. Fuente única para que ambos muestren lo mismo.
  */
 export function deriveSectionTitle(pathname: string): string {
+  if (pathname === "/perfil" || pathname.startsWith("/perfil/")) return "Perfil"
   if (OPERACIONES_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
     return "Operaciones"
   }
