@@ -44,13 +44,27 @@ select:-webkit-autofill {
 
 Mismo origen: el icono del calendario nativo aparece **negro sobre fondo oscuro**. Fix ya vigente: `color-scheme: dark` sobre `input[type="date|time|datetime-local|month|week"]` (ahora reforzado por el `color-scheme: dark` global del `html`).
 
+## Causa raíz #3 — Overlays/drawers `fixed` atrapados por un ancestro con `backdrop-filter`/`transform`
+
+**Síntoma:** un drawer/modal con `fixed inset-0` (que debería cubrir toda la pantalla) se renderiza diminuto y descolocado en una esquina (típicamente arriba a la derecha), "todo apretado", solapando otra UI.
+
+**Por qué:** por spec de CSS, si un ancestro tiene `transform`, `filter`, `backdrop-filter`, `perspective`, `will-change` o `contain`, ese ancestro se convierte en el **containing block** de los descendientes `position: fixed`. Entonces `fixed inset-0` ya **no** se ancla al viewport, sino a ese ancestro. Caso real: la campana de notificaciones vivía dentro de la píldora global `<OsTopBar>` (`fixed ... rounded-full backdrop-blur-md`); su drawer `fixed inset-0` quedaba atrapado dentro de la píldora del top-right → "se expandía toda jodida arriba a la derecha". Se intentó arreglar varias veces moviendo clases, sin tocar la causa.
+
+**Fix de raíz:** los overlays (drawers, modales, popovers, tooltips) **se renderizan SIEMPRE con un portal a `document.body`**, nunca anidados como `fixed` dentro del árbol de un componente con blur/transform.
+
+- Usar los primitivos de Radix del kit, que portalean por defecto: `Sheet` (drawer), `DropdownMenu`, `Tooltip`, `Dialog`. Ej.: la campana ahora usa `<Sheet>` (`src/components/ui/sheet.tsx`) y el selector "quién cerró" usa `<DropdownMenu>`.
+- Si hay que portalear a mano: `createPortal(node, document.body)`.
+- Regla mental: **un overlay nunca debe depender de dónde vive su botón.** Si moverlo de sitio lo rompe, es que no está portaleado.
+
 ## Checklist antes de cerrar una UI
 
 - [ ] ¿Hay inputs? → probar autofill (con email guardado en el navegador), no solo tecleo manual.
 - [ ] ¿Hay controles nativos (date/time/select)? → verificar que su UI nativa es legible en oscuro.
 - [ ] ¿Algún texto/icono usa un color hardcodeado cercano al fondo? → subir contraste.
+- [ ] ¿Hay un drawer/modal/popover? → ¿portalea a `body`? ¿algún ancestro tiene `backdrop-blur`/`transform`? Si sí y NO portalea → bug latente, portalear.
 - [ ] Verificación visual real (screenshot/producción), no solo "el JSX se ve bien".
 
 ## Cambios versionados
 
 - **2026-06-20** (v1): creado. Bug raíz: Adrián no veía lo que escribía en los campos de login/forgot-password (autofill blanco-sobre-blanco). Fix global `color-scheme: dark` en `html` + override `:-webkit-autofill`. Regla absoluta "nunca mismo color que el fondo" elevada a Knowledge.
+- **2026-06-26** (v2): añadida Causa raíz #3 — overlays `fixed` atrapados por ancestros con `backdrop-filter`/`transform`. Bug recurrente de la campana de notificaciones (drawer "se expandía toda jodida arriba a la derecha") cerrado de raíz: el drawer pasó de `fixed inset-0` casero a `<Sheet>` de Radix (portal a `body`). Regla: overlays SIEMPRE portalean a body. Nuevo item en el checklist.
