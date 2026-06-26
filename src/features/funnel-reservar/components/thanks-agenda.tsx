@@ -1,7 +1,8 @@
 "use client"
 
-import { CheckCircle2, ExternalLink, Play } from "lucide-react"
-import { FUNNEL_RESERVAR, bunnyEmbedUrl } from "../config"
+import { useState } from "react"
+import { CheckCircle2, ExternalLink, Play, Volume2 } from "lucide-react"
+import { FUNNEL_RESERVAR } from "../config"
 
 /**
  * Página /reservar/gracias — post-booking (gracias-agenda).
@@ -15,6 +16,51 @@ import { FUNNEL_RESERVAR, bunnyEmbedUrl } from "../config"
  * Botón: "aún no has hecho el test" → abre el test en ventana nueva.
  */
 type Props = { videoGuid?: string; libraryId?: string; testUrl?: string }
+
+/**
+ * Reproductor del vídeo post-agenda.
+ * - Arranca AUTOPLAY en MUTED + loop (efecto "animación", sin molestar).
+ * - Overlay "Toca para activar el sonido". Al tocar (gesto del usuario → el navegador
+ *   permite autoplay con audio), recarga el iframe desde el INICIO con sonido y sin loop.
+ */
+function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
+  const [unmuted, setUnmuted] = useState(false)
+  const base = `https://iframe.mediadelivery.net/embed/${lib}/${guid}`
+  const src = unmuted
+    ? `${base}?autoplay=true&muted=false&playsinline=true&preload=true`
+    : `${base}?autoplay=true&muted=true&loop=true&playsinline=true&preload=true`
+
+  return (
+    <div className="relative" style={{ paddingTop: "56.25%" }}>
+      <iframe
+        key={src}
+        src={src}
+        loading="lazy"
+        title="Vídeo — cómo aprovechar la llamada"
+        className="absolute inset-0 h-full w-full"
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+      />
+      {!unmuted && (
+        <button
+          type="button"
+          onClick={() => setUnmuted(true)}
+          aria-label="Activar el sonido y reproducir desde el inicio"
+          className="group absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/40 transition-colors hover:bg-black/30"
+        >
+          <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/70 bg-black/30 backdrop-blur-sm transition-transform group-hover:scale-105">
+            <Volume2 className="h-6 w-6 text-white" />
+          </span>
+          <span
+            className="text-[11px] uppercase tracking-[0.25em] text-white"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            Toca para activar el sonido
+          </span>
+        </button>
+      )}
+    </div>
+  )
+}
 
 export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
   const guid = videoGuid ?? FUNNEL_RESERVAR.VIDEO_GUID
@@ -61,15 +107,7 @@ export function ThanksAgenda({ videoGuid, libraryId, testUrl }: Props = {}) {
         {/* Vídeo */}
         <div className="mb-10 overflow-hidden border border-[#2A2D34] bg-[#141418]">
           {guid ? (
-            <div className="relative" style={{ paddingTop: "56.25%" }}>
-              <iframe
-                src={bunnyEmbedUrl(guid, lib)}
-                loading="lazy"
-                title="Vídeo — cómo aprovechar la llamada"
-                className="absolute inset-0 h-full w-full"
-                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-              />
-            </div>
+            <MutedAutoplayVideo guid={guid} lib={lib} />
           ) : (
             <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 text-[#6B7280]">
               <Play className="h-8 w-8" />
