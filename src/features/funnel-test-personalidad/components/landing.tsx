@@ -9,14 +9,15 @@ import { getStoredUtms } from "@/lib/utm/utm-capture"
 /**
  * Landing del Funnel Test Personalidad (test de Equilibria).
  *
- * Dirección de diseño: "instrumento de diagnóstico" — cinematográfico monocromo
- * estilo terminal/IDE. 100% dentro del brandkit Capital Hub:
- *   BG #0F0F12 · hairlines #2A2D34 · texto #F5F6F7 · acento #FFFFFF · sin neón, sin grid.
- *   Inter Tight (display) · Inter (body) · JetBrains Mono (labels técnicos).
+ * Dirección de diseño: premium, dinámico y legible. Base monocromo Capital Hub
+ * (#0F0F12 · hairlines #2A2D34 · texto #F5F6F7) + VERDE como acento oficial (#22C55E).
+ * Tipografía normal y limpia: Inter Tight (display) · Inter (texto). Sin labels mono
+ * espaciados en mayúsculas.
  *
- * Motion (WOW dentro del brand): secuencia de entrada escalonada, motif de "4 colores"
- * como ecualizador en grises, count-up de +500.000, CTA magnético, spotlight que sigue
- * el cursor, grano sutil, reveals al scroll. Todo degrada con prefers-reduced-motion.
+ * Motion (WOW dentro del brand): entrada escalonada, headline con clip, count-up de
+ * +500.000 en verde, motivo de "4 colores" con verde, CTA magnético que se llena de
+ * verde, spotlight que sigue el cursor, glow verde sutil, reveals al scroll. Todo
+ * degrada con prefers-reduced-motion.
  *
  * Lógica intacta: opt-in (3 campos obligatorios) → Meta Pixel+CAPI → atribución utm_source.
  */
@@ -75,9 +76,10 @@ export function TestPersonalidadLanding() {
     >
       <TpStyles />
 
-      {/* Atmósfera: spotlight (cursor) + glow superior + grano + viñeta. Sin grid. */}
+      {/* Atmósfera: spotlight (cursor) + glow + acento verde sutil + grano + viñeta. Sin grid. */}
       <div aria-hidden className="tp-spotlight" />
       <div aria-hidden className="tp-glow" />
+      <div aria-hidden className="tp-glow-green" />
       <div aria-hidden className="tp-grain" />
       <div aria-hidden className="tp-vignette" />
 
@@ -85,27 +87,21 @@ export function TestPersonalidadLanding() {
         {/* Marca */}
         <header className="tp-load flex items-center justify-between pt-8 md:pt-12" style={{ animationDelay: "0ms" }}>
           <span
-            className="text-[11px] uppercase tracking-[0.4em] text-[#F5F6F7]"
-            style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 500 }}
+            className="text-sm font-semibold tracking-[0.02em] text-[#F5F6F7]"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            CAPITAL&nbsp;HUB
+            Capital&nbsp;Hub
           </span>
-          <span
-            className="hidden items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-[#6B7280] sm:inline-flex"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            <span className="tp-dot" /> sistema de diagnóstico
+          <span className="hidden items-center gap-2 text-[13px] text-[#9CA3AF] sm:inline-flex">
+            <span className="tp-dot" /> Orientación profesional
           </span>
         </header>
 
         {/* ───────── SECCIÓN 1 · HERO ───────── */}
         <section className="flex flex-1 flex-col justify-center py-16 md:py-24">
-          <p
-            className="tp-load mb-7 text-[10px] uppercase tracking-[0.3em] text-[#9CA3AF] md:text-[11px]"
-            style={{ fontFamily: "'JetBrains Mono', monospace", animationDelay: "80ms" }}
-          >
+          <p className="tp-load mb-7 text-sm text-[#9CA3AF] md:text-[15px]" style={{ animationDelay: "80ms" }}>
             Test gratis · 15 minutos ·{" "}
-            <span className="text-[#F5F6F7]">
+            <span className="font-semibold text-[#22C55E]">
               <CountUp target={500000} prefix="+" /> personas
             </span>
           </p>
@@ -138,11 +134,8 @@ export function TestPersonalidadLanding() {
 
         {/* Separador con índice de sección */}
         <div className="tp-load flex items-center gap-4" style={{ animationDelay: "720ms" }}>
-          <span
-            className="text-[10px] uppercase tracking-[0.3em] text-[#4B5159]"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            02 — Qué es
+          <span className="text-[13px] text-[#6B7280]">
+            <span className="font-semibold text-[#22C55E]">02</span> · Qué es
           </span>
           <div className="h-px flex-1 bg-[#2A2D34]" />
         </div>
@@ -160,14 +153,11 @@ export function TestPersonalidadLanding() {
           <div className="mb-12 grid gap-4 md:grid-cols-2">
             <article
               data-reveal
-              className="tp-reveal group relative overflow-hidden border border-[#2A2D34] bg-[#141418] p-6 md:p-7"
+              className="tp-card tp-reveal group relative overflow-hidden border border-[#2A2D34] bg-[#141418] p-6 md:p-7"
               style={{ transitionDelay: "60ms" }}
             >
-              <span
-                className="mb-4 block text-[10px] uppercase tracking-[0.3em] text-[#6B7280]"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
-              >
-                01 / Avalado
+              <span className="mb-4 block text-[13px] text-[#9CA3AF]">
+                <span className="font-semibold text-[#22C55E]">01</span> · Avalado
               </span>
               <p className="text-base leading-relaxed text-[#C7CBD1] md:text-[1.05rem]">
                 Es el test de <strong className="font-medium text-white">Equilibria</strong>, el mismo
@@ -179,14 +169,11 @@ export function TestPersonalidadLanding() {
 
             <article
               data-reveal
-              className="tp-reveal group relative overflow-hidden border border-[#2A2D34] bg-[#141418] p-6 md:p-7"
+              className="tp-card tp-reveal group relative overflow-hidden border border-[#2A2D34] bg-[#141418] p-6 md:p-7"
               style={{ transitionDelay: "140ms" }}
             >
-              <span
-                className="mb-4 block text-[10px] uppercase tracking-[0.3em] text-[#6B7280]"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
-              >
-                02 / Resultado
+              <span className="mb-4 block text-[13px] text-[#9CA3AF]">
+                <span className="font-semibold text-[#22C55E]">02</span> · Resultado
               </span>
               <p className="mb-5 text-base leading-relaxed text-[#C7CBD1] md:text-[1.05rem]">
                 Te da un resultado en <strong className="font-medium text-white">cuatro colores</strong>{" "}
@@ -204,10 +191,7 @@ export function TestPersonalidadLanding() {
         </section>
 
         {/* Footer */}
-        <footer
-          className="mt-auto flex items-center justify-between border-t border-[#1C1D22] py-7 text-[10px] uppercase tracking-[0.25em] text-[#4B5159]"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
+        <footer className="mt-auto flex items-center justify-between border-t border-[#1C1D22] py-7 text-[13px] text-[#6B7280]">
           <span>© Capital Hub</span>
           <span>Adrián Villanueva</span>
         </footer>
@@ -246,13 +230,13 @@ function MagneticButton({ children, onClick }: { children: React.ReactNode; onCl
       style={{ fontFamily: "'Inter Tight', sans-serif" }}
     >
       <span aria-hidden className="tp-cta-fill" />
-      <span className="relative z-10">{children}</span>
-      <ArrowRight className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+      <span className="tp-cta-label relative z-10">{children}</span>
+      <ArrowRight className="tp-cta-arrow relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
     </button>
   )
 }
 
-/* 4 swatches que se rellenan en secuencia (4 tonos de gris→blanco) */
+/* 4 swatches que se rellenan en secuencia — el verde de marca como protagonista */
 function FourColors() {
   return (
     <div className="flex gap-1.5" aria-hidden>
@@ -405,11 +389,8 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           <X className="h-5 w-5" />
         </button>
 
-        <span
-          className="mb-3 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-[#6B7280]"
-          style={{ fontFamily: "'JetBrains Mono', monospace" }}
-        >
-          <span className="tp-dot" /> acceso al test
+        <span className="mb-3 inline-flex items-center gap-2 text-[13px] text-[#9CA3AF]">
+          <span className="tp-dot" /> Acceso al test
         </span>
         <h3
           className="mb-6 pr-8 text-xl font-medium tracking-[-0.01em] text-white md:text-2xl"
@@ -424,7 +405,7 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           <Field id="phone" label="Tu teléfono" type="tel" value={phone} onChange={setPhone} placeholder="+34 600 00 00 00" autoComplete="tel" disabled={loading} />
 
           {error && (
-            <div className="border-l-2 border-white py-1 pl-3 text-sm text-[#F5F6F7]">{error}</div>
+            <div className="border-l-2 border-[#22C55E] py-1 pl-3 text-sm text-[#F5F6F7]">{error}</div>
           )}
 
           <button
@@ -438,8 +419,8 @@ function OptinModal({ onClose }: { onClose: () => void }) {
             ) : (
               <>
                 <span aria-hidden className="tp-cta-fill" />
-                <span className="relative z-10">Quiero hacer el test gratis</span>
-                <ArrowRight className="relative z-10 h-4 w-4" />
+                <span className="tp-cta-label relative z-10">Quiero hacer el test gratis</span>
+                <ArrowRight className="tp-cta-arrow relative z-10 h-4 w-4" />
               </>
             )}
           </button>
@@ -461,11 +442,7 @@ function Field({
 }) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="mb-1.5 block text-[10px] uppercase tracking-[0.2em] text-[#9CA3AF]"
-        style={{ fontFamily: "'JetBrains Mono', monospace" }}
-      >
+      <label htmlFor={id} className="mb-1.5 block text-[13px] text-[#9CA3AF]">
         {label}
       </label>
       <input
@@ -477,7 +454,7 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         disabled={disabled}
-        className="h-12 w-full rounded-none border border-[#3F3F46] bg-[#18181B] px-4 text-base text-[#F5F6F7] transition-colors placeholder:text-[#6B7280] focus:border-white focus:outline-none focus:ring-1 focus:ring-white/30"
+        className="h-12 w-full rounded-none border border-[#3F3F46] bg-[#18181B] px-4 text-base text-[#F5F6F7] transition-colors placeholder:text-[#6B7280] focus:border-[#22C55E] focus:outline-none focus:ring-1 focus:ring-[#22C55E]/40"
       />
     </div>
   )
@@ -497,6 +474,11 @@ function TpStyles() {
       .tp-glow {
         position: absolute; inset: 0; z-index: 0; pointer-events: none;
         background: radial-gradient(900px 460px at 50% -10%, rgba(245,246,247,0.05), transparent 70%);
+      }
+      /* Acento verde sutil de la marca (arriba a la derecha) */
+      .tp-glow-green {
+        position: absolute; inset: 0; z-index: 0; pointer-events: none;
+        background: radial-gradient(640px 360px at 88% -6%, rgba(34,197,94,0.10), transparent 68%);
       }
       .tp-vignette {
         position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -521,23 +503,28 @@ function TpStyles() {
       /* Reveals al scroll */
       .tp-reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s cubic-bezier(0.22,0.61,0.36,1), transform 0.7s cubic-bezier(0.22,0.61,0.36,1); }
       .tp-reveal.tp-in { opacity: 1; transform: translateY(0); }
-      /* Punto status pulsante */
-      .tp-dot { display:inline-block; width:6px; height:6px; border-radius:9999px; background:#F5F6F7; box-shadow:0 0 0 0 rgba(245,246,247,0.5); animation: tp-pulse 2.4s ease-out infinite; }
-      @keyframes tp-pulse { 0%{box-shadow:0 0 0 0 rgba(245,246,247,0.45)} 70%{box-shadow:0 0 0 7px rgba(245,246,247,0)} 100%{box-shadow:0 0 0 0 rgba(245,246,247,0)} }
-      /* CTA fill */
+      /* Punto status — verde de marca */
+      .tp-dot { display:inline-block; width:7px; height:7px; border-radius:9999px; background:#22C55E; box-shadow:0 0 0 0 rgba(34,197,94,0.55); animation: tp-pulse 2.4s ease-out infinite; }
+      @keyframes tp-pulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)} 70%{box-shadow:0 0 0 7px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
+      /* CTA: se llena de verde al hover; el texto/flecha pasan a blanco */
       .tp-cta { transition: transform 0.25s cubic-bezier(0.22,0.61,0.36,1); will-change: transform; }
-      .tp-cta-fill { position:absolute; inset:0; background:#C7CBD1; transform: scaleX(0); transform-origin:left; transition: transform 0.4s cubic-bezier(0.22,0.61,0.36,1); }
+      .tp-cta-fill { position:absolute; inset:0; background:#22C55E; transform: scaleX(0); transform-origin:left; transition: transform 0.4s cubic-bezier(0.22,0.61,0.36,1); }
       .tp-cta:hover .tp-cta-fill { transform: scaleX(1); }
-      /* 4 swatches */
+      .tp-cta-label, .tp-cta-arrow { transition: color 0.3s ease; }
+      .tp-cta:hover .tp-cta-label, .tp-cta:hover .tp-cta-arrow { color: #FFFFFF; }
+      /* Card hover lift + borde verde sutil */
+      .tp-card { transition: transform 0.4s cubic-bezier(0.22,0.61,0.36,1), border-color 0.4s ease; }
+      .tp-card:hover { transform: translateY(-3px); border-color: #2f6b45; }
+      /* 4 swatches — el verde de marca como protagonista */
       .tp-swatch { width:34px; height:6px; border-radius:1px; opacity:0; animation: tp-sw 0.5s ease forwards; }
-      .tp-reveal.tp-in .tp-swatch-0 { animation-delay:0.15s } .tp-swatch-0{ background:#F5F6F7 }
-      .tp-reveal.tp-in .tp-swatch-1 { animation-delay:0.30s } .tp-swatch-1{ background:#9CA3AF }
+      .tp-reveal.tp-in .tp-swatch-0 { animation-delay:0.15s } .tp-swatch-0{ background:#22C55E }
+      .tp-reveal.tp-in .tp-swatch-1 { animation-delay:0.30s } .tp-swatch-1{ background:#F5F6F7 }
       .tp-reveal.tp-in .tp-swatch-2 { animation-delay:0.45s } .tp-swatch-2{ background:#6B7280 }
       .tp-reveal.tp-in .tp-swatch-3 { animation-delay:0.60s } .tp-swatch-3{ background:#3F3F46 }
       @keyframes tp-sw { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)} }
-      /* Esquina decorativa de las cards */
-      .tp-corner { position:absolute; top:0; right:0; width:34px; height:34px; border-top:1px solid #3F3F46; border-right:1px solid #3F3F46; opacity:0; transition:opacity 0.4s; }
-      .group:hover .tp-corner { opacity:1; }
+      /* Esquina decorativa de las cards — verde */
+      .tp-corner { position:absolute; top:0; right:0; width:34px; height:34px; border-top:1px solid #22C55E; border-right:1px solid #22C55E; opacity:0; transition:opacity 0.4s; }
+      .group:hover .tp-corner { opacity:0.7; }
       /* Modal */
       .tp-backdrop { background: rgba(8,8,10,0.78); backdrop-filter: blur(6px); animation: tp-fade 0.25s ease forwards; }
       .tp-modal { animation: tp-modal 0.32s cubic-bezier(0.22,0.61,0.36,1) forwards; }
