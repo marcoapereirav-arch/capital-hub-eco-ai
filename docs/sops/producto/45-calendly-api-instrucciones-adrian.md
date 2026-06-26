@@ -106,3 +106,16 @@ Calendly API es **temporal**. El plan a largo plazo es:
 
 - **2026-06-17:** Marco re-prioriza Calendly arriba del todo, pausa calendario propio, deja Calendly como integración temporal urgente.
 - **2026-06-17:** Pausado `proj_880_calendario_propio` con `status='paused'`. Se reactivará cuando bandwidth lo permita.
+
+## 2026-06-26 — Embed del funnel /reservar: rendimiento, scroll y marca
+
+Mejoras aplicadas en `booking-embed.tsx` + `reservar/page.tsx`:
+
+- **Carga más rápida:** en el `<head>` de `/reservar` → `preconnect` a `assets.calendly.com` y `calendly.com` + `preload` del `widget.js`. El navegador conecta y baja el script de Calendly cuanto antes.
+- **Sin scroll interno en móvil (fix del scroll atrapado):** escuchamos el `postMessage` `calendly.page_height` (Calendly manda la altura real del contenido, p.ej. `1083px`) y ajustamos el alto de la tarjeta a esa altura. Así el iframe NO necesita scroll propio → la página baja de corrido. Verificado: `holder=iframe=1083px`, página scrollea entera.
+- **Loader de marca** (`<LoadingScreen/>`) mientras carga, en vez del spinner genérico. Se quita al recibir el primer `page_height`.
+- **Diseño** alineado al funnel Test: logo de marca (mayúsculas espaciadas como el OS), copy en Inter normal, verde de acento.
+
+### Pendiente de Adrián — quitar "Desarrollado por Calendly"
+El banner "Desarrollado por Calendly" va DENTRO del iframe de Calendly; no se puede quitar desde nuestro código (cross-origin). Adrián lo desactiva desde su cuenta:
+**Calendly → Account / Admin Management → Settings → "Remove Calendly branding"** (o en el evento: Share → Add to website → opción de quitar branding). Requiere plan de pago (Standard/Teams). Una vez activado, el banner desaparece en el embed sin tocar nada más.

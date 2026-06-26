@@ -47,3 +47,9 @@ Se levanta el veto al verde. El **verde es el color de acento oficial** de Capit
 - **TODOS los reproductores de vídeo (Bunny) van en verde**, en OS y App.
 - Cómo se aplica al player de Bunny: Account API `PlayerKeyColor` → requiere `BUNNY_ACCOUNT_API_KEY` en `.env.local` (la stream key da 401). Es un setting por library; aplicar a todas las libraries en uso (OS + App).
 - Otros neones (violet/cyan/ámbar fluor) siguen prohibidos. Ver [[feedback-brandkit-absoluto]].
+
+## Logo vs copy — el logo SÍ va espaciado (Marco, 2026-06-26)
+
+- **Logo / wordmark "Capital Hub"** = tratamiento de marca: Inter Tight, **MAYÚSCULAS**, `tracking-[0.15em]`, semibold (igual que el logo de la esquina del OS, `app-sidebar.tsx`). Esto es CORRECTO y se mantiene.
+- **Copy normal** (frases, footers `© Capital Hub`, labels, body) = tipografía NORMAL Inter, sin tracking ancho ni mayúsculas espaciadas.
+- Regla mental: **el logo es un logo, no es texto.** Solo el logo lleva ese tratamiento. Ver [[feedback-tipografia-normal-legible]].
