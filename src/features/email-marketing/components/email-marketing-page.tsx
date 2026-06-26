@@ -43,6 +43,12 @@ type Template = {
   label: string
   description: string
   category: string
+  group?: string
+  group_label?: string
+  group_color?: string
+  group_order?: number
+  trigger?: string
+  frequency?: "alta" | "media" | "baja"
   variables?: string[]
   defaultSubject?: string
   defaultHtml?: string
@@ -50,6 +56,12 @@ type Template = {
   currentHtml?: string
   hasOverride?: boolean
   updatedAt?: string | null
+}
+
+const FREQ_META: Record<string, { label: string; color: string }> = {
+  alta: { label: "ALTA", color: "border-red-500/40 text-red-400 bg-red-500/[0.04]" },
+  media: { label: "MEDIA", color: "border-amber-500/40 text-amber-400 bg-amber-500/[0.04]" },
+  baja: { label: "BAJA", color: "border-zinc-500/40 text-zinc-400 bg-zinc-500/[0.04]" },
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -187,6 +199,7 @@ function TemplatesTab() {
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Template | null>(null)
+  const [search, setSearch] = useState("")
 
   async function load() {
     setLoading(true)
@@ -200,54 +213,111 @@ function TemplatesTab() {
 
   if (loading) return <div className="text-sm text-muted-foreground py-6">Cargando…</div>
 
-  const byCategory = new Map<string, Template[]>()
-  for (const t of templates) {
-    const arr = byCategory.get(t.category) ?? []
-    arr.push(t)
-    byCategory.set(t.category, arr)
+  // Filtro búsqueda (label + trigger + key)
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? templates.filter((t) =>
+        t.label.toLowerCase().includes(q) ||
+        (t.trigger ?? "").toLowerCase().includes(q) ||
+        (t.description ?? "").toLowerCase().includes(q) ||
+        t.key.toLowerCase().includes(q)
+      )
+    : templates
+
+  // Agrupar por group (nuevo) con fallback a category (legacy)
+  const groups = new Map<string, { label: string; color: string; order: number; items: Template[] }>()
+  for (const t of filtered) {
+    const groupKey = t.group ?? t.category ?? "otros"
+    const existing = groups.get(groupKey)
+    if (existing) {
+      existing.items.push(t)
+    } else {
+      groups.set(groupKey, {
+        label: t.group_label ?? t.category ?? "Otros",
+        color: t.group_color ?? "border-border text-muted-foreground",
+        order: t.group_order ?? 99,
+        items: [t],
+      })
+    }
   }
+  const sortedGroups = Array.from(groups.entries()).sort((a, b) => a[1].order - b[1].order)
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">
-        {templates.length} templates editables. Click en cualquiera para editar el asunto y el HTML
-        directamente desde aquí. Los cambios se aplican al siguiente envío sin redeploy. Variables
-        dinámicas con sintaxis <code className="font-mono text-[11px] bg-white/[0.05] px-1 py-0.5 rounded">{`{{nombre}}`}</code>.
-      </p>
+      {/* Header + buscador */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-xs text-muted-foreground flex-1 min-w-[280px]">
+          {templates.length} plantillas editables · click para editar asunto + HTML visualmente · cambios sin redeploy
+        </p>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar plantilla…"
+            className="h-8 w-64 rounded-sm border border-border bg-background pl-8 pr-2 text-xs"
+          />
+        </div>
+      </div>
 
-      {Array.from(byCategory.entries()).map(([cat, list]) => (
-        <section key={cat}>
-          <h2 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">{cat}</h2>
+      {filtered.length === 0 && (
+        <div className="text-xs text-muted-foreground py-12 text-center border border-dashed border-border rounded-sm">
+          Ninguna plantilla matchea "{search}".
+        </div>
+      )}
+
+      {sortedGroups.map(([groupKey, group]) => (
+        <section key={groupKey} className={cn("rounded-md border p-3 space-y-2", group.color)}>
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold">{group.label}</h2>
+            <span className="text-[9px] font-mono uppercase tracking-wider opacity-70">
+              {group.items.length} {group.items.length === 1 ? "plantilla" : "plantillas"}
+            </span>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {list.map((t) => (
+            {group.items.map((t) => {
+              const freq = FREQ_META[t.frequency ?? "baja"]
+              return (
               <button
                 key={t.key}
                 onClick={() => setEditing(t)}
-                className="rounded-md border border-border p-3 hover:border-border hover:bg-card/40 transition-colors text-left"
+                className="rounded-md border border-border bg-background/60 p-3 hover:border-foreground/40 hover:bg-card/60 transition-colors text-left"
               >
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <div className="text-sm font-medium">{t.label}</div>
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div className="text-sm font-medium leading-tight">{t.label}</div>
                   <div className="flex items-center gap-1 shrink-0">
                     {t.hasOverride && (
                       <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400 border border-green-500/30">
                         editado
                       </span>
                     )}
-                    <span className={cn(
-                      "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
-                      CATEGORY_COLORS[t.category] ?? "border-border"
-                    )}>
-                      {t.category}
-                    </span>
+                    {freq && (
+                      <span
+                        className={cn(
+                          "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
+                          freq.color
+                        )}
+                        title={`Frecuencia de envío: ${freq.label}`}
+                      >
+                        {freq.label}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-2">{t.description}</p>
+                {/* TRIGGER — lo más visual: cuándo se dispara este email */}
+                {t.trigger && (
+                  <div className="mb-2 rounded-sm border-l-2 border-foreground/30 pl-2 py-1 bg-foreground/[0.03]">
+                    <div className="text-[9px] font-mono uppercase tracking-wider text-foreground/60 mb-0.5">Se envía cuando</div>
+                    <p className="text-xs text-foreground/85 leading-snug">{t.trigger}</p>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-mono text-muted-foreground">key: {t.key}</div>
-                  <div className="text-[10px] font-mono text-foreground/60 underline">Editar →</div>
+                  <div className="text-[10px] font-mono text-muted-foreground/70 truncate">{t.key}</div>
+                  <div className="text-[10px] font-mono text-foreground/60 underline shrink-0 ml-2">Editar →</div>
                 </div>
               </button>
-            ))}
+              )
+            })}
           </div>
         </section>
       ))}

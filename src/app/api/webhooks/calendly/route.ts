@@ -168,8 +168,11 @@ async function moveContactForCalendly(
       }).eq("id", existing.id)
       await logJourney(admin, existing.id, "call_booked", "Agendó llamada (Calendly)")
     } else {
+      // Decisión Marco 2026-06-20: leads que agendan DIRECTO en Calendly (sin pasar por
+      // el funnel test-personalidad) van al pipeline GENERAL (is_default=true), no al
+      // test-personalidad. Esto separa correctamente los flujos de captación.
       const { data: pipeline } = await admin
-        .from("pipelines").select("id").eq("slug", "test-personalidad").maybeSingle()
+        .from("pipelines").select("id").eq("is_default", true).maybeSingle()
       const fullName = inv.name?.trim() || email
       const { data: created } = await admin.from("contacts").insert({
         full_name: fullName,
@@ -182,7 +185,7 @@ async function moveContactForCalendly(
         source: "calendly_direct",
       }).select("id").single()
       contactId = created?.id
-      if (contactId) await logJourney(admin, contactId, "call_booked", "Agendó llamada (Calendly, sin test previo)")
+      if (contactId) await logJourney(admin, contactId, "call_booked", "Agendó llamada (Calendly, sin test previo) → pipeline general")
     }
   } else if (kind === "canceled" && existing) {
     // Decisión Marco 2026-06-20: cancelación → seguimiento INMEDIATO (no 7 días).
