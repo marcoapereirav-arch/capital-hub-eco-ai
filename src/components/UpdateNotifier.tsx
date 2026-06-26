@@ -22,6 +22,20 @@ async function fetchVersion(): Promise<VersionInfo | null> {
   }
 }
 
+/**
+ * Convierte el mensaje técnico del commit en una frase humana.
+ * Quita el prefijo conventional-commit (`feat(reservar):`, `fix:`…) y el ruido
+ * para que el usuario lea SOLO qué cambió, sin códigos ni jerga técnica.
+ */
+function humanizeChange(message: string | null): string | null {
+  if (!message) return null
+  let m = message.split("\n")[0].trim()
+  m = m.replace(/^[a-záéíóúñ]+(\([^)]*\))?!?:\s*/i, "")
+  m = m.trim()
+  if (!m) return null
+  return m.charAt(0).toUpperCase() + m.slice(1)
+}
+
 export function UpdateNotifier() {
   const initialSha = useRef<string | null>(null)
   const [info, setInfo] = useState<VersionInfo | null>(null)
@@ -60,6 +74,8 @@ export function UpdateNotifier() {
 
   if (!info || dismissed) return null
 
+  const change = humanizeChange(info.message)
+
   return (
     <div
       role="status"
@@ -71,18 +87,11 @@ export function UpdateNotifier() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-heading text-sm font-semibold text-foreground">
-            Nueva versión disponible
+            Actualiza para ver los últimos cambios
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Refresca para ver los últimos cambios.
-          </p>
-          {(info.message || info.author) && (
-            <p
-              className="mt-2 truncate font-mono text-[10px] text-muted-foreground/70"
-              title={info.message ?? undefined}
-            >
-              {info.author ? `${info.author} · ` : ""}
-              {info.sha} {info.message ? `— ${info.message}` : ""}
+          {change && (
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">
+              {change}
             </p>
           )}
         </div>
@@ -96,22 +105,14 @@ export function UpdateNotifier() {
         </button>
       </div>
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3">
         <Button
           size="sm"
           onClick={() => window.location.reload()}
-          className="flex-1 font-mono text-xs"
+          className="w-full"
         >
           <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-          Refrescar
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setDismissed(true)}
-          className="font-mono text-xs"
-        >
-          Más tarde
+          Actualizar
         </Button>
       </div>
     </div>
