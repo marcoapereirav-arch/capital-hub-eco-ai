@@ -189,3 +189,19 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
      Fix: policies INSERT/UPDATE/DELETE para ADMIN/PROFESSOR (migración `20260626140000_app_content_rls_admin_write.sql`),
      aplicadas en vivo a `aglyoyqtzozdnusltjxe` + verificadas por impersonación (admin escribe, no-admin bloqueado).
   3. **Comentarios de alumno:** ya funcionaban (`lesson_comments_insert_self` existe). Confirmado.
+- **2026-06-26 (v5):** Más fixes (sesión paralela a la v4 — otra ventana de Marco). Verificados en prod con Playwright + `test-agent`.
+  1. **"Completar lección" no se notaba / no se guardaba bien:** `completeLesson` (App `web/src/api/training.ts`)
+     guardaba `completed_at` pero nunca `completed=true` y **se tragaba el error** del upsert → al recargar volvía a 0.
+     Los checks/barras eran blancos (tailwind App `accent:#FFFFFF`, sin verde). Fix: `completed=true` + lanzar el
+     error; checks, etiqueta "Completada" y barras de progreso en **VERDE** (`#22C55E`/`green-400`) en LessonViewer,
+     FormationDetailPage y tarjetas (SkoolClassroomTab). Backfill de filas viejas. Commit App `adba166`.
+  2. **Círculo decorativo confuso** a la derecha de cada lección (siempre vacío, contradecía al check verde) → eliminado. Commit `466ccef`.
+  3. **Comunidad por formación (seguridad — "extremadamente importante" para Marco):** RLS de aislamiento. Función
+     `public.user_can_see_community(c_id)` (admin=todas; alumno=las de sus `student_invites.products`, mapeo
+     `product_key = lower(replace(producto,' ','_'))`). `community_posts/reactions/comments` SELECT solo de comunidades
+     propias; `posts INSERT` exige comunidad propia. Aplicado en vivo a `aglyoyqtzozdnusltjxe` y **verificado por
+     simulación** (REP solo ve su comunidad; post de prueba en otra comunidad NO lo ve; admin ve todas). Front: el
+     selector muestra solo las comunidades propias (commit App `d040449`). Antes el filtro era solo cliente (bypasseable).
+  **Coordinación:** dos sesiones de Marco editando el mismo repo App + este Knowledge a la vez (v4 y v5). Sin choque de
+  git por ahora; cuidado con migraciones RLS concurrentes sobre la misma BD.
+  **Pendiente de esta tanda:** notificación al formador al comentar (con /add-mobile) + bug `feedback/status` (CORS en cada página).
