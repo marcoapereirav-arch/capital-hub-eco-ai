@@ -62,3 +62,22 @@ export const navSections: NavSection[] = [
 export const navAll = navSections.flatMap((s) => s.items)
 export const navPrimary = navAll.filter((i) => i.mobilePrimary)
 export const navSecondary = navAll.filter((i) => !i.mobilePrimary)
+
+// Subrutas que comparten el entorno "Operaciones" (mismo layout con subtabs).
+// El sidebar las agrupa bajo "Operaciones" (/overview), pero cada una tiene su
+// propia ruta — sin esto, el título de la TopBar caía al fallback "Capital Hub".
+const OPERACIONES_ROUTES = ["/overview", "/areas", "/projects", "/tasks", "/board"]
+
+/**
+ * Título de sección para el chrome superior (TopBar desktop + MobileHeader),
+ * derivado de la ruta. Fuente única para que ambos muestren lo mismo.
+ */
+export function deriveSectionTitle(pathname: string): string {
+  if (OPERACIONES_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
+    return "Operaciones"
+  }
+  const match = navAll.find(
+    (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+  )
+  return match?.title ?? "Capital Hub"
+}

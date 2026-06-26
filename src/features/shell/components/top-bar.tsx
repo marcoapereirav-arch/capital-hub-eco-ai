@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { NotificationsBell } from "@/features/notifications/components/NotificationsPanel"
-import { navAll } from "./nav-config"
+import { deriveSectionTitle } from "./nav-config"
 
 /**
  * Barra superior ÚNICA del OS (desktop). Vive una sola vez en (main)/layout.tsx,
@@ -18,16 +18,9 @@ import { navAll } from "./nav-config"
  *
  * Sustituye al antiguo <OsTopBar> flotante y al <ShellHeader> por página.
  */
-function deriveTitle(pathname: string): string {
-  const match = navAll.find(
-    (item) => pathname === item.href || pathname.startsWith(item.href + "/")
-  )
-  return match?.title ?? "Capital Hub"
-}
-
 export function TopBar() {
   const pathname = usePathname()
-  const title = deriveTitle(pathname)
+  const title = deriveSectionTitle(pathname)
 
   return (
     <header className="hidden h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4 md:flex">

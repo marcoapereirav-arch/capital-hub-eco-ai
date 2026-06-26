@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { NotificationsBell } from "@/features/notifications/components/NotificationsPanel"
-import { navAll } from "./nav-config"
+import { deriveSectionTitle } from "./nav-config"
 
 interface MobileHeaderProps {
   userEmail: string
@@ -23,18 +23,11 @@ function deriveInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-function deriveTitle(pathname: string): string {
-  const match = navAll.find(
-    (item) => pathname === item.href || pathname.startsWith(item.href + "/")
-  )
-  return match?.title ?? "Capital Hub"
-}
-
 export function MobileHeader({ userEmail, userName }: MobileHeaderProps) {
   const pathname = usePathname()
   const displayName = deriveDisplayName(userName, userEmail)
   const initials = deriveInitials(displayName)
-  const title = deriveTitle(pathname)
+  const title = deriveSectionTitle(pathname)
 
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/95 px-4 pt-safe backdrop-blur-md md:hidden">
