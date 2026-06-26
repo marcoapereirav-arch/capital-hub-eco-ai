@@ -177,3 +177,15 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
   `feedback/status` falla por CORS en cada página. Corrección de arquitectura: producción usa la Supabase del
   OS (`aglyoyqtzozdnusltjxe`); las migraciones del repo App son legacy → los hallazgos de seguridad de la
   auditoría de código NO están confirmados en prod. SOP 17 correcto, SOP 02 corregido.
+- **2026-06-26 (v4):** Tres bugs de formación arreglados de raíz (reportados por Marco: "el formador no puede
+  subir vídeos, no se guarda nada"). **Confirmado en vivo (bundle de `app.capitalhubapp.com`): la App usa
+  `aglyoyqtzozdnusltjxe` (Supabase del OS)** — refuerza v3.
+  1. **Subida de vídeo (Bunny):** la App sube llamando al endpoint del OS (`POST ecoai…/api/admin/lessons/bunny-create-video`).
+     Faltaban `BUNNY_STREAM_API_KEY/LIBRARY_ID/CDN_HOSTNAME` en **Vercel del OS** (estaban solo en `.env.local`).
+     Añadidas a Vercel prod + redeploy. Verificado: el endpoint devuelve `videoId` + firma TUS. Regla: toda var de
+     `.env.local` debe estar también en Vercel o la feature falla SOLO en prod.
+  2. **No se guardaba nada (títulos/descripciones/lecciones/vídeo):** `formations/modules/lessons` solo tenían RLS
+     de SELECT. El editor de la App escribe directo con `supabase.from().update()` → RLS lo bloqueaba EN SILENCIO.
+     Fix: policies INSERT/UPDATE/DELETE para ADMIN/PROFESSOR (migración `20260626140000_app_content_rls_admin_write.sql`),
+     aplicadas en vivo a `aglyoyqtzozdnusltjxe` + verificadas por impersonación (admin escribe, no-admin bloqueado).
+  3. **Comentarios de alumno:** ya funcionaban (`lesson_comments_insert_self` existe). Confirmado.
