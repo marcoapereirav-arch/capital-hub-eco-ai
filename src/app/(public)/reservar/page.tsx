@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import { BookingEmbed } from "@/features/funnel-reservar/components/booking-embed"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -11,7 +12,7 @@ export const metadata = {
 
 export default function ReservarRoute() {
   return (
-    <Suspense fallback={<div style={{ minHeight: "100dvh", backgroundColor: "#0F0F12" }} />}>
+    <Suspense fallback={<LoadingScreen />}>
       <BookingEmbed />
     </Suspense>
   )

@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle2, ExternalLink, Play, Volume2, Loader2 } from "lucide-react"
+import { CheckCircle2, ExternalLink, Play, Volume2 } from "lucide-react"
 import { FUNNEL_RESERVAR } from "../config"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 /**
  * Página /reservar/gracias — post-booking (gracias-agenda).
@@ -42,11 +43,6 @@ function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
 
   return (
     <div className="relative bg-[#0F0F12]" style={{ paddingTop: "56.25%" }}>
-      <style>{`
-        @keyframes tp-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-        .tp-shimmer { background: linear-gradient(100deg, #0F0F12 28%, #1c1c22 50%, #0F0F12 72%); background-size: 200% 100%; animation: tp-shimmer 1.25s ease-in-out infinite; }
-      `}</style>
-
       <iframe
         key={src}
         src={src}
@@ -56,13 +52,12 @@ function MutedAutoplayVideo({ guid, lib }: { guid: string; lib: string }) {
         allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
       />
 
-      {/* Animación de carga (cubre el buffering; se desvanece al empezar el vídeo) */}
+      {/* Efecto de carga de marca (cubre el buffering; se desvanece al empezar el vídeo) */}
       <div
         aria-hidden
-        className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-500 ${loading ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 z-20 transition-opacity duration-500 ${loading ? "opacity-100" : "pointer-events-none opacity-0"}`}
       >
-        <div className="tp-shimmer absolute inset-0" />
-        <Loader2 className="relative h-8 w-8 animate-spin text-white/60" />
+        <LoadingScreen fullscreen={false} className="absolute inset-0" />
       </div>
 
       {/* Overlay de activar sonido — legible, tipografía normal */}
