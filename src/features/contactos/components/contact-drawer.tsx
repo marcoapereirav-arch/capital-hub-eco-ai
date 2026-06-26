@@ -14,6 +14,7 @@ type ContactDetail = {
   manychat_subscriber_id: string | null
   company: string | null
   stage: string | null
+  pipeline_id: string | null
   products: string[]
   total_revenue: number
   total_cash_collected: number
@@ -24,6 +25,13 @@ type ContactDetail = {
   last_call_at: string | null
   created_at: string
   updated_at: string
+}
+
+type PipelineWithStages = {
+  id: string
+  name: string
+  slug: string
+  stages: { key: string; name: string; sortOrder?: number; sort_order?: number }[]
 }
 
 type JourneyEvent = {
@@ -53,11 +61,18 @@ export function ContactDrawer({
   onClose,
   onUpdate,
   stages,
+  pipelines,
 }: {
   contactId: string
   onClose: () => void
   onUpdate: () => void
   stages: Stage[]
+  /**
+   * Lista completa de pipelines (con sus stages). Permite al usuario mover
+   * el contacto a otro pipeline desde la ficha. Si no se pasa, el selector de
+   * pipeline NO se muestra (backwards-compat).
+   */
+  pipelines?: PipelineWithStages[]
 }) {
   const [tab, setTab] = useState<"datos" | "productos" | "journey" | "notas">("datos")
   const [contact, setContact] = useState<ContactDetail | null>(null)
@@ -170,13 +185,37 @@ export function ContactDrawer({
                   <MessageSquare className="h-3 w-3" /> IG
                 </a>
               )}
+              {/* Selector PIPELINE: mover contacto a otro pipeline. El server resetea el stage
+                  al primer stage del nuevo pipeline si el actual no existe alli. */}
+              {pipelines && pipelines.length > 0 && (
+                <select
+                  value={contact.pipeline_id ?? ""}
+                  onChange={(e) => save({ pipeline_id: e.target.value || null })}
+                  disabled={saving}
+                  className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border bg-background px-2 py-1"
+                  title="Pipeline al que pertenece este contacto"
+                >
+                  <option value="">Sin pipeline</option>
+                  {pipelines.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              )}
+              {/* Selector STAGE: usa los stages del pipeline actual del contacto (no los del kanban activo). */}
               <select
-                value={contact.stage ?? "new"}
+                value={contact.stage ?? ""}
                 onChange={(e) => save({ stage: e.target.value })}
                 disabled={saving}
                 className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border bg-background px-2 py-1"
+                title="Stage actual dentro del pipeline"
               >
-                {stages.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                {(() => {
+                  const currentPipeline = pipelines?.find((p) => p.id === contact.pipeline_id)
+                  const stageOpts = currentPipeline
+                    ? currentPipeline.stages.map((s) => ({ value: s.key, label: s.name }))
+                    : stages
+                  return stageOpts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)
+                })()}
               </select>
               <div className="flex-1" />
               {(contact.stage === "won" || contact.stage === "alumno") && (

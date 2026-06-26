@@ -59,20 +59,63 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   const admin = getAdminClient()
-  const before = await admin.from("contacts").select("stage").eq("id", id).maybeSingle()
+  const before = await admin.from("contacts").select("stage, pipeline_id").eq("id", id).maybeSingle()
 
-  const { error } = await admin
-    .from("contacts")
-    .update({ ...parsed.data, updated_at: new Date().toISOString() })
-    .eq("id", id)
+  // Si cambia el pipeline_id y el caller NO especifica stage, comprobamos que el stage
+  // actual exista en el nuevo pipeline. Si no existe, lo reseteamos al primer stage
+  // del nuevo pipeline. Sin esto el contacto quedaria con un stage 'huerfano' y no
+  // aparece en ninguna columna del kanban.
+  const patch: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() }
+  const movedPipeline =
+    parsed.data.pipeline_id !== undefined &&
+    parsed.data.pipeline_id !== before.data?.pipeline_id
+
+  if (movedPipeline && parsed.data.stage === undefined && parsed.data.pipeline_id) {
+    const { data: newStages } = await admin
+      .from("pipeline_stages")
+      .select("key")
+      .eq("pipeline_id", parsed.data.pipeline_id)
+      .order("sort_order", { ascending: true })
+    const stageKeys = (newStages ?? []).map((s) => s.key as string)
+    const stageStillValid = before.data?.stage && stageKeys.includes(before.data.stage)
+    if (!stageStillValid) patch.stage = stageKeys[0] ?? null
+  }
+
+  const { error } = await admin.from("contacts").update(patch).eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Si cambió el stage, registrar en journey
-  if (parsed.data.stage && parsed.data.stage !== before.data?.stage) {
+  // Journey: cambio de pipeline
+  if (movedPipeline) {
+    const [{ data: oldPipe }, { data: newPipe }] = await Promise.all([
+      before.data?.pipeline_id
+        ? admin.from("pipelines").select("name").eq("id", before.data.pipeline_id).maybeSingle()
+        : Promise.resolve({ data: null } as { data: { name: string } | null }),
+      parsed.data.pipeline_id
+        ? admin.from("pipelines").select("name").eq("id", parsed.data.pipeline_id).maybeSingle()
+        : Promise.resolve({ data: null } as { data: { name: string } | null }),
+    ])
+    await admin.from("contact_journey_events").insert({
+      contact_id: id,
+      type: "pipeline_change",
+      title: `Movido al pipeline '${newPipe?.name ?? "(sin pipeline)"}' desde '${oldPipe?.name ?? "(sin pipeline)"}'`,
+      data: {
+        from_pipeline_id: before.data?.pipeline_id ?? null,
+        to_pipeline_id: parsed.data.pipeline_id ?? null,
+        stage_reset_to: patch.stage !== undefined ? patch.stage : null,
+      },
+    })
+  }
+
+  // Journey: cambio de stage (cuando NO fue por reset auto al mover pipeline)
+  if (
+    parsed.data.stage !== undefined &&
+    parsed.data.stage !== before.data?.stage &&
+    !movedPipeline
+  ) {
     await admin.from("contact_journey_events").insert({
       contact_id: id,
       type: "stage_change",
-      title: `Cambio de pipeline: ${before.data?.stage ?? "(none)"} → ${parsed.data.stage}`,
+      title: `Stage: ${before.data?.stage ?? "(none)"} -> ${parsed.data.stage}`,
       data: { from: before.data?.stage ?? null, to: parsed.data.stage },
     })
   }

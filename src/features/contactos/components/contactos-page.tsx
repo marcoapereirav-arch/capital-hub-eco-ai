@@ -282,6 +282,27 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-3">
             {Toolbar}
           </div>
+          {/* KPIs del pipeline activo (suma sobre los contactos visibles, respeta filtros). */}
+          <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
+            {(() => {
+              const totalRev = filtered.reduce((acc, c) => acc + (Number(c.total_revenue) || 0), 0)
+              const totalCash = filtered.reduce((acc, c) => acc + (Number(c.total_cash_collected) || 0), 0)
+              const alumnos = filtered.filter((c) => c.stage === "alumno").length
+              const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 0 })
+              const pipelineLabel = activePipeline?.name ?? "Pipeline"
+              return (
+                <>
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    {pipelineLabel}
+                  </div>
+                  <Kpi label="Contactos" value={fmt(filtered.length)} />
+                  <Kpi label="Alumnos" value={fmt(alumnos)} accent="green" />
+                  <Kpi label="Facturacion total" value={`${fmt(totalRev)} EUR`} accent="green" />
+                  <Kpi label="Cash collected" value={`${fmt(totalCash)} EUR`} accent="cyan" />
+                </>
+              )
+            })()}
+          </div>
           {/* Kanban: scroll H aislado en este area. Padding va al CONTENIDO interior
               (no al contenedor scrollable) para que ambos extremos respeten margen
               incluso cuando el usuario scrollea hasta el final. */}
@@ -306,6 +327,14 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
             onClose={() => setSelectedId(null)}
             onUpdate={() => load()}
             stages={PIPELINE_STAGES}
+            pipelines={pipelines.map((p) => ({
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              stages: [...p.stages]
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map((s) => ({ key: s.key, name: s.name })),
+            }))}
           />
         )}
         {creating && <ContactCreateModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
@@ -408,5 +437,20 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
         />
       )}
     </>
+  )
+}
+
+/**
+ * KPI compacto para la cabecera del kanban. Valor + label en una linea.
+ * Accent controla el color del valor (default foreground).
+ */
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: "green" | "cyan" }) {
+  const color =
+    accent === "green" ? "text-green-400" : accent === "cyan" ? "text-cyan-400" : "text-foreground"
+  return (
+    <div className="flex items-baseline gap-1.5 shrink-0">
+      <span className={cn("text-sm font-semibold tabular-nums", color)}>{value}</span>
+      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
+    </div>
   )
 }
