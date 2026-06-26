@@ -41,6 +41,16 @@ Pantalla de configuración personal y edición de miembros del equipo. Lo clave:
 
 **Regla:** ningún email de auth sale por Supabase SMTP (BYOE) — todo por Resend. El cambio de email no es excepción.
 
+## Verificado end-to-end (2026-06-26)
+
+Prueba real sobre la cuenta `test-agent` (revertida al final, intacta):
+1. Cambio de email disparado desde `/perfil` → **el correo se envía** (verificado leyéndolo en Gmail: from `adrian@mail.capitalhubapp.com`, asunto "Confirma tu nuevo email", con el link real + JWT firmado).
+2. **El link del correo aplica el cambio** → el email en `auth.users` pasa al nuevo; login con el email nuevo funciona, con el viejo no.
+3. **Cambio de contraseña** vía `POST /api/me/password` → 200; login con la nueva funciona, con la vieja no.
+4. Reversión completa (email + contraseña) → cuenta exactamente como al empezar.
+
+**Edge case observado:** si la respuesta del `POST /confirm` se pierde por red (el server ya aplicó el cambio pero el navegador no recibe el 200), un reintento del mismo link da "este enlace ya no es válido (el email cambió)" — porque el binding `oldEmail` ya no coincide. El cambio **sí** se aplicó; solo el mensaje de reintento confunde. Aceptable por ahora.
+
 ## Cambios versionados
 
-- **2026-06-26** (v1): creado. Pantalla `/perfil` (nombre/email/contraseña), edición de miembros en `/team` (nombre + email), y cambio de email seguro vía JWT firmado sin alterar el esquema de `auth_tokens`. Disparador: Marco — el menú "Perfil" no llevaba a nada y los nombres de Marco/Adrián salían derivados del email por falta de `full_name`. Foto de perfil pospuesta (sin tocar Storage).
+- **2026-06-26** (v1): creado. Pantalla `/perfil` (nombre/email/contraseña), edición de miembros en `/team` (nombre + email), y cambio de email seguro vía JWT firmado sin alterar el esquema de `auth_tokens`. Disparador: Marco — el menú "Perfil" no llevaba a nada y los nombres de Marco/Adrián salían derivados del email por falta de `full_name`. Foto de perfil pospuesta (sin tocar Storage). Verificado end-to-end el mismo día.
