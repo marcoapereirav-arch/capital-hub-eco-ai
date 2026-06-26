@@ -5,6 +5,7 @@ import { Calendar, Trash2, Plus, AlertTriangle, CheckCircle2, ExternalLink, Exte
 import { cn } from "@/lib/utils"
 import { PageContainer } from "@/components/ui/page-container"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
+import { ShellHeader } from "@/features/shell/components/shell-header"
 
 const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
 const WEEKDAYS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
@@ -106,20 +107,18 @@ export function CalendarioAdmin() {
   const past = bookings.filter((b) => new Date(b.start_at).getTime() < now)
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">Calendario</h1>
+    <>
+      <ShellHeader title="Calendario" />
+      <PageContainer>
+        {/* Subheader info */}
+        <div>
+          <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            Owner: {owner?.display_name ?? "Adrián"} · slots de {owner?.slot_minutes ?? 30} min · {owner?.buffer_minutes ?? 10} min buffer
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            URL pública para reservar: <a href="/agenda" className="font-mono underline">/agenda</a>
+          </p>
         </div>
-        <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          Owner: {owner?.display_name ?? "Adrián"} · slots de {owner?.slot_minutes ?? 30} min · {owner?.buffer_minutes ?? 10} min buffer
-        </p>
-        <p className="text-xs text-muted-foreground mt-2">
-          URL pública para reservar: <a href="/agenda" className="font-mono underline">/agenda</a>
-        </p>
-      </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border">
@@ -308,7 +307,8 @@ export function CalendarioAdmin() {
           </div>
         </div>
       )}
-    </PageContainer>
+      </PageContainer>
+    </>
   )
 }
 

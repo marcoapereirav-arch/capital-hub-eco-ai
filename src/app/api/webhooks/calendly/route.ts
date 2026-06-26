@@ -44,12 +44,13 @@ async function applyTag(admin: Admin, contactId: string, tagName: string) {
 }
 
 /**
- * Notifica al host (Adrián u quien tenga el calendario) por DOS canales:
- *  1. Email transaccional (notifyAdrianBooking — template ya existente)
- *  2. In-app notification en el OS (tabla `notifications` que la campana lee)
+ * Notifica al CLOSER que tiene la cita agendada + super_admins (Marco/Adrián).
+ * Two canales: in-app notifications + email.
  *
- * Para no_show + canceled se notifica también — Adrián debe saber qué pasó con
- * sus citas reservadas para llamar/reagendar/follow-up al lead.
+ * Detección del closer:
+ *   1. scheduled_event.event_memberships[0].user_email → match con profiles.email
+ *   2. Si no matchea (closer aún no está en el OS) → solo super_admins
+ *   3. Si matchea un super_admin → no duplicar (ya viene en la lista de super_admins)
  */
 async function notifyHost(
   admin: Admin,
@@ -57,15 +58,39 @@ async function notifyHost(
   inv: { email: string; name: string; phone?: string | null },
   scheduledStart: string,
   eventName: string,
+  hostUserEmails: string[] = [],  // emails de event_memberships del scheduled_event
 ) {
-  // host = super_admins con cuenta en profiles (Marco + Adrián). Notif a ambos.
-  const { data: hosts } = await admin
+  // 1) Super_admins (Marco + Adrián siempre reciben — visibilidad operacional)
+  const { data: superAdmins } = await admin
     .from("profiles")
     .select("id, email, full_name")
     .eq("role", "super_admin")
     .eq("active", true)
 
-  if (!hosts || hosts.length === 0) return
+  // 2) Closer asignado al meeting — match por email
+  let assignedCloser: { id: string; email: string; full_name: string | null } | null = null
+  if (hostUserEmails.length > 0) {
+    const { data: matched } = await admin
+      .from("profiles")
+      .select("id, email, full_name, role")
+      .in("email", hostUserEmails.map((e) => e.toLowerCase()))
+      .in("role", ["closer", "setter", "marketing", "formador"])
+      .eq("active", true)
+      .maybeSingle()
+    assignedCloser = matched ?? null
+  }
+
+  // Dedupar: si el closer asignado también es super_admin, no añadir 2 veces
+  const hostsById = new Map<string, { id: string; email: string; full_name: string | null }>()
+  for (const sa of superAdmins ?? []) {
+    hostsById.set(sa.id, sa)
+  }
+  if (assignedCloser && !hostsById.has(assignedCloser.id)) {
+    hostsById.set(assignedCloser.id, assignedCloser)
+  }
+  const hosts = Array.from(hostsById.values())
+
+  if (hosts.length === 0) return
 
   const dt = new Date(scheduledStart).toLocaleString("es-ES", {
     weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
@@ -120,6 +145,7 @@ async function moveContactForCalendly(
   inv: { email?: string; name?: string; phone?: string | null },
   scheduledStart: string,
   eventName: string,
+  hostUserEmails: string[] = [],
 ) {
   const email = inv.email?.toLowerCase().trim()
   if (!email) return
@@ -178,7 +204,7 @@ async function moveContactForCalendly(
     if (tagName) await applyTag(admin, contactId, tagName)
   }
   if (inv.email && inv.name) {
-    await notifyHost(admin, kind, { email: inv.email, name: inv.name, phone: inv.phone ?? null }, scheduledStart, eventName)
+    await notifyHost(admin, kind, { email: inv.email, name: inv.name, phone: inv.phone ?? null }, scheduledStart, eventName, hostUserEmails)
   }
 }
 
@@ -233,6 +259,7 @@ export async function POST(req: NextRequest) {
         end_time: string
         event_type: string
         location?: { type: string; location?: string; join_url?: string }
+        event_memberships?: Array<{ user: string; user_email: string; user_name?: string }>
       }
     }
   }
@@ -271,12 +298,14 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }, { onConflict: "uri" })
 
+      const hostEmails = (scheduled.event_memberships ?? []).map((m) => m.user_email).filter(Boolean)
       await moveContactForCalendly(
         admin,
         event === "invitee.created" ? "created" : "canceled",
         { email: inv.email, name: inv.name, phone: inv.text_reminder_number ?? null },
         scheduled.start_time,
         scheduled.name,
+        hostEmails,
       )
     } else if (event === "invitee_no_show.created") {
       // status update + read del scheduled_event guardado para tener start_time + name (no vienen completos en este payload)
@@ -291,12 +320,14 @@ export async function POST(req: NextRequest) {
         .eq("uri", scheduled.uri)
         .maybeSingle()
 
+      const hostEmailsNs = (scheduled.event_memberships ?? []).map((m) => m.user_email).filter(Boolean)
       await moveContactForCalendly(
         admin,
         "no_show",
         { email: inv.email, name: inv.name },
         savedEvent?.start_time ?? scheduled.start_time ?? new Date().toISOString(),
         savedEvent?.name ?? scheduled.name ?? "(evento)",
+        hostEmailsNs,
       )
     }
 

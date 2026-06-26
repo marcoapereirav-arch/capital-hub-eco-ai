@@ -76,6 +76,7 @@ export type CalendlyScheduledEvent = {
   end_time: string
   event_type: string
   location?: { type: string; location?: string; join_url?: string }
+  event_memberships?: Array<{ user: string; user_email: string; user_name?: string }>
 }
 
 export async function listScheduledEvents(organizationUri: string, opts?: { count?: number }): Promise<CalendlyScheduledEvent[]> {

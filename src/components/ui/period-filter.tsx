@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import { Calendar, ChevronDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -55,6 +56,45 @@ export function PeriodFilter({
   const [customFrom, setCustomFrom] = useState<string>("")
   const [customTo, setCustomTo] = useState<string>("")
   const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [mounted, setMounted] = useState(false)
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => { setMounted(true) }, [])
+
+  // Calcula la posición del dropdown anclado al botón cuando se abre.
+  // El dropdown se renderiza vía Portal en document.body, así NO lo recorta
+  // ningún contenedor con overflow:hidden (problema raíz: el dropdown
+  // anidado se cortaba dentro del PageContainer / SidebarInset / scroll
+  // wrapper del layout (main)).
+  useEffect(() => {
+    if (!open || !buttonRef.current) return
+    const updatePos = () => {
+      if (!buttonRef.current) return
+      const rect = buttonRef.current.getBoundingClientRect()
+      const popoverWidth = 264 // w-64 = 16rem = 256px + border = 264 approx
+      // Por defecto alineado a la izquierda del botón. Si se sale por la derecha,
+      // ajusta a la derecha del viewport.
+      let left = rect.left
+      if (left + popoverWidth > window.innerWidth - 8) {
+        left = Math.max(8, window.innerWidth - popoverWidth - 8)
+      }
+      // Por defecto debajo del botón. Si no cabe abajo (popover ~ 280px alto), lo pone arriba.
+      const popoverHeight = 320
+      let top = rect.bottom + 4
+      if (top + popoverHeight > window.innerHeight - 8) {
+        top = Math.max(8, rect.top - popoverHeight - 4)
+      }
+      setPopoverPos({ top, left })
+    }
+    updatePos()
+    window.addEventListener("scroll", updatePos, true)
+    window.addEventListener("resize", updatePos)
+    return () => {
+      window.removeEventListener("scroll", updatePos, true)
+      window.removeEventListener("resize", updatePos)
+    }
+  }, [open])
 
   // Inicializar con default si no hay value
   useEffect(() => {
@@ -104,9 +144,64 @@ export function PeriodFilter({
 
   const currentLabel = value?.label ?? PRESETS.find((p) => p.value === defaultPreset)?.label ?? "Período"
 
+  const popover = open && mounted && popoverPos ? (
+    <div
+      style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
+      className="w-64 rounded-md border border-border bg-background shadow-2xl overflow-hidden"
+    >
+      <div className="py-1">
+        {PRESETS.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => selectPreset(p.value)}
+            className={cn(
+              "w-full text-left px-3 py-1.5 text-xs hover:bg-card transition-colors flex items-center justify-between",
+              value?.preset === p.value && "bg-card/60 text-foreground"
+            )}
+          >
+            <span>{p.label}</span>
+            {value?.preset === p.value && <span className="text-[10px] font-mono text-muted-foreground">✓</span>}
+          </button>
+        ))}
+      </div>
+
+      <div className="border-t border-border px-3 py-3 space-y-2 bg-card/30">
+        <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">Personalizado</div>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="space-y-1">
+            <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">Desde</span>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="w-full h-7 rounded-sm border border-border bg-background px-2 text-xs"
+            />
+          </label>
+          <label className="space-y-1">
+            <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">Hasta</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="w-full h-7 rounded-sm border border-border bg-background px-2 text-xs"
+            />
+          </label>
+        </div>
+        <button
+          onClick={applyCustom}
+          disabled={!customFrom || !customTo || customFrom > customTo}
+          className="w-full h-7 rounded-sm bg-foreground text-background text-[10px] font-mono uppercase tracking-wider disabled:opacity-30 hover:opacity-90"
+        >
+          Aplicar rango
+        </button>
+      </div>
+    </div>
+  ) : null
+
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((s) => !s)}
         className="inline-flex items-center gap-2 h-8 rounded-sm border border-border bg-background px-3 text-xs hover:bg-card transition-colors"
       >
@@ -115,58 +210,7 @@ export function PeriodFilter({
         <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
-      {open && (
-        <div className="absolute top-full right-0 mt-1 w-64 rounded-md border border-border bg-background shadow-xl z-50 overflow-hidden">
-          {/* Lista de presets */}
-          <div className="py-1">
-            {PRESETS.map((p) => (
-              <button
-                key={p.value}
-                onClick={() => selectPreset(p.value)}
-                className={cn(
-                  "w-full text-left px-3 py-1.5 text-xs hover:bg-card transition-colors flex items-center justify-between",
-                  value?.preset === p.value && "bg-card/60 text-foreground"
-                )}
-              >
-                <span>{p.label}</span>
-                {value?.preset === p.value && <span className="text-[10px] font-mono text-muted-foreground">✓</span>}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom date pickers */}
-          <div className="border-t border-border px-3 py-3 space-y-2 bg-card/30">
-            <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">Personalizado</div>
-            <div className="grid grid-cols-2 gap-2">
-              <label className="space-y-1">
-                <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">Desde</span>
-                <input
-                  type="date"
-                  value={customFrom}
-                  onChange={(e) => setCustomFrom(e.target.value)}
-                  className="w-full h-7 rounded-sm border border-border bg-background px-2 text-xs"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">Hasta</span>
-                <input
-                  type="date"
-                  value={customTo}
-                  onChange={(e) => setCustomTo(e.target.value)}
-                  className="w-full h-7 rounded-sm border border-border bg-background px-2 text-xs"
-                />
-              </label>
-            </div>
-            <button
-              onClick={applyCustom}
-              disabled={!customFrom || !customTo || customFrom > customTo}
-              className="w-full h-7 rounded-sm bg-foreground text-background text-[10px] font-mono uppercase tracking-wider disabled:opacity-30 hover:opacity-90"
-            >
-              Aplicar rango
-            </button>
-          </div>
-        </div>
-      )}
+      {popover && createPortal(popover, document.body)}
     </div>
   )
 }
