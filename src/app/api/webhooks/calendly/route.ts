@@ -60,14 +60,14 @@ async function notifyHost(
   eventName: string,
   hostUserEmails: string[] = [],  // emails de event_memberships del scheduled_event
 ) {
-  // 1) Super_admins (Marco + Adrián siempre reciben — visibilidad operacional)
+  // 1) Super_admins (Marco + Adrián siempre reciben - visibilidad operacional)
   const { data: superAdmins } = await admin
     .from("profiles")
     .select("id, email, full_name")
     .eq("role", "super_admin")
     .eq("active", true)
 
-  // 2) Closer asignado al meeting — match por email
+  // 2) Closer asignado al meeting - match por email
   let assignedCloser: { id: string; email: string; full_name: string | null } | null = null
   if (hostUserEmails.length > 0) {
     const { data: matched } = await admin
@@ -98,9 +98,9 @@ async function notifyHost(
   })
   const kindLabel = kind === "created" ? "📅 Nueva reserva" : kind === "canceled" ? "❌ Cancelación" : "🚫 No show"
   const titles: Record<typeof kind, string> = {
-    created: `${kindLabel} — ${inv.name}`,
-    canceled: `${kindLabel} — ${inv.name}`,
-    no_show: `${kindLabel} — ${inv.name}`,
+    created: `${kindLabel} - ${inv.name}`,
+    canceled: `${kindLabel} - ${inv.name}`,
+    no_show: `${kindLabel} - ${inv.name}`,
   }
   const bodies: Record<typeof kind, string> = {
     created: `${inv.name} (${inv.email}) reservó "${eventName}" para el ${dt}.`,
@@ -118,7 +118,7 @@ async function notifyHost(
   }))
   await admin.from("notifications").insert(rows).then(() => null, (e) => console.error("[calendly/notif] in-app insert failed", e))
 
-  // 2) Email — solo para 'created' usamos el template existente notifyAdrianBooking;
+  // 2) Email - solo para 'created' usamos el template existente notifyAdrianBooking;
   //    para canceled/no_show usamos el mismo template con etiqueta clara en el subject.
   try {
     await notifyAdrianBooking({
@@ -168,11 +168,11 @@ async function moveContactForCalendly(
       }).eq("id", existing.id)
       await logJourney(admin, existing.id, "call_booked", "Agendó llamada (Calendly)")
     } else {
-      // Decisión Marco 2026-06-20: leads que agendan DIRECTO en Calendly (sin pasar por
-      // el funnel test-personalidad) van al pipeline GENERAL (is_default=true), no al
-      // test-personalidad. Esto separa correctamente los flujos de captación.
+      // Decisión Marco 2026-06-20: leads que agendan DIRECTO en Calendly (sin pasar
+      // por el funnel test-personalidad) van al pipeline GENERAL (agenda directa).
+      // Match por slug, NO por is_default (no hay default sesgado).
       const { data: pipeline } = await admin
-        .from("pipelines").select("id").eq("is_default", true).maybeSingle()
+        .from("pipelines").select("id").eq("slug", "general").maybeSingle()
       const fullName = inv.name?.trim() || email
       const { data: created } = await admin.from("contacts").insert({
         full_name: fullName,
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
     .maybeSingle()
 
   if (!cfg?.webhook_signing_key) {
-    console.error("[calendly/webhook] No signing_key in BD — run /api/admin/calendly/setup first")
+    console.error("[calendly/webhook] No signing_key in BD - run /api/admin/calendly/setup first")
     return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
   }
 

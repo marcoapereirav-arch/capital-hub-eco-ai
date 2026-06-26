@@ -55,6 +55,7 @@ type Template = {
   currentSubject?: string
   currentHtml?: string
   hasOverride?: boolean
+  paused?: boolean
   updatedAt?: string | null
 }
 
@@ -85,7 +86,7 @@ export function EmailMarketingPage() {
           <Mail className="h-5 w-5 text-muted-foreground" />
           <h1 className="text-lg font-semibold">Email Marketing</h1>
           <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            · Resend + React Email · 17 templates registrados
+            · Resend + React Email · 13 plantillas activas
           </span>
         </div>
 
@@ -286,6 +287,14 @@ function TemplatesTab() {
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="text-sm font-medium leading-tight">{t.label}</div>
                   <div className="flex items-center gap-1 shrink-0">
+                    {t.paused && (
+                      <span
+                        className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-amber-500/15 text-amber-300 border border-amber-500/40"
+                        title="Esta plantilla esta pausada. NO se envia."
+                      >
+                        pausado
+                      </span>
+                    )}
                     {t.hasOverride && (
                       <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400 border border-green-500/30">
                         editado
@@ -297,14 +306,14 @@ function TemplatesTab() {
                           "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
                           freq.color
                         )}
-                        title={`Frecuencia de envío: ${freq.label}`}
+                        title={`Frecuencia de envio: ${freq.label}`}
                       >
                         {freq.label}
                       </span>
                     )}
                   </div>
                 </div>
-                {/* TRIGGER — lo más visual: cuándo se dispara este email */}
+                {/* TRIGGER - lo más visual: cuándo se dispara este email */}
                 {t.trigger && (
                   <div className="mb-2 rounded-sm border-l-2 border-foreground/30 pl-2 py-1 bg-foreground/[0.03]">
                     <div className="text-[9px] font-mono uppercase tracking-wider text-foreground/60 mb-0.5">Se envía cuando</div>
@@ -338,9 +347,11 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [saving, setSaving] = useState(false)
   const [reset, setReset] = useState(false)
+  const [togglingPause, setTogglingPause] = useState(false)
+  const [paused, setPaused] = useState(!!template.paused)
   const [err, setErr] = useState<string | null>(null)
 
-  // srcDoc inicial — incluye scripts que activan contentEditable.
+  // srcDoc inicial - incluye scripts que activan contentEditable.
   // Solo se recalcula al abrir un template distinto (sino el iframe se reset).
   const initialSrcDoc = useMemo(() => {
     const html = template.currentHtml ?? template.defaultHtml ?? ""
@@ -401,7 +412,7 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
   }
 
   async function deleteOverride() {
-    if (!confirm("¿Borrar tu versión y volver al texto original del código? No se puede deshacer.")) return
+    if (!confirm("Borrar tu version y volver al texto original del codigo. No se puede deshacer. Continuar?")) return
     setReset(true); setErr(null)
     try {
       const res = await fetch(`/api/admin/email-templates?key=${encodeURIComponent(template.key)}`, { method: "DELETE" })
@@ -412,6 +423,29 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
       setErr((e as Error).message)
     } finally {
       setReset(false)
+    }
+  }
+
+  async function togglePause() {
+    const next = !paused
+    const msg = next
+      ? "Pausar esta plantilla. Mientras este pausada, NO se enviara nunca (ni manual ni cron). Continuar?"
+      : "Reactivar el envio de esta plantilla?"
+    if (!confirm(msg)) return
+    setTogglingPause(true); setErr(null)
+    try {
+      const res = await fetch("/api/admin/email-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ template_key: template.key, paused: next }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Error")
+      setPaused(next)
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setTogglingPause(false)
     }
   }
 
@@ -436,13 +470,27 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={togglePause}
+              disabled={togglingPause}
+              className={cn(
+                "rounded-sm border px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider disabled:opacity-40",
+                paused
+                  ? "border-green-500/50 text-green-300 hover:bg-green-500/10"
+                  : "border-amber-500/50 text-amber-300 hover:bg-amber-500/10"
+              )}
+              title={paused ? "Reactivar envio" : "Pausar envio (no se enviara aunque exista cron)"}
+            >
+              {togglingPause ? "..." : paused ? "Reactivar envio" : "Pausar envio"}
+            </button>
             {template.hasOverride && (
               <button
                 onClick={deleteOverride}
                 disabled={reset}
-                className="rounded-sm border border-amber-500/40 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-300 hover:bg-amber-500/10 disabled:opacity-40"
+                className="rounded-sm border border-red-500/40 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-red-300 hover:bg-red-500/10 disabled:opacity-40"
+                title="Borrar tu version y volver al texto original del codigo"
               >
-                {reset ? "Restaurando…" : "Volver al original"}
+                {reset ? "Restaurando..." : "Volver al original"}
               </button>
             )}
             <button
@@ -450,10 +498,10 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
               disabled={saving || !subject.trim()}
               className="rounded-sm bg-gradient-to-br from-green-500 to-green-600 text-black px-4 py-1.5 text-[10px] font-mono uppercase tracking-wider font-bold disabled:opacity-30"
             >
-              {saving ? "Guardando…" : "Guardar cambios"}
+              {saving ? "Guardando..." : "Guardar cambios"}
             </button>
             <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs font-mono uppercase tracking-wider px-2">
-              ✕
+              X
             </button>
           </div>
         </div>

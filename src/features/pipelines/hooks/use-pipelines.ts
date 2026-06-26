@@ -30,7 +30,14 @@ export function usePipelines(refreshKey?: unknown) {
 
 /**
  * Mantiene el id del pipeline activo (persistido en localStorage).
- * Si no hay valor guardado o el guardado ya no existe, devuelve el default.
+ *
+ * Decisión Marco 2026-06-20: NO hay pipeline "por default". Cada pipeline
+ * tiene su propia intención (general = agenda directa, test-personalidad =
+ * funnel test, etc). El usuario elige siempre qué pipeline ver.
+ *
+ * - Primera carga sin localStorage: usa el primero alfabéticamente (no por flag).
+ * - Si hay valor guardado y sigue existiendo: lo usa.
+ * - Si no existe: cae al primero.
  */
 export function useActivePipelineId(pipelines: Pipeline[]): {
   activeId: string | null
@@ -45,8 +52,9 @@ export function useActivePipelineId(pipelines: Pipeline[]): {
     if (saved && exists) {
       setActiveIdState(saved)
     } else {
-      const fallback = pipelines.find((p) => p.isDefault) ?? pipelines[0]
-      setActiveIdState(fallback?.id ?? null)
+      // Sin default sesgado: usa el primero por orden alfabético del slug.
+      const sorted = [...pipelines].sort((a, b) => a.slug.localeCompare(b.slug))
+      setActiveIdState(sorted[0]?.id ?? null)
     }
   }, [pipelines])
 

@@ -5,6 +5,8 @@ import { APP_URL } from "./resend-client"
 import { WelcomeTrialEmail } from "./templates/welcome-trial"
 import { AgendaConfirmedEmail } from "./templates/agenda-confirmed"
 import { AgendaReminder24hEmail } from "./templates/agenda-reminder-24h"
+import { AgendaReminder2hEmail } from "./templates/agenda-reminder-2h"
+import { AgendaReminder30minEmail } from "./templates/agenda-reminder-30min"
 import { TrialEnds48hEmail } from "./templates/trial-ends-48h"
 import { PaymentFailedEmail } from "./templates/payment-failed"
 import { InternalBookingAlert } from "./templates/internal-booking-alert"
@@ -52,7 +54,7 @@ export async function sendAgendaConfirmed(input: {
   callId?: string
   publicToken?: string
   leadId?: string
-  cancelUrlPath?: string // ej "/api/calendar/cancel" — default mifge legacy
+  cancelUrlPath?: string // ej "/api/calendar/cancel" - default mifge legacy
   reschedulePath?: string // ej "/api/calendar/reschedule"
 }) {
   const { generateIcs } = await import("@/lib/calendar/ics")
@@ -103,6 +105,7 @@ export async function sendAgendaReminder24h(input: {
   email: string
   slotStartIso: string
   meetingUrl: string
+  durationMinutes?: number
   callId?: string
   leadId?: string
 }) {
@@ -110,12 +113,63 @@ export async function sendAgendaReminder24h(input: {
     fullName: input.fullName,
     slotStartIso: input.slotStartIso,
     meetingUrl: input.meetingUrl,
+    durationMinutes: input.durationMinutes,
   }))
   return sendEmail({
     template: "agenda_reminder_24h",
     to: input.email,
     toName: input.fullName,
-    subject: "Mañana hablamos — preparación rápida",
+    subject: "Manana hablamos. Preparacion rapida",
+    html,
+    callId: input.callId,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendAgendaReminder2h(input: {
+  fullName: string
+  email: string
+  slotStartIso: string
+  meetingUrl: string
+  durationMinutes?: number
+  callId?: string
+  leadId?: string
+}) {
+  const html = await render(AgendaReminder2hEmail({
+    fullName: input.fullName,
+    slotStartIso: input.slotStartIso,
+    meetingUrl: input.meetingUrl,
+    durationMinutes: input.durationMinutes,
+  }))
+  return sendEmail({
+    template: "agenda_reminder_2h",
+    to: input.email,
+    toName: input.fullName,
+    subject: "En 2 horas hablamos",
+    html,
+    callId: input.callId,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendAgendaReminder30min(input: {
+  fullName: string
+  email: string
+  slotStartIso: string
+  meetingUrl: string
+  callId?: string
+  leadId?: string
+}) {
+  const html = await render(AgendaReminder30minEmail({
+    fullName: input.fullName,
+    slotStartIso: input.slotStartIso,
+    meetingUrl: input.meetingUrl,
+  }))
+  return sendEmail({
+    template: "agenda_reminder_30min",
+    to: input.email,
+    toName: input.fullName,
+    subject: "Empezamos en 30 minutos",
     html,
     callId: input.callId,
     leadId: input.leadId,
@@ -147,7 +201,7 @@ export async function sendPaymentFailed(input: { fullName: string; email: string
     template: "payment_failed",
     to: input.email,
     toName: input.fullName,
-    subject: "Problema con tu pago — actualiza tu método",
+    subject: "Problema con tu pago - actualiza tu método",
     html,
     leadId: input.leadId,
   })
@@ -193,7 +247,7 @@ export async function sendNoShow(input: { fullName: string; email: string; callI
     template: "no_show",
     to: input.email,
     toName: input.fullName,
-    subject: "No te vi hoy — reagenda en 1 click",
+    subject: "No te vi hoy - reagenda en 1 click",
     html,
     callId: input.callId,
     leadId: input.leadId,
@@ -235,8 +289,8 @@ export async function sendBetaRetargeting(input: {
     subject: input.cancelOrigin === "trial"
       ? "¿Qué te frenó?"
       : input.cancelOrigin === "monthly"
-        ? "Hasta luego — la puerta queda abierta"
-        : "Tu plan anual se acabó — la puerta queda abierta",
+        ? "Hasta luego - la puerta queda abierta"
+        : "Tu plan anual se acabó - la puerta queda abierta",
     html,
     leadId: input.leadId,
   })
@@ -386,13 +440,13 @@ export async function notifyMarcoErrors(input: {
     template: "internal_error_alert",
     to: MARCO_EMAIL,
     toName: "Marco",
-    subject: `⚠️ ${total} fallo${total === 1 ? "" : "s"} en MIFGE — últimos ${input.windowMinutes}min`,
+    subject: `⚠️ ${total} fallo${total === 1 ? "" : "s"} en MIFGE - últimos ${input.windowMinutes}min`,
     html,
   })
 }
 
 /**
- * Notif venta — manda alerta a Marco Y Adrián en paralelo.
+ * Notif venta - manda alerta a Marco Y Adrián en paralelo.
  * Decisión Marco 2026-06-19: ambos founders deben recibir notif cada venta.
  * Si uno falla el otro sigue (Promise.allSettled). El nombre del helper se
  * mantiene como notifyMarcoPurchase por compat con sales/register endpoint.
@@ -414,7 +468,7 @@ export async function notifyMarcoPurchase(input: {
     currency: input.currency,
     productName: input.productName,
   }))
-  const subject = `${input.amount ? `${input.amount}${input.currency === "EUR" || !input.currency ? "€" : input.currency} · ` : ""}${input.eventLabel} — ${input.fullName}`
+  const subject = `${input.amount ? `${input.amount}${input.currency === "EUR" || !input.currency ? "€" : input.currency} · ` : ""}${input.eventLabel} - ${input.fullName}`
   const vars = {
     fullName: input.fullName,
     email: input.email,

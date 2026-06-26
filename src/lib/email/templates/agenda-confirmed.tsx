@@ -8,19 +8,26 @@ interface Props {
   meetingUrl?: string | null
   cancelUrl?: string | null
   rescheduleUrl?: string | null
+  /** Duracion real del slot en minutos. Se obtiene del event_type real (Calendly) o del calendar propio. */
+  durationMinutes?: number
 }
 
-export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cancelUrl, rescheduleUrl }: Props) {
+/**
+ * Email de confirmacion al lead que reservo la llamada.
+ * Copy sin em-dash. Duracion NO esta hardcoded a 20 min, viene del slot real.
+ */
+export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cancelUrl, rescheduleUrl, durationMinutes }: Props) {
   const firstName = fullName.split(" ")[0] || ""
   const date = new Date(slotStartIso)
   const dateStr = date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
   const timeStr = date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+  const durStr = durationMinutes && durationMinutes > 0 ? ` (${durationMinutes} min)` : ""
 
   return (
     <EmailLayout preview={`Confirmada tu llamada el ${dateStr} a las ${timeStr}.`}>
       <H1>Confirmada{firstName ? `, ${firstName}` : ""}.</H1>
       <P>
-        Tu llamada de 20 minutos conmigo está reservada. Te dejo los detalles:
+        Tu llamada conmigo esta reservada. Te dejo los detalles:
       </P>
 
       <Section style={{ backgroundColor: emailColors.surface, border: `1px solid ${emailColors.border}`, padding: 18, margin: "20px 0", borderRadius: 4 }}>
@@ -31,7 +38,7 @@ export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cance
           {dateStr}
         </Text>
         <Text style={{ fontSize: 16, color: emailColors.text, margin: 0 }}>
-          {timeStr} (hora España) · 20 minutos
+          {timeStr} (hora Espana){durStr}
         </Text>
         {meetingUrl && (
           <Text style={{ fontSize: 13, color: emailColors.textDim, margin: "12px 0 0" }}>
@@ -42,22 +49,22 @@ export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cance
       </Section>
 
       <Text style={{ fontSize: 14, color: emailColors.textDim, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.1em", margin: "24px 0 12px" }}>
-        Cómo prepararte
+        Como prepararte
       </Text>
       <P dim>
-        · Cámara y audio en sitio tranquilo<br />
-        · Libreta o notas para apuntar<br />
-        · Piensa: ¿qué situación profesional quieres cambiar?<br />
-        · 2-3 dudas concretas que tengas
+        Camara y audio en sitio tranquilo.<br />
+        Libreta o notas para apuntar.<br />
+        Piensa: que situacion profesional quieres cambiar.<br />
+        2 o 3 dudas concretas que tengas.
       </P>
 
       {(rescheduleUrl || cancelUrl) ? (
         <P dim>
-          ¿Necesitas cambios?{" "}
+          Si necesitas cambios:{" "}
           {rescheduleUrl && (
             <>
               <a href={rescheduleUrl} style={{ color: emailColors.text }}>Reagendar</a>
-              {cancelUrl && " · "}
+              {cancelUrl && " . "}
             </>
           )}
           {cancelUrl && (
@@ -70,7 +77,7 @@ export function AgendaConfirmedEmail({ fullName, slotStartIso, meetingUrl, cance
         </P>
       )}
 
-      <Text style={{ fontSize: 14, color: emailColors.text, margin: "24px 0 4px" }}>Adrián Villanueva</Text>
+      <Text style={{ fontSize: 14, color: emailColors.text, margin: "24px 0 4px" }}>Adrian Villanueva</Text>
       <Text style={{ fontSize: 12, color: emailColors.textDim, margin: 0 }}>Fundador, Capital Hub</Text>
     </EmailLayout>
   )

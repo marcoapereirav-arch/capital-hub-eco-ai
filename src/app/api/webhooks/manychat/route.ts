@@ -84,9 +84,13 @@ function normalizeCustomFields(
   return cf
 }
 
-/** Devuelve el pipeline_id del pipeline marcado como is_default. */
+/**
+ * Devuelve el pipeline_id de 'general'. Marco 2026-06-20: NO hay default.
+ * ManyChat va a 'general' por ahora; cuando definamos CTAs por canal se
+ * mapearán a sus pipelines específicos.
+ */
 async function getDefaultPipelineId(supabase: ReturnType<typeof createAdminClient>): Promise<string | null> {
-  const { data } = await supabase.from('pipelines').select('id').eq('is_default', true).maybeSingle()
+  const { data } = await supabase.from('pipelines').select('id').eq('slug', 'general').maybeSingle()
   return data?.id ?? null
 }
 

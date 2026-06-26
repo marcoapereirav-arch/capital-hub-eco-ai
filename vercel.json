@@ -4,6 +4,18 @@
     {
       "path": "/api/cron/sync-ideas",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/agenda-reminder-24h",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/agenda-reminder-2h",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/agenda-reminder-30min",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

@@ -51,21 +51,37 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; r
   let error: string | undefined
   let status: "sent" | "failed" = "sent"
 
-  // Override: si super_admin guardó un texto custom para este template_key,
-  // lo usa en lugar del HTML/subject hardcoded del template React.
+  // Override + paused: super_admin puede sobrescribir el copy O pausar el envio
+  // completo desde /email-marketing > Plantillas.
   let finalSubject = input.subject
   let finalHtml = input.html
   let overrideUsed = false
   try {
     const { data: override } = await supabase
       .from("email_template_overrides")
-      .select("subject, html_body")
+      .select("subject, html_body, paused")
       .eq("template_key", input.template)
       .maybeSingle()
     if (override) {
+      // Plantilla pausada por Marco/Adrian. NO se envia. Log para trazabilidad.
+      if ((override as { paused?: boolean }).paused) {
+        await supabase.from("email_logs").insert({
+          template: input.template,
+          to_email: input.to.toLowerCase().trim(),
+          to_name: input.toName ?? null,
+          subject: input.subject,
+          resend_id: null,
+          status: "skipped_paused",
+          error: "Plantilla pausada por admin",
+          metadata: { ...(input.metadata ?? {}), paused: true },
+          lead_id: input.leadId ?? null,
+          call_id: input.callId ?? null,
+        }).then(() => null, () => null)
+        return { ok: false, error: "Plantilla pausada" }
+      }
       const vars = input.vars ?? {}
-      finalSubject = substituteVars(override.subject as string, vars)
-      finalHtml = substituteVars(override.html_body as string, vars)
+      finalSubject = substituteVars((override as { subject: string }).subject, vars)
+      finalHtml = substituteVars((override as { html_body: string }).html_body, vars)
       overrideUsed = true
     }
   } catch {

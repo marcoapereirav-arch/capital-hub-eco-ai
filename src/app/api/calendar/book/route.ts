@@ -102,9 +102,10 @@ export async function POST(req: NextRequest) {
 
       let contactId = existingContact?.id
       if (!contactId) {
-        // Lead nuevo sin contexto → pipeline General (default)
+        // Lead nuevo sin contexto va al pipeline 'general' (agenda directa).
+        // Marco 2026-06-20: NO hay default sesgado, match por slug.
         const { data: defaultPipeline } = await supabase
-          .from("pipelines").select("id").eq("is_default", true).maybeSingle()
+          .from("pipelines").select("id").eq("slug", "general").maybeSingle()
         const { data: created } = await supabase
           .from("contacts")
           .insert({
