@@ -11,6 +11,32 @@ order: 50
 > porque **todo lo que se toca en la App se refleja en el Knowledge del OS** para mantener el
 > contexto unificado.
 
+## ✅ Verificación EN VIVO (2026-06-26) — esto MANDA sobre la auditoría de código de abajo
+
+Se entró a la app de producción (`app.capitalhubapp.com`) con la cuenta `test-agent` y se probó cada flujo
+de verdad con Playwright (capturas reales, no lectura de código):
+
+- **Funciona:** login · Home · Comunidad (ver, **publicar**, **like**, **comentar**) · Mensajes 1-a-1
+  (enviar/recibir) · Formación (abrir clase, **marcar completada → progreso 100%**) · Perfil (editar + guardar
+  bio) · Miembros (lista real, 12 personas).
+- **En construcción (placeholders, futuro):** Calendario · Leaderboards · Marketplace.
+- **No probado:** reproducción de video — todavía no hay ninguna formación con video subido (las lecciones de
+  prueba no tienen video).
+- **Bug real:** en cada página la llamada a `api/feedback/status` falla por CORS (el preflight OPTIONS no
+  devuelve HTTP ok). No rompe la UI pero está roto por detrás. Menor: el contador de comentarios no se
+  actualiza en vivo (el comentario sí persiste, se ve al recargar).
+
+### Corrección importante de arquitectura (verificada en vivo)
+
+La app de **producción usa la MISMA Supabase que el OS** (`aglyoyqtzozdnusltjxe`): tanto el login (`auth/v1`)
+como la edge function `api` apuntan ahí (visto en las llamadas de red). El `web/.env` local apunta a otro
+proyecto (`xkuhkkjeuzxutggbnwed`) que **NO es producción**. Implicación: **las migraciones del repo de la App
+(`supabase/migrations`) son legacy (del port capitalhub2.0) y NO son el esquema desplegado.** Por eso los
+hallazgos de RLS/seguridad de la auditoría de código de abajo (paywall "burlable", `lessons USING(true)`,
+`exam_questions`, etc.) salen de ese esquema legacy y **NO están confirmados en producción** — no asustarse
+con ellos. Para evaluar la seguridad real hay que mirar las políticas de la BD del OS (`aglyoyqtzozdnusltjxe`),
+no estas migraciones. **SOP 17 (la App comparte Supabase con el OS) es el correcto; SOP 02 queda corregido.**
+
 ## Metadatos de la auditoría
 
 - **Fecha:** 2026-06-26
@@ -146,3 +172,8 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
 - **2026-06-26 (v2):** Aclaraciones de Marco. (a) Modelo HOY = solo high ticket (suscripciones = futuro, con
   webinar) → no construir suscripciones ahora. (b) Regla: las formaciones se suben con la misma config verde de
   Bunny que el funnel. (c) Marketplace, AI chat, Calendario y Leaderboards = futuro, no tocar hasta aviso.
+- **2026-06-26 (v3):** Verificación EN VIVO con Playwright + cuenta `test-agent` (sección al inicio del SOP).
+  Confirmado que el recorrido del alumno funciona (comunidad, mensajes, formación, perfil, miembros). Bug real:
+  `feedback/status` falla por CORS en cada página. Corrección de arquitectura: producción usa la Supabase del
+  OS (`aglyoyqtzozdnusltjxe`); las migraciones del repo App son legacy → los hallazgos de seguridad de la
+  auditoría de código NO están confirmados en prod. SOP 17 correcto, SOP 02 corregido.
