@@ -58,7 +58,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   transactional: "text-green-400 border-green-500/40",
   retargeting: "text-purple-400 border-purple-500/40",
   auth: "text-blue-400 border-blue-500/40",
-  internal: "text-muted-foreground border-border/40",
+  internal: "text-muted-foreground border-border",
 }
 
 export function EmailMarketingPage() {
@@ -158,7 +158,7 @@ function DashboardTab() {
                 Sin envíos en este rango. Cambia el filtro de período para ver otras fechas.
               </div>
             ) : (
-              <div className="rounded-md border border-border/40 divide-y divide-border/40">
+              <div className="rounded-md border border-border divide-y divide-border">
                 {stats.topTemplates.map((t) => {
                   const openR = t.total > 0 ? Math.round((t.opened / t.total) * 100) : 0
                   const clickR = t.total > 0 ? Math.round((t.clicked / t.total) * 100) : 0
@@ -223,7 +223,7 @@ function TemplatesTab() {
               <button
                 key={t.key}
                 onClick={() => setEditing(t)}
-                className="rounded-md border border-border/40 p-3 hover:border-border hover:bg-card/40 transition-colors text-left"
+                className="rounded-md border border-border p-3 hover:border-border hover:bg-card/40 transition-colors text-left"
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="text-sm font-medium">{t.label}</div>
@@ -235,7 +235,7 @@ function TemplatesTab() {
                     )}
                     <span className={cn(
                       "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
-                      CATEGORY_COLORS[t.category] ?? "border-border/40"
+                      CATEGORY_COLORS[t.category] ?? "border-border"
                     )}>
                       {t.category}
                     </span>
@@ -388,7 +388,7 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
           </div>
         </div>
 
-        <div className="px-4 py-3 border-b border-border/60 space-y-2.5">
+        <div className="px-4 py-3 border-b border-border space-y-2.5">
           <label className="block">
             <span className="text-[10px] font-mono uppercase tracking-wider text-foreground/80">
               Asunto del email <span className="text-red-400">*</span>
@@ -406,17 +406,17 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
             <div className="flex items-center gap-1 mr-2">
               <button
                 onClick={() => applyCommand("bold")}
-                className="w-7 h-7 rounded-sm border border-white/15 text-foreground hover:bg-white/[0.06] font-bold text-xs"
+                className="w-7 h-7 rounded-sm border border-border text-foreground hover:bg-white/[0.06] font-bold text-xs"
                 title="Negrita (Ctrl+B)"
               >B</button>
               <button
                 onClick={() => applyCommand("italic")}
-                className="w-7 h-7 rounded-sm border border-white/15 text-foreground hover:bg-white/[0.06] italic text-xs"
+                className="w-7 h-7 rounded-sm border border-border text-foreground hover:bg-white/[0.06] italic text-xs"
                 title="Itálica (Ctrl+I)"
               >I</button>
               <button
                 onClick={() => applyCommand("underline")}
-                className="w-7 h-7 rounded-sm border border-white/15 text-foreground hover:bg-white/[0.06] underline text-xs"
+                className="w-7 h-7 rounded-sm border border-border text-foreground hover:bg-white/[0.06] underline text-xs"
                 title="Subrayado (Ctrl+U)"
               >U</button>
             </div>
@@ -430,7 +430,7 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
                   <button
                     key={v}
                     onClick={() => insertText(`{{${v}}}`)}
-                    className="text-[11px] font-mono px-2 py-1 rounded bg-white/[0.05] border border-white/15 text-foreground hover:border-white/35"
+                    className="text-[11px] font-mono px-2 py-1 rounded bg-white/[0.05] border border-border text-foreground hover:border-white/35"
                     title="Insertar en la posición del cursor"
                   >
                     {`{{${v}}}`}
@@ -516,7 +516,7 @@ function LogsTab() {
           Sin envíos con esos filtros.
         </div>
       ) : (
-        <div className="rounded-md border border-border/40 divide-y divide-border/40">
+        <div className="rounded-md border border-border divide-y divide-border">
           {logs.map((l) => (
             <div key={l.id} className="px-3 py-2 grid grid-cols-[1fr_auto_auto] gap-3 items-center">
               <div className="min-w-0">
@@ -571,7 +571,7 @@ function BroadcastsTab() {
 function ConfigTab() {
   return (
     <div className="space-y-3">
-      <section className="rounded-md border border-border/40 p-3 space-y-2">
+      <section className="rounded-md border border-border p-3 space-y-2">
         <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Resend</h3>
         <div className="text-sm space-y-1">
           <div><span className="text-muted-foreground">From email:</span> <code className="font-mono text-xs">adrian@mail.capitalhubapp.com</code></div>
@@ -594,7 +594,7 @@ function ConfigTab() {
         </ul>
       </section>
 
-      <section className="rounded-md border border-border/40 p-3 space-y-2">
+      <section className="rounded-md border border-border p-3 space-y-2">
         <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Brand y layout</h3>
         <p className="text-xs text-muted-foreground">
           Todos los templates usan <code className="font-mono">src/lib/email/templates/_layout.tsx</code> como base.
@@ -628,7 +628,7 @@ function StatCard({
   }[accent] : ""
 
   return (
-    <div className="rounded-md border border-border/40 bg-card/40 p-3">
+    <div className="rounded-md border border-border bg-card/40 p-3">
       <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">{label}</div>
       <div className={cn("text-2xl font-semibold", colorClass)}>{value}{suffix}</div>
       {sublabel && <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">{sublabel}</div>}

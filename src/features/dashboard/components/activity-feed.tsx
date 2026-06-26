@@ -21,7 +21,7 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
             {items.map((item, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 border-b border-border/30 py-3 last:border-0"
+                className="flex items-start gap-3 border-b border-border py-3 last:border-0"
               >
                 {/* Dot indicator */}
                 <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/60" />

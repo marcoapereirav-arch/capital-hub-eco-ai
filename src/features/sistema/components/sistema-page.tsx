@@ -105,7 +105,7 @@ const STEPS: Step[] = [
 const STATUS_META: Record<StepStatus, { label: string; cls: string; bg: string }> = {
   live: { label: "✓ Live", cls: "border-green-500/50 text-green-400", bg: "bg-green-500/[0.04]" },
   wip: { label: "⚙ En construcción", cls: "border-amber-500/50 text-amber-400", bg: "bg-amber-500/[0.04]" },
-  todo: { label: "○ Por hacer", cls: "border-border/40 text-muted-foreground", bg: "bg-card/30" },
+  todo: { label: "○ Por hacer", cls: "border-border text-muted-foreground", bg: "bg-card/30" },
 }
 
 export function SistemaPage() {
@@ -116,7 +116,7 @@ export function SistemaPage() {
       <PageContainer>
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-2">
-          <div className="inline-flex items-center gap-2 border border-border/40 px-3 py-1 rounded-sm">
+          <div className="inline-flex items-center gap-2 border border-border px-3 py-1 rounded-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Foco: Webinar 8/8/2026
@@ -167,7 +167,7 @@ export function SistemaPage() {
         </div>
 
         {/* Cierre */}
-        <section className="mt-8 rounded-md border border-border/40 bg-gradient-to-br from-amber-500/[0.04] to-red-500/[0.04] p-6 text-center">
+        <section className="mt-8 rounded-md border border-border bg-gradient-to-br from-amber-500/[0.04] to-red-500/[0.04] p-6 text-center">
           <h2 className="text-lg font-semibold mb-1">Día D · 8 de agosto 2026</h2>
           <p className="text-sm text-muted-foreground">
             Webinar en directo. El sistema completo ejecuta una compra real cada vez que alguien atraviese este flujo.
@@ -208,7 +208,7 @@ function StepCard({ step }: { step: Step }) {
   const content = (
     <>
       <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="h-9 w-9 rounded-md bg-card/60 border border-border/40 flex items-center justify-center shrink-0">
+        <div className="h-9 w-9 rounded-md bg-card/60 border border-border flex items-center justify-center shrink-0">
           <Icon className="h-4 w-4 text-foreground" />
         </div>
         <span className={cn("text-[9px] font-mono uppercase tracking-wider border px-1.5 py-0.5 rounded-sm shrink-0", meta.cls)}>
@@ -229,7 +229,7 @@ function StepCard({ step }: { step: Step }) {
     "rounded-md border p-4 transition-all",
     step.status === "live" && "border-green-500/30 hover:border-green-500/60",
     step.status === "wip" && "border-amber-500/30 hover:border-amber-500/60",
-    step.status === "todo" && "border-border/40 hover:border-border",
+    step.status === "todo" && "border-border hover:border-border",
     meta.bg,
     step.href && "cursor-pointer"
   )

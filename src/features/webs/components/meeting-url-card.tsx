@@ -101,13 +101,13 @@ export function MeetingUrlCard() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="https://us05web.zoom.us/j/8765432109?pwd=..."
-          className="flex-1 rounded-sm border border-border/40 bg-background px-2 py-1.5 text-xs font-mono"
+          className="flex-1 rounded-sm border border-border bg-background px-2 py-1.5 text-xs font-mono"
         />
         {draft && (
           <button
             onClick={handleClear}
             disabled={saving}
-            className="rounded-sm border border-border/40 px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider hover:bg-card disabled:opacity-50"
+            className="rounded-sm border border-border px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider hover:bg-card disabled:opacity-50"
           >
             Limpiar
           </button>

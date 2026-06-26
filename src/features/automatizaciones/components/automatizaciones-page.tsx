@@ -26,7 +26,7 @@ type Summary = { total: number; live: number; pending: number; idle: number; err
 const STATUS_META: Record<Automation["status"], { label: string; icon: typeof CheckCircle2; color: string; bg: string; border: string }> = {
   live: { label: "Activa", icon: CheckCircle2, color: "text-green-400", bg: "bg-green-500/[0.06]", border: "border-green-500/30" },
   pending: { label: "Pendiente", icon: Clock, color: "text-amber-400", bg: "bg-amber-500/[0.06]", border: "border-amber-500/30" },
-  idle: { label: "Inactiva", icon: Clock, color: "text-muted-foreground", bg: "bg-card/30", border: "border-border/40" },
+  idle: { label: "Inactiva", icon: Clock, color: "text-muted-foreground", bg: "bg-card/30", border: "border-border" },
   error: { label: "Fallando", icon: XCircle, color: "text-red-400", bg: "bg-red-500/[0.06]", border: "border-red-500/30" },
 }
 
@@ -97,7 +97,7 @@ export function AutomatizacionesPage() {
               Se actualiza automáticamente cada 30 segundos.
             </p>
           </div>
-          <button onClick={() => load()} className="shrink-0 rounded-sm border border-border/40 px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider hover:bg-card flex items-center gap-1.5">
+          <button onClick={() => load()} className="shrink-0 rounded-sm border border-border px-2 py-1.5 text-[10px] font-mono uppercase tracking-wider hover:bg-card flex items-center gap-1.5">
             <RefreshCcw className="h-3 w-3" /> Refrescar
           </button>
         </div>
@@ -151,7 +151,7 @@ function SummaryCard({ label, value, active, color }: { label: string; value: nu
   return (
     <div className={cn(
       "rounded-md border p-3 transition-colors",
-      active ? "border-border bg-card/30" : "border-border/40"
+      active ? "border-border bg-card/30" : "border-border"
     )}>
       <div className={cn("text-[10px] font-mono uppercase tracking-wider", color ?? "text-muted-foreground")}>{label}</div>
       <div className="text-2xl font-semibold mt-1">{value}</div>
@@ -187,12 +187,12 @@ function AutomationCard({ a, expanded, onToggle }: { a: Automation; expanded: bo
       </button>
 
       {expanded && (
-        <div className="border-t border-border/40 px-4 pb-4 pt-3 space-y-3 bg-background/30">
+        <div className="border-t border-border px-4 pb-4 pt-3 space-y-3 bg-background/30">
           <p className="text-xs text-muted-foreground">{a.description}</p>
 
           <div>
             <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Trigger</div>
-            <code className="text-xs font-mono bg-card/40 border border-border/40 rounded-sm px-2 py-1 inline-block">
+            <code className="text-xs font-mono bg-card/40 border border-border rounded-sm px-2 py-1 inline-block">
               {a.trigger}
             </code>
           </div>
@@ -214,13 +214,13 @@ function AutomationCard({ a, expanded, onToggle }: { a: Automation; expanded: bo
               <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Tablas BD</div>
               <div className="flex flex-wrap gap-1">
                 {a.relatedTables.map((t) => (
-                  <code key={t} className="text-[10px] font-mono bg-card/40 border border-border/40 rounded-sm px-1.5 py-0.5">{t}</code>
+                  <code key={t} className="text-[10px] font-mono bg-card/40 border border-border rounded-sm px-1.5 py-0.5">{t}</code>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/40 text-[10px] font-mono">
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border text-[10px] font-mono">
             <div>
               <div className="text-muted-foreground uppercase tracking-wider mb-0.5">Última ejecución</div>
               <div className="text-foreground">

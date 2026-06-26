@@ -96,7 +96,7 @@ export function AreasOverview() {
                 key={area.id}
                 href={exists ? `/areas/${area.id}` : "#"}
                 className={cn(
-                  "rounded-md border border-border/40 p-4 ring-1 transition-all hover:border-border",
+                  "rounded-md border border-border p-4 ring-1 transition-all hover:border-border",
                   colors.ring,
                   colors.tint,
                   !exists && "opacity-50 pointer-events-none"
@@ -142,7 +142,7 @@ export function AreasOverview() {
 
         {/* Proyectos huérfanos */}
         {orphanProjects.length > 0 && (
-          <div className="rounded-md border border-border/40 p-4 bg-background">
+          <div className="rounded-md border border-border p-4 bg-background">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold">Proyectos sin área asignada</h2>
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">

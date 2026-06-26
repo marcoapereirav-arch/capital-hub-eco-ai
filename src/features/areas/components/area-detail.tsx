@@ -121,7 +121,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
             </h2>
             <button
               onClick={() => setShowAssign((v) => !v)}
-              className="text-[10px] font-mono uppercase tracking-wider border border-border/40 rounded-sm px-2 py-1 hover:bg-card"
+              className="text-[10px] font-mono uppercase tracking-wider border border-border rounded-sm px-2 py-1 hover:bg-card"
             >
               {showAssign ? "Cerrar" : "+ Asignar / crear"}
             </button>
@@ -137,7 +137,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
                 const tcount = tasks.filter((t) => t.paraId === p.id).length
                 const open = tasks.filter((t) => t.paraId === p.id && t.status !== "done").length
                 return (
-                  <li key={p.id} className="flex items-center justify-between rounded-sm border border-border/40 px-3 py-2 hover:bg-card/40">
+                  <li key={p.id} className="flex items-center justify-between rounded-sm border border-border px-3 py-2 hover:bg-card/40">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       {p.status === "completed" && (
                         <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
@@ -164,7 +164,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
 
           {/* Panel asignar/crear */}
           {showAssign && (
-            <div className="rounded-md border border-border/40 p-3 space-y-3 bg-card/30">
+            <div className="rounded-md border border-border p-3 space-y-3 bg-card/30">
               {/* Crear nuevo */}
               <div>
                 <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -176,7 +176,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
                     onChange={(e) => setNewProjectName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject() }}
                     placeholder="Nombre del proyecto"
-                    className="flex-1 rounded-sm border border-border/40 bg-background px-2 py-1.5 text-xs"
+                    className="flex-1 rounded-sm border border-border bg-background px-2 py-1.5 text-xs"
                   />
                   <button
                     onClick={handleCreateProject}
@@ -200,7 +200,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
                         <span className="truncate">{p.name}</span>
                         <button
                           onClick={() => handleAssign(p)}
-                          className="text-[10px] font-mono uppercase tracking-wider border border-border/40 rounded-sm px-2 py-0.5 hover:bg-foreground hover:text-background shrink-0"
+                          className="text-[10px] font-mono uppercase tracking-wider border border-border rounded-sm px-2 py-0.5 hover:bg-foreground hover:text-background shrink-0"
                         >
                           + Asignar
                         </button>
@@ -220,7 +220,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
             <ul className="space-y-1.5">
               {directTasks.map((t) => (
                 <li key={t.id} className={cn(
-                  "flex items-center justify-between rounded-sm border border-border/40 px-3 py-2",
+                  "flex items-center justify-between rounded-sm border border-border px-3 py-2",
                   t.status === "done" && "opacity-50"
                 )}>
                   <div className="flex items-center gap-2 flex-1 min-w-0">

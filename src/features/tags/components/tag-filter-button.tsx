@@ -77,7 +77,7 @@ export function TagFilterButton({
                 <button
                   key={tag.id}
                   onClick={() => toggle(tag.id)}
-                  className="w-full text-left px-3 py-1.5 hover:bg-secondary/40 flex items-center gap-2 text-xs"
+                  className="w-full text-left px-3 py-1.5 hover:bg-secondary flex items-center gap-2 text-xs"
                 >
                   <span
                     className={cn(

@@ -322,7 +322,7 @@ export function OperacionesDashboard() {
                     <span>Tiempo transcurrido</span>
                     <span>{Math.round(focusCountdown.timePct)}%</span>
                   </div>
-                  <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
+                  <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
                     <div
                       className={cn("h-full bg-gradient-to-r transition-all", FOCUS_GRADIENTS[activeFocus.color] ?? FOCUS_GRADIENTS.amber)}
                       style={{ width: `${focusCountdown.timePct}%` }}
@@ -345,7 +345,7 @@ export function OperacionesDashboard() {
                 <span>Tareas completadas del foco</span>
                 <span>{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
               </div>
-              <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
+              <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
               </div>
             </div>
@@ -369,7 +369,7 @@ export function OperacionesDashboard() {
                 <span>Completadas globalmente</span>
                 <span>{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
               </div>
-              <div className="h-2.5 rounded-full bg-secondary/40 overflow-hidden">
+              <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
               </div>
             </div>
@@ -394,7 +394,7 @@ export function OperacionesDashboard() {
             </button>
 
             {showAllFocus && (
-              <div className="border-t border-border/40 px-4 py-3 space-y-4">
+              <div className="border-t border-border px-4 py-3 space-y-4">
                 {focusOpenByPriority.map((group) => {
                   const meta = PRIORITY_META[group.prio]
                   return (
@@ -497,7 +497,7 @@ export function OperacionesDashboard() {
                 <Link
                   key={a.id}
                   href={`/areas/${a.id}`}
-                  className={cn("rounded-md border border-border/40 p-3 ring-1 transition hover:border-border", c?.ring, c?.tint)}
+                  className={cn("rounded-md border border-border p-3 ring-1 transition hover:border-border", c?.ring, c?.tint)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -512,7 +512,7 @@ export function OperacionesDashboard() {
                     <span>{a.done} / {a.total} tareas</span>
                     <span>{Math.round(a.pct)}%</span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-secondary/40 overflow-hidden">
+                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
                     <div className={cn("h-full transition-all", c?.dot)} style={{ width: `${a.pct}%` }} />
                   </div>
                 </Link>
@@ -527,7 +527,7 @@ export function OperacionesDashboard() {
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <FolderKanban className="h-4 w-4 text-muted-foreground" /> Proyectos
             </h2>
-            <div className="rounded-md border border-border/40 divide-y divide-border/40">
+            <div className="rounded-md border border-border divide-y divide-border">
               {projectsProgress.map((p) => (
                 <Link
                   key={p.id}
@@ -552,7 +552,7 @@ export function OperacionesDashboard() {
                         </span>
                       )}
                     </div>
-                    <div className="h-1 rounded-full bg-secondary/40 overflow-hidden">
+                    <div className="h-1 rounded-full bg-secondary overflow-hidden">
                       <div className="h-full bg-green-500" style={{ width: `${p.pct}%` }} />
                     </div>
                   </div>
@@ -580,7 +580,7 @@ export function OperacionesDashboard() {
                 (click para ver sus tareas)
               </span>
             </h2>
-            <div className="rounded-md border border-border/40 divide-y divide-border/40">
+            <div className="rounded-md border border-border divide-y divide-border">
               {byAssignee.map((a) => (
                 <button
                   key={a.assignee}
@@ -610,7 +610,7 @@ export function OperacionesDashboard() {
                 (no Marco / no AI — bloquean avance)
               </span>
             </h2>
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border/40">
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border">
               {humanActions.map((t) => (
                 <TaskRow key={t.id} task={t} startOfToday={startOfToday} now={now} variant="amber" />
               ))}
@@ -624,7 +624,7 @@ export function OperacionesDashboard() {
             <h2 className="text-sm font-semibold flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" /> Próximos deadlines
             </h2>
-            <div className="rounded-md border border-border/40 divide-y divide-border/40">
+            <div className="rounded-md border border-border divide-y divide-border">
               {upcomingDeadlines.map((t) => (
                 <TaskRow key={t.id} task={t} startOfToday={startOfToday} now={now} variant="default" />
               ))}
@@ -776,12 +776,12 @@ function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className="rounded-md border border-border/40 bg-card/40 p-3 text-left transition-all hover:border-border hover:bg-card/60 cursor-pointer"
+        className="rounded-md border border-border bg-card/40 p-3 text-left transition-all hover:border-border hover:bg-card/60 cursor-pointer"
       >
         {content}
       </button>
     )
   }
 
-  return <div className="rounded-md border border-border/40 bg-card/40 p-3">{content}</div>
+  return <div className="rounded-md border border-border bg-card/40 p-3">{content}</div>
 }

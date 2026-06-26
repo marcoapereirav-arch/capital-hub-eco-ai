@@ -76,7 +76,7 @@ export function GoogleCalendarCard() {
 
   if (!status.connected) {
     return (
-      <div className="flex items-center justify-between rounded-sm border border-border/40 bg-card/40 p-3">
+      <div className="flex items-center justify-between rounded-sm border border-border bg-card/40 p-3">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <div>
@@ -113,7 +113,7 @@ export function GoogleCalendarCard() {
         onClick={handleDisconnect}
         disabled={acting}
         className={cn(
-          "rounded-sm border border-border/40 px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:bg-card",
+          "rounded-sm border border-border px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:bg-card",
           acting && "opacity-50"
         )}
       >

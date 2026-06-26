@@ -15,7 +15,7 @@ export function PlatformTable({ stats }: { stats: PlatformStat[] }) {
           {stats.map((stat) => (
             <div
               key={stat.platform}
-              className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0"
+              className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0"
             >
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">

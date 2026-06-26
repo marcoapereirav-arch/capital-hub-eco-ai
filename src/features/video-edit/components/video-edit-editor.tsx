@@ -254,7 +254,7 @@ export function VideoEditEditor({
                   words.map((w, i) => (
                     <div
                       key={`${i}-${w.start}`}
-                      className="flex items-center gap-3 border-b border-border/50 px-3 py-1.5 last:border-b-0 hover:bg-muted/30"
+                      className="flex items-center gap-3 border-b border-border px-3 py-1.5 last:border-b-0 hover:bg-muted/30"
                     >
                       <span className="w-24 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
                         {w.start.toFixed(2)}–{w.end.toFixed(2)}
@@ -295,7 +295,7 @@ export function VideoEditEditor({
                     )}
                   </div>
                   {llmCuts.length === 0 ? (
-                    <p className="rounded-lg border border-border/50 p-3 text-xs text-muted-foreground">
+                    <p className="rounded-lg border border-border p-3 text-xs text-muted-foreground">
                       La IA no detectó cortes en este video.
                     </p>
                   ) : (
@@ -305,7 +305,7 @@ export function VideoEditEditor({
                         return (
                           <div
                             key={i}
-                            className={`flex items-center gap-3 border-b border-border/50 px-3 py-2 last:border-b-0 ${
+                            className={`flex items-center gap-3 border-b border-border px-3 py-2 last:border-b-0 ${
                               isRejected ? 'opacity-50' : ''
                             }`}
                           >
@@ -350,7 +350,7 @@ export function VideoEditEditor({
                       {manualCuts.map((cut, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-3 border-b border-border/50 px-3 py-2 last:border-b-0"
+                          className="flex items-center gap-3 border-b border-border px-3 py-2 last:border-b-0"
                         >
                           <span className="w-24 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
                             {cut.start.toFixed(2)}–{cut.end.toFixed(2)}

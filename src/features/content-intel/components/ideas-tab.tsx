@@ -814,7 +814,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                               {it.content.length > 200 ? '…' : ''}
                             </p>
                           </div>
-                          <div className="flex flex-col gap-1 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
+                          <div className="flex flex-col gap-1 border-t border-border pt-2 text-[11px] text-muted-foreground">
                             <div>
                               <span className="font-medium text-foreground">
                                 Hook propuesto:

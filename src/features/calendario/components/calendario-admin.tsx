@@ -156,7 +156,7 @@ export function CalendarioAdmin() {
               {upcoming.length > 0 && (
                 <section>
                   <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">Próximas</h2>
-                  <div className="rounded-md border border-border/40 divide-y divide-border/40">
+                  <div className="rounded-md border border-border divide-y divide-border">
                     {upcoming.map((b) => <BookingRow key={b.id} booking={b} />)}
                   </div>
                 </section>
@@ -164,7 +164,7 @@ export function CalendarioAdmin() {
               {past.length > 0 && (
                 <section>
                   <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2 mt-6">Pasadas</h2>
-                  <div className="rounded-md border border-border/40 divide-y divide-border/40 opacity-60">
+                  <div className="rounded-md border border-border divide-y divide-border opacity-60">
                     {past.slice(0, 30).map((b) => <BookingRow key={b.id} booking={b} />)}
                   </div>
                 </section>
@@ -181,7 +181,7 @@ export function CalendarioAdmin() {
             Horarios recurrentes en los que estás disponible. Los slots se generan automáticamente dentro de estas ventanas.
           </p>
 
-          <div className="rounded-md border border-border/40 divide-y divide-border/40">
+          <div className="rounded-md border border-border divide-y divide-border">
             {rules.length === 0 ? (
               <div className="px-3 py-4 text-sm text-muted-foreground">Sin reglas todavía.</div>
             ) : (
@@ -202,13 +202,13 @@ export function CalendarioAdmin() {
           </div>
 
           {/* Add rule */}
-          <div className="rounded-md border border-border/40 p-3 space-y-2 bg-card/30">
+          <div className="rounded-md border border-border p-3 space-y-2 bg-card/30">
             <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Añadir horario</label>
             <div className="flex items-center gap-2">
               <select
                 value={newRule.weekday}
                 onChange={(e) => setNewRule({ ...newRule, weekday: parseInt(e.target.value) })}
-                className="rounded-sm border border-border/40 bg-background px-2 py-1 text-xs"
+                className="rounded-sm border border-border bg-background px-2 py-1 text-xs"
               >
                 {WEEKDAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
               </select>
@@ -216,14 +216,14 @@ export function CalendarioAdmin() {
                 type="time"
                 value={newRule.start}
                 onChange={(e) => setNewRule({ ...newRule, start: e.target.value })}
-                className="rounded-sm border border-border/40 bg-background px-2 py-1 text-xs"
+                className="rounded-sm border border-border bg-background px-2 py-1 text-xs"
               />
               <span className="text-xs text-muted-foreground">–</span>
               <input
                 type="time"
                 value={newRule.end}
                 onChange={(e) => setNewRule({ ...newRule, end: e.target.value })}
-                className="rounded-sm border border-border/40 bg-background px-2 py-1 text-xs"
+                className="rounded-sm border border-border bg-background px-2 py-1 text-xs"
               />
               <button
                 onClick={addRule}
@@ -282,7 +282,7 @@ export function CalendarioAdmin() {
                     await fetch("/api/admin/google-calendar/disconnect", { method: "POST" })
                     load()
                   }}
-                  className="text-[10px] font-mono uppercase tracking-wider border border-border/40 rounded-sm px-2 py-1 hover:bg-card text-muted-foreground"
+                  className="text-[10px] font-mono uppercase tracking-wider border border-border rounded-sm px-2 py-1 hover:bg-card text-muted-foreground"
                 >
                   Desconectar
                 </button>
@@ -332,7 +332,7 @@ function BookingRow({ booking }: { booking: Booking }) {
         booking.status === "booked" && "border-cyan-500/40 text-cyan-400",
         booking.status === "attended" && "border-green-500/40 text-green-400",
         booking.status === "no_show" && "border-orange-500/40 text-orange-400",
-        booking.status === "cancelled" && "border-border/40 text-muted-foreground",
+        booking.status === "cancelled" && "border-border text-muted-foreground",
       )}>
         {booking.status}
       </span>
@@ -404,7 +404,7 @@ function CalendlyEventsTab() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="rounded-sm border border-border/40 bg-background px-2 py-1.5 text-xs"
+            className="rounded-sm border border-border bg-background px-2 py-1.5 text-xs"
           >
             <option value="all">Todos los estados</option>
             <option value="active">Activas</option>
@@ -414,7 +414,7 @@ function CalendlyEventsTab() {
           <select
             value={eventTypeFilter}
             onChange={(e) => setEventTypeFilter(e.target.value)}
-            className="rounded-sm border border-border/40 bg-background px-2 py-1.5 text-xs"
+            className="rounded-sm border border-border bg-background px-2 py-1.5 text-xs"
           >
             <option value="all">Todos los event types</option>
             {eventTypes.map((et) => <option key={et.uri} value={et.uri}>{et.name}</option>)}
@@ -434,13 +434,13 @@ function CalendlyEventsTab() {
       {loading ? (
         <div className="text-sm text-muted-foreground py-8 text-center">Cargando…</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border/40">
+        <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border">
           {events.length === 0
             ? "Sin reservas en este período."
             : "Ninguna reserva matchea los filtros."}
         </div>
       ) : (
-        <div className="rounded-md border border-border/40 divide-y divide-border/40">
+        <div className="rounded-md border border-border divide-y divide-border">
           {filtered.map((e) => <CalendlyEventRow key={e.uri} event={e} />)}
         </div>
       )}
@@ -470,13 +470,13 @@ function CalendlyEventRow({ event }: { event: CalendlyEvent }) {
             {dateStr} · {timeStr}
           </span>
           {event.event_type_name && (
-            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-border/40 text-muted-foreground">
+            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-border text-muted-foreground">
               {event.event_type_name} ({event.event_type_duration}min)
             </span>
           )}
           <span className={cn(
             "text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
-            statusColors[event.status ?? ""] ?? "border-border/40 text-muted-foreground"
+            statusColors[event.status ?? ""] ?? "border-border text-muted-foreground"
           )}>
             {statusLabels[event.status ?? ""] ?? event.status}
           </span>
@@ -511,7 +511,7 @@ function CalendlyEventRow({ event }: { event: CalendlyEvent }) {
 
 function KpiCard({ icon: Icon, label, value, color }: { icon: typeof Calendar; label: string; value: number; color: string }) {
   return (
-    <div className="rounded-md border border-border/40 bg-card/30 px-3 py-2.5">
+    <div className="rounded-md border border-border bg-card/30 px-3 py-2.5">
       <div className="flex items-center justify-between mb-1">
         <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
         <Icon className={cn("h-3.5 w-3.5", color)} />
@@ -545,7 +545,7 @@ function Field({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm font-mono"
+          className="flex-1 rounded-sm border border-border bg-background px-2 py-1.5 text-sm font-mono"
         />
         <button
           onClick={() => onChange(draft)}

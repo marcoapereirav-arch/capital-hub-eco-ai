@@ -108,7 +108,7 @@ export function FunnelPerformance() {
               </header>
 
               {/* BARRA con marcadores de proyección y objetivo */}
-              <div className="relative h-6 w-full overflow-visible rounded-sm bg-secondary/40">
+              <div className="relative h-6 w-full overflow-visible rounded-sm bg-secondary">
                 {/* Barra de actual */}
                 <div
                   className={cn("absolute left-0 top-0 h-full transition-all", barColor)}

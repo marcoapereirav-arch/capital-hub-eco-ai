@@ -112,13 +112,13 @@ export function TeamPage() {
           {loading ? (
             <div className="text-sm text-muted-foreground py-6 text-center">Cargando…</div>
           ) : (
-            <div className="rounded-md border border-border/40 divide-y divide-border/40">
+            <div className="rounded-md border border-border divide-y divide-border">
               {members.map((m) => {
                 const roleOpt = ROLE_OPTIONS.find((r) => r.value === m.role)
                 return (
                   <div key={m.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="h-7 w-7 rounded-full bg-secondary/40 flex items-center justify-center text-[10px] font-mono uppercase shrink-0">
+                      <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-mono uppercase shrink-0">
                         {(m.full_name ?? m.email).charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -136,7 +136,7 @@ export function TeamPage() {
                       onChange={(e) => updateRole(m.id, e.target.value)}
                       className={cn(
                         "text-[10px] font-mono uppercase tracking-wider rounded-sm border bg-background px-2 py-1",
-                        ROLE_COLORS[m.role] ?? "border-border/40"
+                        ROLE_COLORS[m.role] ?? "border-border"
                       )}
                     >
                       {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
@@ -155,7 +155,7 @@ export function TeamPage() {
         {pending.length > 0 && (
           <section className="space-y-2">
             <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Invitaciones pendientes</h2>
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border/40">
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border">
               {pending.map((inv) => {
                 const expiresIn = Math.ceil((new Date(inv.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 return (
@@ -169,7 +169,7 @@ export function TeamPage() {
                     </div>
                     <span className={cn(
                       "text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border",
-                      ROLE_COLORS[inv.role] ?? "border-border/40"
+                      ROLE_COLORS[inv.role] ?? "border-border"
                     )}>
                       {ROLE_OPTIONS.find((r) => r.value === inv.role)?.label ?? inv.role}
                     </span>
@@ -285,7 +285,7 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
             required
             minLength={2}
-            className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
 
@@ -296,7 +296,7 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             required
-            className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
           />
         </label>
 
@@ -305,7 +305,7 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
           <select
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value })}
-            className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
+            className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
           >
             {ROLE_OPTIONS.map((r) => (
               <option key={r.value} value={r.value}>{r.label}</option>
@@ -320,7 +320,7 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
               value={form.formacion_asignada}
               onChange={(e) => setForm({ ...form, formacion_asignada: e.target.value })}
               required
-              className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
+              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
             >
               {FORMACION_OPTIONS.map((f) => (
                 <option key={f.value} value={f.value}>{f.label}</option>
@@ -451,9 +451,9 @@ function RolePermissionsMatrix() {
         </div>
       )}
 
-      <div className="rounded-md border border-border/40 overflow-x-auto">
+      <div className="rounded-md border border-border overflow-x-auto">
         <table className="w-full text-xs">
-          <thead className="bg-card/40 border-b border-border/40 sticky top-0">
+          <thead className="bg-card/40 border-b border-border sticky top-0">
             <tr>
               <th className="text-left px-3 py-2 font-mono uppercase tracking-wider text-[10px] text-muted-foreground sticky left-0 bg-card/40 z-10 min-w-[200px]">
                 Sección del nav
@@ -462,7 +462,7 @@ function RolePermissionsMatrix() {
                 <th key={role} className="text-center px-3 py-2 font-mono uppercase tracking-wider text-[10px] whitespace-nowrap">
                   <span className={cn(
                     "inline-block px-2 py-0.5 rounded-sm border",
-                    ROLE_COLORS[role] ?? "border-border/40"
+                    ROLE_COLORS[role] ?? "border-border"
                   )}>{role}</span>
                 </th>
               ))}
@@ -471,13 +471,13 @@ function RolePermissionsMatrix() {
           <tbody>
             {Array.from(groups.entries()).map(([groupName, sections]) => (
               <>
-                <tr key={`group-${groupName}`} className="bg-card/20 border-y border-border/30">
+                <tr key={`group-${groupName}`} className="bg-card/20 border-y border-border">
                   <td colSpan={data.roles.length + 1} className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                     {groupName}
                   </td>
                 </tr>
                 {sections.map((sec) => (
-                  <tr key={sec.href} className="border-b border-border/20 hover:bg-card/10">
+                  <tr key={sec.href} className="border-b border-border hover:bg-card/10">
                     <td className="px-3 py-2 sticky left-0 bg-background z-10">
                       <div className="text-sm">{sec.label}</div>
                       <div className="text-[10px] font-mono text-muted-foreground/60">{sec.href}</div>
@@ -494,7 +494,7 @@ function RolePermissionsMatrix() {
                               "inline-flex items-center justify-center w-5 h-5 rounded-sm border transition-colors",
                               isOn
                                 ? "bg-green-500/30 border-green-500/60 text-green-300"
-                                : "border-white/15 text-transparent hover:border-white/40",
+                                : "border-border text-transparent hover:border-white/40",
                               isSaving && "opacity-40"
                             )}
                             title={isOn ? "Click para quitar acceso" : "Click para dar acceso"}

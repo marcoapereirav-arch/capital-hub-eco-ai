@@ -148,7 +148,7 @@ export function AgendaPublica() {
                       "w-full text-left rounded-sm border px-3 py-2 transition-all",
                       isActive
                         ? "border-[#37CA37] bg-[#37CA37]/[0.07]"
-                        : "border-[#2A2D34] hover:border-white/20"
+                        : "border-[#2A2D34] hover:border-border"
                     )}
                   >
                     <div className="text-xs font-mono uppercase tracking-wider text-white/50">

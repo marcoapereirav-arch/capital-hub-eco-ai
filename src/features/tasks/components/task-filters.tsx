@@ -110,7 +110,7 @@ export function TaskFilters() {
     { id: "vencidas", label: "Vencidas", count: counts.vencidas, color: "border-red-500/40 text-red-400 bg-red-500/[0.06]" },
     { id: "esta_semana", label: "Esta semana", count: counts.esta_semana, color: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]" },
     { id: "hechas", label: "Hechas", count: counts.hechas, color: "border-green-500/40 text-green-400 bg-green-500/[0.06]" },
-    { id: "todas", label: "Todas", count: counts.todas, color: "border-border/40 text-muted-foreground bg-card/30" },
+    { id: "todas", label: "Todas", count: counts.todas, color: "border-border text-muted-foreground bg-card/30" },
   ]
 
   return (
@@ -125,7 +125,7 @@ export function TaskFilters() {
               onClick={() => applyPreset(p.id)}
               className={cn(
                 "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-xs font-mono uppercase tracking-wider transition-colors",
-                active ? p.color + " font-semibold" : "border-border/40 text-muted-foreground hover:bg-card hover:text-foreground"
+                active ? p.color + " font-semibold" : "border-border text-muted-foreground hover:bg-card hover:text-foreground"
               )}
             >
               {p.label}
@@ -222,7 +222,7 @@ export function TaskFilters() {
               resetFilters()
               applyPreset("pendientes")
             }}
-            className="h-7 px-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border/40 rounded-sm"
+            className="h-7 px-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-sm"
           >
             <X className="h-3 w-3" /> Limpiar
           </button>

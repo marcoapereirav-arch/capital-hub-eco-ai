@@ -142,7 +142,7 @@ export function MobileBottomNav({
                   href={item.href}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
-                    "tap-target flex items-center gap-3 rounded-md border border-border/60 px-3 py-3 text-sm transition-colors active:bg-secondary",
+                    "tap-target flex items-center gap-3 rounded-md border border-border px-3 py-3 text-sm transition-colors active:bg-secondary",
                     isActive
                       ? "border-foreground/40 bg-secondary text-foreground"
                       : "text-foreground"
@@ -158,7 +158,7 @@ export function MobileBottomNav({
           <Separator className="my-2" />
 
           <div className="px-4 pb-4">
-            <div className="mb-3 flex items-center gap-3 rounded-md bg-secondary/40 px-3 py-3">
+            <div className="mb-3 flex items-center gap-3 rounded-md bg-secondary px-3 py-3">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-secondary text-xs font-mono font-semibold text-secondary-foreground">
                   {initials}
@@ -176,7 +176,7 @@ export function MobileBottomNav({
             <button
               type="button"
               onClick={() => setMoreOpen(false)}
-              className="tap-target flex w-full items-center gap-3 rounded-md border border-border/60 px-3 py-3 text-sm text-foreground transition-colors active:bg-secondary"
+              className="tap-target flex w-full items-center gap-3 rounded-md border border-border px-3 py-3 text-sm text-foreground transition-colors active:bg-secondary"
             >
               <User className="h-5 w-5 text-muted-foreground" strokeWidth={1.75} />
               <span className="font-medium">Perfil</span>

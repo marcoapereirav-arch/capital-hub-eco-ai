@@ -143,7 +143,7 @@ export function ProjectDetail({ id }: { id: string }) {
                     type="button"
                     className={cn(
                       "shrink-0 inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors hover:opacity-80",
-                      STATUS_COLOR[project.status] ?? "border-border/40 text-muted-foreground"
+                      STATUS_COLOR[project.status] ?? "border-border text-muted-foreground"
                     )}
                     title="Cambiar estado del proyecto"
                   >
@@ -200,7 +200,7 @@ export function ProjectDetail({ id }: { id: string }) {
               "rounded-sm text-[10px] font-mono uppercase tracking-wider px-2 py-1 border transition-colors",
               !showDone
                 ? "border-foreground text-foreground bg-card"
-                : "border-border/40 text-muted-foreground hover:bg-card/50"
+                : "border-border text-muted-foreground hover:bg-card/50"
             )}
           >
             Pendientes ({nextCount})
@@ -211,7 +211,7 @@ export function ProjectDetail({ id }: { id: string }) {
               "rounded-sm text-[10px] font-mono uppercase tracking-wider px-2 py-1 border transition-colors",
               showDone
                 ? "border-foreground text-foreground bg-card"
-                : "border-border/40 text-muted-foreground hover:bg-card/50"
+                : "border-border text-muted-foreground hover:bg-card/50"
             )}
           >
             Todas ({total})

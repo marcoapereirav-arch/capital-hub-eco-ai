@@ -120,7 +120,7 @@ export function AdsAffiliatesPanel() {
               </div>
 
               {/* Link */}
-              <p className="mt-2 break-all rounded-sm border border-border bg-secondary/40 px-2 py-1 font-mono text-[11px] text-muted-foreground">
+              <p className="mt-2 break-all rounded-sm border border-border bg-secondary px-2 py-1 font-mono text-[11px] text-muted-foreground">
                 {a.link}
               </p>
 

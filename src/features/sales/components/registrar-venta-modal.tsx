@@ -150,7 +150,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
           )}
 
           {(emailFailed || showMagicLink) ? (
-            <div className="rounded-sm bg-card/40 border border-border/40 p-3 text-left space-y-1">
+            <div className="rounded-sm bg-card/40 border border-border p-3 text-left space-y-1">
               <div className="flex items-center justify-between">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Magic link</p>
                 <button
@@ -177,7 +177,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
             <button onClick={onClose} className="flex-1 rounded-sm bg-foreground text-background px-3 py-2 text-xs font-mono uppercase tracking-wider">
               Cerrar
             </button>
-            <a href={`/contactos`} className="flex-1 rounded-sm border border-border/40 px-3 py-2 text-xs font-mono uppercase tracking-wider text-center hover:bg-card">
+            <a href={`/contactos`} className="flex-1 rounded-sm border border-border px-3 py-2 text-xs font-mono uppercase tracking-wider text-center hover:bg-card">
               Ver contactos
             </a>
           </div>
@@ -214,7 +214,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
                   onClick={() => setForm({ ...form, close_type: v })}
                   className={cn(
                     "rounded-sm border p-2.5 text-left transition-all",
-                    form.close_type === v ? "border-green-500/60 bg-green-500/[0.06]" : "border-border/40 hover:border-border"
+                    form.close_type === v ? "border-green-500/60 bg-green-500/[0.06]" : "border-border hover:border-border"
                   )}
                 >
                   <div className="text-sm font-medium">{label}</div>
@@ -248,7 +248,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
                     onClick={() => toggleProduct(p)}
                     className={cn(
                       "flex items-center gap-2 rounded-sm border p-2.5 text-left transition-all",
-                      checked ? "border-green-500/60 bg-green-500/[0.06] text-foreground" : "border-border/40 text-muted-foreground hover:border-border"
+                      checked ? "border-green-500/60 bg-green-500/[0.06] text-foreground" : "border-border text-muted-foreground hover:border-border"
                     )}
                   >
                     <div className={cn("h-4 w-4 rounded-sm border flex items-center justify-center shrink-0", checked && "bg-green-500 border-green-500")}>
@@ -316,7 +316,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-sm border border-border/40 px-4 py-2 text-xs font-mono uppercase tracking-wider hover:bg-card"
+            className="rounded-sm border border-border px-4 py-2 text-xs font-mono uppercase tracking-wider hover:bg-card"
           >
             Cancelar
           </button>

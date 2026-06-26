@@ -189,7 +189,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
     <article className="flex flex-col gap-4 rounded-sm border border-border bg-card p-5 transition-colors hover:border-foreground/30">
       {/* Header */}
       <header className="flex items-start gap-3">
-        <div className="rounded-sm border border-border bg-secondary/40 p-2">
+        <div className="rounded-sm border border-border bg-secondary p-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className="min-w-0 flex-1">
@@ -277,7 +277,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
           ) : (
             <button
               onClick={() => setEditingSlug(true)}
-              className="mt-0.5 inline-flex items-center gap-1.5 rounded-sm border border-border/40 bg-secondary/30 px-2 py-1 text-left hover:border-foreground/40 hover:bg-secondary/60 transition-colors group/edit"
+              className="mt-0.5 inline-flex items-center gap-1.5 rounded-sm border border-border bg-secondary/30 px-2 py-1 text-left hover:border-foreground/40 hover:bg-secondary/60 transition-colors group/edit"
               title="Click para editar el path de esta landing"
             >
               <p className="font-mono text-[11px] text-foreground/80 group-hover/edit:text-foreground">/{slug}</p>
@@ -311,7 +311,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
             const isEditingName = isEditingThis && editingStepField === "name"
             const isEditingSlug = isEditingThis && editingStepField === "slug"
             return (
-              <li key={step.id} className="rounded-sm border border-border/50 bg-secondary/30 px-2.5 py-2 space-y-1.5">
+              <li key={step.id} className="rounded-sm border border-border bg-secondary/30 px-2.5 py-2 space-y-1.5">
                 {/* Nombre del step: clickeable para editar */}
                 <div className="flex items-center justify-between gap-2">
                   {isEditingName ? (
@@ -383,7 +383,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
                   !isEditingName && (
                     <button
                       onClick={() => { setEditingStepId(step.id); setEditingStepField("slug"); setStepDraft(step.slug); setStepError(null) }}
-                      className="flex w-full items-center gap-1.5 rounded-sm border border-border/30 bg-background/40 px-2 py-1 text-left hover:border-foreground/40 hover:bg-background/70 transition-colors group/spath"
+                      className="flex w-full items-center gap-1.5 rounded-sm border border-border bg-background/40 px-2 py-1 text-left hover:border-foreground/40 hover:bg-background/70 transition-colors group/spath"
                       title="Click para editar el path"
                     >
                       <p className="truncate font-mono text-[10px] text-foreground/70 group-hover/spath:text-foreground flex-1">
@@ -404,7 +404,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
       </div>
 
       {/* Footer actions */}
-      <footer className="flex items-center gap-2 border-t border-border/50 pt-3">
+      <footer className="flex items-center gap-2 border-t border-border pt-3">
         <Button
           size="sm"
           variant="secondary"

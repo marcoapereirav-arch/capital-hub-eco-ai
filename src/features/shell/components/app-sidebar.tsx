@@ -57,7 +57,7 @@ function GoToAppButton({ isCollapsed }: { isCollapsed: boolean }) {
         href="https://app.capitalhubapp.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="mx-auto my-1 flex items-center justify-center w-8 h-8 rounded-md border border-border/40 hover:bg-card transition-colors"
+        className="mx-auto my-1 flex items-center justify-center w-8 h-8 rounded-md border border-border hover:bg-card transition-colors"
         title="Ir a la App"
       >
         <ExternalLink className="h-4 w-4 text-muted-foreground" />
@@ -69,7 +69,7 @@ function GoToAppButton({ isCollapsed }: { isCollapsed: boolean }) {
       href="https://app.capitalhubapp.com"
       target="_blank"
       rel="noopener noreferrer"
-      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-md border border-border/40 px-2.5 py-2 text-xs hover:bg-card transition-colors group"
+      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-md border border-border px-2.5 py-2 text-xs hover:bg-card transition-colors group"
       title="Abre la App en una pestaña nueva (misma sesion)"
     >
       <span className="flex items-center gap-2 min-w-0">

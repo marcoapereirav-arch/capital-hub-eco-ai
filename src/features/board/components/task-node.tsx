@@ -120,7 +120,7 @@ export function TaskNode({ data }: NodeProps) {
 
       {/* Badge fecha — esquina superior derecha si tiene */}
       {task.dueDate && (
-        <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-sm border border-white/20 bg-zinc-900 px-1.5 py-0.5 font-mono text-[9px] text-white/90 shadow-sm">
+        <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-sm border border-border bg-zinc-900 px-1.5 py-0.5 font-mono text-[9px] text-white/90 shadow-sm">
           <Calendar className="h-2.5 w-2.5" />
           {new Date(task.dueDate).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
         </div>

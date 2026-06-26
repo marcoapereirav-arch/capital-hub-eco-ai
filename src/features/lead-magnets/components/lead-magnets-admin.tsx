@@ -138,7 +138,7 @@ function LeadMagnetCard({
       className={`relative flex flex-col gap-3 rounded-lg border p-4 transition-opacity ${
         lm.active
           ? "border-border bg-card"
-          : "border-border/40 bg-card/40 opacity-60"
+          : "border-border bg-card/40 opacity-60"
       }`}
     >
       {/* Header */}
@@ -176,7 +176,7 @@ function LeadMagnetCard({
       )}
 
       {/* Stats */}
-      <dl className="grid grid-cols-3 gap-2 border-t border-border/60 pt-3">
+      <dl className="grid grid-cols-3 gap-2 border-t border-border pt-3">
         <div>
           <dt className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground/60">
             Opt-ins
@@ -203,7 +203,7 @@ function LeadMagnetCard({
       </dl>
 
       {/* Actions */}
-      <div className="flex items-center gap-1 border-t border-border/60 pt-3">
+      <div className="flex items-center gap-1 border-t border-border pt-3">
         <button
           type="button"
           onClick={onEdit}

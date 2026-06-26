@@ -90,7 +90,7 @@ function DroppableColumn({
         >
           {tasks.length === 0 ? (
             <div className={`flex items-center justify-center rounded-sm border border-dashed p-10 transition-colors ${
-              isOver ? "border-foreground/30 bg-accent/10" : "border-border/40"
+              isOver ? "border-foreground/30 bg-accent/10" : "border-border"
             }`}>
               <span className="text-xs text-muted-foreground/30">
                 {isOver ? "Soltar aqui" : "Sin tareas"}

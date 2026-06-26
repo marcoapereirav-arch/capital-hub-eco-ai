@@ -100,7 +100,7 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm"
+        className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
       />
     </label>
   )

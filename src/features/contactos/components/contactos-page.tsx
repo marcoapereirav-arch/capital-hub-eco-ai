@@ -317,7 +317,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
             {search || stageFilter !== "all" ? "Sin resultados con esos filtros." : "Aún no hay contactos."}
           </div>
         ) : (
-          <div className="rounded-md border border-border/40 divide-y divide-border/40 overflow-hidden">
+          <div className="rounded-md border border-border divide-y divide-border overflow-hidden">
             {filtered.map((c) => {
               const stage = PIPELINE_STAGES.find((s) => s.value === c.stage)
               const contactTags = tagsByContact.get(c.id) ?? []
@@ -328,7 +328,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                   className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-card/40 text-left transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="h-7 w-7 rounded-full bg-secondary/40 flex items-center justify-center text-[10px] font-mono uppercase shrink-0">
+                    <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-mono uppercase shrink-0">
                       {c.full_name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">

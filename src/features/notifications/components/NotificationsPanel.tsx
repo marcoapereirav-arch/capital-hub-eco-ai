@@ -122,7 +122,7 @@ export function NotificationsBell() {
                 <div
                   key={n.id}
                   className={cn(
-                    "flex items-start gap-2.5 border-b border-border/40 px-4 py-3",
+                    "flex items-start gap-2.5 border-b border-border px-4 py-3",
                     !n.read && "bg-card/30"
                   )}
                 >

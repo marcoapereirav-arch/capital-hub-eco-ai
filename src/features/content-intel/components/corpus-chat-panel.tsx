@@ -513,7 +513,7 @@ export function CorpusChatPanel({
                   return (
                     <div
                       key={c.id}
-                      className={`group flex items-start gap-2 border-b border-border/40 px-3 py-2.5 transition last:border-b-0 ${
+                      className={`group flex items-start gap-2 border-b border-border px-3 py-2.5 transition last:border-b-0 ${
                         isActive
                           ? 'bg-muted/40'
                           : 'hover:bg-muted/20 cursor-pointer'
