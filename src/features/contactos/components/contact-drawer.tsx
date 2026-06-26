@@ -126,7 +126,7 @@ export function ContactDrawer({
           <>
             {/* Header */}
             <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-secondary/40 flex items-center justify-center text-sm font-mono uppercase shrink-0">
+              <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center text-sm font-mono uppercase shrink-0">
                 {contact.full_name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
@@ -140,11 +140,11 @@ export function ContactDrawer({
 
             {/* Quick actions header */}
             <div className="px-4 py-3 border-b border-border flex items-center gap-2 flex-wrap">
-              <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card">
+              <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card">
                 <Mail className="h-3 w-3" /> Email
               </a>
               {contact.phone && (
-                <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card">
+                <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card">
                   <Phone className="h-3 w-3" /> Llamar
                 </a>
               )}
@@ -153,7 +153,7 @@ export function ContactDrawer({
                   href={`https://manychat.com/inbox/${contact.manychat_subscriber_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card"
+                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card"
                   title="Abrir conversación en panel ManyChat (opcional)"
                 >
                   <MessageSquare className="h-3 w-3" /> ManyChat
@@ -164,7 +164,7 @@ export function ContactDrawer({
                   href={`https://instagram.com/${contact.instagram_username.replace(/^@/, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card"
+                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card"
                   title="Abrir perfil de Instagram"
                 >
                   <MessageSquare className="h-3 w-3" /> IG
@@ -174,7 +174,7 @@ export function ContactDrawer({
                 value={contact.stage ?? "new"}
                 onChange={(e) => save({ stage: e.target.value })}
                 disabled={saving}
-                className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border/40 bg-background px-2 py-1"
+                className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border bg-background px-2 py-1"
               >
                 {stages.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
@@ -189,7 +189,7 @@ export function ContactDrawer({
                       : (data.error ?? "No se pudo reenviar"),
                     )
                   }}
-                  className="text-[10px] font-mono uppercase tracking-wider border border-border/40 px-2 py-1 rounded-sm hover:bg-card hover:border-foreground/40 transition-colors"
+                  className="text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card hover:border-foreground/40 transition-colors"
                   title="Reenviar magic link de acceso a la App"
                 >
                   ↻ Reenviar acceso
@@ -237,7 +237,7 @@ export function ContactDrawer({
 
                 {/* ManyChat subscriber ID (solo lectura, lo setea el webhook) */}
                 {contact.manychat_subscriber_id && (
-                  <div className="text-[10px] font-mono text-muted-foreground border-t border-border/40 pt-3">
+                  <div className="text-[10px] font-mono text-muted-foreground border-t border-border pt-3">
                     ManyChat subscriber ID: <code className="text-foreground">{contact.manychat_subscriber_id}</code>
                   </div>
                 )}
@@ -257,7 +257,7 @@ export function ContactDrawer({
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-border/40 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                <div className="pt-4 border-t border-border text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                   <div>Creado: {new Date(contact.created_at).toLocaleString("es-ES")}</div>
                   <div>Actualizado: {new Date(contact.updated_at).toLocaleString("es-ES")}</div>
                 </div>
@@ -281,7 +281,7 @@ export function ContactDrawer({
                           }}
                           className={cn(
                             "rounded-sm border px-2.5 py-1 text-xs transition-all",
-                            has ? "border-green-500/40 bg-green-500/10 text-green-400" : "border-border/40 text-muted-foreground hover:border-border"
+                            has ? "border-green-500/40 bg-green-500/10 text-green-400" : "border-border text-muted-foreground hover:border-border"
                           )}
                         >
                           {has ? "✓ " : "+ "}{p}
@@ -308,7 +308,7 @@ export function ContactDrawer({
                 ) : (
                   <ul className="space-y-2">
                     {bookings.map((b) => (
-                      <li key={`b-${b.id}`} className="flex items-start gap-2 rounded-sm border border-border/40 px-3 py-2">
+                      <li key={`b-${b.id}`} className="flex items-start gap-2 rounded-sm border border-border px-3 py-2">
                         <Calendar className="h-3.5 w-3.5 text-cyan-400 mt-0.5 shrink-0" />
                         <div className="flex-1 text-sm">
                           <div>Llamada {b.status === "cancelled" ? "(cancelada)" : ""}</div>
@@ -319,7 +319,7 @@ export function ContactDrawer({
                       </li>
                     ))}
                     {events.map((e) => (
-                      <li key={e.id} className="flex items-start gap-2 rounded-sm border border-border/40 px-3 py-2">
+                      <li key={e.id} className="flex items-start gap-2 rounded-sm border border-border px-3 py-2">
                         <span className="h-2 w-2 rounded-full bg-muted-foreground/40 mt-1.5 shrink-0" />
                         <div className="flex-1 text-sm">
                           <div>{e.title}</div>
@@ -367,7 +367,7 @@ function DataField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm font-mono"
+        className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm font-mono"
       />
     </div>
   )
@@ -385,7 +385,7 @@ function NumberField({ label, value, onSave }: { label: string; value: number; o
         step="0.01"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        className="flex-1 rounded-sm border border-border/40 bg-background px-2 py-1 text-sm font-mono"
+        className="flex-1 rounded-sm border border-border bg-background px-2 py-1 text-sm font-mono"
       />
       {changed && (
         <button
@@ -411,7 +411,7 @@ function NotesTab({ notes, onSave, onAdd }: { notes: string; onSave: (v: string)
           value={main}
           onChange={(e) => setMain(e.target.value)}
           rows={6}
-          className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm font-mono resize-none"
+          className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm font-mono resize-none"
         />
         {main !== notes && (
           <button
@@ -430,7 +430,7 @@ function NotesTab({ notes, onSave, onAdd }: { notes: string; onSave: (v: string)
           onChange={(e) => setQuick(e.target.value)}
           placeholder="Ej: Le interesa el plan anual pero quiere pensarlo. Llamar viernes 14h."
           rows={3}
-          className="w-full rounded-sm border border-border/40 bg-background px-2 py-1.5 text-sm resize-none"
+          className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm resize-none"
         />
         <button
           onClick={() => { onAdd(quick); setQuick("") }}

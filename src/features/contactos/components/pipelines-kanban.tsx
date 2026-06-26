@@ -77,9 +77,9 @@ export function PipelinesKanban({
               setDragging(null)
             }}
             className={cn(
-              "shrink-0 w-72 h-full rounded-md border bg-card/30 p-2 transition-colors flex flex-col",
-              STAGE_COLORS[s.value] ?? "border-border/40",
-              isOver && "bg-card/60 ring-2 ring-foreground/30"
+              "shrink-0 w-72 h-full rounded-md border bg-card/40 p-2 transition-colors flex flex-col",
+              STAGE_COLORS[s.value] ?? "border-border",
+              isOver && "bg-card/70 ring-2 ring-foreground/30"
             )}
           >
             <div className="flex items-center justify-between px-1.5 shrink-0 mb-2">
@@ -92,7 +92,7 @@ export function PipelinesKanban({
             {/* Lista de cards con SCROLL VERTICAL propio. */}
             <div className="space-y-1.5 flex-1 min-h-0 overflow-y-auto pr-0.5">
               {list.length === 0 ? (
-                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/40 px-1.5 py-2">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 px-1.5 py-2">
                   vacío
                 </div>
               ) : (
@@ -108,7 +108,7 @@ export function PipelinesKanban({
                     onDragEnd={() => { setDragging(null); setOverStage(null) }}
                     onClick={() => onSelect(c.id)}
                     className={cn(
-                      "cursor-grab active:cursor-grabbing rounded-sm border border-border/40 bg-background p-2 text-sm hover:border-border transition-colors",
+                      "cursor-grab active:cursor-grabbing rounded-sm border border-border bg-card p-2 text-sm shadow-sm hover:border-foreground/40 transition-colors",
                       dragging === c.id && "opacity-50"
                     )}
                   >
@@ -122,7 +122,7 @@ export function PipelinesKanban({
                     {c.products.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {c.products.map((p) => (
-                          <span key={p} className="text-[9px] font-mono uppercase border border-border/40 px-1 py-0.5 rounded-sm">
+                          <span key={p} className="text-[9px] font-mono uppercase border border-border px-1 py-0.5 rounded-sm">
                             {p}
                           </span>
                         ))}

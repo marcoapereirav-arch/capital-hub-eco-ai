@@ -342,9 +342,9 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
   )
 }
 
-const fieldBase = "w-full rounded-sm border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:bg-white/[0.08] focus:border-green-500/70"
-const fieldOk = "border-white/25 bg-white/[0.04] hover:bg-white/[0.06] hover:border-white/40 text-foreground placeholder:text-muted-foreground/70"
-const fieldRequiredEmpty = "border-red-500/50 bg-red-500/[0.06] hover:bg-red-500/[0.08] text-foreground placeholder:text-red-300/60"
+const fieldBase = "w-full rounded-sm border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:border-green-500/70 focus:bg-secondary"
+const fieldOk = "border-border bg-card hover:bg-secondary hover:border-foreground/40 text-foreground placeholder:text-muted-foreground"
+const fieldRequiredEmpty = "border-red-500/60 bg-red-500/[0.10] hover:bg-red-500/[0.14] text-foreground placeholder:text-red-300/70"
 
 function Input({
   value,

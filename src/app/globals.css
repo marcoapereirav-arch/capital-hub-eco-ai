@@ -103,12 +103,13 @@
     /* TEXT: #F5F6F7 Blanco Roto (10%) */
     --foreground: oklch(0.97 0.001 250);
 
-    /* CARDS: #18181B */
-    --card: oklch(0.153 0.004 265);
+    /* CARDS: superficie elevada — DEBE separarse claramente del fondo (#0F0F12).
+       Subido de 0.153 a 0.185 para que las fichas/cajas tengan contraste real. */
+    --card: oklch(0.185 0.004 265);
     --card-foreground: oklch(0.97 0.001 250);
 
-    /* POPOVERS: #18181B */
-    --popover: oklch(0.153 0.004 265);
+    /* POPOVERS/menús/sheets: capa por encima de las cards → un punto más claro */
+    --popover: oklch(0.205 0.004 265);
     --popover-foreground: oklch(0.97 0.001 250);
 
     /* PRIMARY ACCENT: #FFFFFF Blanco Puro (5%) */
@@ -119,9 +120,10 @@
     --secondary: oklch(0.24 0.012 260);
     --secondary-foreground: oklch(0.97 0.001 250);
 
-    /* MUTED: #2A2D34 con texto #6B7280 */
+    /* MUTED: superficie #2A2D34; texto secundario subido de 0.52 a 0.62 para
+       que sea legible de verdad sobre el fondo oscuro (antes quedaba apagado). */
     --muted: oklch(0.24 0.012 260);
-    --muted-foreground: oklch(0.52 0.015 255);
+    --muted-foreground: oklch(0.62 0.015 255);
 
     /* ACCENT: #2A2D34 */
     --accent: oklch(0.24 0.012 260);
@@ -130,10 +132,11 @@
     /* DESTRUCTIVE */
     --destructive: oklch(0.704 0.191 22.216);
 
-    /* BORDERS: #2A2D34 bordes finos brandkit */
-    --border: oklch(0.24 0.012 260);
-    --input: oklch(0.24 0.012 260);
-    --ring: oklch(0.52 0.015 255);
+    /* BORDERS: subidos de 0.24 a 0.275 para que los bordes de cajas/inputs se
+       VEAN — incluso cuando un componente los diluye. Regla: no bajar de aquí. */
+    --border: oklch(0.275 0.012 260);
+    --input: oklch(0.275 0.012 260);
+    --ring: oklch(0.55 0.015 255);
 
     /* CHARTS: escala monocromatica */
     --chart-1: oklch(1 0 0);
@@ -149,8 +152,8 @@
     --sidebar-primary-foreground: oklch(0.113 0.005 265);
     --sidebar-accent: oklch(0.24 0.012 260);
     --sidebar-accent-foreground: oklch(0.97 0.001 250);
-    --sidebar-border: oklch(0.24 0.012 260);
-    --sidebar-ring: oklch(0.52 0.015 255);
+    --sidebar-border: oklch(0.275 0.012 260);
+    --sidebar-ring: oklch(0.55 0.015 255);
   }
 
   * {
