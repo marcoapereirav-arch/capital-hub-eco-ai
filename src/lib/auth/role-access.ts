@@ -17,7 +17,7 @@
 export type Role = "super_admin" | "admin" | "marketing" | "closer" | "setter" | "formador"
 
 /** Rutas siempre permitidas para cualquier usuario autenticado (logout, perfil, etc). */
-const ALWAYS_ALLOWED = ["/login", "/logout", "/api/", "/auth/", "/_next/", "/favicon", "/manifest"]
+const ALWAYS_ALLOWED = ["/login", "/logout", "/api/", "/auth/", "/_next/", "/favicon", "/manifest", "/formacion"]
 
 /**
  * Defaults hardcoded — fallback si la BD no responde.
