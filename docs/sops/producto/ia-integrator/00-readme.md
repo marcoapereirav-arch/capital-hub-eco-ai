@@ -1,5 +1,6 @@
 ---
-title: IA Integrator — índice de la formación
+title: IA Integrator
+description: Formación · manuales de Vibe Coding + Git
 order: 0
 ---
 

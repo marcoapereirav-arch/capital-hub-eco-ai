@@ -7,10 +7,10 @@ import { ChevronRight, FileText, Folder, Palette } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { PageNavHeader, type PageNavGroup } from "@/features/shell/components/page-nav-header"
 import { cn } from "@/lib/utils"
-import type { QuadrantInfo, Sop } from "../services/knowledge-service"
+import type { KnowledgeFolder, Sop } from "../services/knowledge-service"
 
 interface KnowledgePageProps {
-  quadrants: QuadrantInfo[]
+  folders: KnowledgeFolder[]
 }
 
 const BRANDKIT_ID = "__brandkit"
@@ -24,10 +24,10 @@ type View =
   | { kind: "folder"; folderId: string }
   | { kind: "item"; folderId: string; itemId: string }
 
-export function KnowledgePage({ quadrants }: KnowledgePageProps) {
+export function KnowledgePage({ folders: knowledgeFolders }: KnowledgePageProps) {
   const [view, setView] = useState<View>({ kind: "root" })
 
-  const allSops: Sop[] = quadrants.flatMap((q) => q.sops)
+  const allSops: Sop[] = knowledgeFolders.flatMap((f) => f.sops)
 
   const folders: FolderDef[] = [
     {
@@ -36,11 +36,11 @@ export function KnowledgePage({ quadrants }: KnowledgePageProps) {
       description: "Identidad, brandkit, guías visuales",
       items: [{ id: BRANDKIT_ID, label: "Brandkit Capital Hub", icon: Palette }],
     },
-    ...quadrants.map((q) => ({
-      id: q.id,
-      label: q.label,
-      description: q.description,
-      items: q.sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })),
+    ...knowledgeFolders.map((f) => ({
+      id: f.id,
+      label: f.label,
+      description: f.description,
+      items: f.sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })),
     })),
   ]
 
