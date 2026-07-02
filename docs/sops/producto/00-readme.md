@@ -20,6 +20,7 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 48 | [Diseño dinámico y efecto WOW](48-diseno-dinamico-wow.md) | Regla principal: funnels/landings dinámicos, con motion y WOW, siempre dentro del brandkit |
 | 49 | [Efecto de carga de marca (SIEMPRE)](49-efecto-de-carga.md) | `<LoadingScreen />` (anillo + monograma CH) en TODA carga. `app/loading.tsx` de raíz. Nada de spinners genéricos ni pantallas en blanco/gris |
 | 50 | [Capital Hub App (alumnos) — Auditoría de estado](50-app-alumnos-auditoria-estado.md) | Estado real de la App del alumno (proyecto separado). Qué funciona, bugs P0/P1/P2, schema drift, hueco de pago→acceso. Se actualiza con cada cambio en la App |
+| 51 | [Recursos de formación (App)](51-recursos-formacion-app.md) | Recursos por formación enlazables a lecciones (M2M) en la App. Guías visuales (type GUIDE) via registry. Tablas resources + resource_lessons + RLS |
 
 ## Formaciones (material de presentación)
 
