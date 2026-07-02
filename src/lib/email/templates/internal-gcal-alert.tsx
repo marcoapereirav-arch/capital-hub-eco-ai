@@ -61,8 +61,8 @@ export function InternalGCalAlert({ reason, detail, lastConnectedAt, ownerEmail 
 
       <P>
         <strong>Acción inmediata:</strong> Adrián tiene que entrar a{" "}
-        <a href="https://ecoai.capitalhubapp.com/calendario" style={{ color: emailColors.text }}>
-          ecoai.capitalhubapp.com/calendario
+        <a href="https://os.capitalhubapp.com/calendario" style={{ color: emailColors.text }}>
+          os.capitalhubapp.com/calendario
         </a>{" "}
         → Configuración → "Conectar ahora" y reautorizar.
       </P>

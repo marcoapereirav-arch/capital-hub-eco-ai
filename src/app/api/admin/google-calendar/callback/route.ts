@@ -18,7 +18,7 @@ function getAdminClient() {
  * persiste en calls_availability → redirige al panel.
  */
 export async function GET(req: NextRequest) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ecoai.capitalhubapp.com"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://os.capitalhubapp.com"
   const url = new URL(req.url)
   const code = url.searchParams.get("code")
   const error = url.searchParams.get("error")

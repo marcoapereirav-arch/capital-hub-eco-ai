@@ -21,7 +21,7 @@ function getAdminClient() {
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
   const { token } = await ctx.params
   if (!token || token.length < 16) {
-    return NextResponse.redirect(new URL("/mifge/agenda?error=token_invalid", "https://ecoai.capitalhubapp.com"))
+    return NextResponse.redirect(new URL("/mifge/agenda?error=token_invalid", "https://os.capitalhubapp.com"))
   }
 
   const supabase = getAdminClient()
@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     .eq("public_token", token)
     .maybeSingle()
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ecoai.capitalhubapp.com"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://os.capitalhubapp.com"
 
   if (!call) {
     return NextResponse.redirect(`${baseUrl}/mifge/agenda?error=not_found`)

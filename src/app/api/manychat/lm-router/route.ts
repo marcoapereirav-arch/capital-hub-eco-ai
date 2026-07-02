@@ -42,7 +42,7 @@ type LeadMagnetRow = {
 }
 
 function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://ecoai.capitalhubapp.com"
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "https://os.capitalhubapp.com"
 }
 
 function placeholderEmail(subscriberId: string): string {

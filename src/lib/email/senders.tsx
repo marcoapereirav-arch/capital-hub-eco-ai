@@ -257,7 +257,7 @@ export async function sendNoShow(input: { fullName: string; email: string; callI
 export async function sendPostCallFollowup(input: { fullName: string; email: string; callId?: string; leadId?: string }) {
   const html = await render(PostCallFollowupEmail({
     fullName: input.fullName,
-    upgradeUrl: process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO ?? "https://ecoai.capitalhubapp.com/mifge/upsell-anual",
+    upgradeUrl: process.env.NEXT_PUBLIC_WHOP_CHECKOUT_URL_ANO ?? "https://os.capitalhubapp.com/mifge/upsell-anual",
     appUrl: APP_LOGIN_URL,
   }))
   return sendEmail({
@@ -279,7 +279,7 @@ export async function sendBetaRetargeting(input: {
 }) {
   const html = await render(BetaRetargetingEmail({
     fullName: input.fullName,
-    rejoinUrl: "https://ecoai.capitalhubapp.com/mifge",
+    rejoinUrl: "https://os.capitalhubapp.com/mifge",
     cancelOrigin: input.cancelOrigin,
   }))
   return sendEmail({

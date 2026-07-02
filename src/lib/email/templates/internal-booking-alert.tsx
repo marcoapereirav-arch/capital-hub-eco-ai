@@ -49,7 +49,7 @@ export function InternalBookingAlert({ fullName, email, phone, slotStartIso, not
         </>
       )}
 
-      <P dim>Ver/gestionar todas las llamadas en el panel: <a href="https://ecoai.capitalhubapp.com/webs" style={{ color: emailColors.text }}>OS → Webs → Llamadas</a></P>
+      <P dim>Ver/gestionar todas las llamadas en el panel: <a href="https://os.capitalhubapp.com/webs" style={{ color: emailColors.text }}>OS → Webs → Llamadas</a></P>
     </EmailLayout>
   )
 }

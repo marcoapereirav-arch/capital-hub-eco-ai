@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const me = await getCurrentUser()
 
     // 2. URL del webhook (canonical OS)
-    const baseUrl = process.env.NEXT_PUBLIC_OS_URL ?? "https://ecoai.capitalhubapp.com"
+    const baseUrl = process.env.NEXT_PUBLIC_OS_URL ?? "https://os.capitalhubapp.com"
     const callbackUrl = `${baseUrl}/api/webhooks/calendly`
 
     // 3. ¿Ya hay un webhook apuntando a nuestro callback?

@@ -17,7 +17,7 @@ export async function signUpWithEmailConfirmation(email: string, password: strin
   const expiresAt = new Date(Date.now() + TTL_HOURS * 3600 * 1000).toISOString()
   await supabase.from('auth_tokens').insert({ token, email: e, user_id: userId, type: 'email_confirmation', expires_at: expiresAt })
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ecoai.capitalhubapp.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://os.capitalhubapp.com'
   const { subject, html, text } = renderEmailConfirmationEmail({ confirmLink: `${baseUrl}/auth/confirm-email?token=${token}` })
   await sendEmail({ to: e, subject, html, text, tag: 'auth_email_confirmation', templateName: 'email-confirmation' })
   return { ok: true, userId }

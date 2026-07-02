@@ -42,7 +42,7 @@ export function InternalPurchaseAlert({ eventLabel, fullName, email, amount, cur
         </Text>
       </Section>
 
-      <P dim>Ver lead completo en el CRM: <a href="https://ecoai.capitalhubapp.com/crm" style={{ color: emailColors.text }}>OS → CRM</a></P>
+      <P dim>Ver lead completo en el CRM: <a href="https://os.capitalhubapp.com/crm" style={{ color: emailColors.text }}>OS → CRM</a></P>
     </EmailLayout>
   )
 }

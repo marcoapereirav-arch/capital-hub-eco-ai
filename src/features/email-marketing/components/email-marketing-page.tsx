@@ -706,7 +706,7 @@ function ConfigTab() {
           actualizan en tiempo real cuando los destinatarios interactúan con los emails.
         </p>
         <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-4">
-          <li>Endpoint: <code className="font-mono">ecoai.capitalhubapp.com/api/email/webhooks/resend</code></li>
+          <li>Endpoint: <code className="font-mono">os.capitalhubapp.com/api/email/webhooks/resend</code></li>
           <li>Estado: enabled en Resend dashboard</li>
           <li>Eventos suscritos: sent, delivered, opened, clicked, bounced, complained, failed</li>
         </ul>

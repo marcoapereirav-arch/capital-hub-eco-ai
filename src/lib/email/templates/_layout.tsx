@@ -57,13 +57,13 @@ export function EmailLayout({ preview, children }: LayoutProps) {
 
           <Text style={{ fontSize: 11, color: colors.textMuted, lineHeight: 1.6, margin: 0 }}>
             Capital Hub · Adrián Villanueva ·{" "}
-            <Link href="https://ecoai.capitalhubapp.com" style={{ color: colors.textMuted }}>
-              ecoai.capitalhubapp.com
+            <Link href="https://os.capitalhubapp.com" style={{ color: colors.textMuted }}>
+              os.capitalhubapp.com
             </Link>
           </Text>
           <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 8 }}>
             Si no quieres recibir más emails,{" "}
-            <Link href="https://ecoai.capitalhubapp.com/unsubscribe" style={{ color: colors.textMuted, textDecoration: "underline" }}>
+            <Link href="https://os.capitalhubapp.com/unsubscribe" style={{ color: colors.textMuted, textDecoration: "underline" }}>
               da de baja aquí
             </Link>
             .

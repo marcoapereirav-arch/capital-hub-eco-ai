@@ -32,7 +32,7 @@ export function baseLayout(opts: { preview?: string; bodyHtml: string }): string
   <tr><td style="color:${C.body};font-size:15px;line-height:1.65">${opts.bodyHtml}</td></tr>
   <tr><td style="padding:30px 0 0">
     <div style="height:1px;line-height:1px;font-size:0;background:${C.border}">&nbsp;</div>
-    <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:${C.muted}">Capital Hub · Adrián Villanueva · ecoai.capitalhubapp.com</p>
+    <p style="margin:16px 0 0;font-size:11px;line-height:1.6;color:${C.muted}">Capital Hub · Adrián Villanueva · os.capitalhubapp.com</p>
     <p style="margin:6px 0 0;font-size:11px;line-height:1.6;color:${C.muted}">Recibiste este correo porque tienes una cuenta en ${APP_NAME}.</p>
   </td></tr>
 </table></td></tr></table></body></html>`

@@ -45,7 +45,7 @@ export async function requestEmailChange(userId: string, oldEmailRaw: string, ne
     .setExpirationTime(TTL)
     .sign(secret())
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ecoai.capitalhubapp.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://os.capitalhubapp.com'
   const { subject, html, text } = renderEmailChangeEmail({ confirmLink: `${baseUrl}/auth/confirm-email-change?token=${token}`, newEmail })
   const r = await sendEmail({ to: newEmail, subject, html, text, tag: 'auth_email_change', templateName: 'email-change' })
   if (!r.ok) return { ok: false, status: 500, error: r.error ?? 'No se pudo enviar el email de confirmación' }

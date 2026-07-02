@@ -17,4 +17,4 @@ export const RESEND_FROM = `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`
 
 // Dominio público del OS para construir links absolutos en emails
 export const APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? "https://ecoai.capitalhubapp.com"
+  process.env.NEXT_PUBLIC_APP_URL ?? "https://os.capitalhubapp.com"

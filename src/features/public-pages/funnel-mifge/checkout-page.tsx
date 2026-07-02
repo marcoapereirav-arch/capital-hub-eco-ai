@@ -10,7 +10,7 @@ const PLAN_ID_MES = process.env.NEXT_PUBLIC_WHOP_PLAN_ID_MES ?? ""
 const RETURN_URL =
   typeof window !== "undefined"
     ? `${window.location.origin}/mifge/upsell-anual`
-    : "https://ecoai.capitalhubapp.com/mifge/upsell-anual"
+    : "https://os.capitalhubapp.com/mifge/upsell-anual"
 
 /**
  * /mifge/checkout

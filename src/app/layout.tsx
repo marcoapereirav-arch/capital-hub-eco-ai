@@ -21,7 +21,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://ecoai.capitalhubapp.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://os.capitalhubapp.com'),
   title: 'Capital Hub OS',
   description: 'Sistema operativo interno de Capital Hub',
   manifest: '/manifest.json',

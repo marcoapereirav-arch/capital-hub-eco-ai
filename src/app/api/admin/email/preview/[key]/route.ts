@@ -21,7 +21,7 @@ import { InternalGCalAlert } from "@/lib/email/templates/internal-gcal-alert"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://ecoai.capitalhubapp.com"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://os.capitalhubapp.com"
 
 // Datos demo para cada template (suficiente para previsualizar)
 const previews: Record<string, () => Promise<string>> = {
@@ -59,7 +59,7 @@ const previews: Record<string, () => Promise<string>> = {
   })),
   post_call_followup: () => render(PostCallFollowupEmail({
     fullName: "Israel Ramírez",
-    upgradeUrl: "https://ecoai.capitalhubapp.com/mifge/upsell-anual",
+    upgradeUrl: "https://os.capitalhubapp.com/mifge/upsell-anual",
     appUrl: "https://app.capitalhubapp.com",
   })),
   trial_ends_48h: () => render(TrialEnds48hEmail({
@@ -77,17 +77,17 @@ const previews: Record<string, () => Promise<string>> = {
   })),
   beta_retargeting_trial: () => render(BetaRetargetingEmail({
     fullName: "Israel Ramírez",
-    rejoinUrl: "https://ecoai.capitalhubapp.com/mifge",
+    rejoinUrl: "https://os.capitalhubapp.com/mifge",
     cancelOrigin: "trial",
   })),
   beta_retargeting_monthly: () => render(BetaRetargetingEmail({
     fullName: "Israel Ramírez",
-    rejoinUrl: "https://ecoai.capitalhubapp.com/mifge",
+    rejoinUrl: "https://os.capitalhubapp.com/mifge",
     cancelOrigin: "monthly",
   })),
   beta_retargeting_annual: () => render(BetaRetargetingEmail({
     fullName: "Israel Ramírez",
-    rejoinUrl: "https://ecoai.capitalhubapp.com/mifge",
+    rejoinUrl: "https://os.capitalhubapp.com/mifge",
     cancelOrigin: "annual",
   })),
   team_invite: () => render(TeamInviteEmail({

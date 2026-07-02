@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Email Resend con link nuestro (BYOE)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://ecoai.capitalhubapp.com"
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://os.capitalhubapp.com"
   const acceptUrl = `${baseUrl}/accept-invite/${token}`
 
   await sendTeamInvite({

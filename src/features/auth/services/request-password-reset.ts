@@ -49,7 +49,7 @@ export async function requestPasswordReset(rawEmail: string): Promise<RequestPas
   })
   if (insErr) return { ok: false, status: 500, error: insErr.message }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ecoai.capitalhubapp.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://os.capitalhubapp.com'
   const { subject, html, text } = renderPasswordResetEmail({ resetLink: `${baseUrl}/auth/reset-password?token=${token}` })
   const result = await sendEmail({ to: p.email, subject, html, text, tag: 'auth_password_reset', templateName: 'password-reset' })
   if (!result.ok) return { ok: false, status: 500, error: result.error ?? 'No se pudo enviar el email' }
