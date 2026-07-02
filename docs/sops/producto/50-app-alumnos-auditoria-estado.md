@@ -216,3 +216,20 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
   **Parte 2/2 pendiente:** entrega push al dispositivo (PWA service worker en la App + subscribe + envío web-push). La App
   aún NO tiene service worker (solo manifest+iconos). `push_subscriptions`/`notifications` y las VAPID keys YA existen (OS).
   El `/add-mobile` es plantilla Next.js → hay que adaptarlo a Vite + edge functions (Deno) o reusar el sender del OS.
+- **2026-07-02 (v7):** Arreglado el bug `feedback/status` (CORS en cada página) — y de paso un bug MAYOR: **toda la
+  edge function `api` daba 404**. Dos causas que se tapaban mutuamente:
+  1. `[functions.api] verify_jwt = true` → el gateway de Supabase rechazaba el preflight OPTIONS (que el navegador
+     manda SIN Authorization) con 401 → CORS fallaba cross-origin. Fix: `verify_jwt = false`. La auth NO se pierde:
+     cada handler llama `requireUser`/`requireRole` (verificado: sin token = 401).
+  2. `stripPrefix: '/functions/v1/api'` pero Supabase entrega a la función la ruta como `/api/...` → no recortaba →
+     TODAS las rutas 404 (lo tapaba el CORS del punto 1). Fix: `stripPrefix: '/api'`. Verificado: `/feedback/status`
+     autenticado = 200, sin token = 401. Commit App `55fe029`. **Redeploy de la edge `api` a `aglyoyqtzozdnusltjxe`
+     vía `supabase functions deploy` (las edge functions NO se despliegan por Vercel; requieren el CLI + access token).**
+     Efecto: ahora TODA la API de la App (feedback, qa, chat, billing, etc.) es alcanzable. El popup de feedback ahora
+     funciona (aparece si `required=true`) — si no se quiere, es decisión de producto aparte.
+  **⚠️ Concurrencia confirmada (2026-07-02):** dos sesiones de Marco trabajando en el repo App a la vez. La otra sesión
+  tenía WIP **sin commitear** (feature "resources": `web/src/api/resources.ts`, `web/src/features/`, migración
+  `20260702120000_resources.sql`, `AdminFormacionDetailPage.tsx` modificado). Yo commiteo solo por archivo (`git add`
+  específico), nunca `-A`, para no barrer su trabajo. **Regla:** con dos sesiones en el mismo repo, `git add` específico
+  + `pull --rebase` antes de push, y evitar tocar los mismos archivos.
+  **Pendiente:** notif push al dispositivo (parte 2/2) — pausada a propósito para no colisionar con el WIP de la otra sesión.
