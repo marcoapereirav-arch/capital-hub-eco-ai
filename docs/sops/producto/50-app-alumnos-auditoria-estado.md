@@ -205,3 +205,14 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
   **Coordinación:** dos sesiones de Marco editando el mismo repo App + este Knowledge a la vez (v4 y v5). Sin choque de
   git por ahora; cuidado con migraciones RLS concurrentes sobre la misma BD.
   **Pendiente de esta tanda:** notificación al formador al comentar (con /add-mobile) + bug `feedback/status` (CORS en cada página).
+- **2026-06-26 (v6):** Notificación al formador cuando comentan — **parte 1/2 (el corazón, hecha y verificada)**.
+  Mapeo formador↔formación: `users.formacion_asignada` guarda el **slug de la comunidad** (ej. `"media-buyer-digital"`),
+  que equivale a `replace(route.product_key,'_','-')` y a `communities.slug`. Dos triggers `AFTER INSERT`
+  (`notify_formador_on_community_comment` sobre `community_post_comments`; `notify_formador_on_lesson_comment` sobre
+  `lesson_comments`) insertan una fila en `notifications` para el/los formador(es) de esa comunidad/formación (no
+  auto-notifican si el propio formador comenta). Aplicados en vivo a `aglyoyqtzozdnusltjxe` + **verificado** (comentario
+  de prueba en lección 2 → notificación creada para Juan Pablo, formador de Media Buyer; limpiado). Hoy hay formador solo
+  para Media Buyer (Juan Pablo) y Comercial Closing (nagaigobantesq); IA Integrator no tiene formador asignado (nadie recibe).
+  **Parte 2/2 pendiente:** entrega push al dispositivo (PWA service worker en la App + subscribe + envío web-push). La App
+  aún NO tiene service worker (solo manifest+iconos). `push_subscriptions`/`notifications` y las VAPID keys YA existen (OS).
+  El `/add-mobile` es plantilla Next.js → hay que adaptarlo a Vite + edge functions (Deno) o reusar el sender del OS.
