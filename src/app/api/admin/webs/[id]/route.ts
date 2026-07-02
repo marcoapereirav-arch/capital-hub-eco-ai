@@ -10,6 +10,7 @@ const patchSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   description: z.string().max(500).nullable().optional(),
   status: z.enum(["draft", "published", "archived"]).optional(),
+  hostname: z.enum(["ch", "os"]).optional(),
   slug: z
     .string()
     .min(1)
@@ -40,6 +41,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (parsed.data.description !== undefined) update.description = parsed.data.description
   if (parsed.data.status !== undefined) update.status = parsed.data.status
   if (parsed.data.slug !== undefined) update.slug = parsed.data.slug
+  if (parsed.data.hostname !== undefined) update.hostname = parsed.data.hostname
 
   const { data, error } = await admin
     .from("webs")

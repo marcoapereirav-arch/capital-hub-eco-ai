@@ -9,6 +9,7 @@ type WebRow = {
   name: string
   description: string | null
   status: Web["status"]
+  hostname: Web["hostname"] | null
   created_at: string
   updated_at: string
 }
@@ -31,6 +32,7 @@ function rowToWeb(r: WebRow): Web {
     name: r.name,
     description: r.description ?? "",
     status: r.status,
+    hostname: r.hostname ?? "ch",
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }

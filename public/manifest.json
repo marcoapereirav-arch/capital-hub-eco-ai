@@ -2,7 +2,7 @@
   "name": "Capital Hub OS",
   "short_name": "Capital Hub",
   "description": "Sistema operativo interno de Capital Hub",
-  "start_url": "/content-intel",
+  "start_url": "/dashboard",
   "scope": "/",
   "capture_links": "none",
   "display": "standalone",

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Copy, Check, ExternalLink, Globe, FileDown, Loader2, Pencil, X, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import type { WebWithSteps } from "../types/web"
+import type { WebWithSteps, WebHostname } from "../types/web"
 import { getFunnelManifest } from "../lib/funnel-settings-manifest"
 import { FunnelSettingsModal } from "./funnel-settings-modal"
 
@@ -28,11 +28,48 @@ const STATUS_STYLES: Record<string, string> = {
 
 type StepLocal = WebWithSteps["steps"][0]
 
+/** Base URLs por subdominio publico. En dev/preview usa el host actual. */
+function baseUrlForHostname(hostname: WebHostname, fallbackBase: string): string {
+  try {
+    const u = new URL(fallbackBase)
+    if (u.hostname.includes("localhost") || u.hostname.endsWith(".vercel.app")) {
+      return fallbackBase
+    }
+  } catch {
+    // ignore
+  }
+  return hostname === "ch"
+    ? "https://ch.capitalhubapp.com"
+    : "https://os.capitalhubapp.com"
+}
+
 export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [copiedStepId, setCopiedStepId] = useState<string | null>(null)
   const [status, setStatus] = useState(web.status)
+  const [hostname, setHostname] = useState<WebHostname>(web.hostname)
   const [saving, setSaving] = useState(false)
   const [steps, setSteps] = useState<StepLocal[]>(web.steps)
+  const effectiveBaseUrl = baseUrlForHostname(hostname, publicBaseUrl)
+
+  async function saveHostname(next: WebHostname) {
+    if (next === hostname) return
+    const previous = hostname
+    setHostname(next) // optimista
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/webs/${web.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hostname: next }),
+      })
+      if (!res.ok) throw new Error("PATCH failed")
+    } catch {
+      setHostname(previous)
+      alert("No se pudo cambiar el subdominio. Reintenta.")
+    } finally {
+      setSaving(false)
+    }
+  }
   const [editingStepId, setEditingStepId] = useState<string | null>(null)
   const [editingStepField, setEditingStepField] = useState<"slug" | "name">("slug")
   const [stepDraft, setStepDraft] = useState<string>("")
@@ -169,10 +206,10 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   // Decisión Marco 2026-06-17 para eliminar el bug de doble-concatenacion
   // (que generaba /login/login, /test-personalidad/thanks → 404).
   function urlForStep(stepSlug: string | undefined): string {
-    if (!stepSlug) return publicBaseUrl
+    if (!stepSlug) return effectiveBaseUrl
     // Permite slug con o sin barra inicial
     const clean = stepSlug.startsWith("/") ? stepSlug.slice(1) : stepSlug
-    return `${publicBaseUrl}/${clean}`
+    return `${effectiveBaseUrl}/${clean}`
   }
 
   async function copyToClipboard(url: string, stepId: string) {
@@ -225,6 +262,19 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
               </button>
             )}
             {!editingName && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Selector de subdominio publico. Marco 2026-07-02: solo aqui,
+                  el middleware host-based aplica la separacion en runtime. */}
+              <select
+                value={hostname}
+                onChange={(e) => saveHostname(e.target.value as WebHostname)}
+                disabled={saving}
+                className="rounded-sm border border-border bg-secondary/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-foreground/90 hover:border-foreground/40 disabled:opacity-50 cursor-pointer"
+                title="Subdominio publico donde se sirve esta web. Cambiar aqui hace que aparezca (o desaparezca) del dominio elegido en segundos."
+              >
+                <option value="ch">ch. (publico)</option>
+                <option value="os">os. (interno)</option>
+              </select>
             <button
               onClick={togglePublished}
               disabled={saving}
@@ -241,6 +291,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
               {saving && <Loader2 className="inline h-2.5 w-2.5 animate-spin mr-1" />}
               {status === "published" ? "Published" : status === "draft" ? "Draft" : status}
             </button>
+            </div>
             )}
           </div>
           {nameError && <p className="text-[10px] text-red-400 mt-1">{nameError}</p>}
