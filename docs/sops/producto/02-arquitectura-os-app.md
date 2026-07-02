@@ -7,6 +7,20 @@ order: 2
 
 Este documento clarifica qué es qué para no volver a confundirlos.
 
+## REGLA DE ORO: contenido de alumnos SIEMPRE en la App
+
+**TODO lo que sea para el alumno vive en la App** (repo `capital-hub-app`, dominio `app.capitalhubapp.com`), **NUNCA en el OS.**
+
+Incluye: formación y lecciones, material visual de formación (ej. la formación IA Integrator), comunidad, bolsa de empleo, onboarding del alumno, perfil público, y cualquier página que un alumno vaya a ver.
+
+El OS es SOLO el panel interno del equipo. Su única cara pública son los funnels de captación (`/mifge`, `/test-personalidad`, `/reservar`, etc.), que son marketing (leads), no producto del alumno.
+
+**How to apply:**
+- Antes de construir cualquier página: ¿la ve un alumno? Si sí, va en la App.
+- Si por error se construyó contenido de alumno en el OS, se migra a la App y se retira del OS.
+
+**Why:** Marco lo dejó como regla el 2026-07-02. Mezclar producto del alumno en el panel interno rompe la separación OS/App (aislamiento, permisos, equipos).
+
 ## Capital Hub OS (este proyecto)
 
 - **Qué es**: el "panel interno" de Marco + Adrián + equipo.
@@ -120,3 +134,4 @@ npx vercel deploy --prod --yes
   desplegada es **compartida** (coincide con SOP 17). El proyecto `xkuhkkjeuzxutggbnwed` que aparece en el
   `web/.env` local es legacy, NO producción. Las migraciones del repo de la App son del port viejo y no son el
   esquema vivo. Ver detalle en SOP 50 (verificación en vivo).
+- **2026-07-02** (v7): Marco fija la REGLA DE ORO (arriba): todo contenido de alumnos vive en la App, nunca en el OS. La formación IA Integrator en versión visual se construyó por error como página pública en el OS (`/formacion/ia-integrator`, feature `formacion-ia-integrator`); queda pendiente migrarla a la App y retirarla del OS. También queda fijada la REGLA #7 del protocolo del agente (SOP 04): prohibido el guion largo (em dash) en todo texto.

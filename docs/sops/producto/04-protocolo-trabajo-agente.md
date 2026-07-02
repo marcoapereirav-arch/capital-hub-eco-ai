@@ -137,7 +137,24 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 
 ---
 
+## REGLA #7: PROHIBIDO el guion largo (em dash)
+
+**NUNCA escribir el guion largo** (em dash, el carácter `—`, U+2014) en NINGÚN texto que yo produzca: copy de UI, landing pages, emails, documentos del Knowledge, comentarios de código, nombres, ni mensajes de chat a Marco. Cero excepciones (salvo nombrar la propia regla, como aquí).
+
+**How to apply:**
+- En su lugar: dos puntos (`:`), coma, punto y seguido, o paréntesis. Reescribir la frase antes que meter un guion.
+- Si de verdad hiciera falta un guion, usar el corto normal (`-`) con espacios. Pero preferir siempre puntuación normal.
+- El guion medio (`–`, en dash) tampoco.
+- Antes de cerrar cualquier bloque (código, doc, email, chat), revisar que no quede ni un `—`.
+
+**Why:** Marco lo pidió como regla dura el 2026-07-02. El em dash delata texto generado por IA y no encaja con su tono. Sin excepciones.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-02: REGLA #7 añadida
+Prohibido el guion largo (em dash) en todo texto que yo escriba, en cualquier soporte. Marco lo pidió explícitamente. Se aplica desde ya.
 
 ### 2026-05-04 — Creación
 Las 3 reglas vivían dispersas: REGLA #1 y #2 en `~/.claude/.../memory/` (memoria privada local), REGLA #3 todavía no estaba escrita. Marco corrigió: **el Knowledge es la fuente única**. Movidas aquí, indexadas en `00-readme.md`. CLAUDE.md ahora solo tiene la REGLA #0 ("lee Knowledge antes de actuar") y apunta a este SOP indirectamente.
