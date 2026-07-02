@@ -11,6 +11,8 @@ Sistema de **recursos por formación** en la App: materiales que cuelgan de una 
 
 Cada formación tiene una sección **"Recursos"**. Un admin crea recursos (guías visuales, enlaces, archivos, texto) y los enlaza a lecciones concretas. El alumno los ve en dos sitios: en la sección Recursos de la formación (con las lecciones a las que están enlazados, visible) y dentro de cada lección enlazada ("Recursos de esta lección").
 
+**REGLA DE ALCANCE (Marco, 2026-07-02):** un recurso pertenece a UNA formación y solo se enlaza a lecciones de ESA formación. **Nunca se mezclan recursos ni enlaces entre formaciones.** Por eso `resources.formation_id` es obligatorio y el enlazador del admin solo lista las lecciones de esa formación. No añadir enlace cross-formación.
+
 ## Datos (Supabase compartida `aglyoyqtzozdnusltjxe`)
 
 - `resources`: `id`, `formation_id` (FK formations), `title`, `description`, `type` (`GUIDE` | `LINK` | `FILE` | `TEXT`), `url` (LINK/FILE), `content` (TEXT), `guide_key` (GUIDE), `display_order`, `active`.
@@ -42,3 +44,4 @@ Una guía visual es una página animada dentro de la App (React + SVG + reveals 
 ## Cambios versionados
 
 - **2026-07-02**: Creación de la feature. Tablas + RLS, API, admin, alumno, ResourceViewer, registry de guías + primera guía Vibe Coding. Pendiente: retirar la versión vieja del OS (`/formacion/ia-integrator`), y portar los otros dos manuales (método completo, Git) como guías.
+- **2026-07-02**: Botón a la lección enlazada + acceso a editar desde el visor del recurso. Regla de alcance fijada: recursos solo dentro de su formación, sin mezclar entre formaciones (commit App `0c7e715`).
