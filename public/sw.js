@@ -1,9 +1,10 @@
-// Capital Hub OS — Service Worker v2.0 (2026-06-17)
+// Capital Hub OS - Service Worker v3.0 (2026-07-03)
 // CRITICO: NO incluir fetch handler (rompe iOS Safari PWA)
-// BUMP: la version cambio para forzar invalidacion del cache viejo en
-// navegadores que tenian /test-personalidad cacheada como 404.
+// BUMP: version cambio para forzar re-fetch del manifest.json (start_url
+// paso de /content-intel a /dashboard). Los navegadores que tenian el
+// manifest antiguo cacheado lo revalidan al activarse este SW nuevo.
 
-const CACHE_NAME = 'capital-hub-v2-2026-06-17';
+const CACHE_NAME = 'capital-hub-v3-2026-07-03';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

@@ -4,18 +4,109 @@ import { updateSession } from '@/lib/supabase/proxy'
 /**
  * Proxy (anteriormente middleware) — Next.js 16+ renombró middleware → proxy.
  *
- * Hace 2 cosas:
+ * Hace 3 cosas:
  *
- * 1. CORS para rutas que la App alumno consume cross-origin:
+ * 1. HOST-BASED ROUTING (Marco 2026-07-02):
+ *    En ch.capitalhubapp.com solo se sirven rutas explicitamente marcadas
+ *    como publicas (tabla webs/lead_magnets hostname='ch' + fallback
+ *    hardcoded). Cualquier ruta del OS bajo ch. devuelve 404.
+ *    Se ejecuta ANTES del CORS/session porque tiene prioridad de
+ *    aislamiento del OS. En os. y hosts dev/preview no aplica.
+ *
+ * 2. CORS para rutas que la App alumno consume cross-origin:
  *    - /api/auth/*  (student-invite-accept)
  *    - /api/public/*
  *    - /api/calendar/book/*
  *    Preflight OPTIONS responde 204 inmediato con headers correctos.
  *    Para GET/POST/etc añade headers a la response.
  *
- * 2. updateSession (Supabase Auth) en TODAS las demás rutas para mantener
+ * 3. updateSession (Supabase Auth) en TODAS las demás rutas para mantener
  *    la sesión refrescada (excepto _next/static, imágenes, etc).
  */
+
+// ============================================================
+// HOST-BASED ROUTING (bloque 1)
+// ============================================================
+
+const CH_HOSTNAME = 'ch.capitalhubapp.com'
+
+const SYSTEM_PREFIXES = [
+  '/_next/',
+  '/api/',
+  '/favicon',
+  '/icons/',
+  '/manifest.json',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/sw.js',
+  '/apple-touch-icon',
+  '/assets/',
+]
+
+const CH_FALLBACK_SLUGS = new Set([
+  'test-personalidad',
+  'lm',
+  'formacion',
+  'legal',
+  'reservar',
+  'welcome',
+  'agenda',
+  'mifge',
+  'lt8',
+])
+
+let chSlugCache: { slugs: Set<string>; expiresAt: number } | null = null
+
+async function fetchChPublicSlugs(): Promise<Set<string>> {
+  const now = Date.now()
+  if (chSlugCache && chSlugCache.expiresAt > now) return chSlugCache.slugs
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !anon) return CH_FALLBACK_SLUGS
+
+  const slugs = new Set<string>()
+  try {
+    const [websRes, lmRes] = await Promise.all([
+      fetch(
+        `${supabaseUrl}/rest/v1/webs?select=slug&hostname=eq.ch&status=eq.published`,
+        { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, cache: 'no-store' }
+      ),
+      fetch(
+        `${supabaseUrl}/rest/v1/lead_magnets?select=slug&hostname=eq.ch&active=eq.true`,
+        { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, cache: 'no-store' }
+      ),
+    ])
+    if (websRes.ok) {
+      const rows = (await websRes.json()) as { slug: string }[]
+      for (const r of rows) if (r.slug) slugs.add(r.slug)
+    }
+    if (lmRes.ok) {
+      const rows = (await lmRes.json()) as { slug: string }[]
+      for (const r of rows) if (r.slug) slugs.add(`lm/${r.slug}`)
+    }
+  } catch {
+    return CH_FALLBACK_SLUGS
+  }
+
+  for (const s of CH_FALLBACK_SLUGS) slugs.add(s)
+  chSlugCache = { slugs, expiresAt: now + 30_000 }
+  return slugs
+}
+
+function firstSegment(pathname: string): string {
+  return pathname.replace(/^\//, '').split('/')[0] ?? ''
+}
+
+async function isChPublicRoute(pathname: string): Promise<boolean> {
+  for (const prefix of SYSTEM_PREFIXES) {
+    if (pathname === prefix || pathname.startsWith(prefix)) return true
+  }
+  if (pathname === '/' || pathname === '') return false
+  const seg = firstSegment(pathname)
+  const chSlugs = await fetchChPublicSlugs()
+  return chSlugs.has(seg)
+}
 
 const ALLOWED_ORIGIN_PATTERNS: Array<string | RegExp> = [
   'https://app.capitalhubapp.com',
@@ -51,8 +142,17 @@ function needsCors(pathname: string): boolean {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const hostname = (request.headers.get('host') ?? '').toLowerCase()
 
-  // === 1. CORS para rutas cross-origin que llama la App alumno ===
+  // === 1. HOST-BASED ROUTING ===
+  // Solo aplica en ch.capitalhubapp.com. En os./localhost/previews pasa tal cual.
+  if (hostname === CH_HOSTNAME) {
+    const allowed = await isChPublicRoute(pathname)
+    if (!allowed) return new NextResponse(null, { status: 404 })
+    // Ruta publica ok: continua a Supabase session refresh normal.
+  }
+
+  // === 2. CORS para rutas cross-origin que llama la App alumno ===
   if (needsCors(pathname)) {
     const origin = request.headers.get('origin')
     const corsHeaders = getCorsHeaders(origin)
@@ -70,7 +170,7 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  // === 2. Supabase Auth session refresh para el resto del OS ===
+  // === 3. Supabase Auth session refresh para el resto del OS ===
   return await updateSession(request)
 }
 
