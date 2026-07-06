@@ -29,6 +29,12 @@ area: sistemas
 - **Misma cuenta de email** Resend, mismas variables de entorno comunes
 - **Misma cuenta admin** de Adrián para Vercel / GitHub
 
+> ⚠️ **Discrepancia detectada (2026-07-06):** el `web/.env` de la App apunta a la
+> Supabase **`xkuhkkjeuzxutggbnwed`**, NO a `aglyoyqtzozdnusltjxe`. Puede que la App
+> ya tenga su Supabase propia y este SOP haya quedado desactualizado. **Sin confirmar
+> con Marco.** No tocar datos de la App por API/MCP hasta aclarar cuál es la real.
+> Ver [`producto/52-app-editor-formacion-reordenar.md`](../producto/52-app-editor-formacion-reordenar.md).
+
 ## NO comparten
 
 - Stack: OS es Next.js 16, App es React + Vite
