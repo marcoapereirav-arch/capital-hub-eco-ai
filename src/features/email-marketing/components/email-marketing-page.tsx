@@ -86,7 +86,7 @@ export function EmailMarketingPage() {
           <Mail className="h-5 w-5 text-muted-foreground" />
           <h1 className="text-lg font-semibold">Email Marketing</h1>
           <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            · Resend + React Email · 13 plantillas activas
+            · Resend + React Email
           </span>
         </div>
 
