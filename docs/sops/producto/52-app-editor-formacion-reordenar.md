@@ -91,10 +91,23 @@ cambian). Numeración visual por índice, feedback inmediato, resync si algo fal
 
 ### Estado de verificación
 - ✅ Compila limpio (`tsc -b`).
-- ⏳ Verificación en vivo (click-test) **pendiente**: bloqueada por el gotcha de
-  máquina de arriba. Plan: probar en preview de Vercel con `test-agent`
-  (reordenar y **restaurar** el orden, o usar módulos temporales, para no dejar
-  datos reales alterados).
+- ✅ **Verificado en vivo en producción** (2026-07-06) con `test-agent` sobre la
+  formación "Media Buyer Digital": módulos reordenan y **persisten** tras
+  recargar; lecciones también (probado con 2 lecciones temporales que luego se
+  borraron). Todo restaurado, sin residuos.
+- Nota de método: el local y la preview no servían (gotcha de máquina + preview
+  sin env de Supabase), así que se verificó desplegando a prod y probando ahí con
+  Playwright, con plan de revert. Blast radius mínimo (solo el editor del
+  formador; alumnos no lo ven).
+
+### 🐛 Bug encontrado en el test en vivo (aprendizaje)
+La 1ª versión **no persistía**: el arrastre se veía pero al recargar volvía al
+orden viejo. Causa: el commit (`onDragEnd`) leía `modulesRef`/`lessonsRef`, que se
+sincronizaban vía `useEffect` — y `useEffect` corre DESPUÉS del repintado, mientras
+`onDragEnd` corre ANTES. Al guardar, el ref tenía el orden viejo → `updates` vacío
+→ no escribía (sin error). **Regla:** con framer-motion `Reorder` + persistir en
+`onDragEnd`, actualizar el ref de forma **síncrona dentro del handler `onReorder`**,
+nunca vía `useEffect`. (Commit `ae2ca2e`.)
 
 ---
 
@@ -102,3 +115,6 @@ cambian). Numeración visual por índice, feedback inmediato, resync si algo fal
 - **2026-07-06:** Creado. Fix de reordenar (drag & drop real) en el editor de
   formación de la App + doc de setup local (Node 22, test-agent, gotcha de
   máquina) + flag de discrepancia de Supabase.
+- **2026-07-06 (2):** Verificado en vivo en producción (módulos + lecciones
+  persisten). Documentado el bug del ref síncrono (commit `ae2ca2e`). Feature
+  cerrada y funcionando.
