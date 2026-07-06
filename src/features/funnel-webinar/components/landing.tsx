@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowRight, X, Gift, BadgeCheck, Sparkles } from "lucide-react"
+import { Loader2, ArrowRight, X, Gift, BadgeCheck, Send } from "lucide-react"
 import { track } from "@/lib/meta/pixel-client"
 import { getStoredUtms } from "@/lib/utm/utm-capture"
 
@@ -502,7 +502,7 @@ function OptinModal({ onClose }: { onClose: () => void }) {
             ) : (
               <>
                 <span aria-hidden className="wb-send-shine" />
-                <Sparkles className="relative z-10 h-4 w-4" />
+                <Send className="relative z-10 h-4 w-4" />
                 <span className="relative z-10">Enviarme la invitación</span>
               </>
             )}

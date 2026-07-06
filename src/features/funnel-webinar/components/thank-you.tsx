@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { MessageCircle, CalendarClock, CheckCircle2, Clock, Sparkles, ArrowRight } from "lucide-react"
+import { MessageCircle, CalendarClock, CheckCircle2, Sparkles, ArrowRight } from "lucide-react"
 import { FUNNEL_WEBINAR } from "../config"
 
 /**
@@ -143,33 +143,22 @@ export function WebinarThankYou({ whatsappGroup, dateLabel }: Props = {}) {
             directo y todos los avisos. Entra ahora y lo dejas listo.
           </p>
 
-          {/* CTA principal: entrar al grupo (grande y llamativo) */}
-          {hasGroup ? (
-            <a
-              href={groupUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="wbt-cta group relative mb-4 flex h-16 w-full items-center justify-center gap-3 overflow-hidden rounded-none bg-[#22C55E] px-6 text-lg font-semibold text-[#08130C]"
-              style={{ fontFamily: "'Inter Tight', sans-serif" }}
-            >
-              <span aria-hidden className="wbt-cta-shine" />
-              <MessageCircle className="relative z-10 h-6 w-6" />
-              <span className="relative z-10">Entrar al grupo de WhatsApp</span>
-              <ArrowRight className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-            </a>
-          ) : (
-            <div
-              className="mb-4 flex h-16 w-full items-center justify-center gap-2.5 rounded-none border border-[#3F3F46] bg-[#18181B] px-6 text-base font-semibold text-[#9CA3AF]"
-              style={{ fontFamily: "'Inter Tight', sans-serif" }}
-            >
-              <Clock className="h-5 w-5 text-[#22C55E]" />
-              <span>El grupo se abre en breve</span>
-            </div>
-          )}
+          {/* CTA principal: entrar al grupo (grande y llamativo, siempre visible) */}
+          <a
+            href={groupUrl || "#"}
+            target={hasGroup ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            onClick={hasGroup ? undefined : (e) => e.preventDefault()}
+            className="wbt-cta group relative mb-4 flex h-16 w-full items-center justify-center gap-3 overflow-hidden rounded-none bg-[#22C55E] px-6 text-lg font-semibold text-[#08130C]"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+          >
+            <span aria-hidden className="wbt-cta-shine" />
+            <MessageCircle className="relative z-10 h-6 w-6" />
+            <span className="relative z-10">Entrar al grupo de WhatsApp</span>
+            <ArrowRight className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+          </a>
           <p className="mb-9 text-center text-[13px] text-[#6B7280]">
-            {hasGroup
-              ? "Se abre WhatsApp en una pestaña nueva. Pulsa «Unirse al grupo» y ya estás dentro."
-              : "Te avisamos por email en cuanto el grupo esté abierto. También lo verás aquí."}
+            Se abre WhatsApp en una pestaña nueva. Pulsa «Unirse al grupo» y ya estás dentro.
           </p>
 
           {/* Recordatorio de la cita */}
