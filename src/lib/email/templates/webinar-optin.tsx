@@ -16,12 +16,12 @@ interface Props {
  */
 export function WebinarOptinEmail({ firstName, whatsappUrl, dateLabel }: Props) {
   return (
-    <EmailLayout preview="Tu plaza en el webinar está reservada. Entra al grupo de WhatsApp.">
+    <EmailLayout preview="Tu plaza está reservada. Entra al grupo de WhatsApp para acceder al directo.">
       <H1>Tu plaza está reservada{firstName ? `, ${firstName}` : ""}.</H1>
       <P>
-        El webinar es <strong>{dateLabel}</strong>. Falta un último paso: entra al grupo de
-        WhatsApp. Ahí soltamos el link del Zoom del directo y todos los avisos para que no te
-        lo pierdas.
+        El directo es <strong>{dateLabel}</strong>. Para acceder solo tienes que hacer una cosa:
+        entrar al grupo de WhatsApp. Ahí es donde te mandamos el <strong>link del Zoom</strong> del
+        directo y los avisos, para que no te lo pierdas.
       </P>
 
       <Button href={whatsappUrl}>Entrar al grupo de WhatsApp</Button>

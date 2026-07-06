@@ -153,10 +153,13 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 
 ## Cambios versionados
 
+### 2026-07-06: REGLA #7 reforzada
+Marco la re-enfatizó al revisar la landing del webinar: el guion largo (`—`) se elimina de CUALQUIER lugar donde aparezca y no se vuelve a añadir nunca (landing, gracias, emails, Knowledge, comentarios, chat). Barrido aplicado al funnel webinar completo. Cero excepciones salvo nombrar la propia regla.
+
 ### 2026-07-02: REGLA #7 añadida
 Prohibido el guion largo (em dash) en todo texto que yo escriba, en cualquier soporte. Marco lo pidió explícitamente. Se aplica desde ya.
 
-### 2026-05-04 — Creación
+### 2026-05-04: Creación
 Las 3 reglas vivían dispersas: REGLA #1 y #2 en `~/.claude/.../memory/` (memoria privada local), REGLA #3 todavía no estaba escrita. Marco corrigió: **el Knowledge es la fuente única**. Movidas aquí, indexadas en `00-readme.md`. CLAUDE.md ahora solo tiene la REGLA #0 ("lee Knowledge antes de actuar") y apunta a este SOP indirectamente.
 
 ### 2026-05-04 — REGLA #4 añadida

@@ -16,7 +16,7 @@
  */
 export const FUNNEL_WEBINAR = {
   WHATSAPP_GROUP_URL: "",
-  WEBINAR_DATE_LABEL: "Viernes 10 de julio · en directo",
+  WEBINAR_DATE_LABEL: "Viernes 10 de julio · 17:00h",
   RESERVAR_URL: "/reservar",
   INSTAGRAM_HANDLE: "adrianvillanuevarios",
 } as const

@@ -76,3 +76,13 @@ Defaults en `src/features/funnel-webinar/config.ts`. Resolución server-only en 
 ## Cambios versionados
 
 - **2026-07-06**: creación del funnel webinar (reunión Marco/Adrián). Pipeline `webinar`, landing+gracias, opt-in con email, Meta `webinar_lead`, registro en `/webs` y en el panel de automatizaciones.
+- **2026-07-06 (v2, feedback Marco)**: pasada de diseño y copy.
+  - Hora del directo: **viernes 10 jul, 17:00** (`date_label`).
+  - HERO rehecho como sección estrella: profundidad 3D (perspective + parallax por puntero), orbes flotantes, número destacado con brillo, chips de la descripción (más visual, sin perder conceptos). Móvil primero.
+  - Sección **bolsa de trabajo** mejorada (glow, marquee de "empresas buscando talento", subrayado animado).
+  - Sección "Lo que verás en el directo" **eliminada** (contenido aún sin definir; se reañadirá cuando Marco lo diga).
+  - Historia de Adrián con **galería de fotos** en scroll horizontal. Las 8 fotos se descargaron a **`public/adrian/`** (comprimidas + `next/image`), ya NO dependen del storage externo de GHL.
+  - Pop-up reenfocado: el formulario es la "excusa" para **entregarles** la invitación al grupo (icono regalo, copy "te enviamos la invitación", botón "Enviarme la invitación"). Campos obligatorios (`required`).
+  - Gracias: **botón grande verde** a WhatsApp + **confeti de celebración** al entrar + recordatorio con día/hora y "reserva el hueco, sin distracciones". Enfoque: "aquí tienes tu acceso".
+  - Email `optin_webinar` reenfocado (plaza reservada → entra al grupo → ahí va el link del Zoom).
+  - Barrido del guion largo (em dash): cero en todo el funnel. Ver REGLA #7 (producto/04).
