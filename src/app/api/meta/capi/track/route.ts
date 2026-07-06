@@ -14,6 +14,7 @@ const ALLOWED_EVENTS: CapiEventName[] = [
   "mifge_monthly_purchased",
   "mifge_call_attended",
   "test_personalidad_lead",
+  "webinar_lead",
 ]
 
 const TrackSchema = z.object({

@@ -1,5 +1,6 @@
 import { FUNNEL_TEST_PERSONALIDAD } from "@/features/funnel-test-personalidad/config"
 import { FUNNEL_RESERVAR } from "@/features/funnel-reservar/config"
+import { FUNNEL_WEBINAR } from "@/features/funnel-webinar/config"
 
 /**
  * Manifiesto de ajustes editables por funnel (links de los botones/CTA).
@@ -43,6 +44,35 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
         label: "Instagram de Adrián",
         hint: "Solo el usuario, sin @. Ej: adrianvillanuevarios",
         default: FUNNEL_TEST_PERSONALIDAD.INSTAGRAM_HANDLE,
+      },
+    ],
+  },
+  webinar: {
+    slug: "webinar",
+    fields: [
+      {
+        key: "whatsapp_group",
+        label: "Grupo de WhatsApp — link de invitación",
+        hint: "Link del grupo/comunidad de WhatsApp (chat.whatsapp.com/...). Es el botón grande de la página de gracias. Vacío = «el grupo se abre en breve».",
+        default: FUNNEL_WEBINAR.WHATSAPP_GROUP_URL,
+      },
+      {
+        key: "date_label",
+        label: "Fecha/hora del webinar",
+        hint: "Lo que se muestra en la landing. Ej: «Viernes 10 de julio · 19:00h».",
+        default: FUNNEL_WEBINAR.WEBINAR_DATE_LABEL,
+      },
+      {
+        key: "reservar_url",
+        label: "Funnel de agendar (Calendly)",
+        hint: "A dónde lleva el CTA del webinar para agendar la llamada. Por defecto /reservar.",
+        default: FUNNEL_WEBINAR.RESERVAR_URL,
+      },
+      {
+        key: "instagram",
+        label: "Instagram de Adrián",
+        hint: "Solo el usuario, sin @. Ej: adrianvillanuevarios",
+        default: FUNNEL_WEBINAR.INSTAGRAM_HANDLE,
       },
     ],
   },

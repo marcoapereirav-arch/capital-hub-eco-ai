@@ -13,6 +13,7 @@ import { AgendaReminder2hEmail } from "@/lib/email/templates/agenda-reminder-2h"
 import { AgendaReminder30minEmail } from "@/lib/email/templates/agenda-reminder-30min"
 import { NoShowEmail } from "@/lib/email/templates/no-show"
 import { PasswordChangedEmail } from "@/lib/email/templates/password-changed"
+import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -36,7 +37,7 @@ type Template = {
   label: string
   description: string
   category: string
-  group: "venta" | "pre_llamada" | "post_llamada" | "equipo_os" | "alertas_sistema"
+  group: "captacion" | "venta" | "pre_llamada" | "post_llamada" | "equipo_os" | "alertas_sistema"
   trigger: string
   frequency: "alta" | "media" | "baja"
   variables: string[]
@@ -45,6 +46,22 @@ type Template = {
 }
 
 const TEMPLATES: Template[] = [
+  {
+    key: "optin_webinar",
+    label: "Opt-in Webinar (link WhatsApp)",
+    description: "Email que recibe el lead al reservar plaza en /webinar. Incluye el botón al grupo de WhatsApp donde se suelta el link del Zoom.",
+    category: "lifecycle",
+    group: "captacion",
+    trigger: "Cada vez que alguien reserva plaza en la landing del webinar (/webinar). Solo se envía si el grupo de WhatsApp está configurado en /webs.",
+    frequency: "alta",
+    variables: ["firstName", "whatsappUrl", "dateLabel"],
+    defaultSubject: "Tu plaza en el webinar está reservada — entra al grupo",
+    renderDefault: () => render(WebinarOptinEmail({
+      firstName: "{{firstName}}",
+      whatsappUrl: "{{whatsappUrl}}",
+      dateLabel: "{{dateLabel}}",
+    })),
+  },
   {
     key: "welcome_alumno_ht",
     label: "Bienvenida alumno (post venta)",
@@ -269,6 +286,7 @@ const TEMPLATES: Template[] = [
 ]
 
 export const GROUP_META: Record<Template["group"], { label: string; icon: string; color: string; description: string; order: number }> = {
+  captacion: { label: "Captación (funnels)", icon: "🎣", color: "border-green-500/40 text-green-400 bg-green-500/[0.04]", description: "Emails de los funnels de captación (opt-in webinar, etc.).", order: 0 },
   venta: { label: "Venta cerrada", icon: "💰", color: "border-green-500/40 text-green-400 bg-green-500/[0.04]", description: "Lo que dispara cada venta nueva. Copy critico.", order: 1 },
   pre_llamada: { label: "Pre-llamada (reservas)", icon: "📅", color: "border-amber-500/40 text-amber-400 bg-amber-500/[0.04]", description: "Cuando un lead agenda llamada (Calendly o calendar propio).", order: 2 },
   post_llamada: { label: "Post-llamada", icon: "📞", color: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.04]", description: "Recovery tras la llamada (no show).", order: 3 },

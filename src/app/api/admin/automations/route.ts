@@ -128,6 +128,19 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // Stats del funnel Webinar (opt-in)
+  const { count: webinarOptinCount } = await admin
+    .from("contact_journey_events")
+    .select("*", { count: "exact", head: true })
+    .eq("type", "optin_webinar")
+  const { data: lastWebinarOptin } = await admin
+    .from("contact_journey_events")
+    .select("created_at")
+    .eq("type", "optin_webinar")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   // Stats Calendly
   const { count: calendlyCount } = await admin
     .from("calendly_scheduled_events")
@@ -378,6 +391,31 @@ export async function GET() {
       lastRun: lastTpOptin?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastTpOptin?.created_at),
       totalExecutions: tpOptinCount ?? 0,
+    },
+    {
+      id: "webinar_optin",
+      category: "crm",
+      label: "Funnel Webinar → CRM + email WhatsApp + CAPI",
+      description:
+        "Lead reserva plaza en /webinar → crea/actualiza contacto stage='lead', pipeline 'Webinar', tags origen + fuente (afiliado), email de confirmación con el link del grupo de WhatsApp (si está configurado), y evento Meta CAPI. La agenda posterior (Calendly) y el pago (venta) mueven el contacto a Agendado/Alumno vía sus propias automatizaciones.",
+      trigger: "POST /api/optin/webinar (form público)",
+      actions: [
+        "Upsert contacto por email (stage='lead' si es nuevo, sin degradar si ya avanzado)",
+        "Asigna pipeline 'Webinar' + tag origen:webinar",
+        "Atribución: affiliate_slug = utm_source (first-touch) + tag fuente:<slug>",
+        "Envía email 'optin_webinar' con el link del grupo de WhatsApp (editable en /email-marketing)",
+        "Dispara Meta Pixel + CAPI (webinar_lead + Lead)",
+        "Inserta contact_journey_event 'optin_webinar'",
+      ],
+      relatedTables: ["contacts", "contact_tags", "tags", "contact_journey_events", "email_logs", "app_settings", "meta_events_log", "notifications"],
+      status: (webinarOptinCount ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (webinarOptinCount ?? 0) > 0
+          ? `Recibiendo opt-ins · ${webinarOptinCount} eventos`
+          : "Funnel publicado · sin opt-ins reales todavía",
+      lastRun: lastWebinarOptin?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastWebinarOptin?.created_at),
+      totalExecutions: webinarOptinCount ?? 0,
     },
     {
       id: "calendly_webhook",
