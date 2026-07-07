@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { X, Mail, Phone, Calendar, Euro, Tag, MessageSquare, Save, Trash2 } from "lucide-react"
+import { X, Mail, Phone, Calendar, Euro, Tag, MessageSquare, Save, Trash2, ShoppingBag } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ContactTagsPanel } from "@/features/tags/components/contact-tags-panel"
+import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
+import { SaleStagePrompt } from "@/features/sales/components/sale-stage-prompt"
 
 type ContactDetail = {
   id: string
@@ -81,6 +83,9 @@ export function ContactDrawer({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState<Partial<ContactDetail>>({})
+  // Flujo "mover a Alumno" desde la ficha: popup ahora/mas tarde + modal de venta.
+  const [salePrompt, setSalePrompt] = useState(false)
+  const [saleModalOpen, setSaleModalOpen] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -95,7 +100,7 @@ export function ContactDrawer({
       .finally(() => setLoading(false))
   }, [contactId])
 
-  async function save(patch: Partial<ContactDetail>) {
+  async function save(patch: Partial<ContactDetail> & { sale_pending?: boolean }) {
     setSaving(true)
     try {
       await fetch(`/api/admin/contacts/${contactId}`, {
@@ -112,6 +117,10 @@ export function ContactDrawer({
       setSaving(false)
     }
   }
+
+  // Mover a Alumno desde la ficha: pregunta ahora/mas tarde (igual que en el kanban).
+  function handleSaleNow() { setSalePrompt(false); setSaleModalOpen(true) }
+  async function handleSaleLater() { setSalePrompt(false); await save({ stage: "alumno", sale_pending: true }) }
 
   async function addNote(note: string) {
     if (!note.trim()) return
@@ -204,7 +213,12 @@ export function ContactDrawer({
               {/* Selector STAGE: usa los stages del pipeline actual del contacto (no los del kanban activo). */}
               <select
                 value={contact.stage ?? ""}
-                onChange={(e) => save({ stage: e.target.value })}
+                onChange={(e) => {
+                  const v = e.target.value
+                  // Mover a Alumno abre el flujo de venta (ahora/mas tarde) en vez de mover a ciegas.
+                  if (v === "alumno" && contact.stage !== "alumno") { setSalePrompt(true); return }
+                  save({ stage: v })
+                }}
                 disabled={saving}
                 className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border bg-background px-2 py-1"
                 title="Stage actual dentro del pipeline"
@@ -217,6 +231,13 @@ export function ContactDrawer({
                   return stageOpts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)
                 })()}
               </select>
+              <button
+                onClick={() => setSaleModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-green-500/40 text-green-400 px-2 py-1 rounded-sm hover:bg-green-500/10 transition-colors"
+                title="Registrar la venta y dar acceso a la App"
+              >
+                <ShoppingBag className="h-3 w-3" /> Registrar venta
+              </button>
               <div className="flex-1" />
               {(contact.stage === "won" || contact.stage === "alumno") && (
                 <button
@@ -381,6 +402,34 @@ export function ContactDrawer({
           </>
         )}
       </div>
+
+      {salePrompt && contact && (
+        <SaleStagePrompt
+          contactName={contact.full_name}
+          onNow={handleSaleNow}
+          onLater={handleSaleLater}
+          onClose={() => setSalePrompt(false)}
+        />
+      )}
+      {saleModalOpen && contact && (
+        <RegistrarVentaModal
+          prefill={{
+            contact_id: contact.id,
+            full_name: contact.full_name,
+            email: contact.email,
+            phone: contact.phone ?? "",
+            products: contact.products ?? [],
+            close_type: "direct",
+          }}
+          onClose={() => setSaleModalOpen(false)}
+          onRegistered={() => {
+            fetch(`/api/admin/contacts/${contactId}`).then((r) => r.json()).then((d) => {
+              setContact(d.contact); setEvents(d.events ?? [])
+            })
+            onUpdate()
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -90,6 +90,8 @@ export async function POST(req: NextRequest) {
         full_name: data.full_name.trim(),
         phone: data.phone.trim(),
         last_call_at: new Date().toISOString(),
+        sale_pending: false,
+        sale_pending_since: null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", contactId)
@@ -111,6 +113,8 @@ export async function POST(req: NextRequest) {
           phone: data.phone.trim(),
           last_call_at: new Date().toISOString(),
           source: data.source ?? null,
+          sale_pending: false,
+          sale_pending_since: null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)

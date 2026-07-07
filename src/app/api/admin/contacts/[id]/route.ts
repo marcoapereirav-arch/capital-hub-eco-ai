@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
+import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -28,6 +29,8 @@ const PatchSchema = z.object({
   tags: z.array(z.string()).optional(),
   notes: z.string().nullable().optional(),
   owner_assignee: z.string().nullable().optional(),
+  // "Venta por completar": true cuando se mueve a Alumno a mano y se deja para más tarde.
+  sale_pending: z.boolean().optional(),
 })
 
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
@@ -66,6 +69,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   // del nuevo pipeline. Sin esto el contacto quedaria con un stage 'huerfano' y no
   // aparece en ninguna columna del kanban.
   const patch: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() }
+  // Marcar/limpiar la fecha del pendiente de venta según el flag.
+  if (parsed.data.sale_pending === true) patch.sale_pending_since = new Date().toISOString()
+  if (parsed.data.sale_pending === false) patch.sale_pending_since = null
   const movedPipeline =
     parsed.data.pipeline_id !== undefined &&
     parsed.data.pipeline_id !== before.data?.pipeline_id
@@ -107,17 +113,45 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
 
   // Journey: cambio de stage (cuando NO fue por reset auto al mover pipeline)
-  if (
+  const manualStageChange =
     parsed.data.stage !== undefined &&
     parsed.data.stage !== before.data?.stage &&
     !movedPipeline
-  ) {
+  if (manualStageChange) {
     await admin.from("contact_journey_events").insert({
       contact_id: id,
       type: "stage_change",
       title: `Stage: ${before.data?.stage ?? "(none)"} -> ${parsed.data.stage}`,
       data: { from: before.data?.stage ?? null, to: parsed.data.stage },
     })
+
+    // Notificar a super_admins del movimiento MANUAL (in-app), igual que hacen las
+    // automatizaciones. Así mover una tarjeta a mano también "activa las notificaciones".
+    try {
+      const STAGE_LABELS: Record<string, string> = {
+        lead: "Lead", agendado: "Agendado", seguimiento: "Seguimiento",
+        no_show: "No show", alumno: "Alumno", perdido: "Perdido",
+      }
+      const toLabel = STAGE_LABELS[parsed.data.stage as string] ?? parsed.data.stage
+      const [{ data: contactRow }, { data: admins }] = await Promise.all([
+        admin.from("contacts").select("full_name, email").eq("id", id).maybeSingle(),
+        admin.from("profiles").select("id").eq("role", "super_admin").eq("active", true).neq("email", TEST_AGENT_EMAIL),
+      ])
+      const who = contactRow?.full_name || contactRow?.email || "Un contacto"
+      const pending = parsed.data.sale_pending === true
+      const rows = (admins ?? []).map((a) => ({
+        user_id: a.id,
+        title: `🔀 ${who} → ${toLabel}`,
+        body: pending
+          ? `${who} movido a «Alumno» a mano. Falta registrar la venta para darle el acceso.`
+          : `${who} movido a «${toLabel}» a mano en el CRM.`,
+        type: "manual_stage_change",
+        data: { contact_id: id, from: before.data?.stage ?? null, to: parsed.data.stage, moved_by: user.id, sale_pending: pending },
+      }))
+      if (rows.length) await admin.from("notifications").insert(rows)
+    } catch (e) {
+      console.error("[contacts PATCH] notif manual stage change failed (no bloquea)", e)
+    }
   }
 
   return NextResponse.json({ ok: true })

@@ -44,9 +44,19 @@ const emptyForm: Form = {
   notes: "",
 }
 
-export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
+export function RegistrarVentaModal({
+  onClose,
+  prefill,
+  onRegistered,
+}: {
+  onClose: () => void
+  /** Datos precargados al abrir desde la ficha / kanban / dashboard (contacto ya conocido). */
+  prefill?: Partial<Form>
+  /** Se llama tras registrar la venta con éxito (para que el CRM/dashboard recarguen). */
+  onRegistered?: () => void
+}) {
   const [config, setConfig] = useState<{ closers: Closer[]; products: string[]; payment_methods: string[] } | null>(null)
-  const [form, setForm] = useState<Form>(emptyForm)
+  const [form, setForm] = useState<Form>({ ...emptyForm, ...prefill })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<{ contact_id: string; invite_url: string; revenue: number; email_sent?: boolean; email_error?: string | null } | null>(null)
@@ -114,6 +124,7 @@ export function RegistrarVentaModal({ onClose }: { onClose: () => void }) {
         return
       }
       setSuccess(data)
+      onRegistered?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error de red")
     } finally {

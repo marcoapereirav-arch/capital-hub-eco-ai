@@ -141,6 +141,16 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // Stats movimiento MANUAL de stage (notifica) + ventas por completar
+  const { count: manualStageCount } = await admin
+    .from("contact_journey_events")
+    .select("*", { count: "exact", head: true })
+    .eq("type", "stage_change")
+  const { count: pendingSalesCount } = await admin
+    .from("contacts")
+    .select("*", { count: "exact", head: true })
+    .eq("sale_pending", true)
+
   // Stats Calendly
   const { count: calendlyCount } = await admin
     .from("calendly_scheduled_events")
@@ -273,10 +283,11 @@ export async function GET() {
       id: "register_sale",
       category: "ventas",
       label: "Registrar venta → email magic link al alumno",
-      description: "El closer registra una venta desde el widget flotante. El sistema crea token + envía email con magic link para activar la App.",
-      trigger: "POST /api/admin/sales/register (widget Registrar venta)",
+      description: "Se abre desde el widget flotante, desde la ficha del contacto, desde el popup al mover a Alumno, o desde 'Ventas por completar' del dashboard (prefilled con los datos del contacto). Crea token + envía email con magic link para activar la App.",
+      trigger: "POST /api/admin/sales/register (widget / ficha / popup / dashboard)",
       actions: [
         "Upsert contact stage='alumno' + suma revenue + products[]",
+        "Limpia sale_pending (deja de estar en 'Ventas por completar')",
         "Crea contact_journey_event 'sale'",
         "Crea student_invite con token único (expira 7d)",
         "Email welcome_alumno_ht al alumno con magic link",
@@ -289,6 +300,30 @@ export async function GET() {
       lastRun: lastSale?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastSale?.created_at),
       totalExecutions: null,
+    },
+    {
+      id: "manual_stage_change",
+      category: "crm",
+      label: "Mover stage a mano → notifica (y venta si es Alumno)",
+      description: "Mover una tarjeta a mano en el CRM (kanban o ficha) también dispara las notificaciones, igual que las automatizaciones. Si el destino es 'Alumno', salta el popup 'registrar la venta ahora o más tarde'; 'más tarde' deja el contacto en 'Ventas por completar' (dashboard).",
+      trigger: "PATCH /api/admin/contacts/[id] (cambio de stage manual)",
+      actions: [
+        "Inserta contact_journey_event 'stage_change'",
+        "Notifica in-app a super_admins (type 'manual_stage_change')",
+        "A Alumno: popup ahora/más tarde. Más tarde → sale_pending=true",
+        "Pendientes visibles en 'Ventas por completar' del dashboard",
+      ],
+      relatedTables: ["contacts", "contact_journey_events", "notifications"],
+      status: (manualStageCount ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (pendingSalesCount ?? 0) > 0
+          ? `${manualStageCount} movimientos · ${pendingSalesCount} ventas por completar`
+          : (manualStageCount ?? 0) > 0
+            ? `${manualStageCount} movimientos manuales registrados`
+            : "Listo · sin movimientos manuales todavía",
+      lastRun: null,
+      lastRunHoursAgo: null,
+      totalExecutions: manualStageCount ?? 0,
     },
     {
       id: "welcome_alumno_followup",

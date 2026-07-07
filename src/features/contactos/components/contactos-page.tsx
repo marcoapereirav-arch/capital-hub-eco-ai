@@ -12,7 +12,11 @@ import { TagChips } from "@/features/tags/components/tag-chips"
 import { useContactTagsMap } from "@/features/tags/hooks/use-contact-tags-map"
 import { PipelineSelector } from "@/features/pipelines/components/pipeline-selector"
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
+import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
+import { SaleStagePrompt } from "@/features/sales/components/sale-stage-prompt"
 import { cn } from "@/lib/utils"
+
+type SalePrefill = React.ComponentProps<typeof RegistrarVentaModal>["prefill"]
 
 type ContactRow = {
   id: string
@@ -49,6 +53,9 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<"list" | "kanban">(initialView)
+  // Flujo "mover a Alumno": popup ahora/mas tarde + modal de venta prefilled.
+  const [salePromptContact, setSalePromptContact] = useState<ContactRow | null>(null)
+  const [saleModalPrefill, setSaleModalPrefill] = useState<SalePrefill>(undefined)
   const { byContact: tagsByContact, allTags } = useContactTagsMap()
   const { pipelines } = usePipelines()
   const { activeId, setActiveId } = useActivePipelineId(pipelines)
@@ -76,13 +83,48 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   }, [contacts])
 
   async function updateStage(contactId: string, newStage: string) {
+    // Mover a Alumno a mano NO persiste directo: preguntamos si se registra la venta
+    // ahora (da el acceso) o mas tarde (queda pendiente en el dashboard).
+    if (newStage === "alumno") {
+      const c = contacts.find((x) => x.id === contactId)
+      if (c) { setSalePromptContact(c); return }
+    }
+    await persistStage(contactId, newStage)
+  }
+
+  async function persistStage(contactId: string, newStage: string, salePending = false) {
     await fetch(`/api/admin/contacts/${contactId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       // pipeline_id se actualiza tambien para que quede asociado al pipeline activo
-      body: JSON.stringify({ stage: newStage, pipeline_id: activeId }),
+      body: JSON.stringify({
+        stage: newStage,
+        pipeline_id: activeId,
+        ...(newStage === "alumno" ? { sale_pending: salePending } : {}),
+      }),
     })
     load()
+  }
+
+  // Popup "mover a Alumno": rellenar la venta ahora (abre el modal) o mas tarde (pendiente).
+  function handleSaleNow() {
+    const c = salePromptContact
+    setSalePromptContact(null)
+    if (!c) return
+    setSaleModalPrefill({
+      contact_id: c.id,
+      full_name: c.full_name,
+      email: c.email,
+      phone: c.phone ?? "",
+      products: c.products ?? [],
+      close_type: "direct",
+    })
+  }
+  async function handleSaleLater() {
+    const c = salePromptContact
+    setSalePromptContact(null)
+    if (!c) return
+    await persistStage(c.id, "alumno", true)
   }
 
   useEffect(() => { load() }, [stageFilter])
@@ -338,6 +380,21 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           />
         )}
         {creating && <ContactCreateModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
+        {salePromptContact && (
+          <SaleStagePrompt
+            contactName={salePromptContact.full_name}
+            onNow={handleSaleNow}
+            onLater={handleSaleLater}
+            onClose={() => setSalePromptContact(null)}
+          />
+        )}
+        {saleModalPrefill && (
+          <RegistrarVentaModal
+            prefill={saleModalPrefill}
+            onClose={() => setSaleModalPrefill(undefined)}
+            onRegistered={() => load()}
+          />
+        )}
       </>
     )
   }
@@ -434,6 +491,21 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
             setSelectedId(id)
             load()
           }}
+        />
+      )}
+      {salePromptContact && (
+        <SaleStagePrompt
+          contactName={salePromptContact.full_name}
+          onNow={handleSaleNow}
+          onLater={handleSaleLater}
+          onClose={() => setSalePromptContact(null)}
+        />
+      )}
+      {saleModalPrefill && (
+        <RegistrarVentaModal
+          prefill={saleModalPrefill}
+          onClose={() => setSaleModalPrefill(undefined)}
+          onRegistered={() => load()}
         />
       )}
     </>
