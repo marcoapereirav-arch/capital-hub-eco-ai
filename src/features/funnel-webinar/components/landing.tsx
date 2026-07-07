@@ -187,26 +187,39 @@ export function WebinarLanding({ dateLabel }: { dateLabel: string }) {
           <div aria-hidden className="wb-job-glow" />
           <span className="relative z-10 mb-5 inline-flex items-center gap-2 rounded-full border border-[#22C55E]/30 bg-[#22C55E]/10 px-3.5 py-1.5 text-[13px] font-medium text-[#4ADE80]">
             <BadgeCheck className="h-4 w-4" />
-            Bolsa de trabajo garantizada por contrato
+            Bolsa de oportunidades y clientes
           </span>
           <h2
             className="relative z-10 mb-4 text-[1.75rem] font-medium leading-[1.1] tracking-[-0.01em] text-white md:text-[2.7rem] [text-wrap:balance]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            No te formas y te quedas solo. <span className="wb-underline">Te conectamos con las empresas.</span>
+            No te formas y te quedas solo. <span className="wb-underline">Te acompañamos.</span>
           </h2>
           <p className="relative z-10 max-w-2xl text-base leading-relaxed text-[#C7CBD1] md:text-lg">
-            Aprendes una habilidad que las empresas están demandando y entras en nuestra bolsa de
-            trabajo. Cada semana nos escriben empresas buscando perfiles. En el directo te explico
-            cómo funciona y qué necesitas para entrar.
+            Aprendes una profesión digital que las empresas están demandando y entras en nuestra bolsa
+            de oportunidades y clientes. Cada semana nos escriben empresas buscando perfiles. En el
+            directo te explico cómo funciona y qué necesitas para entrar.
           </p>
 
           {/* Fila animada de "empresas buscando" (marquee sutil, genérico) */}
           <div className="relative z-10 mt-8 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_12%,#000_88%,transparent)]">
             <div className="wb-marquee flex w-max gap-2.5">
-              {["Agencias", "Startups", "Marcas", "Ecommerce", "Infoproductores", "Consultoras", "Agencias", "Startups", "Marcas", "Ecommerce", "Infoproductores", "Consultoras"].map((c, i) => (
+              {[
+                "Startups buscando talento",
+                "Marcas buscando talento",
+                "Ecommerce buscando talento",
+                "Consultoras buscando marketers",
+                "Agencias buscando integradores de IA",
+                "Servicios de alto ticket buscando talento",
+                "Startups buscando talento",
+                "Marcas buscando talento",
+                "Ecommerce buscando talento",
+                "Consultoras buscando marketers",
+                "Agencias buscando integradores de IA",
+                "Servicios de alto ticket buscando talento",
+              ].map((c, i) => (
                 <span key={i} className="whitespace-nowrap rounded-full border border-[#2A2D34] bg-[#0F0F12] px-3.5 py-1.5 text-[13px] text-[#9CA3AF]">
-                  {c} buscando talento
+                  {c}
                 </span>
               ))}
             </div>
@@ -255,7 +268,7 @@ function AdrianStory({ onOpen }: { onOpen: () => void }) {
         className="wb-reveal mb-2 text-2xl font-medium tracking-[-0.01em] text-white md:text-4xl"
         style={{ fontFamily: "'Inter Tight', sans-serif" }}
       >
-        La habilidad que me dio la libertad
+        La profesión que me dio la libertad
       </h2>
       <p data-reveal className="wb-reveal mb-8 text-[13px] text-[#6B7280]">La historia de Adrián</p>
 
@@ -295,32 +308,33 @@ function AdrianStory({ onOpen }: { onOpen: () => void }) {
         <p>
           Tenía 21 años. Había pasado 4 años montando negocios que fracasaron: agencia de marketing,
           consultoría, eventos, criptomonedas. Volví a casa de mi madre, lo dejé con mi novia, y tenía
-          una deuda de 4.000 € que no sabía cómo iba a pagar.
+          una deuda que no sabía cómo iba a pagar.
         </p>
         <p>
           Vengo de una familia de clase baja. Mi madre limpiaba casas, mi padre era camarero. Nunca
           tuvimos casa en propiedad. Y nadie me enseñó cómo funcionaba el dinero.
         </p>
-        <p className="text-lg text-white">Entonces descubrí las profesiones digitales.</p>
+        <p className="text-lg text-white">Entonces descubrí el mundo de las profesiones digitales.</p>
         <p>
-          Un amigo trabajaba de esto. Ganaba muy bien, desde casa, sin jefes. Y pensé: aquí puedo
-          aprender una habilidad que se paga bien, meterme en una empresa en días, y empezar a cobrar.
-          Sin montar nada, sin riesgo. <strong>Aprendes. Das el servicio. Te pagan.</strong>
+          Vi que se ganaba muy bien desde casa, sin jefes, y más rápido que nada de lo que había visto
+          hasta entonces. Mi objetivo era salir de mi trabajo cuanto antes, y pensé: aquí puedo aprender
+          una profesión que se paga bien, meterme en una empresa en días y empezar a cobrar. Sin montar
+          nada, sin riesgo. <strong>Aprendes. Das el servicio. Te pagan.</strong>
         </p>
         <p className="text-lg text-white">
-          Dejé el trabajo en diciembre. En enero gané 4.000 €. Casi 4 veces más de lo que ganaba, en
-          30 días, desde casa.
+          Dejé mi trabajo en enero de 2022. Mi primer mes como profesional digital gané 4.000 € limpios.
+          Casi 4 veces más de lo que ganaba, en 30 días y desde casa.
         </p>
         <p>
-          No porque fuera especial, sino porque tenía una habilidad que el mercado pagaba bien. Pasé
-          de 1.150 € al mes en una inmobiliaria a 4.000 € desde casa. No fue hacerme rico:
-          <strong> fue dejar de depender.</strong>
+          No porque fuera especial, sino porque tenía una profesión que el mercado pagaba bien. Pasé
+          de 1.150 € al mes en una inmobiliaria a 4.000 € desde casa. No me hice rico,
+          <strong> pero pude dejar mi trabajo y empezar a vivir de internet.</strong>
         </p>
         <p>Y esa es mi intención para ti con Capital Hub, para que puedas:</p>
         <ul className="space-y-2.5 pt-1">
           {[
             "Dejar de depender de un sueldo que no controlas.",
-            "Aprender una habilidad que las empresas están demandando.",
+            "Aprender una profesión digital que las empresas están demandando.",
             "Diseñar un estilo de vida flexible, en tus propios términos.",
           ].map((t) => (
             <li key={t} className="flex gap-3">

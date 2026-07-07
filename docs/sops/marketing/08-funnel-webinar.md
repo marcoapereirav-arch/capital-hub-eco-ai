@@ -61,8 +61,8 @@ Defaults en `src/features/funnel-webinar/config.ts`. Resolución server-only en 
 ## Copy aprobado (no inventar)
 
 - Promesa hero (v2, 2026-07-07, dictada por Marco): *"En enero de 2022 dejé mi trabajo y gané 4.000 € al mes. Te enseño a hacer lo mismo en menos de 90 días."* (historia de Adrián en primera persona como gancho). Debajo: *"Un directo gratuito y en vivo donde te enseño el paso a paso:"* + chips: *Qué profesión digital encaja contigo · Empezar sin montar un negocio · Acceso a nuestra bolsa de trabajo*.
-- Sección **bolsa de trabajo garantizada por contrato** (empresas nos contactan cada semana buscando perfiles). PROHIBIDO usar "te colocamos" (en España "colocarse" = drogarse). Titular: *"No te formas y te quedas solo. Te conectamos con las empresas."*
-- Sección **"La habilidad que me dio la libertad"** = historia real de Adrián, como sección abierta con scroll (reutilizada del `BioModal` del LT8, no como pop-up).
+- Sección **"Bolsa de oportunidades y clientes"** (antes "bolsa de trabajo garantizada por contrato"). PROHIBIDO usar "te colocamos" (en España "colocarse" = drogarse). Titular: *"No te formas y te quedas solo. Te acompañamos."* Cuerpo: *"Aprendes una profesión digital que las empresas están demandando y entras en nuestra bolsa de oportunidades y clientes..."*. Marquee: Startups / Marcas / Ecommerce buscando talento · Consultoras buscando marketers · Agencias buscando integradores de IA · Servicios de alto ticket buscando talento.
+- Sección **"La profesión que me dio la libertad"** = historia real de Adrián en primera persona (no "habilidad", siempre "profesión digital"), como sección abierta con scroll. Fechas cuadradas con el hero: dejó su trabajo en **enero de 2022**, primer mes como profesional digital ganó 4.000 € limpios. Cierre: *"No me hice rico, pero pude dejar mi trabajo y empezar a vivir de internet."*
 
 ## Archivos
 
