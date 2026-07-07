@@ -98,3 +98,4 @@ tsconfig.tsbuildinfo
 Update_task_adrian_y_marco
 *.transcript
 /transcripts/
+node_modules.nosync/

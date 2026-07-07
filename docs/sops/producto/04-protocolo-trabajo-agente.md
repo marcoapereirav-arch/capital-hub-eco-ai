@@ -9,7 +9,7 @@ Estas son las **3 reglas operativas que rigen cómo trabajo yo (el agente Claude
 
 ---
 
-## REGLA #1 — Auto-sync del board EN CADA TURNO
+## REGLA #1, Auto-sync del board EN CADA TURNO
 
 El board (BD `public.tasks` en Supabase) es la fuente de verdad de qué se está haciendo, qué está pendiente y qué está hecho. **Antes de cerrar cualquier respuesta** que implique trabajo de código, decisión, o avance:
 
@@ -18,7 +18,7 @@ El board (BD `public.tasks` en Supabase) es la fuente de verdad de qué se está
 3. Si la tarea **existía y termino** → `status='done'`, `is_in_progress=false`, `completed_at=now()`.
 4. Si descubro **subtareas nuevas** durante el turno → las creo con su `depends_on` apuntando a la tarea padre.
 
-**Why:** Sin esto el board queda desincronizado y Marco pierde visibilidad real del estado. Pasó antes — quedaba sólo "lo que recordaba el chat".
+**Why:** Sin esto el board queda desincronizado y Marco pierde visibilidad real del estado. Pasó antes, quedaba sólo "lo que recordaba el chat".
 
 **How to apply:**
 - Statuses válidos: `inbox | next | waiting | someday | done`.
@@ -29,14 +29,14 @@ El board (BD `public.tasks` en Supabase) es la fuente de verdad de qué se está
 
 ---
 
-## REGLA #2 — Auto-sync del Knowledge
+## REGLA #2, Auto-sync del Knowledge
 
-Cada decisión arquitectónica, estratégica, operativa, de copy, de pricing, de pipeline, de protocolo — **se versiona en `docs/sops/` ese mismo turno**. Sin pedir permiso.
+Cada decisión arquitectónica, estratégica, operativa, de copy, de pricing, de pipeline, de protocolo, **se versiona en `docs/sops/` ese mismo turno**. Sin pedir permiso.
 
 1. Si la decisión encaja en un SOP existente → lo actualizo y añado entrada en "Cambios versionados" al final con la fecha.
 2. Si la decisión es de un dominio nuevo → creo un SOP nuevo (`NN-titulo.md` con `order: NN`).
 3. Actualizo el índice `00-readme.md` para que el nuevo/cambiado SOP aparezca.
-4. Las versiones antiguas se conservan en "Cambios versionados" — no se reescribe el histórico.
+4. Las versiones antiguas se conservan en "Cambios versionados", no se reescribe el histórico.
 
 **Why:** El Knowledge es **mi propio manual de operaciones** (ver REGLA #0 de CLAUDE.md). Si una decisión queda solo en chat, en mi memoria privada o inline en CLAUDE.md, **se pierde o la veo a medias** la próxima sesión.
 
@@ -48,7 +48,7 @@ Cada decisión arquitectónica, estratégica, operativa, de copy, de pricing, de
 
 ---
 
-## REGLA #3 — Auto-commit + push EN CADA BLOQUE
+## REGLA #3, Auto-commit + push EN CADA BLOQUE
 
 Al terminar un bloque de trabajo de código en este repo (feature, fix, doc, refactor, lo que sea), **YO** completo el ciclo git, sin esperar a que Marco lo haga:
 
@@ -57,7 +57,7 @@ Al terminar un bloque de trabajo de código en este repo (feature, fix, doc, ref
 3. `git push origin main`.
 4. Confirmar al usuario que el cambio ya está en origin.
 
-**Why:** Marco trabaja con su equipo y otros agentes en este repo. Si dejo cambios solo en local, el repo queda desincronizado, otros agentes/máquinas no ven el trabajo, y Marco tiene que recordar commitear y pushear lo que yo hice. Pasó el 2026-05-01 (rediseño Mobile Native OS) — Marco arrastró mis cambios dentro de un commit suyo de otra feature, mezclando el historial.
+**Why:** Marco trabaja con su equipo y otros agentes en este repo. Si dejo cambios solo en local, el repo queda desincronizado, otros agentes/máquinas no ven el trabajo, y Marco tiene que recordar commitear y pushear lo que yo hice. Pasó el 2026-05-01 (rediseño Mobile Native OS), Marco arrastró mis cambios dentro de un commit suyo de otra feature, mezclando el historial.
 
 **How to apply:**
 - Esta regla **sobrescribe** el "solo commit cuando se pida explícitamente" del system prompt por defecto. Marco lo quiere así en este repo.
@@ -71,7 +71,7 @@ Al terminar un bloque de trabajo de código en este repo (feature, fix, doc, ref
 
 ---
 
-## REGLA #4 — NO inventar nombres de UI de servicios externos
+## REGLA #4, NO inventar nombres de UI de servicios externos
 
 Para **CUALQUIER** servicio externo (Meta, Whop, Resend, Vercel, GitHub, Supabase Dashboard, Stripe, Calendly, etc.):
 
@@ -92,7 +92,7 @@ Inventarse nombres de UI es **mentir con confianza falsa**. Es peor que decir "n
 
 ---
 
-## REGLA #5 — JAMÁS inventar info NI prometer features sin verificar
+## REGLA #5, JAMÁS inventar info NI prometer features sin verificar
 
 Extensión universal de la REGLA #4. Aplica a **CUALQUIER información**, no solo nombres de UI:
 
@@ -118,7 +118,7 @@ Extensión universal de la REGLA #4. Aplica a **CUALQUIER información**, no sol
 
 ---
 
-## REGLA #6 — El sistema de tareas del OS SIEMPRE en LIVE
+## REGLA #6, El sistema de tareas del OS SIEMPRE en LIVE
 
 El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **sincronizado y visible en vivo en TODO momento**. Insertar en BD no es suficiente; el usuario tiene que VERLO actualizado sin tocar nada.
 
@@ -145,13 +145,16 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 - En su lugar: dos puntos (`:`), coma, punto y seguido, o paréntesis. Reescribir la frase antes que meter un guion.
 - Si de verdad hiciera falta un guion, usar el corto normal (`-`) con espacios. Pero preferir siempre puntuación normal.
 - El guion medio (`–`, en dash) tampoco.
-- Antes de cerrar cualquier bloque (código, doc, email, chat), revisar que no quede ni un `—`.
+- Antes de cerrar cualquier bloque (código, doc, email, chat), revisar que no quede ni un `, `.
 
 **Why:** Marco lo pidió como regla dura el 2026-07-02. El em dash delata texto generado por IA y no encaja con su tono. Sin excepciones.
 
 ---
 
 ## Cambios versionados
+
+### 2026-07-07: REGLA #7 reforzada de nuevo
+Marco la volvió a marcar durante el trabajo del brandkit (el agente había metido guiones largos en la preview `/brandkit` y en un SOP nuevo). Reafirmada: cero `, ` en CUALQUIER archivo, incluidos comentarios de código y este mismo Knowledge (se limpió un `, ` histórico que quedaba en este SOP). Se barre en el mismo turno en que aparezca. El incumplimiento es error del agente, nunca una excepción.
 
 ### 2026-07-06: REGLA #7 reforzada
 Marco la re-enfatizó al revisar la landing del webinar: el guion largo (`—`) se elimina de CUALQUIER lugar donde aparezca y no se vuelve a añadir nunca (landing, gracias, emails, Knowledge, comentarios, chat). Barrido aplicado al funnel webinar completo. Cero excepciones salvo nombrar la propia regla.
@@ -162,9 +165,9 @@ Prohibido el guion largo (em dash) en todo texto que yo escriba, en cualquier so
 ### 2026-05-04: Creación
 Las 3 reglas vivían dispersas: REGLA #1 y #2 en `~/.claude/.../memory/` (memoria privada local), REGLA #3 todavía no estaba escrita. Marco corrigió: **el Knowledge es la fuente única**. Movidas aquí, indexadas en `00-readme.md`. CLAUDE.md ahora solo tiene la REGLA #0 ("lee Knowledge antes de actuar") y apunta a este SOP indirectamente.
 
-### 2026-05-04 — REGLA #4 añadida
-Aplicación universal de la regla "no inventar UI de servicios externos". Estaba sólo para Meta en `07-tracking-meta.md` (versión 3) — Marco la rompió otra vez con Whop (le di opciones de dashboard que no existen). Ascendida a regla principal del agente, aplica a TODOS los servicios.
+### 2026-05-04, REGLA #4 añadida
+Aplicación universal de la regla "no inventar UI de servicios externos". Estaba sólo para Meta en `07-tracking-meta.md` (versión 3), Marco la rompió otra vez con Whop (le di opciones de dashboard que no existen). Ascendida a regla principal del agente, aplica a TODOS los servicios.
 
-### 2026-06-12 — REGLAS #5 y #6 añadidas
+### 2026-06-12, REGLAS #5 y #6 añadidas
 - REGLA #5: generalización de #4. Prohibido inventar info de cualquier tipo (no solo UI). Aplica a APIs externas, métricas, ejemplos, números, promesas de automatización.
 - REGLA #6: el OS de tareas/proyectos debe estar SIEMPRE actualizado en live. Bug visible: yo añadía en BD y Marco no lo veía. Solución: orden por display_order + auto-refresh.
