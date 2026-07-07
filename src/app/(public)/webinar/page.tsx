@@ -7,7 +7,7 @@ export const revalidate = 0
 export const metadata = {
   title: "Webinar en directo · Capital Hub",
   description:
-    "Cómo dejar tu trabajo y vivir de internet ganando entre 2.000 € y 4.000 € al mes en menos de 90 días. Webinar en vivo, gratis.",
+    "En enero de 2022 dejé mi trabajo y gané 4.000 € al mes. Te enseño a hacer lo mismo en menos de 90 días. Webinar en vivo y gratis.",
 }
 
 export default async function WebinarRoute() {

@@ -131,33 +131,29 @@ export function WebinarLanding({ dateLabel }: { dateLabel: string }) {
 
             <div className="wb-tilt">
               <h1
-                className="text-[2.15rem] font-medium leading-[1.03] tracking-[-0.022em] text-white [text-wrap:balance] md:text-[3.6rem]"
+                className="text-[1.9rem] font-medium leading-[1.06] tracking-[-0.022em] text-white [text-wrap:balance] md:text-[3.1rem]"
                 style={{ fontFamily: "'Inter Tight', sans-serif" }}
               >
                 <span className="wb-line block" style={{ animationDelay: "150ms" }}>
-                  Deja tu trabajo y vive
+                  En enero de 2022 dejé mi trabajo y gané{" "}
+                  <span className="wb-money">4.000 € al mes</span>.
                 </span>
-                <span className="wb-line block" style={{ animationDelay: "270ms" }}>
-                  de internet.
-                </span>
-                <span className="wb-line mt-2 block text-[1.5rem] font-normal leading-[1.15] text-[#C7CBD1] md:text-[2.1rem]" style={{ animationDelay: "400ms" }}>
-                  Entre{" "}
-                  <span className="wb-money">2.000 € y 4.000 €</span>{" "}
-                  al mes, en menos de{" "}
-                  <span className="text-white">90 días</span>.
+                <span className="wb-line mt-3 block text-[1.3rem] font-normal leading-[1.2] text-[#C7CBD1] md:text-[1.95rem]" style={{ animationDelay: "320ms" }}>
+                  Te enseño a hacer lo mismo en menos de{" "}
+                  <span className="font-medium text-white">90 días</span>.
                 </span>
               </h1>
             </div>
 
             {/* Descripción visual: lead + chips (concepts intactos, más escaneable) */}
             <p className="wb-load mb-4 mt-7 max-w-xl text-[15px] leading-relaxed text-[#C7CBD1] md:text-lg" style={{ animationDelay: "540ms" }}>
-              Un directo gratuito y en vivo donde te lo enseño paso a paso:
+              Un directo gratuito y en vivo donde te enseño el paso a paso:
             </p>
             <div className="wb-load mb-9 flex flex-wrap gap-2.5" style={{ animationDelay: "640ms" }}>
               {[
                 "Qué profesión digital encaja contigo",
                 "Empezar sin montar un negocio",
-                "Acceso a nuestra bolsa de empleo",
+                "Acceso a nuestra bolsa de trabajo",
               ].map((t) => (
                 <span
                   key={t}
@@ -197,11 +193,11 @@ export function WebinarLanding({ dateLabel }: { dateLabel: string }) {
             className="relative z-10 mb-4 text-[1.75rem] font-medium leading-[1.1] tracking-[-0.01em] text-white md:text-[2.7rem] [text-wrap:balance]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            No te formas y te quedas solo. <span className="wb-underline">Te colocamos.</span>
+            No te formas y te quedas solo. <span className="wb-underline">Te conectamos con las empresas.</span>
           </h2>
           <p className="relative z-10 max-w-2xl text-base leading-relaxed text-[#C7CBD1] md:text-lg">
             Aprendes una habilidad que las empresas están demandando y entras en nuestra bolsa de
-            empleo. Cada semana nos escriben empresas buscando perfiles. En el directo te explico
+            trabajo. Cada semana nos escriben empresas buscando perfiles. En el directo te explico
             cómo funciona y qué necesitas para entrar.
           </p>
 

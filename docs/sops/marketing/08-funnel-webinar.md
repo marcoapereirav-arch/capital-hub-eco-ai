@@ -60,8 +60,8 @@ Defaults en `src/features/funnel-webinar/config.ts`. Resolución server-only en 
 
 ## Copy aprobado (no inventar)
 
-- Promesa hero: *"Cómo dejar tu trabajo y vivir de internet ganando entre 2.000 € y 4.000 € al mes en menos de 90 días."*
-- Sección **bolsa de trabajo garantizada por contrato** (empresas nos contactan cada semana buscando perfiles).
+- Promesa hero (v2, 2026-07-07, dictada por Marco): *"En enero de 2022 dejé mi trabajo y gané 4.000 € al mes. Te enseño a hacer lo mismo en menos de 90 días."* (historia de Adrián en primera persona como gancho). Debajo: *"Un directo gratuito y en vivo donde te enseño el paso a paso:"* + chips: *Qué profesión digital encaja contigo · Empezar sin montar un negocio · Acceso a nuestra bolsa de trabajo*.
+- Sección **bolsa de trabajo garantizada por contrato** (empresas nos contactan cada semana buscando perfiles). PROHIBIDO usar "te colocamos" (en España "colocarse" = drogarse). Titular: *"No te formas y te quedas solo. Te conectamos con las empresas."*
 - Sección **"La habilidad que me dio la libertad"** = historia real de Adrián, como sección abierta con scroll (reutilizada del `BioModal` del LT8, no como pop-up).
 
 ## Archivos
