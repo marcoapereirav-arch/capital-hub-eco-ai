@@ -15,7 +15,7 @@
  *   - INSTAGRAM_HANDLE: usuario IG de Adrián (sin @), para el pie/soporte.
  */
 export const FUNNEL_WEBINAR = {
-  WHATSAPP_GROUP_URL: "",
+  WHATSAPP_GROUP_URL: "https://chat.whatsapp.com/C5wQD0OvYLlFLNOdYVcHAS",
   WEBINAR_DATE_LABEL: "Viernes 10 de julio · 17:00h",
   RESERVAR_URL: "/reservar",
   INSTAGRAM_HANDLE: "adrianvillanuevarios",
