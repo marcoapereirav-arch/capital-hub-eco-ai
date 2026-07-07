@@ -413,6 +413,12 @@ function OptinModal({ onClose }: { onClose: () => void }) {
     setLoading(true)
     try {
       const utmSource = getStoredUtms()?.utm_source
+      // Si el lead llegó desde el DM del reel, el link trae ?mc_id=... → lo mandamos
+      // para vincular con el contacto ya creado en el comentario (dedup, SOP producto/20).
+      const mcId =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("mc_id")
+          : null
       const res = await fetch("/api/optin/webinar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -421,6 +427,7 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           email: email.trim(),
           phone: phone.trim(),
           utm_source: utmSource,
+          ...(mcId ? { mc_id: mcId } : {}),
         }),
       })
       if (!res.ok) {

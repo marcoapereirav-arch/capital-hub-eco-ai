@@ -181,3 +181,53 @@ Si la persona NO clica el link `?mc_id=12345` y va directo a `/agenda` (porque t
 5. **Setup en panel ManyChat** — Adrián añade External Request en su Flow Builder apuntando a nuestro webhook
 
 Los puntos 1-3 son código del OS. El 5 requiere acción en panel ManyChat por Adrián.
+
+---
+
+# Router del Webinar (reel → CRM → venta) · construido 2026-07-07
+
+Automatización de **palabra clave en un reel** para el funnel del webinar. Marco creó en ManyChat la automatización "Quick Automation ES" (tipo `feed_comment_trigger`) + el flow "Auto-DM de links desde comentarios". Verificado en vivo por la API de ManyChat (getGrowthTools).
+
+## Realidad de la API de ManyChat (verificado)
+- La API **sí** deja leer (getInfo, getGrowthTools, getFlows, getTags, getCustomFields) y enviar.
+- La API **NO** deja crear el disparador de comentario (growth tool): eso es UI-only en ManyChat. Lo crea Adrián/Marco a mano en el panel. No hay endpoint para ello ni para el admin.
+
+## Qué se construyó en el OS (todo listo, plug-and-play)
+
+| Pieza | Archivo | Qué hace |
+|---|---|---|
+| **Router del webinar** | `src/app/api/manychat/webinar-router/route.ts` | Recibe el comentario (External Request), crea/actualiza contacto en pipeline **Webinar** stage `lead` con `instagram_username` + `manychat_subscriber_id`, tags `origen:webinar`+`fuente:instagram`, journey event, dispara Meta CAPI `webinar_lead` (si hay email/tel), y **devuelve el link del webinar con `mc_id`** para el DM. Auth `Bearer MANYCHAT_WEBHOOK_SECRET`. |
+| **mc_id en el opt-in** | `src/app/api/optin/webinar/route.ts` + `funnel-webinar/components/landing.tsx` | El link del DM lleva `?mc_id=<subscriber_id>`. El opt-in busca primero por `manychat_subscriber_id` → **no duplica** el contacto creado en el comentario; lo completa con email/teléfono. |
+| **Sync cron** | `src/app/api/cron/manychat-sync/route.ts` + `vercel.json` (`23 */6 * * *`) | Cada 6h trae tags + custom fields de ManyChat a la caché y actualiza `api_connections.last_sync_at` (el dashboard deja de estar en cero). |
+| **Panel "Del reel a la venta"** | `manychat/services/webinar-funnel.ts` + `components/webinar-funnel-panel.tsx` (en `/manychat` → Overview) | Embudo de la cohorte ManyChat del pipeline Webinar: Comentaron → Reservaron → Agendaron → **Alumnos** + facturado. |
+| **Registro** | `api/admin/automations` | Entradas `manychat_webinar_router` + `manychat_sync` en el panel `/automatizaciones`. |
+
+El resto del recorrido "hasta la venta" ya existía: `agendado` (webhook Calendly / form) → `alumno` (registro de venta) sobre el mismo `contacts`. El router solo hace que el contacto aparezca **desde el comentario**, no desde el formulario.
+
+## Acción de Adrián en ManyChat (UNA vez) — pasos exactos
+
+En el flow "Auto-DM de links desde comentarios" (el que dispara la automatización del reel), **antes** del paso que manda el DM:
+
+1. Añadir un paso **External Request** (Acciones → External Request / Dynamic Block · el nombre varía por idioma/versión — REGLA #4).
+2. Método **POST**, URL:
+   `https://os.capitalhubapp.com/api/manychat/webinar-router`
+3. Header: `Authorization: Bearer <MANYCHAT_WEBHOOK_SECRET>` (el valor está en el `.env` del OS; Marco se lo pasa a Adrián por un canal seguro, nunca por chat público).
+4. Body (JSON), mapeando los campos de ManyChat:
+   ```json
+   {
+     "subscriber_id": "{{user_id}}",
+     "ig_username": "{{ig_username}}",
+     "first_name": "{{first_name}}",
+     "last_name": "{{last_name}}",
+     "comment_text": "{{last_input_text}}",
+     "post_id": "{{...}}"
+   }
+   ```
+5. Guardar la respuesta: mapear `delivery_link` a un custom field (ej. `cf_webinar_link`).
+6. En el paso del DM, poner el botón/enlace usando `{{cf_webinar_link}}` en vez de un link fijo.
+7. (Opcional) Activar "solo entregar si sigue la cuenta".
+
+Hasta que Adrián haga esto, el reel funciona con el **link simple** (`https://ch.capitalhubapp.com/webinar?utm_source=instagram&utm_medium=manychat&utm_campaign=reel_webinar`): el lead entra al CRM al rellenar el formulario. Con el External Request, entra ya **desde el comentario** y se trackea el embudo completo.
+
+## Cambios versionados
+- **2026-07-07**: creado el router del webinar + mc_id dedup + sync cron + panel "Del reel a la venta" + registro en automatizaciones. Pendiente: Adrián añade el External Request en el flow del reel (pasos arriba).

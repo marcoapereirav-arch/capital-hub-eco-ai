@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/agenda-reminder-30min",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/manychat-sync",
+      "schedule": "23 */6 * * *"
     }
   ]
 }

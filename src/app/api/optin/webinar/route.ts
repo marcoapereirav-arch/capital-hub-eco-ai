@@ -20,6 +20,9 @@ const optinSchema = z.object({
     .refine((v) => v.replace(/\D/g, "").length >= 6, "Teléfono inválido"),
   // Atribución: de qué fuente/afiliado vino (utm_source del link). Opcional.
   utm_source: z.string().max(80).trim().optional(),
+  // ManyChat subscriber id: si el lead vino del DM del reel, vincula al MISMO
+  // contacto creado en el comentario (dedup). Ver SOP producto/20.
+  mc_id: z.string().max(120).trim().optional(),
 })
 
 function slugify(s: string): string {
@@ -62,6 +65,7 @@ export async function POST(req: Request) {
 
   const { full_name, email, phone } = parsed.data
   const source = parsed.data.utm_source ? slugify(parsed.data.utm_source) : null
+  const mcId = parsed.data.mc_id ?? null
 
   // Crea el tag si no existe y devuelve su id. Colores del brandkit (neutros).
   const ensureTag = async (name: string, color: string, description: string): Promise<string | null> => {
@@ -94,11 +98,33 @@ export async function POST(req: Request) {
   let action: "created" | "updated" = "created"
   let recurringFromStage: string | null = null
   {
-    const { data: existing } = await admin
-      .from("contacts")
-      .select("id, stage, pipeline_id, affiliate_slug")
-      .ilike("email", email)
-      .maybeSingle()
+    // 1) Si el lead vino del DM del reel (mc_id), busca el contacto ya creado en
+    //    el comentario para NO duplicar (dedup). 2) Si no, busca por email.
+    type ExistingContact = {
+      id: string
+      stage: string | null
+      pipeline_id: string | null
+      affiliate_slug: string | null
+      email: string | null
+      manychat_subscriber_id: string | null
+    }
+    let existing: ExistingContact | null = null
+    if (mcId) {
+      const { data } = await admin
+        .from("contacts")
+        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id")
+        .eq("manychat_subscriber_id", mcId)
+        .maybeSingle()
+      existing = (data as ExistingContact | null) ?? null
+    }
+    if (!existing) {
+      const { data } = await admin
+        .from("contacts")
+        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id")
+        .ilike("email", email)
+        .maybeSingle()
+      existing = (data as ExistingContact | null) ?? null
+    }
 
     if (existing) {
       contactId = existing.id
@@ -108,6 +134,9 @@ export async function POST(req: Request) {
       if (!existing.stage) update.stage = "lead"
       if (!existing.pipeline_id && pipelineId) update.pipeline_id = pipelineId
       if (!existing.affiliate_slug && source) update.affiliate_slug = source
+      if (mcId && !existing.manychat_subscriber_id) update.manychat_subscriber_id = mcId
+      // El contacto pudo crearse en el comentario sin email real: ahora lo tenemos.
+      if (!existing.email) update.email = email
       await admin.from("contacts").update(update).eq("id", existing.id)
     } else {
       const slug = slugify(full_name) + "_" + Math.random().toString(36).slice(2, 8)
@@ -121,6 +150,7 @@ export async function POST(req: Request) {
         origin: "landing_webinar",
         source: source ?? "landing_webinar",
         affiliate_slug: source,
+        manychat_subscriber_id: mcId,
       }).select("id").single()
       if (cErr) {
         return NextResponse.json({ error: "Error guardando el lead. Inténtalo de nuevo." }, { status: 500 })
