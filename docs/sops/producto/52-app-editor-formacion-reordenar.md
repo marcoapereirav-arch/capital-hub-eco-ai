@@ -26,11 +26,17 @@ La **App de alumnos/formadores** es un repo APARTE del OS. No confundirlos.
 
 Ver también [`sistemas/07-repos-separados-os-app.md`](../sistemas/07-repos-separados-os-app.md) — regla de no mezclar commits.
 
-### ⚠️ Discrepancia de Supabase (a confirmar con Marco)
-- `web/.env` de la App apunta a la Supabase **`xkuhkkjeuzxutggbnwed`**.
-- El OS usa **`aglyoyqtzozdnusltjxe`**.
-- Pero `sistemas/07` dice que **comparten** `aglyoyqtzozdnusltjxe`.
-- **Están en conflicto.** Antes de tocar datos de la App por API/MCP, confirmar CUÁL Supabase es la real de la App. No asumir.
+### ✅ Supabase: son DOS bases separadas (confirmado por Marco 2026-07-07)
+- **OS** → `aglyoyqtzozdnusltjxe`.
+- **App** → `xkuhkkjeuzxutggbnwed` (ver `web/.env`).
+- **Son distintas por diseño actual.** El SOP `sistemas/07` estaba desactualizado
+  (decía que compartían) — ya corregido. Al tocar datos de la App por API/MCP,
+  usar SIEMPRE la Supabase de la App (`xkuhkkjeuzxutggbnwed`).
+- **Pendiente de decisión (Marco):** consolidar todo a UNA sola base o mantener
+  dos. Recomendación: consolidar a una es más limpio a largo plazo (una sola
+  fuente de verdad de usuarios/auth/acceso, menos bugs de sync), pero es una
+  migración delicada — hacerla como proyecto planificado ANTES de escalar
+  (suscripciones/webinar), no mientras se está en fase de lanzamiento.
 
 ---
 
@@ -69,12 +75,20 @@ siquiera tenían icono. Y `saveModule`/`saveLesson` **nunca** guardaban el orden
 intentaba mover y "no funcionaba / daba error".
 
 ### Qué se hizo (fix)
-Drag & drop **real** para módulos **y** lecciones con **`framer-motion`**
-(`Reorder.Group` + `Reorder.Item` + `useDragControls`; ya estaba instalada,
-v12.40). El arrastre arranca **solo desde el grip** (`dragListener={false}`) para
-no romper el click de editar/expandir ni el scroll en móvil (`touch-none`). Al
-soltar (`onDragEnd`) se persiste el nuevo orden en Supabase (solo las filas que
-cambian). Numeración visual por índice, feedback inmediato, resync si algo falla.
+Dos formas de reordenar módulos **y** lecciones, ambas persisten el orden en
+Supabase (solo las filas que cambian):
+1. **Botones ▲▼ (subir/bajar)** en cada módulo y lección → **método principal,
+   100% fiable en móvil táctil y escritorio**, deshabilitados en los extremos.
+   (`moveModule` / `moveLesson`.)
+2. **Arrastrar (drag & drop)** con **`framer-motion`** (`Reorder` +
+   `useDragControls`, ya instalada v12.40); arranca solo desde el grip
+   (`dragListener={false}` + `touch-none`) para no romper clicks ni scroll.
+   Extra sobre todo en escritorio.
+
+⚠️ **Aprendizaje:** el drag de framer-motion con `useDragControls` es **poco
+fiable en móvil táctil** (Marco no lograba moverlas en el teléfono). Por eso los
+**botones ▲▼ son el método principal** en esta app mobile-first; el drag es un
+complemento. No confiar solo en el arrastre para reordenar en móvil.
 
 ### Dónde vive
 - Código: `web/src/pages/admin/AdminFormacionDetailPage.tsx`
@@ -116,5 +130,8 @@ nunca vía `useEffect`. (Commit `ae2ca2e`.)
   formación de la App + doc de setup local (Node 22, test-agent, gotcha de
   máquina) + flag de discrepancia de Supabase.
 - **2026-07-06 (2):** Verificado en vivo en producción (módulos + lecciones
-  persisten). Documentado el bug del ref síncrono (commit `ae2ca2e`). Feature
-  cerrada y funcionando.
+  persisten). Documentado el bug del ref síncrono (commit `ae2ca2e`).
+- **2026-07-07:** Marco no veía cambios en el móvil → el drag táctil no era
+  fiable. Añadidos **botones ▲▼** (commit `4810f08`), verificados en vivo en
+  viewport móvil (mueven + persisten). Confirmado que OS y App usan **Supabase
+  separadas**. Feature cerrada.

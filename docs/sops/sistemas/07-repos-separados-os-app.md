@@ -25,15 +25,15 @@ area: sistemas
 
 ## Comparten
 
-- **Misma Supabase** (`aglyoyqtzozdnusltjxe`) — auth.users + las tablas compartidas (`profiles`, `users`, `contacts`, `student_invites`, etc.)
 - **Misma cuenta de email** Resend, mismas variables de entorno comunes
 - **Misma cuenta admin** de Adrián para Vercel / GitHub
 
-> ⚠️ **Discrepancia detectada (2026-07-06):** el `web/.env` de la App apunta a la
-> Supabase **`xkuhkkjeuzxutggbnwed`**, NO a `aglyoyqtzozdnusltjxe`. Puede que la App
-> ya tenga su Supabase propia y este SOP haya quedado desactualizado. **Sin confirmar
-> con Marco.** No tocar datos de la App por API/MCP hasta aclarar cuál es la real.
-> Ver [`producto/52-app-editor-formacion-reordenar.md`](../producto/52-app-editor-formacion-reordenar.md).
+> ⚠️ **CORRECCIÓN (confirmado por Marco 2026-07-07): NO comparten Supabase.**
+> Son **dos bases separadas**: OS = `aglyoyqtzozdnusltjxe`, App = `xkuhkkjeuzxutggbnwed`
+> (ver `App/web/.env`). Este SOP antes decía que compartían `aglyoyqtzozdnusltjxe`
+> — era incorrecto. Al tocar datos de la App por API/MCP, usar la Supabase de la App.
+> **Decisión abierta:** ¿consolidar a una sola base o mantener dos? (recomendación en
+> [`producto/52`](../producto/52-app-editor-formacion-reordenar.md)).
 
 ## NO comparten
 
