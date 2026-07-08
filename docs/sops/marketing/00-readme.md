@@ -16,3 +16,4 @@ Captación, contenido, ads, funnel hasta checkout, lead magnets.
 | 05 | [Tracking Meta](05-tracking-meta.md) | Pixel + CAPI server-side + eventos custom + Ads Insights API |
 | 06 | [Lead Magnets](06-lead-magnets.md) | Captura desde IG comments → entrega → CRM stage Lead → tracking E2E |
 | 07 | [Funnel Test de Personalidad](07-funnel-test-personalidad.md) | Canal principal de leads: landing opt-in (Equilibria) → gracias → seguimiento manual IG/WhatsApp |
+| 08 | [Funnel Webinar semanal](08-funnel-webinar.md) | Webinar en directo: landing opt-in → grupo WhatsApp → agenda → alumno. Copy, pipeline `webinar`, Meta `webinar_lead`, email, link editable en /webs |
