@@ -64,8 +64,8 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 
 ### Logo e isotipo
 - **Fuera el sello CH** (doble anillo tipo estampa): descartado por Marco (2026-07-08).
-- **Isotipo CH (Marco, 2026-07-08, importante):** añadir el **CH como icono** (la marca gráfica limpia, el isotipo), distinto del sello. Uso: icono de app, favicon, avatar, firma.
-- El wordmark completo sigue como firma tipográfica; el isotipo CH como icono es la pieza que faltaba y es prioritaria.
+- **El logo oficial es el isotipo CH** (Marco, 2026-07-08): el monograma CH como icono en contenedor redondeado. Ya NO está pendiente de diseño; ese mismo CH es el oficial. Se puede afinar/brandear en el futuro, pero ahora no es prioridad.
+- El wordmark ("CAPITAL HUB") es la firma tipográfica; el isotipo CH es la marca gráfica (icono de app, favicon, avatar, firma).
 
 ### Motifs
 - **El marcador (rotulador):** subrayado o círculo a mano alzada en verde sobre una palabra clave (origen: `.wb-money::after` del funnel webinar). **Es UN motif más, NO el sello de la marca.**
@@ -80,6 +80,9 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, laca negra mate, textura de cinturón), mucho aire, sobriedad, artesanía. Aplica todos los arreglos de arriba (copy oficial, cinturones visibles con ejemplo de rayas, cero guion largo).
 
 ## Cambios versionados
+
+### 2026-07-08 (v8, V2 elegida como oficial)
+Marco aprueba los 3 pasos (fijar V2 oficial, llevar a main + regla nueva, rebrand del SaaS por fases). Aplicado: (1) el **logo oficial es el isotipo CH** (ya no "pendiente de diseño"; afinable a futuro). (2) **`/brandkit` consolidado**: retirado el comparador de pestañas y la V1; la página renderiza la V2 directa como brandkit oficial (V1 conservada en el historial git). (3) La **lógica de progresión de cinturones** se envió a Operaciones como tarea **someday** `t_brand_01_logica_cinturones` (área Producto, asignada a Marco). Pendiente en esta rama: merge a main + escribir la regla de branding oficial (retirando el board HTML viejo) + plan por fases del rebrand del SaaS.
 
 ### 2026-07-08 (v7, auditoría multi-agente + fixes)
 Auditoría de cumplimiento con 25 agentes (3 revisores por dimensión: reglas de marca, copy y código; cada hallazgo verificado adversarialmente): 22 hallazgos brutos, 16 refutados, 6 confirmados y corregidos. (1) "Exclusivo del logo" pasa a "Exclusivo del wordmark" (el tracking amplio es solo del wordmark, no del isotipo). (2) Fuera el símil "como un metal precioso" del lead de Color (copy oficial, cero adorno). (3) Ratios de contraste reales por par: carbón/blanco 17.7:1 y papel/tinta 16.3:1 (el chip decía 16.9:1, que no correspondía a ninguno; queda "AAA"). (4) "Container" pasa a "Contenedor". (5) Botón copiar hex: solo confirma "Copiado" si la copia ocurrió de verdad. (6) Anillo de foco de teclado en currentColor (el verde era invisible sobre las placas verdes).

@@ -209,8 +209,8 @@ function LogoSection() {
                 <strong>La altura de la C en todo el perímetro</strong>
               </li>
               <li>
-                <span>Logo CH definitivo</span>
-                <strong>Pendiente de diseño</strong>
+                <span>Logo oficial</span>
+                <strong>Isotipo CH (afinable a futuro)</strong>
               </li>
             </ul>
             <div className="lx-logoplates">
