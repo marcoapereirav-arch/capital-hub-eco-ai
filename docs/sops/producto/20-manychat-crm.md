@@ -196,13 +196,13 @@ Automatización de **palabra clave en un reel** para el funnel del webinar. Marc
 
 | Pieza | Archivo | Qué hace |
 |---|---|---|
-| **Router del webinar** | `src/app/api/manychat/webinar-router/route.ts` | Recibe el comentario (External Request), crea/actualiza contacto en pipeline **Webinar** stage `lead` con `instagram_username` + `manychat_subscriber_id`, tags `origen:webinar`+`fuente:instagram`, journey event, dispara Meta CAPI `webinar_lead` (si hay email/tel), y **devuelve el link del webinar con `mc_id`** para el DM. Auth `Bearer MANYCHAT_WEBHOOK_SECRET`. |
+| **Router del webinar** | `src/app/api/manychat/webinar-router/route.ts` | Recibe el comentario (External Request), lo **loguea** (`manychat_events`, para el conteo "comentaron"), **cachea** el suscriptor y **devuelve el link del webinar con `mc_id`** para el DM. **Comentar NO crea lead** (es solo una interacción): el contacto entra al pipeline **Webinar** como `lead` únicamente al rellenar el opt-in, vinculado por `mc_id`. Auth `Bearer MANYCHAT_WEBHOOK_SECRET`. |
 | **mc_id en el opt-in** | `src/app/api/optin/webinar/route.ts` + `funnel-webinar/components/landing.tsx` | El link del DM lleva `?mc_id=<subscriber_id>`. El opt-in busca primero por `manychat_subscriber_id` → **no duplica** el contacto creado en el comentario; lo completa con email/teléfono. |
 | **Sync cron** | `src/app/api/cron/manychat-sync/route.ts` + `vercel.json` (`23 */6 * * *`) | Cada 6h trae tags + custom fields de ManyChat a la caché y actualiza `api_connections.last_sync_at` (el dashboard deja de estar en cero). |
 | **Panel "Del reel a la venta"** | `manychat/services/webinar-funnel.ts` + `components/webinar-funnel-panel.tsx` (en `/manychat` → Overview) | Embudo de la cohorte ManyChat del pipeline Webinar: Comentaron → Reservaron → Agendaron → **Alumnos** + facturado. |
 | **Registro** | `api/admin/automations` | Entradas `manychat_webinar_router` + `manychat_sync` en el panel `/automatizaciones`. |
 
-El resto del recorrido "hasta la venta" ya existía: `agendado` (webhook Calendly / form) → `alumno` (registro de venta) sobre el mismo `contacts`. El router solo hace que el contacto aparezca **desde el comentario**, no desde el formulario.
+El recorrido: **comentar** = interacción rastreada (evento, conteo "comentaron"). El contacto entra al pipeline como `lead` **al rellenar el opt-in** (vinculado por `mc_id`), y de ahí sigue el recorrido que ya existía: `agendado` (webhook Calendly / form) → `alumno` (registro de venta) sobre el mismo `contacts`. Un comentario **nunca** es un lead.
 
 ## Estado de la conexión (2026-07-07, verificado)
 

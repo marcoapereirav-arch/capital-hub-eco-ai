@@ -22,9 +22,11 @@ type Step = {
 }
 
 export function WebinarFunnelPanel({ funnel }: { funnel: WebinarReelFunnel }) {
-  // Etiquetas = stages REALES del pipeline Funnel Webinar (lead → agendado → alumno).
+  // Comentar es una interacción (no un lead). Lead = opt-in con datos.
+  // El resto son stages reales del pipeline: agendado → alumno (venta).
   const steps: Step[] = [
-    { label: 'Comentaron el reel', hint: 'entran como stage «Lead»', value: funnel.comentaron },
+    { label: 'Comentaron el reel', hint: 'interacción · aún no son lead', value: funnel.comentaron },
+    { label: 'Se apuntaron (Lead)', hint: 'dejaron sus datos en el opt-in', value: funnel.leads },
     { label: 'Agendaron', hint: 'stage «Agendado»', value: funnel.agendaron },
     { label: 'Alumnos', hint: 'stage «Alumno» · la venta', value: funnel.alumnos, accent: true },
   ]

@@ -2,26 +2,29 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 
 /**
- * Embudo "Del reel a la venta": mide la cohorte que entró por ManyChat
- * (comentario del reel → DM) dentro del pipeline Webinar, paso a paso hasta
- * la venta (stage 'alumno').
+ * Embudo "Del reel a la venta".
  *
- * Cohorte = contactos del pipeline 'webinar' con manychat_subscriber_id (todos
- * los que tocaron ManyChat: el router lo pone en el comentario y el opt-in lo
- * vincula vía mc_id). Ver SOP producto/20 + marketing/08.
+ * Modelo (importante):
+ *  - COMENTARON = interacción en el reel (evento manychat_events 'webinar_comment').
+ *    NO son leads todavía: comentar no deja datos.
+ *  - LEAD = dejaron sus datos en el opt-in del webinar → contacto en el pipeline
+ *    'webinar' con manychat_subscriber_id (vinculado por mc_id desde el DM).
+ *  - AGENDADO / ALUMNO = stages reales del pipeline (la venta = 'alumno').
+ *
+ * Ver SOP producto/20 + marketing/08.
  */
 export type WebinarReelFunnel = {
-  comentaron: number // entraron por el reel (ManyChat)
-  reservaron: number // rellenaron el formulario del webinar (tienen email)
-  agendaron: number // reservaron llamada (agendado/seguimiento/no_show/alumno)
-  alumnos: number // compraron (venta)
-  ingresos: number // total facturado por esos alumnos
-  configured: boolean // si el pipeline webinar existe
+  comentaron: number // interacciones en el reel (aún no son lead)
+  leads: number // rellenaron el opt-in (stage Lead o superior)
+  agendaron: number // stage Agendado o superior
+  alumnos: number // compraron (stage Alumno)
+  ingresos: number // facturado por esos alumnos
+  configured: boolean
 }
 
 const EMPTY: WebinarReelFunnel = {
   comentaron: 0,
-  reservaron: 0,
+  leads: 0,
   agendaron: 0,
   alumnos: 0,
   ingresos: 0,
@@ -40,7 +43,18 @@ export async function getWebinarReelFunnel(): Promise<WebinarReelFunnel> {
   const pid = pipeline?.id as string | undefined
   if (!pid) return EMPTY
 
-  // Cohorte base: pipeline webinar + vino de ManyChat.
+  // Comentaron: suscriptores únicos con un evento 'webinar_comment'.
+  const { data: commentRows } = await supabase
+    .from('manychat_events')
+    .select('subscriber_id')
+    .eq('event_type', 'webinar_comment')
+    .limit(5000)
+  const comentaron = new Set(
+    (commentRows ?? []).map((r) => (r as { subscriber_id: string | null }).subscriber_id).filter(Boolean),
+  ).size
+
+  // Cohorte de leads: contactos del pipeline webinar que vinieron de ManyChat
+  // (tienen manychat_subscriber_id → se crearon al rellenar el opt-in del DM).
   const base = () =>
     supabase
       .from('contacts')
@@ -48,9 +62,8 @@ export async function getWebinarReelFunnel(): Promise<WebinarReelFunnel> {
       .eq('pipeline_id', pid)
       .not('manychat_subscriber_id', 'is', null)
 
-  const [comentaronRes, reservaronRes, agendaronRes, alumnosRes, ingresosRes] = await Promise.all([
+  const [leadsRes, agendaronRes, alumnosRes, ingresosRes] = await Promise.all([
     base(),
-    base().not('email', 'is', null),
     base().in('stage', ['agendado', 'seguimiento', 'no_show', 'alumno']),
     base().eq('stage', 'alumno'),
     supabase
@@ -67,8 +80,8 @@ export async function getWebinarReelFunnel(): Promise<WebinarReelFunnel> {
   )
 
   return {
-    comentaron: comentaronRes.count ?? 0,
-    reservaron: reservaronRes.count ?? 0,
+    comentaron,
+    leads: leadsRes.count ?? 0,
     agendaron: agendaronRes.count ?? 0,
     alumnos: alumnosRes.count ?? 0,
     ingresos,

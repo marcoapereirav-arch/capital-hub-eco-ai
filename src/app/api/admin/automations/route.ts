@@ -186,17 +186,15 @@ export async function GET() {
       category: "crm",
       label: "Reel (comentario) → CRM Webinar + link DM",
       description:
-        "Alguien comenta la palabra clave del reel → ManyChat llama al router → crea/actualiza contacto en el pipeline 'Webinar' stage 'lead' (con su @usuario de Instagram, capturado en el momento del comentario), dispara Meta CAPI si hay email/teléfono, y devuelve el link del webinar con mc_id para que ManyChat lo mande por DM.",
+        "Alguien comenta la palabra clave del reel → ManyChat llama al router → loguea el comentario (conteo 'comentaron') + cachea el suscriptor + devuelve el link del webinar con mc_id para el DM. IMPORTANTE: comentar NO crea lead; el contacto entra al pipeline 'Webinar' como 'lead' solo al rellenar el opt-in (vinculado por mc_id).",
       trigger: "POST /api/manychat/webinar-router (External Request desde ManyChat)",
       actions: [
         "Verifica firma MANYCHAT_WEBHOOK_SECRET",
-        "Loguea evento webinar_comment + cachea suscriptor",
-        "Upsert contacto en pipeline Webinar (sin degradar stage)",
-        "Tags origen:webinar + fuente:instagram + journey event",
-        "Dispara Meta CAPI 'webinar_lead' (si hay email/teléfono)",
-        "Devuelve delivery_link con mc_id para el DM",
+        "Loguea evento webinar_comment (conteo 'comentaron')",
+        "Cachea el suscriptor para el dashboard",
+        "Devuelve delivery_link con mc_id para el DM (el lead se crea en el opt-in)",
       ],
-      relatedTables: ["contacts", "manychat_events", "manychat_subscribers_cache", "contact_journey_events", "contact_tags", "meta_events_log"],
+      relatedTables: ["manychat_events", "manychat_subscribers_cache"],
       status: (webinarCommentCount ?? 0) > 0 ? "live" : "pending",
       statusReason: (webinarCommentCount ?? 0) > 0
         ? `Recibiendo comentarios · ${webinarCommentCount} eventos`
