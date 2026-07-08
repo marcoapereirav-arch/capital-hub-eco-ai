@@ -215,9 +215,9 @@ function ContentView({ itemId, sops }: { itemId: string; sops: Sop[] }) {
   if (itemId === BRANDKIT_ID) {
     return (
       <iframe
-        src="/brandkit.html"
+        src="/brandkit"
         title="Brandkit Capital Hub"
-        className="w-full h-full border-0 bg-[#050505]"
+        className="w-full h-full border-0 bg-[#0F0F12]"
       />
     )
   }
