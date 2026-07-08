@@ -53,12 +53,18 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 - Escala de **jiu-jitsu**: blanco, azul, púrpura, marrón, negro.
 - **Las rayas son cintas horizontales que recorren TODO el cinturón** (no marcas en la punta). Se marcan en verde `#22C55E`.
 - **La lógica de progresión está PENDIENTE de definir** (qué desbloquea cada cinturón, cuándo se asciende, cómo aplica al funnel). La escalera se mantiene de forma visual en el brandkit como referencia permanente del sistema.
-- Los cinturones deben **verse** como cinturones (iconos reconocibles), no como cuadrados de color. Incluir el ejemplo de cinturón blanco CON rayas.
+- Los cinturones deben **verse** como cinturones (iconos reconocibles), no como cuadrados de color.
 - La mecánica real (que el alumno suba de verdad) NO se construye ahora, solo el lenguaje visual.
 
-### Logo
+### Dónde se muestra cada cosa (contextos, Marco 2026-07-08)
+- **Landings / funnels:** cinturón **BLANCO** con **rayas horizontales** en formato **barra** (la "barra de cinturón"). Es SOLO para la cinta blanca y SOLO se muestra aquí. Representa la progresión del funnel (el blanco gana rayas).
+- **App, perfil del alumno:** se ve el **cinturón real dibujado** (con su color y su cinta/raya), no la barra abstracta. Aquí es donde se ve "qué cinturón es" el alumno.
+- **Implicación en el brandkit:** en la sección Aplicación, la ficha del alumno debe mostrar el **cinturón dibujado (BeltIcon) con la cinta**, no la barra (BeltBar). La barra queda etiquetada como recurso de landings/funnels y en blanco.
+
+### Logo e isotipo
 - **Fuera el sello CH** (doble anillo tipo estampa): descartado por Marco (2026-07-08).
-- El **logo real de CH está pendiente de diseño**; de momento el brandkit usa solo el wordmark.
+- **Isotipo CH (Marco, 2026-07-08, importante):** añadir el **CH como icono** (la marca gráfica limpia, el isotipo), distinto del sello. Uso: icono de app, favicon, avatar, firma.
+- El wordmark completo sigue como firma tipográfica; el isotipo CH como icono es la pieza que faltaba y es prioritaria.
 
 ### Motifs
 - **El marcador (rotulador):** subrayado o círculo a mano alzada en verde sobre una palabra clave (origen: `.wb-money::after` del funnel webinar). **Es UN motif más, NO el sello de la marca.**
@@ -73,6 +79,9 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, laca negra mate, textura de cinturón), mucho aire, sobriedad, artesanía. Aplica todos los arreglos de arriba (copy oficial, cinturones visibles con ejemplo de rayas, cero guion largo).
 
 ## Cambios versionados
+
+### 2026-07-08 (v4, decisiones; código pendiente de OK)
+Marco fija tres cosas (registradas antes de tocar código): (1) **Isotipo CH**: añadir el CH como icono/marca gráfica limpia (no el sello), importante. (2) **Barra de cinturón con rayas horizontales = SOLO cinta blanca y SOLO en landings/funnels**. (3) En la **App, perfil/ficha del alumno**, se muestra el **cinturón real dibujado con su cinta** (BeltIcon), no la barra abstracta. Recordatorio del propio Marco: TODO se registra en el Knowledge, nada se queda "en la cabeza" del agente (refuerza REGLA #2 de producto/04).
 
 ### 2026-07-08 (v3)
 Pasada de arreglos de Marco sobre la V2: fuera la frase "Disciplina, oficio, progreso.", fuera el sello CH (logo real pendiente de diseño), cinturones a escala jiu-jitsu (blanco, azul `#4F7CC0`, púrpura `#7B5BA6`, marrón `#856046`, negro), rayas ahora horizontales recorriendo todo el cinturón, lógica de progresión marcada como pendiente (se mantiene visual), y motifs de la V1 fusionados en la V2 (15 motifs, sin duplicados, sin sello). Plan acordado: al recibir OK de Marco, esto va a main y sustituye el brandkit del Knowledge; después se fija la regla de branding y se aplica a todo el SaaS (OS + App).
