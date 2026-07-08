@@ -80,6 +80,9 @@ Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, 
 
 ## Cambios versionados
 
+### 2026-07-08 (v5, aplicado en código)
+Las decisiones de v4 quedan aplicadas en la V2 del brandkit: (1) tarjeta **Isotipo** en la sección Logo con el componente `ChIcon` (monograma CH en contenedor redondeado, variantes papel/carbón/verde, tamaños 48/32/24, mínimo 24 px); (2) el motif "Cinturón en barra" ahora es **solo cinta blanca** y su copy lo limita a landings/funnels; (3) la ficha del alumno en Aplicación muestra el **cinturón dibujado (BeltIcon) azul con 2 rayas** en vez de la barra, con el isotipo CH como avatar y subtítulo "Perfil del alumno · App". Verificado en localhost (TypeScript limpio, 0 errores de consola, 0 guiones largos).
+
 ### 2026-07-08 (v4, decisiones; código pendiente de OK)
 Marco fija tres cosas (registradas antes de tocar código): (1) **Isotipo CH**: añadir el CH como icono/marca gráfica limpia (no el sello), importante. (2) **Barra de cinturón con rayas horizontales = SOLO cinta blanca y SOLO en landings/funnels**. (3) En la **App, perfil/ficha del alumno**, se muestra el **cinturón real dibujado con su cinta** (BeltIcon), no la barra abstracta. Recordatorio del propio Marco: TODO se registra en el Knowledge, nada se queda "en la cabeza" del agente (refuerza REGLA #2 de producto/04).
 

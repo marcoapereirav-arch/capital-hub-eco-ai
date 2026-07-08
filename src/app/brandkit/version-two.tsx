@@ -17,6 +17,11 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react"
  * el cinturon. La logica de progresion esta pendiente de definir; la
  * escalera queda como referencia visual del sistema.
  *
+ * Contextos: la barra de cinturon (formato interfaz) es SOLO de la cinta
+ * blanca y SOLO para landings/funnels; en la App, el perfil del alumno
+ * muestra su cinturon dibujado con su cinta. El isotipo CH es la marca
+ * grafica como icono (app, favicon, avatar, firma); el sello quedo fuera.
+ *
  * Reglas duras honradas: cero guion largo en todo el archivo, sin grid de
  * fondo, sin neones fuera del verde, prefers-reduced-motion respetado,
  * animaciones GPU-friendly (transform/opacity), autocontenido.
@@ -182,7 +187,7 @@ function LogoSection() {
   return (
     <section className="lx-sec lx-sec-carbon" aria-label="Logo">
       <div className="lx-wrap">
-        <SectionHead n="01" title="Logo" lead="El wordmark es la firma del sistema. No se estira, no se inclina y no se recolorea fuera de la paleta." />
+        <SectionHead n="01" title="Logo" lead="Dos piezas: el wordmark como firma y el isotipo CH como icono. No se estiran, no se inclinan y no se recolorean fuera de la paleta." />
 
         <div className="lx-logogrid" data-lxr>
           <article className="lx-logocard lx-paperbox lx-r" style={d(0)}>
@@ -217,6 +222,36 @@ function LogoSection() {
                 <em>Negativo · papel sobre carbón</em>
               </div>
             </div>
+          </article>
+
+          <article className="lx-logocard lx-logocard-dark lx-r" style={d(140)}>
+            <p className="lx-label lx-label-dark">Isotipo</p>
+            <div className="lx-tileshow">
+              <ChIcon size={84} tone="paper" />
+              <ChIcon size={84} tone="dark" />
+              <ChIcon size={84} tone="green" />
+            </div>
+            <div className="lx-tilesizes">
+              <ChIcon size={48} tone="paper" />
+              <ChIcon size={32} tone="paper" />
+              <ChIcon size={24} tone="paper" />
+              <span className="lx-tilesizes-note">48 · 32 · 24 px</span>
+            </div>
+            <span className="lx-hr-c" aria-hidden="true" />
+            <ul className="lx-facts lx-facts-dark">
+              <li>
+                <span>Construcción</span>
+                <strong>Monograma CH en contenedor redondeado</strong>
+              </li>
+              <li>
+                <span>Uso</span>
+                <strong>Icono de app, favicon, avatar y firma</strong>
+              </li>
+              <li>
+                <span>Tamaño mínimo</span>
+                <strong>24 px</strong>
+              </li>
+            </ul>
           </article>
         </div>
       </div>
@@ -400,7 +435,9 @@ function BeltSection() {
         </div>
 
         <p className="lx-beltnote lx-r" data-lxr style={d(40)}>
-          La raya se marca siempre en verde #22C55E, sobre cualquier cinturón.
+          La raya se marca siempre en verde #22C55E. En landings y funnels la cinta blanca
+          se muestra en formato barra; en la App, el perfil del alumno muestra su cinturón
+          dibujado con su cinta.
         </p>
       </div>
     </section>
@@ -425,10 +462,10 @@ function MotifSection() {
           </MotifCard>
 
           <MotifCard n="02" title="Cinturón en barra" delay={70}
-            desc="Versión de interfaz del cinturón: barra de color con rayas horizontales a lo ancho.">
+            desc="Formato barra de la cinta blanca con sus rayas. Solo cinta blanca y solo en landings y funnels.">
             <div className="lx-m-beltbar">
-              <BeltBar color="#4F7CC0" stripes={2} />
-              <span className="lx-m-caption">Cinturón azul · 2 rayas</span>
+              <BeltBar stripes={2} />
+              <span className="lx-m-caption">Cinta blanca · 2 rayas</span>
             </div>
           </MotifCard>
 
@@ -546,13 +583,16 @@ function ApplicationSection() {
         <div className="lx-appgrid" data-lxr>
           <article className="lx-carnet lx-r" style={d(0)}>
             <header className="lx-carnet-head">
+              <ChIcon size={30} tone="paper" />
               <span className="lx-wordmark-xs lx-carnet-brand">Capital Hub</span>
             </header>
             <div className="lx-carnet-body">
               <p className="lx-carnet-name">Nombre del alumno</p>
-              <p className="lx-carnet-sub">Alumno · 2026</p>
+              <p className="lx-carnet-sub">Perfil del alumno · App</p>
               <div className="lx-carnet-belt">
-                <BeltBar color="#4F7CC0" stripes={2} height={12} />
+                <div className="lx-carnet-beltfig">
+                  <BeltIcon id="carnet" color="#4F7CC0" stripes={2} />
+                </div>
                 <span>Cinturón azul · 2 rayas</span>
               </div>
             </div>
@@ -705,18 +745,29 @@ function BeltIcon({
   )
 }
 
-/** Versión de interfaz del cinturón: barra de color con rayas horizontales a lo ancho. */
+/** Isotipo CH: monograma en contenedor redondeado. Icono de app, favicon, avatar y firma. */
+function ChIcon({ size = 84, tone = "paper" }: { size?: number; tone?: "paper" | "dark" | "green" }) {
+  return (
+    <span
+      className={`lx-tile lx-tile-${tone}`}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.4), borderRadius: Math.max(4, Math.round(size * 0.22)) }}
+      aria-hidden="true"
+    >
+      CH
+    </span>
+  )
+}
+
+/** Barra de cinturón: SOLO cinta blanca con rayas horizontales. SOLO landings/funnels. */
 function BeltBar({
-  color = "#4F7CC0",
   stripes = 0,
   height = 14,
 }: {
-  color?: string
   stripes?: number
   height?: number
 }) {
   return (
-    <div className="lx-beltbar" style={{ height, background: color }}>
+    <div className="lx-beltbar" style={{ height, background: "#F5F6F7" }}>
       {Array.from({ length: stripes }).map((_, i) => (
         <span
           key={i}
@@ -1043,15 +1094,21 @@ function LxStyles() {
       /* ===== 01 logo ===== */
       .lx-logogrid {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 16px;
       }
+      @media (max-width: 860px) { .lx-logogrid { grid-template-columns: 1fr; } }
       .lx-logocard {
         border-radius: 4px;
         padding: clamp(26px, 4vw, 44px);
         display: flex;
         flex-direction: column;
       }
+      .lx-logocard-dark {
+        background: var(--carbon-2);
+        border: 1px solid var(--line);
+      }
+      .lx-label-dark { color: var(--muted-2); }
       .lx-facts { list-style: none; margin: 0; padding: 0; }
       .lx-facts li {
         display: flex;
@@ -1065,6 +1122,9 @@ function LxStyles() {
       .lx-facts li:last-child { border-bottom: 0; }
       .lx-facts li span { color: var(--ink-2); font-weight: 400; white-space: nowrap; }
       .lx-facts li strong { color: var(--ink); font-weight: 500; text-align: right; }
+      .lx-facts-dark li { border-bottom-color: var(--line); }
+      .lx-facts-dark li span { color: var(--muted-2); }
+      .lx-facts-dark li strong { color: var(--txt); }
       .lx-logoplates {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1088,6 +1148,30 @@ function LxStyles() {
       }
       .lx-logoplate-pos { background: var(--paper-2); color: var(--ink); border: 1px solid var(--pline-2); }
       .lx-logoplate-neg { background: var(--carbon); color: var(--txt); }
+
+      /* isotipo CH: monograma en contenedor redondeado */
+      .lx-tile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        line-height: 1;
+        flex: none;
+        user-select: none;
+      }
+      .lx-tile-paper { background: var(--paper); color: var(--ink); }
+      .lx-tile-dark { background: var(--carbon); color: var(--txt); border: 1px solid var(--line-2); }
+      .lx-tile-green { background: var(--green); color: var(--greenink); }
+      .lx-tileshow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 18px;
+        margin: 4px 0 24px;
+      }
+      .lx-tilesizes { display: flex; align-items: flex-end; gap: 14px; }
+      .lx-tilesizes-note { font-size: 10.5px; font-weight: 500; color: var(--muted-2); margin-left: 8px; }
 
       /* ===== 02 color ===== */
       .lx-usage { margin-bottom: 16px; }
@@ -1558,8 +1642,9 @@ function LxStyles() {
       .lx-carnet-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
       .lx-carnet-name { font-weight: 800; font-size: clamp(22px, 3vw, 28px); letter-spacing: -0.01em; margin: 0; }
       .lx-carnet-sub { font-size: 12.5px; font-weight: 400; color: var(--muted-2); margin: 0 0 22px; }
-      .lx-carnet-belt { display: flex; flex-direction: column; gap: 9px; }
+      .lx-carnet-belt { display: flex; flex-direction: column; gap: 9px; align-items: center; }
       .lx-carnet-belt > span { font-size: 11.5px; font-weight: 500; color: var(--muted); text-transform: uppercase; }
+      .lx-carnet-beltfig { width: min(100%, 230px); margin: 2px auto 0; }
       .lx-carnet-foot {
         display: flex;
         justify-content: space-between;
