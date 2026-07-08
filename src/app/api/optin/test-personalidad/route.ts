@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
-import { notifyAdmins } from "@/lib/notifications/notify-admins"
+import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -161,10 +161,10 @@ export async function POST(req: Request) {
   // Push + in-app al equipo: nuevo lead del test de personalidad.
   if (action === "created") {
     await notifyAdmins(admin, {
-      title: "🎯 Nuevo lead · Test Personalidad",
+      title: "Nuevo lead · Test Personalidad",
       body: `${full_name} hizo opt-in en el test de personalidad.`,
       type: "lead",
-      url: "/crm/pipeline",
+      url: contactId ? `/crm/contactos/${contactId}` : "/crm/pipeline",
       data: { contact_id: contactId, email },
     })
   }
@@ -186,12 +186,17 @@ export async function POST(req: Request) {
         perdido: "Perdido",
       }
       const label = stageLabels[recurringFromStage] ?? recurringFromStage
-      const rows = (admins ?? []).map((a) => ({
-        user_id: a.id,
-        title: "🔁 Contacto recurrente en el funnel del test",
+      const adminIds = await filterByNotificationPref(
+        admin,
+        (admins ?? []).map((a) => a.id as string),
+        "recurring_optin_test_personalidad",
+      )
+      const rows = adminIds.map((user_id) => ({
+        user_id,
+        title: "Contacto recurrente en el funnel del test",
         body: `${full_name} (${email}) ya estaba en «${label}» y volvió a pasar por la landing del test. Su stage NO se modificó.`,
         type: "recurring_optin_test_personalidad",
-        data: { contact_id: contactId, email, prior_stage: recurringFromStage, source },
+        data: { url: `/crm/contactos/${contactId}`, contact_id: contactId, email, prior_stage: recurringFromStage, source },
       }))
       if (rows.length) await admin.from("notifications").insert(rows)
     } catch (e) {

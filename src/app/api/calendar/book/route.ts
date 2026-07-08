@@ -204,10 +204,10 @@ export async function POST(req: NextRequest) {
       day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid",
     })
     await notifyAdmins(supabase, {
-      title: "📅 Nueva reserva",
+      title: "Nueva reserva",
       body: `${data.attendee_name} agendó llamada · ${whenStr}`,
       type: "agenda",
-      url: "/crm/pipeline",
+      url: "/calendario",
       data: { email: data.attendee_email.toLowerCase().trim(), booking_id: inserted.id },
     })
 

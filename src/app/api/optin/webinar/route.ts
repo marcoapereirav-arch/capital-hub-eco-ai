@@ -5,7 +5,7 @@ import { render } from "@react-email/render"
 import { sendEmail } from "@/lib/email/send-email"
 import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
-import { notifyAdmins } from "@/lib/notifications/notify-admins"
+import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/notify-admins"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 
 export const dynamic = "force-dynamic"
@@ -218,10 +218,10 @@ export async function POST(req: Request) {
   // Push + in-app al equipo: nuevo lead del webinar.
   if (action === "created") {
     await notifyAdmins(admin, {
-      title: "🎯 Nuevo lead · Webinar",
+      title: "Nuevo lead · Webinar",
       body: `${full_name} reservó plaza en el webinar.`,
       type: "lead",
-      url: "/crm/pipeline",
+      url: contactId ? `/crm/contactos/${contactId}` : "/crm/pipeline",
       data: { contact_id: contactId, email },
     })
   }
@@ -242,12 +242,17 @@ export async function POST(req: Request) {
         perdido: "Perdido",
       }
       const label = stageLabels[recurringFromStage] ?? recurringFromStage
-      const rows = (admins ?? []).map((a) => ({
-        user_id: a.id,
-        title: "🔁 Contacto recurrente en el webinar",
+      const adminIds = await filterByNotificationPref(
+        admin,
+        (admins ?? []).map((a) => a.id as string),
+        "recurring_optin_webinar",
+      )
+      const rows = adminIds.map((user_id) => ({
+        user_id,
+        title: "Contacto recurrente en el webinar",
         body: `${full_name} (${email}) ya estaba en «${label}» y volvió a reservar plaza en el webinar. Su stage NO se modificó.`,
         type: "recurring_optin_webinar",
-        data: { contact_id: contactId, email, prior_stage: recurringFromStage, source },
+        data: { url: `/crm/contactos/${contactId}`, contact_id: contactId, email, prior_stage: recurringFromStage, source },
       }))
       if (rows.length) await admin.from("notifications").insert(rows)
     } catch (e) {

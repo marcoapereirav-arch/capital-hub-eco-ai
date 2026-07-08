@@ -4,6 +4,7 @@ import { useState } from "react"
 import { User, Mail, Lock, Bell } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
 import { PushSettings } from "@/features/notifications/components/PushSettings"
+import { NotificationPrefs } from "@/features/notifications/components/NotificationPrefs"
 import { cn } from "@/lib/utils"
 
 const inputCls =
@@ -103,9 +104,12 @@ export function ProfilePage({ email, fullName, role, userId }: { email: string; 
         </Row>
       </Section>
 
-      {/* Notificaciones push */}
+      {/* Notificaciones: push del dispositivo + qué tipos de aviso llegan */}
       <Section icon={Bell} title="Notificaciones">
         <PushSettings userId={userId} />
+        <div className="border-t border-border pt-3">
+          <NotificationPrefs />
+        </div>
       </Section>
 
       {/* Contraseña */}

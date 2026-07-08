@@ -156,7 +156,24 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 
 ---
 
+## REGLA #8: PROHIBIDO añadir emojis sin consentimiento de Marco
+
+**NUNCA añadir emojis** en NINGÚN texto que yo produzca para el producto: notificaciones (títulos y cuerpos), copy de UI, landing pages, emails, documentos del Knowledge, títulos de tareas del board, mensajes de chat. Cero excepciones salvo que Marco lo pida o lo apruebe explícitamente para un caso concreto.
+
+**How to apply:**
+- Para dar tono o categoría visual: iconos del sistema (lucide-react) con el color del brandkit, NUNCA un emoji en el texto.
+- Si un texto existente ya tiene emojis y lo estoy tocando: los quito en esa misma pasada.
+- Antes de cerrar cualquier bloque (código, doc, notificación, chat), revisar que no quede ningún emoji nuevo.
+- Tampoco símbolos tipográficos raros como sustituto (flechas `→`, etc.): lenguaje normal.
+
+**Why:** Marco lo pidió como regla dura el 2026-07-08 al revisar las notificaciones del OS (llevaban emojis en los títulos sin que él lo pidiera). Mismo espíritu que la REGLA #7: los adornos que él no pidió ensucian su producto y delatan texto generado.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-08: REGLA #8 añadida
+Prohibido añadir emojis sin consentimiento explícito de Marco, en cualquier soporte (notificaciones, UI, emails, Knowledge, board, chat). Detonante: las notificaciones del equipo salían con emojis en los títulos. Barrido aplicado ese mismo día a todos los títulos de notificación del OS.
 
 ### 2026-07-08: REGLA #2 elevada a URGENTE
 Marco: "acostúmbrate a guardar SIEMPRE SIEMPRE SIEMPRE TODO en el Knowledge, no quiero estar repitiéndotelo". Pasó porque documenté las cosas de la sesión (webinar, notificaciones, bugs) pero de forma completa solo cuando él lo pidió al final. Regla dura: cada cambio se documenta EN SU MISMO BLOQUE, sin recordatorio; si Marco tiene que pedirlo, es un fallo. Añadido checklist de cierre y actualización obligatoria del índice `00-readme.md`.

@@ -13,6 +13,7 @@ import {
   UserX,
   BadgeEuro,
   ArrowRightLeft,
+  Repeat2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -36,6 +37,8 @@ type Notification = {
 // positivo (lead, venta, agenda), rojo solo para alertas/negativo.
 const TYPE_ICONS: Record<string, { icon: typeof Bell; color: string }> = {
   lead: { icon: Target, color: "text-green-400" },
+  recurring_optin_webinar: { icon: Repeat2, color: "text-green-400" },
+  recurring_optin_test_personalidad: { icon: Repeat2, color: "text-green-400" },
   venta: { icon: BadgeEuro, color: "text-green-400" },
   agenda: { icon: CalendarCheck, color: "text-green-400" },
   calendly_created: { icon: CalendarCheck, color: "text-green-400" },

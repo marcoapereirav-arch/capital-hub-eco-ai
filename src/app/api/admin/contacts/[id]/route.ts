@@ -3,6 +3,7 @@ import { z } from "zod"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
+import { filterByNotificationPref } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -139,9 +140,14 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
       ])
       const who = contactRow?.full_name || contactRow?.email || "Un contacto"
       const pending = parsed.data.sale_pending === true
-      const rows = (admins ?? []).map((a) => ({
-        user_id: a.id,
-        title: `🔀 ${who} → ${toLabel}`,
+      const adminIds = await filterByNotificationPref(
+        admin,
+        (admins ?? []).map((a) => a.id as string),
+        "manual_stage_change",
+      )
+      const rows = adminIds.map((user_id) => ({
+        user_id,
+        title: `${who} movido a ${toLabel}`,
         body: pending
           ? `${who} movido a «Alumno» a mano. Falta registrar la venta para darle el acceso.`
           : `${who} movido a «${toLabel}» a mano en el CRM.`,

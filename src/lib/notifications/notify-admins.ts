@@ -2,6 +2,7 @@ import "server-only"
 import webpush from "web-push"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { TEST_AGENT_EMAIL } from "./recipients"
+import { prefKeyForType } from "./prefs-catalog"
 
 /**
  * Notificaciones al equipo (super_admins): in-app + PUSH, en un solo sitio.
@@ -26,6 +27,33 @@ function ensureVapid(): boolean {
 }
 
 type PushPayload = { title: string; body: string; data?: Record<string, unknown>; tag?: string }
+
+/**
+ * Filtra los userIds quitando a quienes APAGARON este tipo de aviso en /perfil
+ * (tabla `notification_preferences`, sin fila = activado). Nunca lanza: si la
+ * query falla, devuelve la lista completa (mejor un aviso de más que perder uno).
+ */
+export async function filterByNotificationPref(
+  admin: SupabaseClient,
+  userIds: string[],
+  type: string,
+): Promise<string[]> {
+  try {
+    const pref = prefKeyForType(type)
+    if (!pref || userIds.length === 0) return userIds
+    const { data } = await admin
+      .from("notification_preferences")
+      .select("user_id")
+      .eq("pref", pref)
+      .eq("enabled", false)
+      .in("user_id", userIds)
+    const off = new Set((data ?? []).map((r) => r.user_id as string))
+    return userIds.filter((id) => !off.has(id))
+  } catch (e) {
+    console.error("[filterByNotificationPref] fallo (no bloquea, entrega a todos)", e)
+    return userIds
+  }
+}
 
 /** Envía web-push a TODOS los dispositivos suscritos de los userIds dados. */
 export async function pushToUsers(
@@ -91,7 +119,8 @@ export async function notifyAdmins(admin: SupabaseClient, input: NotifyInput): P
       .eq("role", "super_admin")
       .eq("active", true)
       .neq("email", TEST_AGENT_EMAIL)
-    const ids = (admins ?? []).map((a) => a.id as string)
+    let ids = (admins ?? []).map((a) => a.id as string)
+    ids = await filterByNotificationPref(admin, ids, input.type)
     if (ids.length === 0) return
 
     const url = input.url ?? "/crm/pipeline"

@@ -249,10 +249,10 @@ export async function POST(req: NextRequest) {
 
   // Push + in-app al equipo (además del email de notifyMarcoPurchase).
   await notifyAdmins(admin, {
-    title: "💰 Venta registrada",
+    title: "Venta registrada",
     body: `${data.full_name} · ${data.products.join(" + ")} · ${data.revenue.toFixed(0)} €`,
     type: "venta",
-    url: "/crm/pipeline",
+    url: contactId ? `/crm/contactos/${contactId}` : "/crm/pipeline",
     data: { contact_id: contactId, email, revenue: data.revenue },
   })
 
