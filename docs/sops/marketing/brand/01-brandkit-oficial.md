@@ -1,14 +1,13 @@
 ---
-title: Experimento, Brandkit "El Dojo" (rama brandkit-dojo)
+title: Brandkit Capital Hub (oficial)
 order: 2
 ---
 
-# Experimento: Brandkit "El Dojo"
+# Brandkit Capital Hub (oficial)
 
-> **Estado: EXPERIMENTAL, pendiente de decisión de Marco.**
-> Vive solo en la rama `brandkit-dojo`. Preview en `localhost:3000/brandkit`.
-> Si se aprueba, el rebrand se aplicará a TODO (ch. + os. + app.) en una fase posterior.
-> Si se descarta, esta rama (y este SOP) se eliminan.
+> **Estado: OFICIAL (elegido por Marco, 2026-07-08).** Este es el brandkit vigente de Capital Hub y **sustituye al board anterior** (`Brandkit_Capital_Hub.html`, retirado).
+> Se ve en vivo en la página **`/brandkit`** del OS. Aplica a TODO: ch. + os. + app.
+> El rebrand del SaaS (aplicar este brandkit a todas las pantallas) se hace por fases; ver plan aparte. La lógica de progresión de cinturones quedó como tarea someday (`t_brand_01_logica_cinturones`).
 
 ## Qué es
 

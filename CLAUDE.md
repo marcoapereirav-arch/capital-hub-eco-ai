@@ -324,10 +324,10 @@ npm run lint         # ESLint
 ## PROTOCOLO DE CONTEXTO Y DOCUMENTACION
 
 1. **CARPETA DE REFERENCIA:** Tu contexto obligatorio es la carpeta `/docs/`.
-2. **LECTURA DINAMICA:** Debes leer todos los archivos presentes en `/docs/` antes de ejecutar cualquier tarea. Esto incluye los archivos base (`Manual_Proyecto_Capital_Hub.md`, `Brandkit_Capital_Hub.html`) y **cualquier archivo adicional** que se anada en el futuro.
+2. **LECTURA DINAMICA:** Debes leer todos los archivos presentes en `/docs/` antes de ejecutar cualquier tarea. Esto incluye el archivo base (`Manual_Proyecto_Capital_Hub.md`), el Knowledge en `docs/sops/` (con el brandkit oficial en `docs/sops/marketing/brand/`) y **cualquier archivo adicional** que se anada en el futuro.
 3. **GESTION PROACTIVA:** Si se recibe informacion nueva, es tu responsabilidad actualizar el documento correspondiente dentro de `/docs/` o crear uno nuevo si la informacion es distinta.
 4. **JERARQUIA:** La informacion en `/docs/` prevalece sobre cualquier suposicion. Si una tarea contradice lo que esta en estos archivos, detente y pregunta.
-5. **BRANDKIT ES LEY DE DISENO:** El archivo `Brandkit_Capital_Hub.html` es el nucleo de diseno de TODO el proyecto. Colores, tipografia, espaciado, componentes, estilo visual — todo se deriva del brandkit. No se disena nada sin consultarlo primero.
+5. **BRANDKIT ES LEY DE DISENO:** El brandkit oficial de Capital Hub vive en `docs/sops/marketing/brand/` (SOP `01-brandkit-oficial.md`) y se ve en vivo en la pagina `/brandkit` del OS. Colores, tipografia (Inter Tight), cinturones (jiu-jitsu), motifs, isotipo CH: todo se deriva de ahi. No se disena nada sin consultarlo primero. El board anterior (`Brandkit_Capital_Hub.html`) queda retirado y sustituido por este.
 
 ---
 
