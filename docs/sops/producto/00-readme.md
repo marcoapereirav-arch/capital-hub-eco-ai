@@ -21,6 +21,8 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 49 | [Efecto de carga de marca (SIEMPRE)](49-efecto-de-carga.md) | `<LoadingScreen />` (anillo + monograma CH) en TODA carga. `app/loading.tsx` de raíz. Nada de spinners genéricos ni pantallas en blanco/gris |
 | 50 | [Capital Hub App (alumnos) — Auditoría de estado](50-app-alumnos-auditoria-estado.md) | Estado real de la App del alumno (proyecto separado). Qué funciona, bugs P0/P1/P2, schema drift, hueco de pago→acceso. Se actualiza con cada cambio en la App |
 | 51 | [Recursos de formación (App)](51-recursos-formacion-app.md) | Recursos por formación enlazables a lecciones (M2M) en la App. Guías visuales (type GUIDE) via registry. Tablas resources + resource_lessons + RLS |
+| 52 | [Venta manual + ventas por completar](52-venta-manual-y-pendientes.md) | Mover a mano dispara notificaciones; popup ahora/más tarde al pasar a Alumno; botón "Registrar venta" en la ficha; bloque "Ventas por completar" en dashboard; columna `sale_pending` |
+| 53 | [Notificaciones al equipo (in-app + push)](53-notificaciones-push.md) | Helper central `notifyAdmins` (in-app + web-push) en lead, agenda, venta, CRM manual y sistema. SIN emojis (REGLA #8). Click lleva al lugar del evento (tabla de destinos). Preferencias por usuario en `/perfil` (tabla `notification_preferences`). Interruptor push por dispositivo. Requisitos push iOS |
 
 ## Formaciones (material de presentación)
 

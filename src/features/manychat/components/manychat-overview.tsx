@@ -30,16 +30,11 @@ function eventLabel(eventType: string): string {
 }
 
 export function ManychatOverviewView({ overview }: { overview: ManychatOverview }) {
+  // Solo tarjetas SIN fecha (totales). Las métricas por período viven en
+  // <ManychatPeriodKpis/> con el filtro global. Tags/CustomFields → pestaña Tags.
   const cards = [
     { title: 'Suscriptores Totales', value: overview.totalSubscribers, source: 'manychat' },
     { title: 'Activos', value: overview.activeStatus, source: 'manychat' },
-    { title: 'Nuevos Hoy', value: overview.newToday, source: 'manychat' },
-    { title: 'Nuevos 7d', value: overview.new7d, source: 'manychat' },
-    { title: 'Nuevos 30d', value: overview.new30d, source: 'manychat' },
-    { title: 'DMs Recibidos 7d', value: overview.messagesReceived7d, source: 'events' },
-    { title: 'Flows Disparados 7d', value: overview.flowsTriggered7d, source: 'events' },
-    { title: 'Tags Definidos', value: overview.tagsCount, source: 'manychat' },
-    { title: 'Custom Fields', value: overview.customFieldsCount, source: 'manychat' },
   ]
 
   const maxTagCount = Math.max(1, ...overview.topTags.map(t => t.count))

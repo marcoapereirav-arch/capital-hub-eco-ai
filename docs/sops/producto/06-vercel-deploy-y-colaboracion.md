@@ -58,6 +58,19 @@ git pull --rebase origin main
 git push
 ```
 
+### Gotcha del AGENTE: el repo puede NO estar en `main` (branch drift)
+Otra máquina/agente cambia de rama en este mismo repo local. Efecto: puedes estar en una rama (`feat/...`) sin darte cuenta, y `git push origin main` empuja el ref **`main` local** (que está viejo) → dice "Everything up-to-date" aunque tu commit esté en HEAD. Protocolo del agente:
+1. **Antes de trabajar**: `git checkout main && git pull origin main`. Trabaja SIEMPRE sobre `main`.
+2. **Al pushear**: si dudas de en qué rama estás, `git push origin HEAD:main` (empuja tu HEAD real a main, no el ref local).
+3. **Si tu rama local tiene commits AJENOS** (experimentos de otra rama que no van a producción): NO rebases toda la rama; **cherry-pick SOLO tu commit** sobre `origin/main` y púshealo:
+   ```
+   git fetch origin main
+   git checkout -b _deploy origin/main && git cherry-pick <mi_commit> && git push origin HEAD:main
+   git checkout main && git branch -D _deploy
+   ```
+4. **Push rechazado (non-fast-forward)** = alguien pusheó mientras trabajabas → `git fetch origin main` y rebase/cherry-pick sobre lo nuevo, nunca `--force`.
+5. Tras pushear, verificar el deploy real con `vercel ls` (o el SHA en `/api/version`), no fiarse de "lo empujé".
+
 ### Reglas duras
 - **NUNCA** `git push --force` a `main`.
 - **NUNCA** crear el proyecto en otro Vercel "para probar".

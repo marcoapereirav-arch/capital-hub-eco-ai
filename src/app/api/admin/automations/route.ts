@@ -84,7 +84,7 @@ export async function GET() {
     admin.from("email_logs").select("template, sent_at, error").eq("status", "failed").order("sent_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("contact_journey_events").select("created_at").eq("type", "sale").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("manychat_events").select("id", { count: "exact", head: true }),
-    admin.from("manychat_events").select("created_at, event_type").order("id", { ascending: false }).limit(1).maybeSingle(),
+    admin.from("manychat_events").select("received_at, event_type").order("received_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("meta_events_log").select("id", { count: "exact", head: true }),
     admin.from("meta_events_log").select("created_at, status").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ])
@@ -162,7 +162,70 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // Stats ManyChat → Webinar (router del reel) + sync
+  const { count: webinarCommentCount } = await admin
+    .from("manychat_events")
+    .select("*", { count: "exact", head: true })
+    .eq("event_type", "webinar_comment")
+  const { data: lastWebinarComment } = await admin
+    .from("manychat_events")
+    .select("received_at")
+    .eq("event_type", "webinar_comment")
+    .order("received_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const { data: manychatConn } = await admin
+    .from("api_connections")
+    .select("last_sync_at, last_error")
+    .eq("platform", "manychat")
+    .maybeSingle()
+
   const automations = [
+    {
+      id: "manychat_webinar_router",
+      category: "crm",
+      label: "Reel (comentario) → CRM Webinar + link DM",
+      description:
+        "Alguien comenta la palabra clave del reel → ManyChat llama al router → loguea el comentario (conteo 'comentaron') + cachea el suscriptor + devuelve el link del webinar con mc_id para el DM. IMPORTANTE: comentar NO crea lead; el contacto entra al pipeline 'Webinar' como 'lead' solo al rellenar el opt-in (vinculado por mc_id).",
+      trigger: "POST /api/manychat/webinar-router (External Request desde ManyChat)",
+      actions: [
+        "Verifica firma MANYCHAT_WEBHOOK_SECRET",
+        "Loguea evento webinar_comment (conteo 'comentaron')",
+        "Cachea el suscriptor para el dashboard",
+        "Devuelve delivery_link con mc_id para el DM (el lead se crea en el opt-in)",
+      ],
+      relatedTables: ["manychat_events", "manychat_subscribers_cache"],
+      status: (webinarCommentCount ?? 0) > 0 ? "live" : "pending",
+      statusReason: (webinarCommentCount ?? 0) > 0
+        ? `Recibiendo comentarios · ${webinarCommentCount} eventos`
+        : "Endpoint listo · FALTA configurar External Request en el flow del reel (Adrián, SOP producto/20)",
+      lastRun: lastWebinarComment?.received_at ?? null,
+      lastRunHoursAgo: hoursSince(lastWebinarComment?.received_at),
+      totalExecutions: webinarCommentCount ?? 0,
+    },
+    {
+      id: "manychat_sync",
+      category: "sistema",
+      label: "Sync ManyChat (tags/fields → dashboard)",
+      description:
+        "Cron cada 6h: trae tags y custom fields de la API de ManyChat a la caché del OS y actualiza el latido 'último sync' del dashboard /manychat. Los suscriptores llegan por webhook, no por aquí.",
+      trigger: "Vercel Cron GET /api/cron/manychat-sync (23 */6 * * *)",
+      actions: [
+        "Llama a la API de ManyChat (getTags + getCustomFields)",
+        "Upsert manychat_tags_cache + manychat_custom_fields_cache",
+        "Actualiza api_connections.last_sync_at",
+      ],
+      relatedTables: ["manychat_tags_cache", "manychat_custom_fields_cache", "api_connections"],
+      status: manychatConn?.last_sync_at ? "live" : "idle",
+      statusReason: manychatConn?.last_error
+        ? `Último sync con error: ${manychatConn.last_error}`
+        : manychatConn?.last_sync_at
+          ? "Sync corriendo cada 6h"
+          : "Cron registrado · aún no ha corrido",
+      lastRun: manychatConn?.last_sync_at ?? null,
+      lastRunHoursAgo: hoursSince(manychatConn?.last_sync_at),
+      totalExecutions: null,
+    },
     {
       id: "agenda_to_calendar",
       category: "calendario",
@@ -398,8 +461,8 @@ export async function GET() {
       statusReason: manychatActive
         ? `Webhook recibiendo · ${manychatCount} eventos · último ${lastManychatEvent?.event_type ?? "?"}`
         : "Endpoint listo · FALTA configurar External Request en panel ManyChat (tarea Marco/Adrián)",
-      lastRun: lastManychatEvent?.created_at ?? null,
-      lastRunHoursAgo: hoursSince(lastManychatEvent?.created_at),
+      lastRun: lastManychatEvent?.received_at ?? null,
+      lastRunHoursAgo: hoursSince(lastManychatEvent?.received_at),
       totalExecutions: manychatCount ?? 0,
     },
     {

@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { verifyWebhookSignature } from "@/lib/calendly"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 import { notifyAdrianBooking } from "@/lib/email/senders"
-import { pushToUsers } from "@/lib/notifications/notify-admins"
+import { pushToUsers, filterByNotificationPref } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -97,7 +97,7 @@ async function notifyHost(
     weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
     timeZone: "Europe/Madrid",
   })
-  const kindLabel = kind === "created" ? "📅 Nueva reserva" : kind === "canceled" ? "❌ Cancelación" : "🚫 No show"
+  const kindLabel = kind === "created" ? "Nueva reserva" : kind === "canceled" ? "Cancelación" : "No show"
   const titles: Record<typeof kind, string> = {
     created: `${kindLabel} - ${inv.name}`,
     canceled: `${kindLabel} - ${inv.name}`,
@@ -109,21 +109,25 @@ async function notifyHost(
     no_show: `${inv.name} (${inv.email}) no se presentó a la cita del ${dt}. Movido a 'no_show'.`,
   }
 
-  // 1) In-app notifications (insert una row por host)
-  const rows = hosts.map((h) => ({
-    user_id: h.id,
+  // 1) In-app notifications (insert una row por host), respetando lo que cada
+  //    uno tenga activado en /perfil (grupo 'agenda').
+  const hostIds = await filterByNotificationPref(admin, hosts.map((h) => h.id), `calendly_${kind}`)
+  const rows = hostIds.map((user_id) => ({
+    user_id,
     title: titles[kind],
     body: bodies[kind],
     type: `calendly_${kind}`,
-    data: { invitee_email: inv.email, invitee_name: inv.name, scheduled_start: scheduledStart, event_name: eventName },
+    data: { url: "/calendario", invitee_email: inv.email, invitee_name: inv.name, scheduled_start: scheduledStart, event_name: eventName },
   }))
-  await admin.from("notifications").insert(rows).then(() => null, (e) => console.error("[calendly/notif] in-app insert failed", e))
+  if (rows.length) {
+    await admin.from("notifications").insert(rows).then(() => null, (e) => console.error("[calendly/notif] in-app insert failed", e))
+  }
 
   // 1b) Push a los mismos hosts (super_admins + closer asignado)
-  await pushToUsers(admin, hosts.map((h) => h.id), {
+  await pushToUsers(admin, hostIds, {
     title: titles[kind],
     body: bodies[kind],
-    data: { url: "/crm/pipeline", invitee_email: inv.email },
+    data: { url: "/calendario", invitee_email: inv.email },
     tag: `calendly_${kind}`,
   })
 

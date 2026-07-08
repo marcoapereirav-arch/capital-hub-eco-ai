@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { notifyGCalDisconnected } from "@/lib/email/senders"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
+import { filterByNotificationPref } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -125,15 +126,22 @@ export async function GET(req: NextRequest) {
     .neq("email", TEST_AGENT_EMAIL)
   if (superAdmins && superAdmins.length > 0) {
     try {
-      await supabase.from("notifications").insert(
-        superAdmins.map((u) => ({
-          user_id: u.id,
-          title: "⚠️ Google Calendar desconectado",
-          body: `Adrián tiene que reconectar en /calendario. Razón: ${reason}`,
-          type: "gcal_disconnected",
-          data: { reason, detail: errBody.slice(0, 200), owner_email: owner.google_oauth_email },
-        }))
+      const adminIds = await filterByNotificationPref(
+        supabase,
+        superAdmins.map((u) => u.id as string),
+        "gcal_disconnected",
       )
+      if (adminIds.length) {
+        await supabase.from("notifications").insert(
+          adminIds.map((user_id) => ({
+            user_id,
+            title: "Google Calendar desconectado",
+            body: `Adrián tiene que reconectar en /calendario. Razón: ${reason}`,
+            type: "gcal_disconnected",
+            data: { url: "/calendario", reason, detail: errBody.slice(0, 200), owner_email: owner.google_oauth_email },
+          }))
+        )
+      }
     } catch (e) {
       console.error("[gcal-health-check] push notif failed", e)
     }

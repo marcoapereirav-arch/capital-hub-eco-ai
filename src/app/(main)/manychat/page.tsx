@@ -7,7 +7,10 @@ import {
   listCustomFields,
   listInbox,
 } from '@/features/manychat/services/queries'
+import { getWebinarReelFunnel } from '@/features/manychat/services/webinar-funnel'
 import { ManychatOverviewView } from '@/features/manychat/components/manychat-overview'
+import { ManychatPeriodKpis } from '@/features/manychat/components/manychat-period-kpis'
+import { WebinarFunnelPanel } from '@/features/manychat/components/webinar-funnel-panel'
 import { SubscribersList } from '@/features/manychat/components/subscribers-list'
 import { InboxView } from '@/features/manychat/components/inbox-view'
 import { TagsPanel } from '@/features/manychat/components/tags-panel'
@@ -15,12 +18,13 @@ import { TagsPanel } from '@/features/manychat/components/tags-panel'
 export const dynamic = 'force-dynamic'
 
 export default async function ManychatPage() {
-  const [overview, subscribers, tags, customFields, inbox] = await Promise.all([
+  const [overview, subscribers, tags, customFields, inbox, webinarFunnel] = await Promise.all([
     getOverview(),
     listSubscribers({ limit: 100 }),
     listTags(),
     listCustomFields(),
     listInbox(50),
+    getWebinarReelFunnel(),
   ])
 
   return (
@@ -44,7 +48,11 @@ export default async function ManychatPage() {
           </TabsList>
 
           <TabsContent value="overview">
-            <ManychatOverviewView overview={overview} />
+            <div className="flex flex-col gap-6">
+              <WebinarFunnelPanel funnel={webinarFunnel} />
+              <ManychatPeriodKpis />
+              <ManychatOverviewView overview={overview} />
+            </div>
           </TabsContent>
 
           <TabsContent value="subscribers">

@@ -9,55 +9,21 @@ import type {
   InboxMessage,
 } from '../types'
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
+/**
+ * Datos del overview SIN ventana de fecha. Las métricas por período (nuevos
+ * suscriptores, DMs) las calcula el componente cliente con el filtro de fechas
+ * global del OS (ver manychat-period-kpis.tsx). Regla: no hardcodear ventanas
+ * de fecha por widget si hay filtro global (SOP sistemas/05).
+ */
 export async function getOverview(): Promise<ManychatOverview> {
   const supabase = await createClient()
-  const now = Date.now()
-  const startOfToday = new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
-  const sevenDaysAgo = new Date(now - 7 * DAY_MS).toISOString()
-  const thirtyDaysAgo = new Date(now - 30 * DAY_MS).toISOString()
 
-  const [
-    totalRes,
-    todayRes,
-    sevenRes,
-    thirtyRes,
-    activeRes,
-    msgs7Res,
-    flows7Res,
-    tagsRes,
-    fieldsRes,
-    eventsRes,
-    connRes,
-  ] = await Promise.all([
+  const [totalRes, activeRes, tagsRes, fieldsRes, eventsRes, connRes] = await Promise.all([
     supabase.from('manychat_subscribers_cache').select('id', { count: 'exact', head: true }),
     supabase
       .from('manychat_subscribers_cache')
       .select('id', { count: 'exact', head: true })
-      .gte('subscribed_at', startOfToday),
-    supabase
-      .from('manychat_subscribers_cache')
-      .select('id', { count: 'exact', head: true })
-      .gte('subscribed_at', sevenDaysAgo),
-    supabase
-      .from('manychat_subscribers_cache')
-      .select('id', { count: 'exact', head: true })
-      .gte('subscribed_at', thirtyDaysAgo),
-    supabase
-      .from('manychat_subscribers_cache')
-      .select('id', { count: 'exact', head: true })
       .eq('status', 'active'),
-    supabase
-      .from('manychat_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_type', 'message_received')
-      .gte('received_at', sevenDaysAgo),
-    supabase
-      .from('manychat_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('event_type', 'flow_triggered')
-      .gte('received_at', sevenDaysAgo),
     supabase.from('manychat_tags_cache').select('*'),
     supabase.from('manychat_custom_fields_cache').select('*'),
     supabase
@@ -79,12 +45,7 @@ export async function getOverview(): Promise<ManychatOverview> {
 
   return {
     totalSubscribers: totalRes.count ?? 0,
-    newToday: todayRes.count ?? 0,
-    new7d: sevenRes.count ?? 0,
-    new30d: thirtyRes.count ?? 0,
     activeStatus: activeRes.count ?? 0,
-    messagesReceived7d: msgs7Res.count ?? 0,
-    flowsTriggered7d: flows7Res.count ?? 0,
     tagsCount: tags.length,
     customFieldsCount: (fieldsRes.data ?? []).length,
     topTags: tagCounts.slice(0, 8),

@@ -49,12 +49,7 @@ export interface ManychatEvent {
 
 export interface ManychatOverview {
   totalSubscribers: number
-  newToday: number
-  new7d: number
-  new30d: number
   activeStatus: number
-  messagesReceived7d: number
-  flowsTriggered7d: number
   tagsCount: number
   customFieldsCount: number
   topTags: Array<{ name: string; count: number }>

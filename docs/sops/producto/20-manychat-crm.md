@@ -181,3 +181,40 @@ Si la persona NO clica el link `?mc_id=12345` y va directo a `/agenda` (porque t
 5. **Setup en panel ManyChat** — Adrián añade External Request en su Flow Builder apuntando a nuestro webhook
 
 Los puntos 1-3 son código del OS. El 5 requiere acción en panel ManyChat por Adrián.
+
+---
+
+# Router del Webinar (reel → CRM → venta) · construido 2026-07-07
+
+Automatización de **palabra clave en un reel** para el funnel del webinar. Marco creó en ManyChat la automatización "Quick Automation ES" (tipo `feed_comment_trigger`) + el flow "Auto-DM de links desde comentarios". Verificado en vivo por la API de ManyChat (getGrowthTools).
+
+## Realidad de la API de ManyChat (verificado)
+- La API **sí** deja leer (getInfo, getGrowthTools, getFlows, getTags, getCustomFields) y enviar.
+- La API **NO** deja crear el disparador de comentario (growth tool): eso es UI-only en ManyChat. Lo crea Adrián/Marco a mano en el panel. No hay endpoint para ello ni para el admin.
+
+## Qué se construyó en el OS (todo listo, plug-and-play)
+
+| Pieza | Archivo | Qué hace |
+|---|---|---|
+| **Router del webinar** | `src/app/api/manychat/webinar-router/route.ts` | Recibe el comentario (External Request), lo **loguea** (`manychat_events`, para el conteo "comentaron"), **cachea** el suscriptor y **devuelve el link del webinar con `mc_id`** para el DM. **Comentar NO crea lead** (es solo una interacción): el contacto entra al pipeline **Webinar** como `lead` únicamente al rellenar el opt-in, vinculado por `mc_id`. Auth `Bearer MANYCHAT_WEBHOOK_SECRET`. |
+| **mc_id en el opt-in** | `src/app/api/optin/webinar/route.ts` + `funnel-webinar/components/landing.tsx` | El link del DM lleva `?mc_id=<subscriber_id>`. El opt-in busca primero por `manychat_subscriber_id` → **no duplica** el contacto creado en el comentario; lo completa con email/teléfono. |
+| **Sync cron** | `src/app/api/cron/manychat-sync/route.ts` + `vercel.json` (`23 */6 * * *`) | Cada 6h trae tags + custom fields de ManyChat a la caché y actualiza `api_connections.last_sync_at` (el dashboard deja de estar en cero). |
+| **Panel "Del reel a la venta"** | `manychat/services/webinar-funnel.ts` + `components/webinar-funnel-panel.tsx` (en `/manychat` → Overview) | Embudo de la cohorte ManyChat del pipeline Webinar: Comentaron → Reservaron → Agendaron → **Alumnos** + facturado. |
+| **Registro** | `api/admin/automations` | Entradas `manychat_webinar_router` + `manychat_sync` en el panel `/automatizaciones`. |
+
+El recorrido: **comentar** = interacción rastreada (evento, conteo "comentaron"). El contacto entra al pipeline como `lead` **al rellenar el opt-in** (vinculado por `mc_id`), y de ahí sigue el recorrido que ya existía: `agendado` (webhook Calendly / form) → `alumno` (registro de venta) sobre el mismo `contacts`. Un comentario **nunca** es un lead.
+
+## Estado de la conexión (2026-07-07, verificado)
+
+Verificado en producción: **cero eventos reales han llegado nunca de ManyChat** (el único evento en `manychat_events` es un test del 5-may). ManyChat detecta el comentario y manda el auto-DM, pero **no avisa al OS**: falta añadir un paso **External Request** dentro del flow del reel que haga `POST` a `/api/manychat/webinar-router`. Sin ese paso, nada del router/dashboard recibe datos.
+
+Esto es una **acción operativa pendiente**, no contenido de Knowledge: vive como **tarea en Operaciones** (el que tenga acceso al panel de ManyChat la ejecuta una vez). Aquí solo se documenta que la integración existe y cómo funciona; los pasos accionables no van en el Knowledge (REGLA: tareas → Operaciones, no `/docs`).
+
+Mientras no se conecte, el reel funciona con el **link simple** en el DM (`https://ch.capitalhubapp.com/webinar?utm_source=instagram&utm_medium=manychat&utm_campaign=reel_webinar`): el lead entra al CRM al rellenar el formulario. Con el External Request, entra ya **desde el comentario** y se trackea el embudo completo.
+
+## Cambios versionados
+- **2026-07-07**: creado el router del webinar + mc_id dedup + sync cron + panel "Del reel a la venta" + registro en automatizaciones.
+- **2026-07-07 (v2, feedback Marco)**: correcciones importantes.
+  - **Comentar NO es lead.** El router ya no crea contacto; solo rastrea el comentario y devuelve el link. El lead se crea al rellenar el opt-in (vinculado por mc_id). El panel separa "comentaron" (interacción) de "Lead" (opt-in con datos).
+  - **Dashboard `/manychat` con el filtro de fechas global.** Fuera las tarjetas con ventanas hardcodeadas (Nuevos Hoy/7d/30d, DMs 7d, Flows 7d); las métricas por período usan `<PeriodFilter>` (mismo del resto del OS, SOP sistemas/05). Overview limpio (totales + embudo del reel + eventos recientes; tags/fields en su pestaña).
+  - **El núcleo funciona sin External Request:** el opt-in del DM capta el lead y lo atribuye a Instagram; el External Request (contador de "comentaron") es un extra opcional.

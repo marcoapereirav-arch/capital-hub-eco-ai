@@ -20,6 +20,7 @@ export default async function PerfilRoute() {
       email={user.email ?? ""}
       fullName={profile?.full_name ?? ""}
       role={profile?.role ?? null}
+      userId={user.id}
     />
   )
 }

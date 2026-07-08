@@ -44,17 +44,19 @@ area: producto
 | 🟢 | `resend_webhook_tracking` | Webhook Resend → POST `/api/email/webhooks/resend` | Actualiza email_logs con aperturas/clicks |
 | 🟢 | `meta_capi_tracking` | Endpoints internos disparan CAPI | Audit trail en `meta_events_log` |
 
-### Sistema (1)
+### Sistema (2)
 
 | Estado | id | Trigger | Notas |
 |---|---|---|---|
 | 🟢 | `error_alerts_digest` | `pg_cron` cada 30 min (jobid 4) | Digest de errores a Marco |
+| 🟢 | `manychat_sync` | Vercel Cron `/api/cron/manychat-sync` cada 6h (`23 */6 * * *`) | Trae tags + custom fields de ManyChat a la caché + `api_connections.last_sync_at` (el dashboard `/manychat` deja de estar en cero). Verificado en producción 2026-07-07. Ver SOP 20. |
 
-### CRM / IG (2)
+### CRM / IG (3)
 
 | Estado | id | Trigger | Notas |
 |---|---|---|---|
 | 🔴 | `manychat_webhook` | Webhook ManyChat → POST `/api/webhooks/manychat` | **PENDING**: FALTA configurar External Request en panel ManyChat (Marco/Adrián). El endpoint está listo. |
+| 🔴 | `manychat_webinar_router` | POST `/api/manychat/webinar-router` (External Request ManyChat) | **PENDING** hasta que Adrián conecte el External Request en el flow del reel (pasos en SOP 20). Comentario del reel → contacto en pipeline **Webinar** (stage `lead`, @IG capturado en el comentario) + tags + Meta CAPI + devuelve link con `mc_id`. Endpoint **verificado en producción** 2026-07-07. `live` cuando lleguen comentarios reales. |
 | 🟢/🟡 | `test_personalidad_optin` | POST `/api/optin/test-personalidad` | Funnel Test Personalidad: crea contacto `lead` + pipeline + tags origen/fuente + atribución afiliado + Meta CAPI + notif si contacto recurrente. `live` cuando hay opt-ins. |
 
 ## Decisiones tomadas

@@ -1,14 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { User, Mail, Lock } from "lucide-react"
+import { User, Mail, Lock, Bell } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
+import { PushSettings } from "@/features/notifications/components/PushSettings"
+import { NotificationPrefs } from "@/features/notifications/components/NotificationPrefs"
 import { cn } from "@/lib/utils"
 
 const inputCls =
   "w-full rounded-sm border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none"
 
-export function ProfilePage({ email, fullName, role }: { email: string; fullName: string; role: string | null }) {
+export function ProfilePage({ email, fullName, role, userId }: { email: string; fullName: string; role: string | null; userId: string }) {
   const roleLabel = role === "super_admin" || role === "admin" ? "Admin" : role ?? "Miembro"
 
   // --- Nombre ---
@@ -100,6 +102,14 @@ export function ProfilePage({ email, fullName, role }: { email: string; fullName
           </SaveBtn>
           {emailMsg && <Msg ok={emailMsg.ok}>{emailMsg.text}</Msg>}
         </Row>
+      </Section>
+
+      {/* Notificaciones: push del dispositivo + qué tipos de aviso llegan */}
+      <Section icon={Bell} title="Notificaciones">
+        <PushSettings userId={userId} />
+        <div className="border-t border-border pt-3">
+          <NotificationPrefs />
+        </div>
       </Section>
 
       {/* Contraseña */}
