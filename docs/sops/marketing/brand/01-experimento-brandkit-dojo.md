@@ -81,6 +81,9 @@ Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, 
 
 ## Cambios versionados
 
+### 2026-07-08 (v7, auditoría multi-agente + fixes)
+Auditoría de cumplimiento con 25 agentes (3 revisores por dimensión: reglas de marca, copy y código; cada hallazgo verificado adversarialmente): 22 hallazgos brutos, 16 refutados, 6 confirmados y corregidos. (1) "Exclusivo del logo" pasa a "Exclusivo del wordmark" (el tracking amplio es solo del wordmark, no del isotipo). (2) Fuera el símil "como un metal precioso" del lead de Color (copy oficial, cero adorno). (3) Ratios de contraste reales por par: carbón/blanco 17.7:1 y papel/tinta 16.3:1 (el chip decía 16.9:1, que no correspondía a ninguno; queda "AAA"). (4) "Container" pasa a "Contenedor". (5) Botón copiar hex: solo confirma "Copiado" si la copia ocurrió de verdad. (6) Anillo de foco de teclado en currentColor (el verde era invisible sobre las placas verdes).
+
 ### 2026-07-08 (v6, corrección de Marco)
 **Las rayas NO van en los cinturones de color.** Son exclusivas de la cinta blanca (progresión del funnel). El cinturón de color se muestra siempre limpio, en su color real de la escalera. Aplicado: ficha del alumno ahora muestra el cinturón azul sin rayas (caption "Cinturón azul"), lead de la sección Rayas y nota de contextos reescritos.
 

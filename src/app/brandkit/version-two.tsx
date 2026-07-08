@@ -202,7 +202,7 @@ function LogoSection() {
               </li>
               <li>
                 <span>Uso del tracking</span>
-                <strong>Exclusivo del logo</strong>
+                <strong>Exclusivo del wordmark</strong>
               </li>
               <li>
                 <span>Área de respeto</span>
@@ -266,7 +266,7 @@ function ColorSection() {
   return (
     <section className="lx-sec lx-sec-carbon lx-sec-line" aria-label="Color">
       <div className="lx-wrap">
-        <SectionHead n="02" title="Color" lead="Dos materiales y un acento. El carbón es la base, el papel hueso es el contrapunto y el verde entra en dosis mínima, como un metal precioso." />
+        <SectionHead n="02" title="Color" lead="Dos materiales y un acento. El carbón es la base, el papel hueso es el contrapunto y el verde entra en dosis mínima." />
 
         <div className="lx-usage" data-lxr>
           <div className="lx-usagebar" role="img" aria-label="Proporción de uso de color">
@@ -325,13 +325,13 @@ function ColorSection() {
         <div className="lx-contrast lx-r" data-lxr style={d(80)}>
           <div className="lx-contrast-half lx-contrast-carbon">
             <span className="lx-aa">Aa</span>
-            <span className="lx-contrast-meta">Carbón #0F0F12 · Blanco Roto #F5F6F7</span>
+            <span className="lx-contrast-meta">Carbón #0F0F12 · Blanco Roto #F5F6F7 · 17.7 : 1</span>
           </div>
           <div className="lx-contrast-half lx-contrast-paper lx-paperbox">
             <span className="lx-aa">Aa</span>
-            <span className="lx-contrast-meta">Papel #F4F1E8 · Tinta #141414</span>
+            <span className="lx-contrast-meta">Papel #F4F1E8 · Tinta #141414 · 16.3 : 1</span>
           </div>
-          <span className="lx-contrast-chip">16.9 : 1 · AAA</span>
+          <span className="lx-contrast-chip">AAA</span>
         </div>
       </div>
     </section>
@@ -516,7 +516,7 @@ function MotifSection() {
 
           <MotifCard n="08" title="Bloques rectangulares" delay={490}
             desc="Contenedores rectos con radios de 2 a 4 px. Sin curvas exageradas.">
-            <div className="lx-m-block">Container</div>
+            <div className="lx-m-block">Contenedor</div>
           </MotifCard>
 
           <MotifCard n="09" title="Indicadores de estado" delay={560}
@@ -830,13 +830,15 @@ function MarkRing({ children, delay = 500 }: { children: ReactNode; delay?: numb
 function CopyHex({ hex }: { hex: string }) {
   const [copied, setCopied] = useState(false)
   const copy = () => {
-    try {
-      void navigator.clipboard?.writeText(hex)
-    } catch {
-      /* clipboard no disponible: el botón sigue mostrando el hex */
-    }
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1300)
+    navigator.clipboard
+      ?.writeText(hex)
+      .then(() => {
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 1300)
+      })
+      .catch(() => {
+        /* clipboard no disponible: el botón sigue mostrando el hex */
+      })
   }
   return (
     <button type="button" className="lx-hex" onClick={copy} title="Copiar hex">
@@ -1279,7 +1281,8 @@ function LxStyles() {
         transition: border-color 0.25s ease;
       }
       .lx-hex:hover { border-color: currentColor; }
-      .lx-hex:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+      /* currentColor: visible en placas verdes donde un anillo verde desapareceria */
+      .lx-hex:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
       .lx-textcolor .lx-hex { color: var(--muted); }
 
       .lx-contrast {
@@ -1677,7 +1680,7 @@ function LxStyles() {
         cursor: pointer;
         transition: translate 0.25s var(--ease), box-shadow 0.25s ease, border-color 0.25s ease;
       }
-      .lx-btn:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+      .lx-btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
       .lx-btn-green { background: var(--green); color: var(--greenink); }
       .lx-btn-green:hover { translate: 0 -2px; box-shadow: 0 14px 30px -14px rgba(34, 197, 94, 0.55); }
       .lx-btn-ghost { background: transparent; border-color: #A9A292; color: var(--ink); }
