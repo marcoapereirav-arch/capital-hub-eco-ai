@@ -78,7 +78,14 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 
 Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, laca negra mate, textura de cinturón), mucho aire, sobriedad, artesanía. Aplica todos los arreglos de arriba (copy oficial, cinturones visibles con ejemplo de rayas, cero guion largo).
 
+## Cómo se ve en el OS
+
+La pantalla **Knowledge > Brand > "Brandkit Capital Hub"** del OS embebe el brandkit en un iframe. Apunta a la **página viva `/brandkit`** (`src/features/knowledge/components/knowledge-page.tsx`), no a un HTML estático. Antes apuntaba a `public/brandkit.html` (el board viejo), ya retirado. Así el Knowledge siempre muestra el brandkit vigente sin regenerar nada.
+
 ## Cambios versionados
+
+### 2026-07-08 (v9, el OS Knowledge muestra el brandkit nuevo)
+El board viejo se seguía viendo en el OS porque la pantalla de Knowledge embebía `public/brandkit.html` (estático) vía iframe, no el markdown. Corregido: el iframe ahora apunta a `/brandkit` (la página viva nueva) y se retiró `public/brandkit.html`. Detonante: Marco no veía el cambio en el Knowledge del SaaS.
 
 ### 2026-07-08 (v8, V2 elegida como oficial)
 Marco aprueba los 3 pasos (fijar V2 oficial, llevar a main + regla nueva, rebrand del SaaS por fases). Aplicado: (1) el **logo oficial es el isotipo CH** (ya no "pendiente de diseño"; afinable a futuro). (2) **`/brandkit` consolidado**: retirado el comparador de pestañas y la V1; la página renderiza la V2 directa como brandkit oficial (V1 conservada en el historial git). (3) La **lógica de progresión de cinturones** se envió a Operaciones como tarea **someday** `t_brand_01_logica_cinturones` (área Producto, asignada a Marco). Pendiente en esta rama: merge a main + escribir la regla de branding oficial (retirando el board HTML viejo) + plan por fases del rebrand del SaaS.
