@@ -57,9 +57,10 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 - La mecánica real (que el alumno suba de verdad) NO se construye ahora, solo el lenguaje visual.
 
 ### Dónde se muestra cada cosa (contextos, Marco 2026-07-08)
+- **Las rayas son EXCLUSIVAS de la cinta blanca.** Los cinturones de color NUNCA llevan rayas: van limpios, en su color real de la escalera (corrección de Marco, 2026-07-08).
 - **Landings / funnels:** cinturón **BLANCO** con **rayas horizontales** en formato **barra** (la "barra de cinturón"). Es SOLO para la cinta blanca y SOLO se muestra aquí. Representa la progresión del funnel (el blanco gana rayas).
-- **App, perfil del alumno:** se ve el **cinturón real dibujado** (con su color y su cinta/raya), no la barra abstracta. Aquí es donde se ve "qué cinturón es" el alumno.
-- **Implicación en el brandkit:** en la sección Aplicación, la ficha del alumno debe mostrar el **cinturón dibujado (BeltIcon) con la cinta**, no la barra (BeltBar). La barra queda etiquetada como recurso de landings/funnels y en blanco.
+- **App, perfil del alumno:** se ve el **cinturón real dibujado, limpio, en su color** (sin rayas), no la barra abstracta. Aquí es donde se ve "qué cinturón es" el alumno.
+- **Implicación en el brandkit:** en la sección Aplicación, la ficha del alumno muestra el **cinturón dibujado (BeltIcon) en su color, sin rayas**. La barra (BeltBar) queda etiquetada como recurso de landings/funnels y en blanco.
 
 ### Logo e isotipo
 - **Fuera el sello CH** (doble anillo tipo estampa): descartado por Marco (2026-07-08).
@@ -79,6 +80,9 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, laca negra mate, textura de cinturón), mucho aire, sobriedad, artesanía. Aplica todos los arreglos de arriba (copy oficial, cinturones visibles con ejemplo de rayas, cero guion largo).
 
 ## Cambios versionados
+
+### 2026-07-08 (v6, corrección de Marco)
+**Las rayas NO van en los cinturones de color.** Son exclusivas de la cinta blanca (progresión del funnel). El cinturón de color se muestra siempre limpio, en su color real de la escalera. Aplicado: ficha del alumno ahora muestra el cinturón azul sin rayas (caption "Cinturón azul"), lead de la sección Rayas y nota de contextos reescritos.
 
 ### 2026-07-08 (v5, aplicado en código)
 Las decisiones de v4 quedan aplicadas en la V2 del brandkit: (1) tarjeta **Isotipo** en la sección Logo con el componente `ChIcon` (monograma CH en contenedor redondeado, variantes papel/carbón/verde, tamaños 48/32/24, mínimo 24 px); (2) el motif "Cinturón en barra" ahora es **solo cinta blanca** y su copy lo limita a landings/funnels; (3) la ficha del alumno en Aplicación muestra el **cinturón dibujado (BeltIcon) azul con 2 rayas** en vez de la barra, con el isotipo CH como avatar y subtítulo "Perfil del alumno · App". Verificado en localhost (TypeScript limpio, 0 errores de consola, 0 guiones largos).

@@ -17,10 +17,11 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react"
  * el cinturon. La logica de progresion esta pendiente de definir; la
  * escalera queda como referencia visual del sistema.
  *
- * Contextos: la barra de cinturon (formato interfaz) es SOLO de la cinta
- * blanca y SOLO para landings/funnels; en la App, el perfil del alumno
- * muestra su cinturon dibujado con su cinta. El isotipo CH es la marca
- * grafica como icono (app, favicon, avatar, firma); el sello quedo fuera.
+ * Contextos: las rayas son EXCLUSIVAS de la cinta blanca (en landings y
+ * funnels, formato barra). Los cinturones de color van siempre limpios,
+ * sin rayas; en la App, el perfil del alumno muestra su cinturon dibujado
+ * en su color real. El isotipo CH es la marca grafica como icono (app,
+ * favicon, avatar, firma); el sello quedo fuera.
  *
  * Reglas duras honradas: cero guion largo en todo el archivo, sin grid de
  * fondo, sin neones fuera del verde, prefers-reduced-motion respetado,
@@ -416,7 +417,7 @@ function BeltSection() {
         <div data-lxr>
           <h3 className="lx-h3 lx-r" style={d(0)}>Rayas</h3>
           <p className="lx-lead lx-lead-paper lx-r" style={d(100)}>
-            Dentro de cada cinturón se ganan rayas. La raya es una cinta verde horizontal
+            Las rayas son exclusivas de la cinta blanca. La raya es una cinta verde horizontal
             que recorre <MarkUnder delay={900}>todo el cinturón</MarkUnder>.
           </p>
         </div>
@@ -435,9 +436,10 @@ function BeltSection() {
         </div>
 
         <p className="lx-beltnote lx-r" data-lxr style={d(40)}>
-          La raya se marca siempre en verde #22C55E. En landings y funnels la cinta blanca
-          se muestra en formato barra; en la App, el perfil del alumno muestra su cinturón
-          dibujado con su cinta.
+          La raya se marca siempre en verde #22C55E y solo existe en la cinta blanca:
+          en landings y funnels se muestra en formato barra. Los cinturones de color van
+          siempre limpios, sin rayas; en la App, el perfil del alumno muestra su cinturón
+          en su color real.
         </p>
       </div>
     </section>
@@ -591,9 +593,9 @@ function ApplicationSection() {
               <p className="lx-carnet-sub">Perfil del alumno · App</p>
               <div className="lx-carnet-belt">
                 <div className="lx-carnet-beltfig">
-                  <BeltIcon id="carnet" color="#4F7CC0" stripes={2} />
+                  <BeltIcon id="carnet" color="#4F7CC0" />
                 </div>
-                <span>Cinturón azul · 2 rayas</span>
+                <span>Cinturón azul</span>
               </div>
             </div>
             <footer className="lx-carnet-foot">
