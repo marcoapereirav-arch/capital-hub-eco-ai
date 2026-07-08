@@ -1,36 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { WebinarReelFunnel } from '../services/webinar-funnel'
 
+const GREEN = '#22C55E'
+
 function fmt(n: number): string {
   return new Intl.NumberFormat('es-ES').format(n)
 }
-
 function eur(n: number): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 }
-
-function pct(part: number, whole: number): string {
-  if (!whole) return '—'
-  return `${Math.round((part / whole) * 100)}%`
-}
-
-type Step = {
-  label: string
-  hint: string
-  value: number
-  accent?: boolean
+function reelLabel(tag: string): string {
+  return tag.replace(/^reel:/, '') || tag
 }
 
 export function WebinarFunnelPanel({ funnel }: { funnel: WebinarReelFunnel }) {
-  // Comentar es una interacción (no un lead). Lead = opt-in con datos.
-  // El resto son stages reales del pipeline: agendado → alumno (venta).
-  const steps: Step[] = [
-    { label: 'Comentaron el reel', hint: 'interacción · aún no son lead', value: funnel.comentaron },
-    { label: 'Se apuntaron (Lead)', hint: 'dejaron sus datos en el opt-in', value: funnel.leads },
-    { label: 'Agendaron', hint: 'stage «Agendado»', value: funnel.agendaron },
-    { label: 'Alumnos', hint: 'stage «Alumno» · la venta', value: funnel.alumnos, accent: true },
+  const { overall, perReel } = funnel
+  const steps = [
+    { label: 'Comentaron', hint: 'stage DM', value: overall.comentaron },
+    { label: 'Se apuntaron', hint: 'stage Lead', value: overall.leads },
+    { label: 'Agendaron', hint: 'stage Agendado', value: overall.agendaron },
+    { label: 'Alumnos', hint: 'la venta', value: overall.alumnos, accent: true },
   ]
-  const max = Math.max(1, ...steps.map((s) => s.value))
 
   return (
     <Card className="border-border">
@@ -39,59 +29,77 @@ export function WebinarFunnelPanel({ funnel }: { funnel: WebinarReelFunnel }) {
           Del reel a la venta
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Recorrido de quien entró por el reel (comentario → DM) hasta comprar.
+          Recorrido de quien llega por tus reels: comentó (DM) → se apuntó (Lead) → agendó → compró.
         </p>
       </CardHeader>
-      <CardContent>
-        {funnel.comentaron === 0 ? (
-          <div className="border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-            Aún no hay nadie del reel. En cuanto ManyChat empiece a avisar de los comentarios, aparecerá el embudo aquí.
-          </div>
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {steps.map((s, i) => {
-              const prev = i === 0 ? null : steps[i - 1].value
-              return (
-                <li key={s.label} className="flex flex-col gap-1.5">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm text-foreground">
-                      {s.label}{' '}
-                      <span className="text-xs text-muted-foreground">· {s.hint}</span>
-                    </span>
-                    <span className="flex items-baseline gap-2">
-                      <span
-                        className="font-heading text-lg font-semibold"
-                        style={{ color: s.accent ? '#22C55E' : undefined }}
-                      >
-                        {fmt(s.value)}
-                      </span>
-                      {prev !== null && (
-                        <span className="font-mono text-[10px] text-muted-foreground">
-                          {pct(s.value, prev)}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex h-2 items-center bg-border/60">
-                    <div
-                      className="h-full"
-                      style={{
-                        width: `${(s.value / max) * 100}%`,
-                        backgroundColor: s.accent ? '#22C55E' : '#F5F6F7',
-                      }}
-                    />
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+      <CardContent className="flex flex-col gap-6">
+        {/* Resumen global */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {steps.map((s) => (
+            <div key={s.label} className="border border-border p-3">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.label}</div>
+              <div
+                className="font-heading text-2xl font-semibold text-foreground"
+                style={{ color: s.accent ? GREEN : undefined }}
+              >
+                {fmt(s.value)}
+              </div>
+              <div className="mt-0.5 font-mono text-[10px] text-muted-foreground/70">{s.hint}</div>
+            </div>
+          ))}
+        </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-          <span className="text-xs text-muted-foreground">Facturado por este canal</span>
-          <span className="font-heading text-xl font-semibold" style={{ color: '#22C55E' }}>
-            {eur(funnel.ingresos)}
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <span className="text-xs text-muted-foreground">Facturado por reels</span>
+          <span className="font-heading text-lg font-semibold" style={{ color: GREEN }}>
+            {eur(overall.ingresos)}
           </span>
+        </div>
+
+        {/* Desglose por reel */}
+        <div className="flex flex-col gap-2">
+          <h4 className="font-heading text-xs font-semibold uppercase tracking-wide text-foreground">
+            Por reel
+          </h4>
+          {perReel.length === 0 ? (
+            <div className="border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+              Aún no hay comentarios atribuidos a un reel. En cuanto ManyChat avise de los comentarios,
+              cada reel aparecerá aquí como una fila con su propio embudo.
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-border">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30 text-left">
+                    {['Reel', 'Comentaron', 'Se apuntaron', 'Agendaron', 'Alumnos', 'Facturado'].map((h, i) => (
+                      <th
+                        key={h}
+                        className={`px-3 py-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground ${i === 0 ? '' : 'text-right'}`}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {perReel.map((r) => (
+                    <tr key={r.reel} className="border-b border-border last:border-b-0 hover:bg-muted/20">
+                      <td className="px-3 py-2.5 font-medium text-foreground">{reelLabel(r.reel)}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-xs text-foreground">{fmt(r.comentaron)}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-xs text-foreground">{fmt(r.leads)}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-xs text-foreground">{fmt(r.agendaron)}</td>
+                      <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold" style={{ color: GREEN }}>
+                        {fmt(r.alumnos)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold" style={{ color: GREEN }}>
+                        {eur(r.ingresos)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

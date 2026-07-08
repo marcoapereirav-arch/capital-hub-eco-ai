@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/email/send-email"
 import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 import { notifyAdmins } from "@/lib/notifications/notify-admins"
+import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -130,9 +131,13 @@ export async function POST(req: Request) {
     if (existing) {
       contactId = existing.id
       action = "updated"
-      if (existing.stage && existing.stage !== "lead") recurringFromStage = existing.stage
+      // 'dm' (solo comentó) y 'lead' NO son "recurrente": es el flujo normal.
+      // Solo avisamos al equipo si el contacto YA estaba más avanzado (agendado/alumno...).
+      if (existing.stage && !["dm", "lead"].includes(existing.stage)) recurringFromStage = existing.stage
       const update: Record<string, unknown> = { full_name, phone, updated_at: new Date().toISOString() }
-      if (!existing.stage) update.stage = "lead"
+      // Opt-in = dejó sus datos → la ficha se mueve de 'dm' a 'lead'. Sin degradar si ya avanzó.
+      const nextStage = resolveAutoStage(existing.stage, "lead")
+      if (nextStage !== existing.stage) update.stage = nextStage
       if (!existing.pipeline_id && pipelineId) update.pipeline_id = pipelineId
       if (!existing.affiliate_slug && source) update.affiliate_slug = source
       if (mcId && !existing.manychat_subscriber_id) update.manychat_subscriber_id = mcId

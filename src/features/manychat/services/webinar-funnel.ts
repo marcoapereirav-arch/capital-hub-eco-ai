@@ -2,89 +2,99 @@ import 'server-only'
 import { createClient } from '@/lib/supabase/server'
 
 /**
- * Embudo "Del reel a la venta".
+ * Embudo "Del reel a la venta", desglosado POR reel.
  *
- * Modelo (importante):
- *  - COMENTARON = interacción en el reel (evento manychat_events 'webinar_comment').
- *    NO son leads todavía: comentar no deja datos.
- *  - LEAD = dejaron sus datos en el opt-in del webinar → contacto en el pipeline
- *    'webinar' con manychat_subscriber_id (vinculado por mc_id desde el DM).
- *  - AGENDADO / ALUMNO = stages reales del pipeline (la venta = 'alumno').
+ * Modelo (SOP producto/20):
+ *  - La ficha entra al pipeline WEBINAR en stage 'dm' cuando la persona COMENTA
+ *    el reel (con su Instagram + tag del reel de origen: `reel:<post_id>`).
+ *  - Al hacer opt-in, la MISMA ficha pasa a 'lead' y se completa.
+ *  - Sigue el pipeline: agendado → alumno (la venta).
  *
- * Ver SOP producto/20 + marketing/08.
+ * Cohorte = contactos del pipeline webinar con manychat_subscriber_id (vinieron
+ * del reel). El desglose por reel se hace con los tags `reel:*` (sistema propio).
  */
+export type ReelFunnelRow = {
+  reel: string // nombre del tag del reel (renombrable en el sistema de tags)
+  comentaron: number
+  leads: number
+  agendaron: number
+  alumnos: number
+  ingresos: number
+}
+
 export type WebinarReelFunnel = {
-  comentaron: number // interacciones en el reel (aún no son lead)
-  leads: number // rellenaron el opt-in (stage Lead o superior)
-  agendaron: number // stage Agendado o superior
-  alumnos: number // compraron (stage Alumno)
-  ingresos: number // facturado por esos alumnos
+  overall: { comentaron: number; leads: number; agendaron: number; alumnos: number; ingresos: number }
+  perReel: ReelFunnelRow[]
   configured: boolean
 }
 
 const EMPTY: WebinarReelFunnel = {
-  comentaron: 0,
-  leads: 0,
-  agendaron: 0,
-  alumnos: 0,
-  ingresos: 0,
+  overall: { comentaron: 0, leads: 0, agendaron: 0, alumnos: 0, ingresos: 0 },
+  perReel: [],
   configured: false,
+}
+
+const AGENDADO_STAGES = new Set(['agendado', 'seguimiento', 'no_show', 'alumno'])
+
+type CohortContact = { id: string; stage: string | null; total_revenue: number | null }
+
+function emptyRow(reel: string): ReelFunnelRow {
+  return { reel, comentaron: 0, leads: 0, agendaron: 0, alumnos: 0, ingresos: 0 }
+}
+
+function tally(row: { comentaron: number; leads: number; agendaron: number; alumnos: number; ingresos: number }, c: CohortContact) {
+  row.comentaron += 1
+  if (c.stage !== 'dm') row.leads += 1 // pasó del comentario: hizo opt-in
+  if (c.stage && AGENDADO_STAGES.has(c.stage)) row.agendaron += 1
+  if (c.stage === 'alumno') {
+    row.alumnos += 1
+    row.ingresos += Number(c.total_revenue) || 0
+  }
 }
 
 export async function getWebinarReelFunnel(): Promise<WebinarReelFunnel> {
   const supabase = await createClient()
 
-  const { data: pipeline } = await supabase
-    .from('pipelines')
-    .select('id')
-    .eq('slug', 'webinar')
-    .maybeSingle()
-
+  const { data: pipeline } = await supabase.from('pipelines').select('id').eq('slug', 'webinar').maybeSingle()
   const pid = pipeline?.id as string | undefined
   if (!pid) return EMPTY
 
-  // Comentaron: suscriptores únicos con un evento 'webinar_comment'.
-  const { data: commentRows } = await supabase
-    .from('manychat_events')
-    .select('subscriber_id')
-    .eq('event_type', 'webinar_comment')
-    .limit(5000)
-  const comentaron = new Set(
-    (commentRows ?? []).map((r) => (r as { subscriber_id: string | null }).subscriber_id).filter(Boolean),
-  ).size
+  // 1. Cohorte: contactos del webinar que vinieron del reel (tienen mc_id).
+  const { data: cohortData } = await supabase
+    .from('contacts')
+    .select('id, stage, total_revenue')
+    .eq('pipeline_id', pid)
+    .not('manychat_subscriber_id', 'is', null)
+  const cohort = (cohortData ?? []) as CohortContact[]
 
-  // Cohorte de leads: contactos del pipeline webinar que vinieron de ManyChat
-  // (tienen manychat_subscriber_id → se crearon al rellenar el opt-in del DM).
-  const base = () =>
-    supabase
-      .from('contacts')
-      .select('id', { count: 'exact', head: true })
-      .eq('pipeline_id', pid)
-      .not('manychat_subscriber_id', 'is', null)
+  const overall = { comentaron: 0, leads: 0, agendaron: 0, alumnos: 0, ingresos: 0 }
+  for (const c of cohort) tally(overall, c)
 
-  const [leadsRes, agendaronRes, alumnosRes, ingresosRes] = await Promise.all([
-    base(),
-    base().in('stage', ['agendado', 'seguimiento', 'no_show', 'alumno']),
-    base().eq('stage', 'alumno'),
-    supabase
-      .from('contacts')
-      .select('total_revenue')
-      .eq('pipeline_id', pid)
-      .not('manychat_subscriber_id', 'is', null)
-      .eq('stage', 'alumno'),
-  ])
+  // 2. Desglose por reel: tags `reel:*` + qué contactos los tienen.
+  const perReel: ReelFunnelRow[] = []
+  if (cohort.length > 0) {
+    const { data: reelTags } = await supabase.from('tags').select('id, name').ilike('name', 'reel:%')
+    const tagNameById = new Map<string, string>((reelTags ?? []).map((t) => [t.id as string, t.name as string]))
 
-  const ingresos = (ingresosRes.data ?? []).reduce(
-    (sum, r) => sum + (Number((r as { total_revenue: number | null }).total_revenue) || 0),
-    0,
-  )
+    if (tagNameById.size > 0) {
+      const contactById = new Map(cohort.map((c) => [c.id, c]))
+      const { data: links } = await supabase
+        .from('contact_tags')
+        .select('contact_id, tag_id')
+        .in('contact_id', cohort.map((c) => c.id))
+        .in('tag_id', Array.from(tagNameById.keys()))
 
-  return {
-    comentaron,
-    leads: leadsRes.count ?? 0,
-    agendaron: agendaronRes.count ?? 0,
-    alumnos: alumnosRes.count ?? 0,
-    ingresos,
-    configured: true,
+      const rowsByReel = new Map<string, ReelFunnelRow>()
+      for (const link of (links ?? []) as Array<{ contact_id: string; tag_id: string }>) {
+        const reelName = tagNameById.get(link.tag_id)
+        const c = contactById.get(link.contact_id)
+        if (!reelName || !c) continue
+        if (!rowsByReel.has(reelName)) rowsByReel.set(reelName, emptyRow(reelName))
+        tally(rowsByReel.get(reelName)!, c)
+      }
+      perReel.push(...Array.from(rowsByReel.values()).sort((a, b) => b.comentaron - a.comentaron))
+    }
   }
+
+  return { overall, perReel, configured: true }
 }
