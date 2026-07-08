@@ -1,9 +1,9 @@
 ---
-title: Brandkit Capital Hub (oficial)
+title: Brandkit, guía y reglas
 order: 2
 ---
 
-# Brandkit Capital Hub (oficial)
+# Brandkit, guía y reglas
 
 > **Estado: OFICIAL (elegido por Marco, 2026-07-08).** Este es el brandkit vigente de Capital Hub y **sustituye al board anterior** (`Brandkit_Capital_Hub.html`, retirado).
 > Se ve en vivo en la página **`/brandkit`** del OS. Aplica a TODO: ch. + os. + app.
@@ -100,6 +100,9 @@ La pantalla **Knowledge > Brand > "Brandkit Capital Hub"** del OS embebe el bran
 - [ ] Un solo PR a `main`. Tras el deploy, recarga forzada para confirmar.
 
 ## Cambios versionados
+
+### 2026-07-08 (v10, una sola carpeta Brand, sin duplicado)
+El Knowledge del OS mostraba el brandkit duplicado: una carpeta "Brand" hardcodeada (solo el brandkit visual) y otra carpeta que salía del markdown de `marketing/brand/` (los documentos). Fusionadas en UNA sola carpeta **Brand** (`knowledge-page.tsx`): brandkit visual + Brand Playbook + esta guía. Además este documento se renombró a "Brandkit, guía y reglas" para no confundirse con el item visual "Brandkit Capital Hub". Detonante: Marco vio el brandkit repetido en dos carpetas.
 
 ### 2026-07-08 (v9, el OS Knowledge muestra el brandkit nuevo)
 El board viejo se seguía viendo en el OS porque la pantalla de Knowledge embebía `public/brandkit.html` (estático) vía iframe, no el markdown. Corregido: el iframe ahora apunta a `/brandkit` (la página viva nueva) y se retiró `public/brandkit.html`. Detonante: Marco no veía el cambio en el Knowledge del SaaS.

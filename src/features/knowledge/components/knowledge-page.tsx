@@ -29,14 +29,23 @@ export function KnowledgePage({ folders: knowledgeFolders }: KnowledgePageProps)
 
   const allSops: Sop[] = knowledgeFolders.flatMap((f) => f.sops)
 
+  // La carpeta markdown "brand" (docs/sops/marketing/brand) se FUSIONA con la
+  // carpeta Brand para no duplicarla: una sola carpeta Brand con el brandkit
+  // visual + los documentos de marca. El resto de carpetas van tal cual.
+  const brandSub = knowledgeFolders.find((f) => f.id === BRAND_FOLDER)
+  const otherFolders = knowledgeFolders.filter((f) => f.id !== BRAND_FOLDER)
+
   const folders: FolderDef[] = [
     {
       id: BRAND_FOLDER,
       label: "Brand",
-      description: "Identidad, brandkit, guías visuales",
-      items: [{ id: BRANDKIT_ID, label: "Brandkit Capital Hub", icon: Palette }],
+      description: "Identidad, brandkit, voz y guías de marca",
+      items: [
+        { id: BRANDKIT_ID, label: "Brandkit Capital Hub", icon: Palette },
+        ...(brandSub?.sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })) ?? []),
+      ],
     },
-    ...knowledgeFolders.map((f) => ({
+    ...otherFolders.map((f) => ({
       id: f.id,
       label: f.label,
       description: f.description,

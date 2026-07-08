@@ -1,9 +1,9 @@
 ---
-title: Brand Playbook — Adrián Villanueva
+title: Brand Playbook, Adrián Villanueva
 order: 1
 ---
 
-# Brand Playbook — Adrián Villanueva
+# Brand Playbook, Adrián Villanueva
 
 > Documento vivo. Se actualiza cuando evoluciona el posicionamiento.
 > Es la guía canónica para cualquier pieza de contenido, guion o mensaje público firmado por Adrián.
