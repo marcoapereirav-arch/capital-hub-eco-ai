@@ -84,7 +84,7 @@ export async function GET() {
     admin.from("email_logs").select("template, sent_at, error").eq("status", "failed").order("sent_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("contact_journey_events").select("created_at").eq("type", "sale").order("created_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("manychat_events").select("id", { count: "exact", head: true }),
-    admin.from("manychat_events").select("created_at, event_type").order("id", { ascending: false }).limit(1).maybeSingle(),
+    admin.from("manychat_events").select("received_at, event_type").order("received_at", { ascending: false }).limit(1).maybeSingle(),
     admin.from("meta_events_log").select("id", { count: "exact", head: true }),
     admin.from("meta_events_log").select("created_at, status").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ])
@@ -169,9 +169,9 @@ export async function GET() {
     .eq("event_type", "webinar_comment")
   const { data: lastWebinarComment } = await admin
     .from("manychat_events")
-    .select("created_at")
+    .select("received_at")
     .eq("event_type", "webinar_comment")
-    .order("id", { ascending: false })
+    .order("received_at", { ascending: false })
     .limit(1)
     .maybeSingle()
   const { data: manychatConn } = await admin
@@ -201,8 +201,8 @@ export async function GET() {
       statusReason: (webinarCommentCount ?? 0) > 0
         ? `Recibiendo comentarios · ${webinarCommentCount} eventos`
         : "Endpoint listo · FALTA configurar External Request en el flow del reel (Adrián, SOP producto/20)",
-      lastRun: lastWebinarComment?.created_at ?? null,
-      lastRunHoursAgo: hoursSince(lastWebinarComment?.created_at),
+      lastRun: lastWebinarComment?.received_at ?? null,
+      lastRunHoursAgo: hoursSince(lastWebinarComment?.received_at),
       totalExecutions: webinarCommentCount ?? 0,
     },
     {
@@ -463,8 +463,8 @@ export async function GET() {
       statusReason: manychatActive
         ? `Webhook recibiendo · ${manychatCount} eventos · último ${lastManychatEvent?.event_type ?? "?"}`
         : "Endpoint listo · FALTA configurar External Request en panel ManyChat (tarea Marco/Adrián)",
-      lastRun: lastManychatEvent?.created_at ?? null,
-      lastRunHoursAgo: hoursSince(lastManychatEvent?.created_at),
+      lastRun: lastManychatEvent?.received_at ?? null,
+      lastRunHoursAgo: hoursSince(lastManychatEvent?.received_at),
       totalExecutions: manychatCount ?? 0,
     },
     {

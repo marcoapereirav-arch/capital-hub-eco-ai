@@ -204,30 +204,13 @@ Automatización de **palabra clave en un reel** para el funnel del webinar. Marc
 
 El resto del recorrido "hasta la venta" ya existía: `agendado` (webhook Calendly / form) → `alumno` (registro de venta) sobre el mismo `contacts`. El router solo hace que el contacto aparezca **desde el comentario**, no desde el formulario.
 
-## Acción de Adrián en ManyChat (UNA vez) — pasos exactos
+## Estado de la conexión (2026-07-07, verificado)
 
-En el flow "Auto-DM de links desde comentarios" (el que dispara la automatización del reel), **antes** del paso que manda el DM:
+Verificado en producción: **cero eventos reales han llegado nunca de ManyChat** (el único evento en `manychat_events` es un test del 5-may). ManyChat detecta el comentario y manda el auto-DM, pero **no avisa al OS**: falta añadir un paso **External Request** dentro del flow del reel que haga `POST` a `/api/manychat/webinar-router`. Sin ese paso, nada del router/dashboard recibe datos.
 
-1. Añadir un paso **External Request** (Acciones → External Request / Dynamic Block · el nombre varía por idioma/versión — REGLA #4).
-2. Método **POST**, URL:
-   `https://os.capitalhubapp.com/api/manychat/webinar-router`
-3. Header: `Authorization: Bearer <MANYCHAT_WEBHOOK_SECRET>` (el valor está en el `.env` del OS; Marco se lo pasa a Adrián por un canal seguro, nunca por chat público).
-4. Body (JSON), mapeando los campos de ManyChat:
-   ```json
-   {
-     "subscriber_id": "{{user_id}}",
-     "ig_username": "{{ig_username}}",
-     "first_name": "{{first_name}}",
-     "last_name": "{{last_name}}",
-     "comment_text": "{{last_input_text}}",
-     "post_id": "{{...}}"
-   }
-   ```
-5. Guardar la respuesta: mapear `delivery_link` a un custom field (ej. `cf_webinar_link`).
-6. En el paso del DM, poner el botón/enlace usando `{{cf_webinar_link}}` en vez de un link fijo.
-7. (Opcional) Activar "solo entregar si sigue la cuenta".
+Esto es una **acción operativa pendiente**, no contenido de Knowledge: vive como **tarea en Operaciones** (el que tenga acceso al panel de ManyChat la ejecuta una vez). Aquí solo se documenta que la integración existe y cómo funciona; los pasos accionables no van en el Knowledge (REGLA: tareas → Operaciones, no `/docs`).
 
-Hasta que Adrián haga esto, el reel funciona con el **link simple** (`https://ch.capitalhubapp.com/webinar?utm_source=instagram&utm_medium=manychat&utm_campaign=reel_webinar`): el lead entra al CRM al rellenar el formulario. Con el External Request, entra ya **desde el comentario** y se trackea el embudo completo.
+Mientras no se conecte, el reel funciona con el **link simple** en el DM (`https://ch.capitalhubapp.com/webinar?utm_source=instagram&utm_medium=manychat&utm_campaign=reel_webinar`): el lead entra al CRM al rellenar el formulario. Con el External Request, entra ya **desde el comentario** y se trackea el embudo completo.
 
 ## Cambios versionados
 - **2026-07-07**: creado el router del webinar + mc_id dedup + sync cron + panel "Del reel a la venta" + registro en automatizaciones. Pendiente: Adrián añade el External Request en el flow del reel (pasos arriba).
