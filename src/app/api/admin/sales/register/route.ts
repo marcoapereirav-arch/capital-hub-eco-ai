@@ -3,6 +3,7 @@ import { z } from "zod"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendWelcomeAlumnoHT, notifyMarcoPurchase } from "@/lib/email/senders"
+import { notifyAdmins } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -245,6 +246,15 @@ export async function POST(req: NextRequest) {
   if (notifResult.status === "rejected") {
     console.error("[sales/register] notif Marco failed", notifResult.reason)
   }
+
+  // Push + in-app al equipo (además del email de notifyMarcoPurchase).
+  await notifyAdmins(admin, {
+    title: "💰 Venta registrada",
+    body: `${data.full_name} · ${data.products.join(" + ")} · ${data.revenue.toFixed(0)} €`,
+    type: "venta",
+    url: "/crm/pipeline",
+    data: { contact_id: contactId, email, revenue: data.revenue },
+  })
 
   return NextResponse.json({
     ok: true,

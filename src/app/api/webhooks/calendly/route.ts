@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { verifyWebhookSignature } from "@/lib/calendly"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 import { notifyAdrianBooking } from "@/lib/email/senders"
+import { pushToUsers } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -117,6 +118,14 @@ async function notifyHost(
     data: { invitee_email: inv.email, invitee_name: inv.name, scheduled_start: scheduledStart, event_name: eventName },
   }))
   await admin.from("notifications").insert(rows).then(() => null, (e) => console.error("[calendly/notif] in-app insert failed", e))
+
+  // 1b) Push a los mismos hosts (super_admins + closer asignado)
+  await pushToUsers(admin, hosts.map((h) => h.id), {
+    title: titles[kind],
+    body: bodies[kind],
+    data: { url: "/crm/pipeline", invitee_email: inv.email },
+    tag: `calendly_${kind}`,
+  })
 
   // 2) Email - solo para 'created' usamos el template existente notifyAdrianBooking;
   //    para canceled/no_show usamos el mismo template con etiqueta clara en el subject.

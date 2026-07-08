@@ -5,6 +5,7 @@ import { render } from "@react-email/render"
 import { sendEmail } from "@/lib/email/send-email"
 import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
+import { notifyAdmins } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -177,6 +178,17 @@ export async function POST(req: Request) {
     }
   } catch (e) {
     console.error("[optin/webinar] email de confirmación falló (no bloquea)", e)
+  }
+
+  // Push + in-app al equipo: nuevo lead del webinar.
+  if (action === "created") {
+    await notifyAdmins(admin, {
+      title: "🎯 Nuevo lead · Webinar",
+      body: `${full_name} reservó plaza en el webinar.`,
+      type: "lead",
+      url: "/crm/pipeline",
+      data: { contact_id: contactId, email },
+    })
   }
 
   // Notificación al equipo: un contacto YA avanzado vuelve a pasar por el opt-in.
