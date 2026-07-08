@@ -8,6 +8,13 @@ interface PushNotificationPromptProps {
   autoShowDelay?: number
 }
 
+// "Ahora no" pausa el aviso unos días, no para siempre. Antes se guardaba un
+// flag permanente y quien lo cerraba una vez ya no tenía NINGUNA forma visible
+// de activar el push (caso Adrián). Ahora: el aviso reaparece pasados 7 días
+// y además existe el interruptor en /perfil.
+const DISMISS_KEY = 'push-prompt-dismissed-at'
+const DISMISS_MS = 7 * 24 * 60 * 60 * 1000
+
 export function PushNotificationPrompt({
   userId,
   autoShowDelay = 3000,
@@ -18,8 +25,8 @@ export function PushNotificationPrompt({
   useEffect(() => {
     if (!isSupported || isSubscribed || permission === 'denied') return
 
-    const dismissed = localStorage.getItem('push-prompt-dismissed')
-    if (dismissed) return
+    const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) ?? 0)
+    if (dismissedAt && Date.now() - dismissedAt < DISMISS_MS) return
 
     const timer = setTimeout(() => setShow(true), autoShowDelay)
     return () => clearTimeout(timer)
@@ -28,13 +35,12 @@ export function PushNotificationPrompt({
   if (!show) return null
 
   const handleEnable = async () => {
-    localStorage.setItem('push-prompt-dismissed', 'true')
-    await subscribe()
     setShow(false)
+    await subscribe()
   }
 
   const handleDismiss = () => {
-    localStorage.setItem('push-prompt-dismissed', 'true')
+    localStorage.setItem(DISMISS_KEY, String(Date.now()))
     setShow(false)
   }
 
@@ -42,7 +48,8 @@ export function PushNotificationPrompt({
     <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-sm border border-border bg-card p-4 shadow-lg space-y-3">
       <p className="text-sm font-medium text-foreground">Activar notificaciones?</p>
       <p className="text-xs text-muted-foreground">
-        Recibe avisos importantes de Capital Hub aunque no tengas la app abierta.
+        Recibe avisos de leads, agendas y ventas aunque no tengas la app abierta.
+        También puedes activarlas después desde Mi perfil.
       </p>
       <div className="flex gap-2">
         <button

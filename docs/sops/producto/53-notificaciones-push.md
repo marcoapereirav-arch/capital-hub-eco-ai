@@ -31,7 +31,17 @@ Pedido por Marco (2026-07-07): "que lleguen notificaciones push cada vez que ent
 - `push_subscriptions` (una fila por dispositivo suscrito, migración `0006_push_notifications`).
 - `web-push` + VAPID (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`).
 - Service worker `public/sw.js` muestra `{ title, body, data:{url}, tag }`; al pulsar navega a `data.url` (por defecto `/crm/pipeline`).
-- Para RECIBIR push hay que haber aceptado el permiso en el dispositivo (prompt PWA). Marco y Adrián ya están suscritos.
+- Para RECIBIR push hay que haber aceptado el permiso en el dispositivo (prompt PWA o interruptor en `/perfil`).
+- **Estado real de suscripciones (verificado en BD 2026-07-08)**: Marco tiene 6 dispositivos suscritos y funcionando. **Adrián tiene CERO** (la suscripción Win32 que se creía suya es de Juan Pablo, formador). Adrián tiene que entrar a `/perfil` → Notificaciones → Activar, en cada dispositivo donde quiera recibir push.
+- **Regla de limpieza de suscripciones**: una suscripción SOLO se borra de BD si el push service responde 404/410 (ya no existe). Un fallo de red o un 400/401/403 (config VAPID) NO borra: antes se borraban suscripciones válidas en silencio y el usuario dejaba de recibir push para siempre.
+
+## UI
+
+- **Campana** (`NotificationsPanel.tsx`, montada en TopBar y MobileHeader): cada notificación es clicable → se marca leída y navega a `data.url`. Iconos por tipo (lead/venta/agenda en verde de marca, cancelaciones/no-show/alertas en rojo). Poll cada 30s + refresh al volver el foco + al abrir el panel. Tiempos relativos ("hace 5 min").
+- **API**: `GET /api/admin/notifications` (lista, `?unread=true`), `PATCH` sin body = todas leídas, `PATCH { id }` = solo esa.
+- **Toda notificación in-app debe llevar `data.url`** (destino al pulsarla). `notifyAdmins` lo pone por defecto (`/crm/pipeline`); los inserts propios (Calendly, movimientos manuales) también lo llevan.
+- **Interruptor push en `/perfil`** (`PushSettings.tsx`): activar/desactivar push del dispositivo actual, con estados para navegador sin soporte y permiso bloqueado. Es la vía visible si se cerró el prompt automático.
+- **Prompt automático** (`PushNotificationPrompt.tsx`): "Ahora no" lo pausa 7 días (antes lo mataba para siempre y no había NINGUNA otra vía en la UI).
 
 ## Para añadir un evento nuevo
 
@@ -54,3 +64,4 @@ Pedido por Marco (2026-07-07): "que lleguen notificaciones push cada vez que ent
 
 - **2026-07-07**: creación del helper central `notifyAdmins`/`pushToUsers`. Cableado en lead (2 opt-ins), agenda (Calendly + calendario propio) y venta. Antes no salía ningún push.
 - **2026-07-08**: documentado requisito iOS (PWA instalada) + aprendizaje "verificar lo que ve el usuario / no borrar la notificación de prueba". Verificado en vivo: push entregado a los 6 dispositivos de Marco.
+- **2026-07-08 (2ª pasada, endurecimiento + UI)**: (1) `pushToUsers` ya solo borra suscripciones en 404/410 y loguea el resto de fallos; antes un fallo de red borraba suscripciones válidas. (2) `notifyAdmins` loguea errores del insert in-app (antes se tragaban en silencio). (3) Notifs de Calendly y movimientos manuales llevan `data.url`. (4) Campana: items clicables (marcan leída + navegan), iconos por tipo, poll 30s, `PATCH { id }` para marcar una sola. (5) Sección Notificaciones en `/perfil` con interruptor push por dispositivo. (6) Prompt "Ahora no" pausa 7 días en vez de para siempre. (7) Eliminada ruta muerta `/api/notifications/send` (sin callers). (8) Corregido dato del SOP: Adrián NO estaba suscrito (la sub Win32 era de Juan Pablo, formador).

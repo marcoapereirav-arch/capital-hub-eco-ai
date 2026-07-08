@@ -115,7 +115,7 @@ async function notifyHost(
     title: titles[kind],
     body: bodies[kind],
     type: `calendly_${kind}`,
-    data: { invitee_email: inv.email, invitee_name: inv.name, scheduled_start: scheduledStart, event_name: eventName },
+    data: { url: "/crm/pipeline", invitee_email: inv.email, invitee_name: inv.name, scheduled_start: scheduledStart, event_name: eventName },
   }))
   await admin.from("notifications").insert(rows).then(() => null, (e) => console.error("[calendly/notif] in-app insert failed", e))
 

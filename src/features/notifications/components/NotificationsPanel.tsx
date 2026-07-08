@@ -1,7 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, AlertTriangle, Info } from "lucide-react"
+import { useRouter } from "next/navigation"
+import {
+  Bell,
+  BellOff,
+  AlertTriangle,
+  Info,
+  Target,
+  CalendarCheck,
+  CalendarX,
+  UserX,
+  BadgeEuro,
+  ArrowRightLeft,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Sheet,
@@ -20,9 +32,27 @@ type Notification = {
   created_at: string
 }
 
+// Iconos por tipo de evento. Brandkit: monocromo + verde de marca para lo
+// positivo (lead, venta, agenda), rojo solo para alertas/negativo.
 const TYPE_ICONS: Record<string, { icon: typeof Bell; color: string }> = {
+  lead: { icon: Target, color: "text-green-400" },
+  venta: { icon: BadgeEuro, color: "text-green-400" },
+  agenda: { icon: CalendarCheck, color: "text-green-400" },
+  calendly_created: { icon: CalendarCheck, color: "text-green-400" },
+  calendly_canceled: { icon: CalendarX, color: "text-red-400" },
+  calendly_no_show: { icon: UserX, color: "text-red-400" },
+  manual_stage_change: { icon: ArrowRightLeft, color: "text-muted-foreground" },
   gcal_disconnected: { icon: AlertTriangle, color: "text-red-400" },
-  default: { icon: Info, color: "text-blue-400" },
+  default: { icon: Info, color: "text-muted-foreground" },
+}
+
+function timeAgo(iso: string): string {
+  const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000)
+  if (min < 1) return "ahora mismo"
+  if (min < 60) return `hace ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `hace ${h} h`
+  return new Date(iso).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
 }
 
 /**
@@ -38,14 +68,22 @@ const TYPE_ICONS: Record<string, { icon: typeof Bell; color: string }> = {
  * dónde viva el botón. Bug recurrente cerrado definitivamente — 2026-06-26.
  */
 export function NotificationsBell() {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     load()
-    const t = setInterval(load, 60_000) // poll cada minuto
-    return () => clearInterval(t)
+    const t = setInterval(load, 30_000) // REGLA #6: el OS en live, poll 15-30s
+    const onVisible = () => {
+      if (document.visibilityState === "visible") load()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      clearInterval(t)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
   }, [])
 
   async function load() {
@@ -59,8 +97,28 @@ export function NotificationsBell() {
   }
 
   async function markAllRead() {
-    await fetch("/api/admin/notifications", { method: "PATCH" })
+    setItems((prev) => prev.map((n) => ({ ...n, read: true })))
+    setUnreadCount(0)
+    await fetch("/api/admin/notifications", { method: "PATCH" }).catch(() => null)
     load()
+  }
+
+  /** Click en una notificación: la marca leída y navega a su destino (si tiene). */
+  function openNotification(n: Notification) {
+    if (!n.read) {
+      setItems((prev) => prev.map((i) => (i.id === n.id ? { ...i, read: true } : i)))
+      setUnreadCount((c) => Math.max(0, c - 1))
+      fetch("/api/admin/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: n.id }),
+      }).catch(() => null)
+    }
+    const url = typeof n.data?.url === "string" ? n.data.url : null
+    if (url) {
+      setOpen(false)
+      router.push(url)
+    }
   }
 
   return (
@@ -110,19 +168,23 @@ export function NotificationsBell() {
 
         {/* Lista */}
         {items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-            Sin notificaciones
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
+            <BellOff className="h-6 w-6 opacity-40" />
+            <span className="text-sm">Sin notificaciones</span>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">
             {items.map((n) => {
               const meta = TYPE_ICONS[n.type] ?? TYPE_ICONS.default
               const Icon = meta.icon
+              const hasUrl = typeof n.data?.url === "string"
               return (
-                <div
+                <button
                   key={n.id}
+                  onClick={() => openNotification(n)}
                   className={cn(
-                    "flex items-start gap-2.5 border-b border-border px-4 py-3",
+                    "flex w-full items-start gap-2.5 border-b border-border px-4 py-3 text-left transition-colors",
+                    hasUrl ? "cursor-pointer hover:bg-card/60" : "cursor-default",
                     !n.read && "bg-card/30"
                   )}
                 >
@@ -131,11 +193,11 @@ export function NotificationsBell() {
                     <div className="text-sm">{n.title}</div>
                     {n.body && <div className="mt-0.5 text-xs text-muted-foreground">{n.body}</div>}
                     <div className="mt-1 text-[10px] font-mono text-muted-foreground">
-                      {new Date(n.created_at).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      {timeAgo(n.created_at)}
                     </div>
                   </div>
                   {!n.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-red-400" />}
-                </div>
+                </button>
               )
             })}
           </div>

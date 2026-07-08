@@ -50,10 +50,15 @@ export async function pushToUsers(
         await admin.from("push_subscriptions").update({ last_used_at: new Date().toISOString() }).eq("id", sub.id)
         sent++
       } catch (err: unknown) {
-        // 4xx (salvo 429) o sin status = subscription muerta → limpiar
+        // Borrar SOLO si el push service dice que la suscripción ya no existe
+        // (404/410). Un fallo de red (sin status) o un 400/401/403 (config VAPID)
+        // NO significa suscripción muerta: borrarla dejaría al usuario sin push
+        // para siempre y en silencio.
         const status = (err as { statusCode?: number }).statusCode
-        if ((status && status >= 400 && status < 500 && status !== 429) || !status) {
+        if (status === 404 || status === 410) {
           await admin.from("push_subscriptions").delete().eq("id", sub.id)
+        } else {
+          console.error(`[pushToUsers] push falló (status ${status ?? "sin status"}, sub ${sub.id})`, err)
         }
         failed++
       }
@@ -99,7 +104,8 @@ export async function notifyAdmins(admin: SupabaseClient, input: NotifyInput): P
       type: input.type,
       data: { ...(input.data ?? {}), url },
     }))
-    await admin.from("notifications").insert(rows).then(() => null, () => null)
+    const { error: insertError } = await admin.from("notifications").insert(rows)
+    if (insertError) console.error("[notifyAdmins] insert in-app falló (no bloquea)", insertError)
 
     // 2) Push
     await pushToUsers(admin, ids, { title: input.title, body: input.body, data: { url }, tag: input.type })

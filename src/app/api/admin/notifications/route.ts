@@ -33,18 +33,25 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ notifications: data ?? [] })
 }
 
-// PATCH /api/admin/notifications - marca todas como leídas
-export async function PATCH() {
+// PATCH /api/admin/notifications - marca como leídas.
+// Sin body (o sin id): todas. Con body { id }: solo esa notificación.
+export async function PATCH(req: NextRequest) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
+  const body = await req.json().catch(() => ({}))
+  const id = typeof body?.id === "string" ? body.id : null
+
   const admin = getAdminClient()
-  const { error } = await admin
+  let q = admin
     .from("notifications")
     .update({ read: true })
     .eq("user_id", user.id)
     .eq("read", false)
+  if (id) q = q.eq("id", id)
+
+  const { error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

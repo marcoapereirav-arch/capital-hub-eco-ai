@@ -146,7 +146,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
           ? `${who} movido a «Alumno» a mano. Falta registrar la venta para darle el acceso.`
           : `${who} movido a «${toLabel}» a mano en el CRM.`,
         type: "manual_stage_change",
-        data: { contact_id: id, from: before.data?.stage ?? null, to: parsed.data.stage, moved_by: user.id, sale_pending: pending },
+        data: { url: `/crm/contactos/${id}`, contact_id: id, from: before.data?.stage ?? null, to: parsed.data.stage, moved_by: user.id, sale_pending: pending },
       }))
       if (rows.length) await admin.from("notifications").insert(rows)
     } catch (e) {
