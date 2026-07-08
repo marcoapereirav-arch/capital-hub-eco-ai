@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   const admin = getAdminClient()
   let query = admin
     .from("contacts")
-    .select("id, full_name, email, phone, instagram_username, stage, products, total_revenue, total_cash_collected, source, tags, last_call_at, created_at")
+    .select("id, full_name, email, phone, instagram_username, stage, pipeline_id, products, total_revenue, total_cash_collected, source, tags, last_call_at, created_at")
     .order("created_at", { ascending: false })
     .limit(limit)
   if (stage) query = query.eq("stage", stage)
