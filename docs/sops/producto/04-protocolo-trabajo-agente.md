@@ -29,21 +29,26 @@ El board (BD `public.tasks` en Supabase) es la fuente de verdad de qué se está
 
 ---
 
-## REGLA #2 — Auto-sync del Knowledge
+## REGLA #2 — Auto-sync del Knowledge (URGENTE, SIEMPRE, SIN RECORDATORIO)
 
-Cada decisión arquitectónica, estratégica, operativa, de copy, de pricing, de pipeline, de protocolo — **se versiona en `docs/sops/` ese mismo turno**. Sin pedir permiso.
+**SIEMPRE. SIEMPRE. SIEMPRE. TODO va al Knowledge.** Cada feature, fix, bug, decisión (arquitectura, copy, pricing, pipeline, protocolo), aprendizaje o cambio de comportamiento — **se versiona en `docs/sops/` en el MISMO bloque en que se hace**, ANTES de cerrar la respuesta. Sin pedir permiso, sin esperar a que Marco lo pida.
 
-1. Si la decisión encaja en un SOP existente → lo actualizo y añado entrada en "Cambios versionados" al final con la fecha.
-2. Si la decisión es de un dominio nuevo → creo un SOP nuevo (`NN-titulo.md` con `order: NN`).
-3. Actualizo el índice `00-readme.md` para que el nuevo/cambiado SOP aparezca.
-4. Las versiones antiguas se conservan en "Cambios versionados" — no se reescribe el histórico.
+**Si Marco tiene que pedirte "guarda esto en el Knowledge" → HAS FALLADO la regla.** No es una tarea final ni un "luego"; es parte de cada cambio, como el commit.
 
-**Why:** El Knowledge es **mi propio manual de operaciones** (ver REGLA #0 de CLAUDE.md). Si una decisión queda solo en chat, en mi memoria privada o inline en CLAUDE.md, **se pierde o la veo a medias** la próxima sesión.
+1. Encaja en un SOP existente → lo actualizo + entrada en "Cambios versionados" con la fecha.
+2. Dominio nuevo → SOP nuevo (`NN-titulo.md` con `order: NN`).
+3. **Actualizo el índice `00-readme.md`** de la carpeta para que aparezca (no dejarlo fuera del índice).
+4. Bug o incidente → va al histórico de bugs del SOP del área (regla derivada + cómo evitarlo).
+5. Versiones antiguas se conservan, no se reescribe el histórico.
+
+**Checklist antes de cerrar CUALQUIER bloque de trabajo:** ¿toqué código/BD/config/copy? → ¿hay SOP que lo recoja? → ¿está en el índice? → ¿commit incluye el `.md`? Si algo es "no" → no cierro.
+
+**Why:** El Knowledge es **el manual de operaciones del proyecto** (REGLA #0 de CLAUDE.md). Si algo queda solo en el chat, la próxima sesión (yo, Adrián u otro agente) **no lo ve y hay que repetir todo el contexto**. Marco lo dejó como regla URGENTE el 2026-07-08 tras tener que repetírmelo: el objetivo del Knowledge es EXACTAMENTE no repetir contexto.
 
 **How to apply:**
 - Frontmatter obligatorio: `title` y `order`.
 - Los `.md` numerados se renderizan en `/knowledge` del OS.
-- Si el cambio es trivial (typo, link), no hace falta entrada de versión. Si cambia comportamiento, sí.
+- Documento en el mismo commit que el cambio (no un commit "docs" aparte al final, salvo cierre de sesión).
 - Excepciones: contenido sensible (secrets, credenciales) **nunca** va al Knowledge.
 
 ---
@@ -152,6 +157,9 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 ---
 
 ## Cambios versionados
+
+### 2026-07-08: REGLA #2 elevada a URGENTE
+Marco: "acostúmbrate a guardar SIEMPRE SIEMPRE SIEMPRE TODO en el Knowledge, no quiero estar repitiéndotelo". Pasó porque documenté las cosas de la sesión (webinar, notificaciones, bugs) pero de forma completa solo cuando él lo pidió al final. Regla dura: cada cambio se documenta EN SU MISMO BLOQUE, sin recordatorio; si Marco tiene que pedirlo, es un fallo. Añadido checklist de cierre y actualización obligatoria del índice `00-readme.md`.
 
 ### 2026-07-06: REGLA #7 reforzada
 Marco la re-enfatizó al revisar la landing del webinar: el guion largo (`—`) se elimina de CUALQUIER lugar donde aparezca y no se vuelve a añadir nunca (landing, gracias, emails, Knowledge, comentarios, chat). Barrido aplicado al funnel webinar completo. Cero excepciones salvo nombrar la propia regla.
