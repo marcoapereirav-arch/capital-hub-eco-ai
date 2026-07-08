@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
+import { notifyAdmins } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -154,6 +155,17 @@ export async function POST(req: Request) {
           ? "Opt-in en la landing del Test de Personalidad"
           : "Reenvió opt-in en la landing del Test de Personalidad",
       data: { email, action, source },
+    })
+  }
+
+  // Push + in-app al equipo: nuevo lead del test de personalidad.
+  if (action === "created") {
+    await notifyAdmins(admin, {
+      title: "🎯 Nuevo lead · Test Personalidad",
+      body: `${full_name} hizo opt-in en el test de personalidad.`,
+      type: "lead",
+      url: "/crm/pipeline",
+      data: { contact_id: contactId, email },
     })
   }
 

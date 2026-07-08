@@ -4,6 +4,7 @@ import { z } from "zod"
 import { rateLimit, getClientIp } from "@/lib/rate-limit/supabase-rate-limit"
 import { sendAgendaConfirmed, notifyAdrianBooking } from "@/lib/email/senders"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
+import { notifyAdmins } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -197,6 +198,18 @@ export async function POST(req: NextRequest) {
       notes: data.notes,
       callId: inserted.id,
     }).catch((e) => console.error("[calendar/book] notif Adrian error", e))
+
+    // Push + in-app al equipo (AWAIT: en serverless sin await el push no se envía).
+    const whenStr = new Date(inserted.start_at).toLocaleString("es-ES", {
+      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid",
+    })
+    await notifyAdmins(supabase, {
+      title: "📅 Nueva reserva",
+      body: `${data.attendee_name} agendó llamada · ${whenStr}`,
+      type: "agenda",
+      url: "/crm/pipeline",
+      data: { email: data.attendee_email.toLowerCase().trim(), booking_id: inserted.id },
+    })
 
     return NextResponse.json({ ok: true, booking: inserted }, { status: 201 })
   } catch (e) {

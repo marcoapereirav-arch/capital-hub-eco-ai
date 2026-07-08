@@ -1,0 +1,109 @@
+import "server-only"
+import webpush from "web-push"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { TEST_AGENT_EMAIL } from "./recipients"
+
+/**
+ * Notificaciones al equipo (super_admins): in-app + PUSH, en un solo sitio.
+ *
+ * Objetivo (Marco 2026-07-07): cada evento importante (lead, agenda, venta) tiene
+ * que avisar por push. Antes cada endpoint hacía lo suyo (unos in-app, otros email,
+ * ninguno push). Este helper centraliza para que NO se escape ningún evento.
+ *
+ * `admin` = cliente Supabase con service role (bypass RLS). Nunca lanza: si algo
+ * falla (VAPID, subs inválidas...) lo loguea pero no bloquea el flujo del endpoint.
+ */
+
+let vapidReady = false
+function ensureVapid(): boolean {
+  if (vapidReady) return true
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+  const priv = process.env.VAPID_PRIVATE_KEY
+  if (!pub || !priv) return false
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:noreply@capitalhubapp.com", pub, priv)
+  vapidReady = true
+  return true
+}
+
+type PushPayload = { title: string; body: string; data?: Record<string, unknown>; tag?: string }
+
+/** Envía web-push a TODOS los dispositivos suscritos de los userIds dados. */
+export async function pushToUsers(
+  admin: SupabaseClient,
+  userIds: string[],
+  payload: PushPayload,
+): Promise<{ sent: number; failed: number }> {
+  let sent = 0
+  let failed = 0
+  try {
+    if (!ensureVapid() || userIds.length === 0) return { sent, failed }
+    const { data: subs } = await admin
+      .from("push_subscriptions")
+      .select("id, endpoint, p256dh, auth")
+      .in("user_id", userIds)
+    for (const sub of subs ?? []) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint as string, keys: { p256dh: sub.p256dh as string, auth: sub.auth as string } },
+          JSON.stringify(payload),
+        )
+        await admin.from("push_subscriptions").update({ last_used_at: new Date().toISOString() }).eq("id", sub.id)
+        sent++
+      } catch (err: unknown) {
+        // 4xx (salvo 429) o sin status = subscription muerta → limpiar
+        const status = (err as { statusCode?: number }).statusCode
+        if ((status && status >= 400 && status < 500 && status !== 429) || !status) {
+          await admin.from("push_subscriptions").delete().eq("id", sub.id)
+        }
+        failed++
+      }
+    }
+  } catch (e) {
+    console.error("[pushToUsers] fallo (no bloquea)", e)
+  }
+  return { sent, failed }
+}
+
+type NotifyInput = {
+  title: string
+  body: string
+  /** tipo del evento (p.ej. 'lead', 'agenda', 'venta'), se usa como type in-app + tag push. */
+  type: string
+  /** a dónde navega al pulsar la notificación. Por defecto /crm/pipeline. */
+  url?: string
+  data?: Record<string, unknown>
+}
+
+/**
+ * Notifica a TODOS los super_admins activos (excepto el bot de tests): crea la
+ * notificación in-app (campana del OS) Y manda push a sus dispositivos.
+ */
+export async function notifyAdmins(admin: SupabaseClient, input: NotifyInput): Promise<void> {
+  try {
+    const { data: admins } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("role", "super_admin")
+      .eq("active", true)
+      .neq("email", TEST_AGENT_EMAIL)
+    const ids = (admins ?? []).map((a) => a.id as string)
+    if (ids.length === 0) return
+
+    const url = input.url ?? "/crm/pipeline"
+
+    // 1) In-app (campana)
+    const rows = ids.map((user_id) => ({
+      user_id,
+      title: input.title,
+      body: input.body,
+      type: input.type,
+      data: { ...(input.data ?? {}), url },
+    }))
+    await admin.from("notifications").insert(rows).then(() => null, () => null)
+
+    // 2) Push
+    await pushToUsers(admin, ids, { title: input.title, body: input.body, data: { url }, tag: input.type })
+  } catch (e) {
+    console.error("[notifyAdmins] fallo (no bloquea)", e)
+  }
+}
