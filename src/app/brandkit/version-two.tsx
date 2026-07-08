@@ -11,9 +11,11 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react"
  * construye con peso, tamano y color. El tracking amplio es exclusivo del
  * wordmark.
  *
- * Los cinturones se dibujan como cinturones reales (banda, nudo, puntas y
- * costuras, en SVG), con la escalera completa del blanco al negro y la
- * progresion de grados por rayas en la punta.
+ * Los cinturones siguen la escala de jiu-jitsu (blanco, azul, purpura,
+ * marron, negro) y se dibujan como cinturones reales (banda, nudo, puntas
+ * y costuras, en SVG). Las rayas son cintas horizontales que recorren todo
+ * el cinturon. La logica de progresion esta pendiente de definir; la
+ * escalera queda como referencia visual del sistema.
  *
  * Reglas duras honradas: cero guion largo en todo el archivo, sin grid de
  * fondo, sin neones fuera del verde, prefers-reduced-motion respetado,
@@ -53,14 +55,13 @@ function useReveal(): void {
 
 /* ============================== datos ============================== */
 
+/* Escala de jiu-jitsu. La logica de progresion esta pendiente de definir. */
 const BELTS = [
   { level: "00", name: "Blanco", hex: "#F5F6F7", light: true },
-  { level: "01", name: "Amarillo", hex: "#D9B14A", light: false },
-  { level: "02", name: "Naranja", hex: "#D08048", light: false },
-  { level: "03", name: "Verde", hex: "#22C55E", light: false },
-  { level: "04", name: "Azul", hex: "#4F7CC0", light: false },
-  { level: "05", name: "Marrón", hex: "#856046", light: false },
-  { level: "06", name: "Negro", hex: "#0F0F12", light: false },
+  { level: "01", name: "Azul", hex: "#4F7CC0", light: false },
+  { level: "02", name: "Púrpura", hex: "#7B5BA6", light: false },
+  { level: "03", name: "Marrón", hex: "#856046", light: false },
+  { level: "04", name: "Negro", hex: "#0F0F12", light: false },
 ] as const
 
 const USAGE = [
@@ -161,15 +162,11 @@ function Cover() {
         <p className="lx-cover-over lx-r" style={d(0)}>
           Capital Hub · Manual de identidad · 2026
         </p>
-        <LxSeal id="lx-seal-cover" size={104} className="lx-cover-seal lx-r" style={d(140)} />
-        <h1 className="lx-wordmark lx-r" style={d(280)}>
+        <h1 className="lx-wordmark lx-r" style={d(160)}>
           Capital Hub
         </h1>
-        <span className="lx-cover-rule lx-r" style={d(430)} aria-hidden="true" />
-        <p className="lx-cover-phrase lx-r" style={d(520)}>
-          Disciplina, oficio, progreso.
-        </p>
-        <div className="lx-cover-belts lx-r" style={d(640)} aria-hidden="true">
+        <span className="lx-cover-rule lx-r" style={d(320)} aria-hidden="true" />
+        <div className="lx-cover-belts lx-r" style={d(460)} aria-hidden="true">
           {BELTS.map((b) => (
             <i key={b.level} style={{ background: b.hex }} />
           ))}
@@ -185,7 +182,7 @@ function LogoSection() {
   return (
     <section className="lx-sec lx-sec-carbon" aria-label="Logo">
       <div className="lx-wrap">
-        <SectionHead n="01" title="Logo" lead="Dos piezas: el wordmark y el monograma. No se estiran, no se inclinan y no se recolorean fuera de la paleta." />
+        <SectionHead n="01" title="Logo" lead="El wordmark es la firma del sistema. No se estira, no se inclina y no se recolorea fuera de la paleta." />
 
         <div className="lx-logogrid" data-lxr>
           <article className="lx-logocard lx-paperbox lx-r" style={d(0)}>
@@ -205,6 +202,10 @@ function LogoSection() {
                 <span>Área de respeto</span>
                 <strong>La altura de la C en todo el perímetro</strong>
               </li>
+              <li>
+                <span>Logo CH definitivo</span>
+                <strong>Pendiente de diseño</strong>
+              </li>
             </ul>
             <div className="lx-logoplates">
               <div className="lx-logoplate lx-logoplate-pos">
@@ -216,28 +217,6 @@ function LogoSection() {
                 <em>Negativo · papel sobre carbón</em>
               </div>
             </div>
-          </article>
-
-          <article className="lx-logocard lx-logocard-dark lx-r" style={d(140)}>
-            <p className="lx-label">Monograma</p>
-            <div className="lx-monoshow">
-              <LxSeal id="lx-seal-logo" size={168} className="lx-stamp" style={d(320)} />
-            </div>
-            <span className="lx-hr-c" aria-hidden="true" />
-            <ul className="lx-facts lx-facts-dark">
-              <li>
-                <span>Construcción</span>
-                <strong>CH dentro de doble anillo</strong>
-              </li>
-              <li>
-                <span>Uso</span>
-                <strong>Avatar, favicon, sello y firma</strong>
-              </li>
-              <li>
-                <span>Tamaño mínimo</span>
-                <strong>24 px de diámetro</strong>
-              </li>
-            </ul>
           </article>
         </div>
       </div>
@@ -375,7 +354,7 @@ function BeltSection() {
         <SectionHead
           n="04"
           title="Cinturones"
-          lead="El nivel del alumno se expresa con un cinturón, como en las artes marciales: se entra de blanco y se progresa hasta el negro. Siete niveles, numerados del 00 al 06."
+          lead="El nivel se expresa con un cinturón, como en jiu-jitsu: blanco, azul, púrpura, marrón y negro. Cinco cinturones, numerados del 00 al 04."
           paper
         />
 
@@ -392,14 +371,18 @@ function BeltSection() {
           ))}
         </div>
 
+        <p className="lx-beltnote lx-r" data-lxr style={d(40)}>
+          La lógica de progresión (qué desbloquea cada cinturón y cuándo se asciende)
+          está pendiente de definir. La escalera queda como referencia visual del sistema.
+        </p>
+
         <span className="lx-hr-p lx-hr-wide" aria-hidden="true" />
 
         <div data-lxr>
-          <h3 className="lx-h3 lx-r" style={d(0)}>Grados</h3>
+          <h3 className="lx-h3 lx-r" style={d(0)}>Rayas</h3>
           <p className="lx-lead lx-lead-paper lx-r" style={d(100)}>
-            Dentro de cada cinturón el alumno gana rayas. La raya es una cinta verde
-            en la punta del cinturón: <MarkUnder delay={900}>cuatro rayas</MarkUnder> completan
-            el nivel y dan paso al siguiente cinturón.
+            Dentro de cada cinturón se ganan rayas. La raya es una cinta verde horizontal
+            que recorre <MarkUnder delay={900}>todo el cinturón</MarkUnder>.
           </p>
         </div>
 
@@ -441,32 +424,36 @@ function MotifSection() {
             </div>
           </MotifCard>
 
-          <MotifCard n="02" title="Sello CH" paper delay={70}
-            desc="Monograma CH en doble anillo, estampado en verde. Cierres, certificados y documentos.">
-            <LxSeal id="lx-seal-motif" size={108} className="lx-stamp lx-stamp-green" style={d(300)} />
-          </MotifCard>
-
-          <MotifCard n="03" title="Cinturón en barra" delay={140}
-            desc="Versión de interfaz del cinturón: barra de color con parche de grados.">
+          <MotifCard n="02" title="Cinturón en barra" delay={70}
+            desc="Versión de interfaz del cinturón: barra de color con rayas horizontales a lo ancho.">
             <div className="lx-m-beltbar">
-              <BeltBar color="#22C55E" stripes={3} />
-              <span className="lx-m-caption">Nivel 03 · 3 grados</span>
+              <BeltBar color="#4F7CC0" stripes={2} />
+              <span className="lx-m-caption">Cinturón azul · 2 rayas</span>
             </div>
           </MotifCard>
 
-          <MotifCard n="04" title="Etiqueta de nivel" delay={210}
-            desc="El nivel escrito: cinturón y número. Peso medio, tamaño pequeño.">
+          <MotifCard n="03" title="Etiqueta de nivel" delay={140}
+            desc="El nivel escrito: cinturón y número. Badges: sólido para lo importante, contorno para lo secundario.">
             <div className="lx-m-chips">
-              <span className="lx-chip lx-chip-green">Cinturón verde · Nivel 03</span>
+              <span className="lx-chip lx-chip-green">Cinturón púrpura · Nivel 02</span>
               <span className="lx-chip">Cinturón blanco · Nivel 00</span>
+              <span className="lx-chip lx-chip-solid">Alumno activo</span>
             </div>
           </MotifCard>
 
-          <MotifCard n="05" title="Contraste de materiales" delay={280}
+          <MotifCard n="04" title="Contraste de materiales" delay={210}
             desc="Carbón junto a papel hueso. La combinación base de todas las piezas.">
             <div className="lx-m-mats">
               <div className="lx-m-mat lx-m-mat-carbon">Aa</div>
               <div className="lx-m-mat lx-m-mat-paper">Aa</div>
+            </div>
+          </MotifCard>
+
+          <MotifCard n="05" title="Numeración de nivel" delay={280}
+            desc="Los niveles se numeran del 00 al 04. Cifras en Black para display.">
+            <div className="lx-m-num">
+              <span className="lx-m-num-big">02</span>
+              <span className="lx-m-num-of">/ 04</span>
             </div>
           </MotifCard>
 
@@ -488,11 +475,58 @@ function MotifSection() {
             </div>
           </MotifCard>
 
-          <MotifCard n="08" title="Numeración de nivel" delay={490}
-            desc="Los niveles se numeran del 00 al 06. Cifras en Black para display.">
-            <div className="lx-m-num">
-              <span className="lx-m-num-big">03</span>
-              <span className="lx-m-num-of">/ 06</span>
+          <MotifCard n="08" title="Bloques rectangulares" delay={490}
+            desc="Contenedores rectos con radios de 2 a 4 px. Sin curvas exageradas.">
+            <div className="lx-m-block">Container</div>
+          </MotifCard>
+
+          <MotifCard n="09" title="Indicadores de estado" delay={560}
+            desc="Punto, barra y check para estado y progreso. En verde sobre carbón.">
+            <div className="lx-m-status">
+              <i aria-hidden="true" />
+              <span className="lx-m-status-bar" aria-hidden="true" />
+              <IconCheck />
+            </div>
+          </MotifCard>
+
+          <MotifCard n="10" title="Capas de fondo" delay={630}
+            desc="Profundidad por capas: carbón, carbón elevado y grafito. Sin sombras duras.">
+            <div className="lx-m-layers">
+              <div>
+                <i aria-hidden="true" />
+              </div>
+            </div>
+          </MotifCard>
+
+          <MotifCard n="11" title="Énfasis tipográfico" delay={700}
+            desc="Jerarquía por tamaño y peso, no por decoración.">
+            <div className="lx-m-typo">
+              <strong>Nivel 02</strong>
+              <span>Cinturón púrpura</span>
+            </div>
+          </MotifCard>
+
+          <MotifCard n="12" title="Highlight puntual" delay={770}
+            desc="Borde izquierdo y fondo sutil para señalar el elemento activo.">
+            <div className="lx-m-hl">Módulo activo</div>
+          </MotifCard>
+
+          <MotifCard n="13" title="Fondos planos" delay={840}
+            desc="Superficies planas, sin gradientes de fondo. Software serio.">
+            <div className="lx-m-flat">#131318</div>
+          </MotifCard>
+
+          <MotifCard n="14" title="Alineación a grid" delay={910}
+            desc="Todo cae en una rejilla que se siente y no se pinta. Orden estricto.">
+            <div className="lx-m-grid">
+              <i /><i /><i /><i /><i /><i />
+            </div>
+          </MotifCard>
+
+          <MotifCard n="15" title="Espaciado limpio" delay={980}
+            desc="Separar por aire antes que por cajas.">
+            <div className="lx-m-space">
+              <i /><i />
             </div>
           </MotifCard>
         </div>
@@ -512,7 +546,6 @@ function ApplicationSection() {
         <div className="lx-appgrid" data-lxr>
           <article className="lx-carnet lx-r" style={d(0)}>
             <header className="lx-carnet-head">
-              <span className="lx-carnet-mono">CH</span>
               <span className="lx-wordmark-xs lx-carnet-brand">Capital Hub</span>
             </header>
             <div className="lx-carnet-body">
@@ -520,12 +553,12 @@ function ApplicationSection() {
               <p className="lx-carnet-sub">Alumno · 2026</p>
               <div className="lx-carnet-belt">
                 <BeltBar color="#4F7CC0" stripes={2} height={12} />
-                <span>Cinturón azul · 2 grados</span>
+                <span>Cinturón azul · 2 rayas</span>
               </div>
             </div>
             <footer className="lx-carnet-foot">
-              <span>Nivel 04</span>
-              <span>00 → 06</span>
+              <span>Nivel 01</span>
+              <span>00 → 04</span>
             </footer>
           </article>
 
@@ -537,7 +570,7 @@ function ApplicationSection() {
             </div>
             <span className="lx-hr-p" aria-hidden="true" />
             <div className="lx-ui-chips">
-              <span className="lx-chip lx-chip-paper-green">Cinturón azul · Nivel 04</span>
+              <span className="lx-chip lx-chip-paper-green">Cinturón azul · Nivel 01</span>
               <span className="lx-chip lx-chip-paper">Alumno activo</span>
             </div>
             <p className="lx-ui-note">Verde solo en la acción principal. Una por pantalla.</p>
@@ -592,8 +625,8 @@ function SectionHead({
 
 /**
  * Cinturón de artes marciales en SVG: banda, nudo, puntas colgantes,
- * costuras y brillo de tela. Las rayas de grado se colocan en la punta
- * derecha, de la punta hacia dentro.
+ * costuras y brillo de tela. Las rayas son cintas horizontales que
+ * recorren toda la banda (el nudo queda por encima).
  */
 function BeltIcon({
   id,
@@ -611,26 +644,21 @@ function BeltIcon({
   const stitch = light ? "rgba(20,20,20,0.28)" : "rgba(245,246,247,0.42)"
   const edge = light ? "#C6BFA9" : "rgba(15,15,18,0.24)"
   const grad = `lx-sheen-${id}`
-  const stripeEls: ReactNode[] = []
-  for (let i = 0; i < stripes; i += 1) {
-    const t = 0.84 - i * 0.16
-    const x = (128 + 43.5 * t).toFixed(1)
-    const y = (66 + 73.5 * t).toFixed(1)
-    stripeEls.push(
-      <g key={i} transform={`translate(${x} ${y}) rotate(-30.6)`}>
-        <rect
-          className="lx-bstripe"
-          style={d(480 + i * 200)}
-          x="-13.5"
-          y="-3.4"
-          width="27"
-          height="6.8"
-          rx="1"
-          fill={stripeColor}
-        />
-      </g>
-    )
-  }
+  /* centros verticales de las rayas dentro de la banda (y 46 a 76) */
+  const STRIPE_Y: Record<number, number[]> = { 1: [61], 2: [56.5, 65.5], 3: [53.5, 61, 68.5] }
+  const stripeEls: ReactNode[] = (STRIPE_Y[stripes] ?? []).map((cy, i) => (
+    <rect
+      key={i}
+      className="lx-bstripe"
+      style={d(480 + i * 200)}
+      x="10"
+      y={cy - 2.2}
+      width="220"
+      height="4.4"
+      rx="1"
+      fill={stripeColor}
+    />
+  ))
   return (
     <svg viewBox="0 0 240 168" className="lx-beltsvg" aria-hidden="true">
       <defs>
@@ -647,6 +675,9 @@ function BeltIcon({
       <line x1="16" y1="52" x2="224" y2="52" stroke={stitch} strokeWidth="1" strokeDasharray="2.5 4.5" />
       <line x1="16" y1="70" x2="224" y2="70" stroke={stitch} strokeWidth="1" strokeDasharray="2.5 4.5" />
 
+      {/* rayas horizontales a lo largo de toda la banda */}
+      {stripeEls}
+
       {/* puntas colgantes (detrás del nudo) */}
       <path d="M102.6 60.4 L121.4 71.6 L79.5 147.5 L57 132.5 Z" fill={color} stroke={edge} strokeWidth="1" />
       <path d="M102.6 60.4 L121.4 71.6 L79.5 147.5 L57 132.5 Z" fill={`url(#${grad})`} />
@@ -657,9 +688,6 @@ function BeltIcon({
       <line x1="106.4" y1="62.7" x2="65.5" y2="131.5" stroke={stitch} strokeWidth="1" strokeDasharray="2.5 4.5" />
       <line x1="122.4" y1="69.3" x2="163.3" y2="138.1" stroke={stitch} strokeWidth="1" strokeDasharray="2.5 4.5" />
       <line x1="133.6" y1="62.7" x2="174.5" y2="131.5" stroke={stitch} strokeWidth="1" strokeDasharray="2.5 4.5" />
-
-      {/* rayas de grado en la punta derecha */}
-      {stripeEls}
 
       {/* nudo */}
       <path
@@ -677,10 +705,10 @@ function BeltIcon({
   )
 }
 
-/** Versión de interfaz del cinturón: barra de color con parche de grados. */
+/** Versión de interfaz del cinturón: barra de color con rayas horizontales a lo ancho. */
 function BeltBar({
-  color = "#22C55E",
-  stripes = 3,
+  color = "#4F7CC0",
+  stripes = 0,
   height = 14,
 }: {
   color?: string
@@ -689,43 +717,14 @@ function BeltBar({
 }) {
   return (
     <div className="lx-beltbar" style={{ height, background: color }}>
-      <div className="lx-beltbar-patch">
-        {Array.from({ length: stripes }).map((_, i) => (
-          <span key={i} className="lx-bstripe lx-beltbar-stripe" style={d(360 + i * 170)} />
-        ))}
-      </div>
+      {Array.from({ length: stripes }).map((_, i) => (
+        <span
+          key={i}
+          className="lx-bstripe lx-beltbar-stripe"
+          style={{ ...d(360 + i * 170), top: `${((i + 1) * 100) / (stripes + 1)}%` }}
+        />
+      ))}
     </div>
-  )
-}
-
-/** Sello: doble anillo, texto en arco y monograma CH. */
-function LxSeal({
-  id,
-  size = 150,
-  className = "",
-  style,
-}: {
-  id: string
-  size?: number
-  className?: string
-  style?: CSSProperties
-}) {
-  return (
-    <svg viewBox="0 0 180 180" width={size} height={size} className={className} style={style} aria-hidden="true">
-      <defs>
-        <path id={id} d="M 90,20 a 70,70 0 1,1 -0.01,0" fill="none" />
-      </defs>
-      <circle cx="90" cy="90" r="86" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="90" cy="90" r="57" fill="none" stroke="currentColor" strokeWidth="1" />
-      <text className="lx-seal-arc">
-        <textPath href={`#${id}`}>
-          CAPITAL HUB · CAPITAL HUB · CAPITAL HUB · CAPITAL HUB · CAPITAL HUB ·
-        </textPath>
-      </text>
-      <text x="90" y="91" className="lx-seal-ch" textAnchor="middle" dominantBaseline="central">
-        CH
-      </text>
-    </svg>
   )
 }
 
@@ -856,6 +855,14 @@ function IconBell() {
     <svg {...ICON_PROPS}>
       <path d="M18 16H6c1.2-1.4 1.8-2.6 1.8-5a4.2 4.2 0 0 1 8.4 0c0 2.4.6 3.6 1.8 5z" />
       <path d="M10.4 19a1.8 1.8 0 0 0 3.2 0" />
+    </svg>
+  )
+}
+
+function IconCheck() {
+  return (
+    <svg {...ICON_PROPS}>
+      <path d="M5 12.5 10 17.5 19 7" />
     </svg>
   )
 }
@@ -993,7 +1000,6 @@ function LxStyles() {
         color: var(--muted-2);
         margin: 0 0 clamp(34px, 6vh, 60px);
       }
-      .lx-cover-seal { color: var(--txt); opacity: 0.9; }
       /* UNICO elemento con tracking ancho: el wordmark. */
       .lx-wordmark {
         font-weight: 600;
@@ -1024,13 +1030,7 @@ function LxStyles() {
         width: 64px;
         height: 1px;
         background: var(--line-2);
-        margin: clamp(30px, 5vh, 52px) 0;
-      }
-      .lx-cover-phrase {
-        font-size: 15.5px;
-        font-weight: 400;
-        color: var(--muted);
-        margin: 0 0 clamp(40px, 7vh, 72px);
+        margin: clamp(34px, 6vh, 60px) 0;
       }
       .lx-cover-belts { display: flex; gap: 7px; width: min(420px, 76%); }
       .lx-cover-belts i {
@@ -1043,21 +1043,15 @@ function LxStyles() {
       /* ===== 01 logo ===== */
       .lx-logogrid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 16px;
       }
-      @media (max-width: 860px) { .lx-logogrid { grid-template-columns: 1fr; } }
       .lx-logocard {
         border-radius: 4px;
         padding: clamp(26px, 4vw, 44px);
         display: flex;
         flex-direction: column;
       }
-      .lx-logocard-dark {
-        background: var(--carbon-2);
-        border: 1px solid var(--line);
-      }
-      .lx-logocard-dark .lx-label { color: var(--muted-2); }
       .lx-facts { list-style: none; margin: 0; padding: 0; }
       .lx-facts li {
         display: flex;
@@ -1071,9 +1065,6 @@ function LxStyles() {
       .lx-facts li:last-child { border-bottom: 0; }
       .lx-facts li span { color: var(--ink-2); font-weight: 400; white-space: nowrap; }
       .lx-facts li strong { color: var(--ink); font-weight: 500; text-align: right; }
-      .lx-facts-dark li { border-bottom-color: var(--line); }
-      .lx-facts-dark li span { color: var(--muted-2); }
-      .lx-facts-dark li strong { color: var(--txt); }
       .lx-logoplates {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1097,28 +1088,6 @@ function LxStyles() {
       }
       .lx-logoplate-pos { background: var(--paper-2); color: var(--ink); border: 1px solid var(--pline-2); }
       .lx-logoplate-neg { background: var(--carbon); color: var(--txt); }
-      .lx-monoshow {
-        flex: 1;
-        min-height: 220px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--green);
-        padding: 18px 0;
-      }
-
-      /* sello */
-      .lx-stamp {
-        opacity: 0;
-        transform: scale(1.35) rotate(0deg);
-        transition:
-          transform 0.6s cubic-bezier(0.2, 1.3, 0.4, 1) var(--d, 300ms),
-          opacity 0.35s ease var(--d, 300ms);
-      }
-      .lx-in .lx-stamp { opacity: 1; transform: scale(1) rotate(-6deg); }
-      .lx-stamp-green { color: var(--green); mix-blend-mode: multiply; }
-      .lx-seal-arc { font-size: 9.5px; font-weight: 600; fill: currentColor; }
-      .lx-seal-ch { font-weight: 800; font-size: 50px; fill: currentColor; }
 
       /* ===== 02 color ===== */
       .lx-usage { margin-bottom: 16px; }
@@ -1435,6 +1404,7 @@ function LxStyles() {
         color: var(--txt);
       }
       .lx-chip-green { color: var(--green-2); border-color: #1E5A36; }
+      .lx-chip-solid { background: var(--txt); border-color: var(--txt); color: var(--carbon); }
       .lx-chip-paper { background: transparent; border-color: #A9A292; color: var(--ink); }
       .lx-chip-paper-green { background: var(--green); border-color: var(--green); color: var(--greenink); }
       .lx-m-mats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
@@ -1456,30 +1426,81 @@ function LxStyles() {
       .lx-m-num-big { font-weight: 900; font-size: 62px; line-height: 1; letter-spacing: -0.02em; color: var(--txt); }
       .lx-m-num-of { font-weight: 500; font-size: 15px; color: var(--muted-2); }
 
-      /* barra de cinturon (motif de interfaz) */
+      /* demos de motifs estructurales */
+      .lx-m-block {
+        width: 100%;
+        height: 64px;
+        background: var(--carbon);
+        border: 1px solid var(--graphite);
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted-2);
+        text-transform: uppercase;
+      }
+      .lx-m-status { display: flex; align-items: center; gap: 18px; color: var(--green); }
+      .lx-m-status > i { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+      .lx-m-status-bar { width: 44px; height: 4px; border-radius: 2px; background: var(--green); }
+      .lx-m-layers {
+        width: 100%;
+        padding: 12px;
+        background: var(--carbon);
+        border: 1px solid var(--graphite);
+        border-radius: 3px;
+      }
+      .lx-m-layers > div {
+        padding: 10px;
+        background: var(--carbon-2);
+        border: 1px solid var(--graphite);
+        border-radius: 2px;
+      }
+      .lx-m-layers i { display: block; height: 16px; background: var(--graphite); border-radius: 2px; }
+      .lx-m-typo { display: flex; flex-direction: column; gap: 5px; align-items: center; }
+      .lx-m-typo strong { font-weight: 900; font-size: 30px; letter-spacing: -0.02em; line-height: 1; color: var(--txt); }
+      .lx-m-typo span { font-size: 10.5px; font-weight: 500; text-transform: uppercase; color: var(--muted-2); }
+      .lx-m-hl {
+        width: 100%;
+        border-left: 3px solid var(--green);
+        background: linear-gradient(90deg, rgba(34, 197, 94, 0.09), transparent 70%);
+        padding: 15px 14px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--txt);
+      }
+      .lx-m-flat {
+        width: 100%;
+        height: 64px;
+        background: #131318;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted-2);
+      }
+      .lx-m-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+      .lx-m-grid i { display: block; height: 26px; background: var(--carbon); border: 1px solid var(--graphite); border-radius: 2px; }
+      .lx-m-space { display: flex; flex-direction: column; gap: 28px; width: 100%; align-items: center; }
+      .lx-m-space i { display: block; width: 34px; height: 2px; background: var(--line-2); border-radius: 1px; }
+
+      /* barra de cinturon (motif de interfaz): rayas horizontales a lo ancho */
       .lx-beltbar {
         position: relative;
         width: 100%;
         border-radius: 2px;
-        display: flex;
-        justify-content: flex-end;
         overflow: hidden;
       }
-      .lx-beltbar-patch {
-        width: 26%;
-        min-width: 64px;
-        max-width: 120px;
-        background: var(--carbon);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-      }
       .lx-beltbar-stripe {
-        width: 4px;
-        height: 62%;
-        background: var(--paper);
-        border-radius: 1px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        transform: translateY(-50%);
+        background: var(--green);
       }
 
       /* marcador */
@@ -1532,19 +1553,7 @@ function LxStyles() {
         gap: 26px;
         box-shadow: 0 26px 50px -30px rgba(15, 15, 18, 0.55);
       }
-      .lx-carnet-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-      .lx-carnet-mono {
-        width: 38px;
-        height: 38px;
-        border: 1px solid var(--line-2);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 13px;
-        color: var(--txt);
-      }
+      .lx-carnet-head { display: flex; align-items: center; gap: 14px; }
       .lx-carnet-brand { color: var(--muted); }
       .lx-carnet-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
       .lx-carnet-name { font-weight: 800; font-size: clamp(22px, 3vw, 28px); letter-spacing: -0.01em; margin: 0; }
@@ -1629,12 +1638,12 @@ function LxStyles() {
 
       /* ===== reduced motion: todo visible y estatico ===== */
       @media (prefers-reduced-motion: reduce) {
-        .lx-r, .lx-stamp, .lx-seg, .lx-bstripe {
+        .lx-r, .lx-seg, .lx-bstripe {
           opacity: 1 !important;
           transform: none !important;
           transition: none !important;
         }
-        .lx-stamp { transform: rotate(-6deg) !important; }
+        .lx-beltbar-stripe { transform: translateY(-50%) !important; }
         .lx-draw { stroke-dashoffset: 0 !important; transition: none !important; }
         .lx-plate, .lx-motif, .lx-beltcell, .lx-progcell, .lx-btn { transition: none !important; }
       }

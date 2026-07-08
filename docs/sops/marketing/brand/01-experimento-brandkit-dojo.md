@@ -47,17 +47,22 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 - Base monocromo se mantiene: `#0F0F12` carbón, `#2A2D34` grafito, `#F5F6F7` blanco roto.
 - **Papel Hueso cálido `#F4F1E8`** (paneles claros, el "gi") + tinta `#141414`. El contraste negro contra papel es el corazón del rediseño.
 - **Acento: SOLO el verde oficial** `#22C55E` / `#4ADE80`. El "acento que cambia de color según nivel" se DESCARTÓ (mucho para un MVP).
-- Escalera de cinturones (lenguaje visual, versiones mate): blanco `#F5F6F7`, amarillo `#D9B14A`, naranja `#D08048`, verde `#22C55E`, azul `#4F7CC0`, marrón `#856046`, negro `#0F0F12`.
+- Escalera de cinturones (Marco, 2026-07-08, escala jiu-jitsu, versiones mate): blanco `#F5F6F7`, azul `#4F7CC0`, púrpura `#7B5BA6`, marrón `#856046`, negro `#0F0F12`. Numerados 00 a 04.
 
 ### Cinturones (lenguaje de progresión; mecánica = fase futura)
-- **En el funnel:** cinturón blanco que gana **rayas** de color (mismos colores de la escalera, en orden). Registro = raya amarilla, siguiente paso = naranja, etc.
-- **Dentro de la formación:** cinturón entero que sube de color al avanzar (definición precisa pendiente).
-- Los cinturones deben **verse** como cinturones (iconos reconocibles), no como cuadrados de color. Incluir un ejemplo de cinturón CON rayas.
+- Escala de **jiu-jitsu**: blanco, azul, púrpura, marrón, negro.
+- **Las rayas son cintas horizontales que recorren TODO el cinturón** (no marcas en la punta). Se marcan en verde `#22C55E`.
+- **La lógica de progresión está PENDIENTE de definir** (qué desbloquea cada cinturón, cuándo se asciende, cómo aplica al funnel). La escalera se mantiene de forma visual en el brandkit como referencia permanente del sistema.
+- Los cinturones deben **verse** como cinturones (iconos reconocibles), no como cuadrados de color. Incluir el ejemplo de cinturón blanco CON rayas.
 - La mecánica real (que el alumno suba de verdad) NO se construye ahora, solo el lenguaje visual.
+
+### Logo
+- **Fuera el sello CH** (doble anillo tipo estampa): descartado por Marco (2026-07-08).
+- El **logo real de CH está pendiente de diseño**; de momento el brandkit usa solo el wordmark.
 
 ### Motifs
 - **El marcador (rotulador):** subrayado o círculo a mano alzada en verde sobre una palabra clave (origen: `.wb-money::after` del funnel webinar). **Es UN motif más, NO el sello de la marca.**
-- Barra de cinturón + grados, etiquetas de rango, sello CH, tarjetas de alto contraste (papel/carbón) y los motifs estructurales v3 actualizados con contraste real.
+- Los motifs de la V1 se fusionan en la V2 sin repetirse y sin el sello: 15 motifs (marcador, cinturón en barra, etiqueta de nivel, contraste de materiales, numeración, línea fina, iconos lineales, bloques rectangulares, indicadores de estado, capas de fondo, énfasis tipográfico, highlight puntual, fondos planos, alineación a grid, espaciado limpio).
 - Prohibido fondo tipo rejilla (regla vigente de Marco).
 
 ### Guion largo prohibido
@@ -68,6 +73,9 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, laca negra mate, textura de cinturón), mucho aire, sobriedad, artesanía. Aplica todos los arreglos de arriba (copy oficial, cinturones visibles con ejemplo de rayas, cero guion largo).
 
 ## Cambios versionados
+
+### 2026-07-08 (v3)
+Pasada de arreglos de Marco sobre la V2: fuera la frase "Disciplina, oficio, progreso.", fuera el sello CH (logo real pendiente de diseño), cinturones a escala jiu-jitsu (blanco, azul `#4F7CC0`, púrpura `#7B5BA6`, marrón `#856046`, negro), rayas ahora horizontales recorriendo todo el cinturón, lógica de progresión marcada como pendiente (se mantiene visual), y motifs de la V1 fusionados en la V2 (15 motifs, sin duplicados, sin sello). Plan acordado: al recibir OK de Marco, esto va a main y sustituye el brandkit del Knowledge; después se fija la regla de branding y se aplica a todo el SaaS (OS + App).
 
 ### 2026-07-07 (v2)
 Página convertida a comparador con pestañas. V1 extraída a `version-one.tsx` (intacta, guiones largos limpiados). Añadido shell `page.tsx` + `version-two.tsx`. Fijadas las reglas de copy oficial, cinturones visibles y la prohibición del guion largo. V2 (luxury + dojo) en construcción con Fable.
