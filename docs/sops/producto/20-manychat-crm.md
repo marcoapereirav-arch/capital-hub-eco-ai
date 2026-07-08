@@ -213,4 +213,8 @@ Esto es una **acción operativa pendiente**, no contenido de Knowledge: vive com
 Mientras no se conecte, el reel funciona con el **link simple** en el DM (`https://ch.capitalhubapp.com/webinar?utm_source=instagram&utm_medium=manychat&utm_campaign=reel_webinar`): el lead entra al CRM al rellenar el formulario. Con el External Request, entra ya **desde el comentario** y se trackea el embudo completo.
 
 ## Cambios versionados
-- **2026-07-07**: creado el router del webinar + mc_id dedup + sync cron + panel "Del reel a la venta" + registro en automatizaciones. Pendiente: Adrián añade el External Request en el flow del reel (pasos arriba).
+- **2026-07-07**: creado el router del webinar + mc_id dedup + sync cron + panel "Del reel a la venta" + registro en automatizaciones.
+- **2026-07-07 (v2, feedback Marco)**: correcciones importantes.
+  - **Comentar NO es lead.** El router ya no crea contacto; solo rastrea el comentario y devuelve el link. El lead se crea al rellenar el opt-in (vinculado por mc_id). El panel separa "comentaron" (interacción) de "Lead" (opt-in con datos).
+  - **Dashboard `/manychat` con el filtro de fechas global.** Fuera las tarjetas con ventanas hardcodeadas (Nuevos Hoy/7d/30d, DMs 7d, Flows 7d); las métricas por período usan `<PeriodFilter>` (mismo del resto del OS, SOP sistemas/05). Overview limpio (totales + embudo del reel + eventos recientes; tags/fields en su pestaña).
+  - **El núcleo funciona sin External Request:** el opt-in del DM capta el lead y lo atribuye a Instagram; el External Request (contador de "comentaron") es un extra opcional.

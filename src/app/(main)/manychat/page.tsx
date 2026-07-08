@@ -9,6 +9,7 @@ import {
 } from '@/features/manychat/services/queries'
 import { getWebinarReelFunnel } from '@/features/manychat/services/webinar-funnel'
 import { ManychatOverviewView } from '@/features/manychat/components/manychat-overview'
+import { ManychatPeriodKpis } from '@/features/manychat/components/manychat-period-kpis'
 import { WebinarFunnelPanel } from '@/features/manychat/components/webinar-funnel-panel'
 import { SubscribersList } from '@/features/manychat/components/subscribers-list'
 import { InboxView } from '@/features/manychat/components/inbox-view'
@@ -49,6 +50,7 @@ export default async function ManychatPage() {
           <TabsContent value="overview">
             <div className="flex flex-col gap-6">
               <WebinarFunnelPanel funnel={webinarFunnel} />
+              <ManychatPeriodKpis />
               <ManychatOverviewView overview={overview} />
             </div>
           </TabsContent>
