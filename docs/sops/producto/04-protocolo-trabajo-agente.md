@@ -170,7 +170,23 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 
 ---
 
+## REGLA #9: Puerto local FIJO 3100 a 3200 (solo Capital Hub)
+
+**El servidor de desarrollo de Capital Hub usa SIEMPRE un puerto del rango 3100 a 3200.** Prohibido 3000 u otros. El script `dev` de `package.json` fija `-p 3100` (Next sube al siguiente libre dentro del rango si 3100 está ocupado). Así el localhost no colisiona con otros proyectos ni se cae a cada rato.
+
+**How to apply:**
+- `npm run dev` arranca en 3100 (o el siguiente 31xx libre).
+- Al abrir en navegador o Playwright, usar `http://localhost:3100`.
+- Liberar el puerto si hace falta: `lsof -ti tcp:3100 | xargs kill`.
+
+**Why:** Marco lo pidió el 2026-07-08. El puerto por defecto (3000) colisionaba con otras cosas y el server se caía a cada rato. Un rango dedicado a Capital Hub lo estabiliza.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-08: REGLA #9 añadida (puerto local)
+Fijado el rango de puerto local 3100 a 3200 para Capital Hub (`-p 3100` en `package.json`). Detonante: el localhost se caía por choque de puertos con otras cosas.
 
 ### 2026-07-08: REGLA #8 añadida
 Prohibido añadir emojis sin consentimiento explícito de Marco, en cualquier soporte (notificaciones, UI, emails, Knowledge, board, chat). Detonante: las notificaciones del equipo salían con emojis en los títulos. Barrido aplicado ese mismo día a todos los títulos de notificación del OS.
