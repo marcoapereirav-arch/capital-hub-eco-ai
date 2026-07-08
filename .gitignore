@@ -98,3 +98,7 @@ tsconfig.tsbuildinfo
 Update_task_adrian_y_marco
 *.transcript
 /transcripts/
+node_modules.nosync/
+
+# build cache fuera de iCloud sync
+.next.nosync/
