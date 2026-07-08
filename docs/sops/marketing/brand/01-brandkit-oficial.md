@@ -82,6 +82,23 @@ Sube el nivel a **luxury + dojo**: sensación premium (materiales caros, papel, 
 
 La pantalla **Knowledge > Brand > "Brandkit Capital Hub"** del OS embebe el brandkit en un iframe. Apunta a la **página viva `/brandkit`** (`src/features/knowledge/components/knowledge-page.tsx`), no a un HTML estático. Antes apuntaba a `public/brandkit.html` (el board viejo), ya retirado. Así el Knowledge siempre muestra el brandkit vigente sin regenerar nada.
 
+## Proceso para actualizar el brandkit (a prueba de errores)
+
+**Regla de oro: el brandkit vive en UN SOLO sitio.** La página `/brandkit` (`src/app/brandkit/version-two.tsx`). Todo lo demás la consume desde ahí, no hay copias:
+
+- El **Knowledge del OS** (Brand > Brandkit Capital Hub) la embebe en vivo por iframe (`src="/brandkit"`).
+- **NO existen archivos estáticos del brandkit** (`public/brandkit.html` retirado). Prohibido volver a crear una copia estática: sería una segunda fuente que se desincroniza (fue justo el bug del 2026-07-08).
+
+**Para actualizar el brandkit:** se edita `src/app/brandkit/version-two.tsx` y ya. Se ve en `/brandkit` y en el Knowledge automáticamente. Nunca hay que tocar el `public/`, ni el iframe, ni un HTML aparte.
+
+**Al publicar:** los cambios del brandkit van a `main` en **un solo PR** (no varios seguidos), para que salgan en un único deploy y no haya confusión de "qué versión está publicada". Tras el merge, el sitio se re-despliega solo; refrescar la página (recarga forzada) para ver el cambio.
+
+**Checklist al actualizar el brandkit:**
+- [ ] Edité SOLO `src/app/brandkit/version-two.tsx` (o piezas que use).
+- [ ] Verifiqué en `/brandkit` (localhost del rango 3100).
+- [ ] No creé ningún archivo estático ni copia del brandkit.
+- [ ] Un solo PR a `main`. Tras el deploy, recarga forzada para confirmar.
+
 ## Cambios versionados
 
 ### 2026-07-08 (v9, el OS Knowledge muestra el brandkit nuevo)
