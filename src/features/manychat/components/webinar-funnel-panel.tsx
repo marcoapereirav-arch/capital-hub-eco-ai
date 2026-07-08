@@ -22,11 +22,11 @@ type Step = {
 }
 
 export function WebinarFunnelPanel({ funnel }: { funnel: WebinarReelFunnel }) {
+  // Etiquetas = stages REALES del pipeline Funnel Webinar (lead → agendado → alumno).
   const steps: Step[] = [
-    { label: 'Comentaron el reel', hint: 'entraron por ManyChat', value: funnel.comentaron },
-    { label: 'Reservaron plaza', hint: 'rellenaron el formulario', value: funnel.reservaron },
-    { label: 'Agendaron llamada', hint: 'reservaron una llamada', value: funnel.agendaron },
-    { label: 'Alumnos', hint: 'compraron', value: funnel.alumnos, accent: true },
+    { label: 'Comentaron el reel', hint: 'entran como stage «Lead»', value: funnel.comentaron },
+    { label: 'Agendaron', hint: 'stage «Agendado»', value: funnel.agendaron },
+    { label: 'Alumnos', hint: 'stage «Alumno» · la venta', value: funnel.alumnos, accent: true },
   ]
   const max = Math.max(1, ...steps.map((s) => s.value))
 
