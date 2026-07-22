@@ -19,6 +19,7 @@ El Knowledge se organiza en los 4 cuadrantes del negocio. Cada SOP vive en su cu
 | **Producto** | [`producto/`](producto/) | Cómo se construye y opera el OS, arquitectura, deploys, protocolo del agente |
 | **Ventas** | [`ventas/`](ventas/) | Proceso de cierre, llamadas, follow-up *(pendiente de contenido)* |
 | **Finanzas** | [`finanzas/`](finanzas/) | Pricing, comisiones, modelo de negocio, P&L *(pendiente de contenido)* |
+| **Sistemas** | [`sistemas/`](sistemas/) | Runbooks y protocolos internos: entorno de trabajo, test-agent, cache PWA, sprints |
 
 ## Reglas
 
@@ -34,4 +35,5 @@ Sin pedir permiso. Cada vez que se toma una decisión importante en chat, el doc
 
 ## Histórico
 
+- **2026-07-22**: Pasada de coherencia. Los repos salieron de iCloud (`Desktop/Marco-Codes/` → `Marco-Codes/`): 4 SOPs apuntaban a la ruta muerta. Dominio del OS unificado a `os.capitalhubapp.com` en 24 ficheros (`ecoai.` queda documentado como legacy con 308). Corregido el Team ID de Vercel en `producto/06`. Nuevo SOP [`sistemas/10-repos-fuera-de-icloud.md`](sistemas/10-repos-fuera-de-icloud.md). Añadido el cuadrante Sistemas a este índice (el código ya lo servía, faltaba aquí).
 - **2026-05-06**: Reorganización completa. Knowledge plano (12 SOPs sueltos) → 4 cuadrantes (Marketing, Producto, Ventas, Finanzas). Renumeración dentro de cada carpeta. `knowledge-service.ts` y `knowledge-page.tsx` actualizados para leer recursivamente. Sidebar del OS también reagrupado por cuadrante.

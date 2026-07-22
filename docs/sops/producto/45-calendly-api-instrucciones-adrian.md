@@ -68,7 +68,7 @@ Confirmar qué campos se piden al lead al agendar:
 Una vez tengamos el endpoint deployado:
 1. Adrián entra a https://calendly.com/app/admin/integrations/api_webhooks
 2. **Create Webhook Subscription**
-3. URL: `https://ecoai.capitalhubapp.com/api/webhooks/calendly`
+3. URL: `https://os.capitalhubapp.com/api/webhooks/calendly`
 4. Events: `invitee.created`, `invitee.canceled`, `invitee.no_show_marked`
 5. Copy del **Signing Key** generado
 6. Añadir a `.env.local` como:

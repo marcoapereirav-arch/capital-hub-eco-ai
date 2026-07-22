@@ -15,10 +15,10 @@ Capital Hub está compuesto por **dos productos software separados** con dos rep
 
 | Campo | Valor |
 |---|---|
-| Carpeta local | `/Users/marcoantonio/Desktop/Marco-Codes/Capital Hub/` |
+| Carpeta local | `/Users/marcoantonio/Marco-Codes/Capital Hub/` |
 | GitHub | `marcoapereirav-arch/capital-hub-eco-ai` |
 | Vercel project | `capital-hub-eco-ai` (team `adrianvillanuevarios-cmds-projects`) |
-| Dominio | `ecoai.capitalhubapp.com` |
+| Dominio | `os.capitalhubapp.com` |
 | Stack | Next.js 16 + React 19 + Supabase + Resend |
 | Para quién | **Equipo interno** (Marco, Adrián, closers, formadores) |
 
@@ -40,7 +40,7 @@ Capital Hub está compuesto por **dos productos software separados** con dos rep
 
 | Campo | Valor |
 |---|---|
-| Carpeta local | `/Users/marcoantonio/Desktop/Marco-Codes/App Capital Hub/` **(con espacios, NO con guiones)** |
+| Carpeta local | `/Users/marcoantonio/Marco-Codes/App Capital Hub/` **(con espacios, NO con guiones)** |
 | GitHub | `marcoapereirav-arch/capital-hub-app` |
 | Vercel project | `capital-hub-app` (team `adrianvillanuevarios-cmds-projects` = `team_RgIpGFtQApuwauxv803z6z4t`) |
 | Project ID Vercel | `prj_7pyN453GlwDuxvEqWiVHKLrQ0NMn` |
@@ -92,8 +92,8 @@ Si **se cruzan** (ej: closer crea alumno → debe enviar acceso a la App):
 ## Reglas para el agente
 
 1. **Antes de tocar código**, identificar a qué repo pertenece la feature. Si no es obvio, preguntar.
-2. **Si la feature es del OS:** trabajar en `/Users/marcoantonio/Desktop/Marco-Codes/Capital Hub/` (este chat).
-3. **Si la feature es de la App:** notificar al humano que esa parte conviene moverla a una ventana nueva de Antigravity en el repo `/Users/marcoantonio/Desktop/Marco-Codes/App Capital Hub/`, o que el humano lo confirme para trabajar aquí.
+2. **Si la feature es del OS:** trabajar en `/Users/marcoantonio/Marco-Codes/Capital Hub/` (este chat).
+3. **Si la feature es de la App:** notificar al humano que esa parte conviene moverla a una ventana nueva de Antigravity en el repo `/Users/marcoantonio/Marco-Codes/App Capital Hub/`, o que el humano lo confirme para trabajar aquí.
 4. **El agente puede trabajar en AMBOS repos desde la misma máquina** (tiene acceso a las dos carpetas). El criterio es organizativo (contexto del chat), no técnico.
 5. **Comparten la misma instancia de Supabase** (`aglyoyqtzozdnusltjxe`). Las tablas con prefijo `students_*` son del lado App. El resto es del OS.
 6. **Comparten el mismo dominio raíz** `capitalhubapp.com` con sub-dominios distintos.
@@ -102,7 +102,8 @@ Si **se cruzan** (ej: closer crea alumno → debe enviar acceso a la App):
 
 | Subdominio | Apuntado a | Estado |
 |---|---|---|
-| `ecoai.capitalhubapp.com` | OS (Vercel `capital-hub-eco-ai`) | LIVE |
+| `os.capitalhubapp.com` | OS (Vercel `capital-hub-eco-ai`) | LIVE |
+| `ecoai.capitalhubapp.com` | OS (legacy) | REDIRECT 308 → `os.` No usar en enlaces nuevos |
 | `app.capitalhubapp.com` | App (Vercel `capital-hub-app`) | DNS pendiente |
 | `capitalhubapp.com` (apex) | (reservado) | NO asignar todavía |
 

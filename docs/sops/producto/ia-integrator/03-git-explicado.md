@@ -109,7 +109,7 @@ Imagina que abrimos una rama llamada `rediseno-funnel-test` para rehacer el funn
 
 Esos 2 commits están **en la rama, en tu ordenador**. **NO están en main, NO están en GitHub, NO están en tu web real.**
 
-👉 Mientras no haga **merge a main + push**, tu web pública (`ecoai.capitalhubapp.com`) sigue mostrando la versión **vieja**. Cuando me digas que está listo, hago el merge, subo a GitHub y pasa a producción para todos.
+👉 Mientras no haga **merge a main + push**, tu web pública (`os.capitalhubapp.com`) sigue mostrando la versión **vieja**. Cuando me digas que está listo, hago el merge, subo a GitHub y pasa a producción para todos.
 
 ---
 

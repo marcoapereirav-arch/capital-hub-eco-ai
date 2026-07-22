@@ -25,7 +25,7 @@ ManyChat ya recibe esos eventos automáticamente porque Adrián tiene su Instagr
 2. ManyChat detecta "new follower" (ya configurado en su panel)
         ↓
 3. ManyChat dispara un External Request HTTP POST hacia:
-   https://ecoai.capitalhubapp.com/api/webhooks/manychat
+   https://os.capitalhubapp.com/api/webhooks/manychat
         ↓
 4. El OS recibe el webhook, verifica firma (header Authorization:
    Bearer <MANYCHAT_WEBHOOK_SECRET>)
@@ -115,7 +115,7 @@ Esta es la parte CRÍTICA. El problema: si solo tenemos su Instagram username, �
 Cuando ManyChat detecta nuevo seguidor genera un **link único de agenda** con un identificador del subscriber:
 
 ```
-https://ecoai.capitalhubapp.com/agenda?mc_id=<subscriber_id>
+https://os.capitalhubapp.com/agenda?mc_id=<subscriber_id>
 ```
 
 Donde `subscriber_id` es el ID interno de ManyChat para esa persona.
@@ -143,7 +143,7 @@ Donde `subscriber_id` es el ID interno de ManyChat para esa persona.
    Click "Abrir chat en ManyChat" → entra al inbox de ManyChat de Juan
         ↓
 6. Setter le escribe en ManyChat: "Hola Juan, ¿quieres saber más?
-   Reserva un slot aquí: https://ecoai.capitalhubapp.com/agenda?mc_id=12345"
+   Reserva un slot aquí: https://os.capitalhubapp.com/agenda?mc_id=12345"
    (ManyChat reemplaza automáticamente {{user_id}} con 12345)
         ↓
 7. Juan clica el link, llega a /agenda?mc_id=12345

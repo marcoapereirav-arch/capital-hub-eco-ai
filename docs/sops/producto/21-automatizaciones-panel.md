@@ -10,7 +10,7 @@ area: producto
 Vista en vivo y SOLO LECTURA de todas las automatizaciones que el sistema ejecuta sin intervención humana. Permite ver de un vistazo qué está activo, qué está pendiente y qué está fallando.
 
 ## URL
-`https://ecoai.capitalhubapp.com/automatizaciones`
+`https://os.capitalhubapp.com/automatizaciones`
 
 ## Reglas duras de esta sección
 1. **NO se edita.** Las automatizaciones son código (endpoints, crons, webhooks). Esta página solo las muestra.

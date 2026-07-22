@@ -35,7 +35,7 @@ area: sistemas
 ### PASO 1 — Verificar el equipo (Bloque #1 OS)
 
 #### 1.1 Roles del equipo
-1. Entra al OS: `https://ecoai.capitalhubapp.com/team`
+1. Entra al OS: `https://os.capitalhubapp.com/team`
 2. Verifica que aparece la lista de roles correctamente en el dropdown "Invitar miembro":
    - `Super Admin` · `Marketing` · `Closer` · `Setter` · `Formador`
 3. Selecciona "Formador" → aparece dropdown formación con 3 opciones (IA Integrator / Media Buyer Digital / Comercial Closing).

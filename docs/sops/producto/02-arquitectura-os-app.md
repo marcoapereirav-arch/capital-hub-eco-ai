@@ -35,8 +35,8 @@ El OS es SOLO el panel interno del equipo. Su única cara pública son los funne
   - **`/mifge/*`** (las landings públicas del funnel — son las únicas páginas públicas del OS; el resto requiere auth)
 - **Stack**: Next.js 16, Supabase, Vercel.
 - **Supabase**: proyecto `aglyoyqtzozdnusltjxe` (cuenta personal de Adrián Villanueva).
-- **Vercel**: actualmente cuenta de **Marco Antonio**. **Pendiente migrar a cuenta de Adrián / Capital Hub** (tarea `t_migrar_vercel_marco_adrian` en someday — se hace presencialmente).
-- **Dominio**: `ecoai.capitalhubapp.com` (confirmado 2026-05-01). Apunta al deploy actual de Vercel en cuenta de Marco. Tras migrar Vercel, el dominio sigue siendo el mismo (solo cambia owner del proyecto).
+- **Vercel**: team Pro `adrianvillanuevarios-cmds-projects` (`team_RgIpGFtQApuwauxv803z6z4t`), proyecto `capital-hub-eco-ai` (`prj_hVU242RC7DqTFhHG2IXXjy85w7G9`). La migración desde la cuenta personal de Marco se **completó el 2026-05-05** — ver `producto/06`.
+- **Dominio**: `os.capitalhubapp.com`. El antiguo `ecoai.capitalhubapp.com` quedó como legacy y responde 308 hacia `os.`.
 
 ## Capital Hub App (otro proyecto)
 
@@ -51,7 +51,7 @@ El OS es SOLO el panel interno del equipo. Su única cara pública son los funne
 - **Modelo de acceso**: por `subscription_tier` (ej. `T1` = acceso completo a formación + marketplace/bolsa de empleo) + estado activo. Lo conceden los webhooks de pago. ⚠️ **Hoy la App tiene webhooks de Stripe / Hotmart / GHL, NO de Whop** — y el OS cobra por Whop. Ese es el hueco a cerrar en la integración.
 - **Supabase**: proyecto **DISTINTO** del OS — **NO** es el `aglyoyqtzozdnusltjxe` que usamos en el OS. El App tiene su propio proyecto Supabase con su propia auth.users y sus propias tablas (formación, lecciones, progreso, etc.).
 - **Vercel**: **CUENTA distinta** a la cuenta actual del OS (que está en cuenta de Marco). Marco confirmó 2026-05-04 que el App vive en otra cuenta Vercel.
-- **Repo** (recibido 2026-05-25): `https://github.com/SASbot01/capitalhub2.0.git`. Clonado en `/Users/marcoantonio/Desktop/Marco-Codes/App Capital Hub` (carpeta local renombrada desde `capitalhub2.0`; hermana del OS, dentro de Marco-Codes). NO confundir con `app-capital-hub` (carpeta vieja con guiones). NO está dentro de este repo del OS.
+- **Repo** (recibido 2026-05-25): `https://github.com/SASbot01/capitalhub2.0.git`. Clonado en `/Users/marcoantonio/Marco-Codes/App Capital Hub` (carpeta local renombrada desde `capitalhub2.0`; hermana del OS, dentro de Marco-Codes). NO confundir con `app-capital-hub` (carpeta vieja con guiones). NO está dentro de este repo del OS.
   - ⚠️ **El repo `SASbot01/capitalhub2.0` NO es nuestro** (es de otra persona). **Adrián Villanueva debe transferirlo/moverlo a SU espacio de GitHub y trabajar desde ahí.** NO se commitea a `SASbot01`. La copia local solo sirve para estudiar y preparar el contexto/handoff mientras tanto.
 - **Contexto de la App** (2026-05-25): se creó un `CLAUDE.md` en la raíz del repo de la App con todo el contexto que tenemos aquí (qué es, relación con el OS, flujo de provisión, reglas de Whop, mapeo de acceso, setup pendiente), para que una sesión abierta en la ventana de la App arranque con contexto completo y las dos cosas queden separadas pero coordinadas.
 

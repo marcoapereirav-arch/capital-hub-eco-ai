@@ -12,8 +12,8 @@ area: sistemas
 
 | Componente | Directorio local | Repo GitHub | Vercel project | Dominio |
 |---|---|---|---|---|
-| **OS** (interno equipo) | `/Users/marcoantonio/Desktop/Marco-Codes/Capital Hub/` | `capital-hub-eco-ai` | `capital-hub-eco-ai` | `ecoai.capitalhubapp.com` |
-| **App** (alumnos) | `/Users/marcoantonio/Desktop/Marco-Codes/App Capital Hub/` | `capital-hub-app` | `capital-hub-app` | `app.capitalhubapp.com` |
+| **OS** (interno equipo) | `/Users/marcoantonio/Marco-Codes/Capital Hub/` | `capital-hub-eco-ai` | `capital-hub-eco-ai` | `os.capitalhubapp.com` |
+| **App** (alumnos) | `/Users/marcoantonio/Marco-Codes/App Capital Hub/` | `capital-hub-app` | `capital-hub-app` | `app.capitalhubapp.com` |
 
 ## Regla absoluta
 

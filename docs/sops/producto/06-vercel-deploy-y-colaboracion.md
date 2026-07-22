@@ -15,8 +15,9 @@ order: 6
 | Plan | Vercel Pro |
 | Project Name | `capital-hub-eco-ai` |
 | Project ID | `prj_hVU242RC7DqTFhHG2IXXjy85w7G9` |
-| Org/Team ID | `team_OCUInwCbENX6QMySAqxsjuJN` |
-| Dominio público | `ecoai.capitalhubapp.com` (subdominio asignado al proyecto) |
+| Org/Team ID | `team_RgIpGFtQApuwauxv803z6z4t` |
+| Dominio público | `os.capitalhubapp.com` |
+| Dominio legacy | `ecoai.capitalhubapp.com` → responde 308 hacia `os.` No usarlo en enlaces nuevos. |
 | Apex `capitalhubapp.com` | RESERVADO. No lo asignamos a este proyecto. Marco lo reserva para uso futuro. |
 | Repo GitHub | `marcoapereirav-arch/capital-hub-eco-ai` rama `main` |
 
@@ -48,9 +49,9 @@ git push origin main
 ```
 Después de pushear, esperar 60–90 segundos y verificar:
 ```
-curl https://ecoai.capitalhubapp.com/api/version
+curl https://os.capitalhubapp.com/api/version
 ```
-El SHA debe coincidir con el último commit pusheado.
+El SHA debe coincidir con el último commit pusheado. Usar `os.`, no `ecoai.`: el legacy devuelve un 308 y sin `-L` no verás el SHA.
 
 ### Si push es rechazado (porque el otro pusheó antes)
 ```
@@ -115,11 +116,13 @@ Comandos útiles tras el link:
 ## DNS y dominio
 
 - Registrar del dominio `capitalhubapp.com`: cuenta de Adrian, Third Party (no Vercel).
-- Subdominio `ecoai.capitalhubapp.com` configurado como CNAME apuntando a Vercel:
-  - `dig +short ecoai.capitalhubapp.com CNAME` → `*.vercel-dns-017.com`
+- Subdominio **actual** `os.capitalhubapp.com` → CNAME `cname.vercel-dns.com`. Es el dominio público del OS.
+- Subdominio **legacy** `ecoai.capitalhubapp.com` → CNAME `*.vercel-dns-017.com`, sigue vivo pero solo hace **redirect 308** hacia `os.`. No poner `ecoai.` en enlaces, webhooks ni env vars nuevas: un POST contra `ecoai.` recibe el 308 y el cliente puede no reenviar el body.
 - Apex `capitalhubapp.com`: NO asignado a este proyecto. Marco lo reserva para futuro uso (otra landing, etc.).
 
 ## Cambios versionados
+
+> Las menciones a `ecoai.capitalhubapp.com` de aquí para abajo son **crónica histórica**: en esas fechas ése era el dominio. Hoy el dominio del OS es `os.capitalhubapp.com`. No se reescriben para no falsear el registro.
 
 ### 2026-05-05 — Migración desde Vercel personal de Marco a Vercel Pro de Adrian
 

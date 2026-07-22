@@ -9,7 +9,7 @@ area: producto
 Donde el equipo sube todo el material que verán los alumnos en la App. Sin tocar BD ni hacer deploys.
 
 ## URL
-`https://ecoai.capitalhubapp.com/contenido`
+`https://os.capitalhubapp.com/contenido`
 
 ## Estructura jerárquica
 

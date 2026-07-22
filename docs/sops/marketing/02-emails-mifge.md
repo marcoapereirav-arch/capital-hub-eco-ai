@@ -63,7 +63,7 @@ CREATE EXTENSION IF NOT EXISTS pg_net;
 -- cada 1h → /api/cron/trial-ends-48h
 ```
 
-Ambos jobs llaman vía `net.http_get` a los endpoints en `https://ecoai.capitalhubapp.com/api/cron/*` con header `Authorization: Bearer <CRON_SECRET>`. El secret está hardcodeado en el job SQL (Supabase no expone fácilmente el `current_setting` desde el MCP por permisos). Si rota el secret: `cron.unschedule(...)` + `cron.schedule(...)` con el nuevo.
+Ambos jobs llaman vía `net.http_get` a los endpoints en `https://os.capitalhubapp.com/api/cron/*` con header `Authorization: Bearer <CRON_SECRET>`. El secret está hardcodeado en el job SQL (Supabase no expone fácilmente el `current_setting` desde el MCP por permisos). Si rota el secret: `cron.unschedule(...)` + `cron.schedule(...)` con el nuevo.
 
 Endpoints:
 

@@ -7,7 +7,7 @@ area: producto
 # Email marketing — sistema completo con Resend + React Email
 
 ## URL
-`https://ecoai.capitalhubapp.com/email-marketing`
+`https://os.capitalhubapp.com/email-marketing`
 
 ## Provider
 Resend. Plan Free permite ~3.000 emails/mes (suficiente para arranque). Configurado con dominio verificado.
@@ -53,7 +53,7 @@ Lista cronológica de TODOS los emails enviados:
 
 Configurado en `resend.com/webhooks` con endpoint:
 ```
-https://ecoai.capitalhubapp.com/api/email/webhooks/resend
+https://os.capitalhubapp.com/api/email/webhooks/resend
 ```
 
 **Estado actual** (verificable via `GET https://api.resend.com/webhooks`):

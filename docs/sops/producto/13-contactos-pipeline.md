@@ -14,10 +14,10 @@ Sección `/crm` del OS. Es el CRM completo del negocio con 2 vistas separadas:
 Las 2 vistas comparten data pero tienen URLs propias y propósito distinto.
 
 ## URLs
-- `https://ecoai.capitalhubapp.com/crm` → redirige a `/crm/contactos`
-- `https://ecoai.capitalhubapp.com/crm/contactos` (lista)
-- `https://ecoai.capitalhubapp.com/crm/pipeline` (kanban)
-- `https://ecoai.capitalhubapp.com/contactos` → redirige a `/crm/contactos` (legacy compat)
+- `https://os.capitalhubapp.com/crm` → redirige a `/crm/contactos`
+- `https://os.capitalhubapp.com/crm/contactos` (lista)
+- `https://os.capitalhubapp.com/crm/pipeline` (kanban)
+- `https://os.capitalhubapp.com/contactos` → redirige a `/crm/contactos` (legacy compat)
 
 ## Funnel en español (stages CANONICOS — NO inventar nuevos)
 

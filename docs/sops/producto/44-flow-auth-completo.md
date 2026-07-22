@@ -91,7 +91,7 @@ RLS habilitado en las cuatro. **Ninguna policy** → solo el service role (que b
 3. **`resetPassword` server action** ejecuta `requestPasswordReset()` DIRECTO (mismo servidor). **PROHIBIDO** que un server action haga `fetch` HTTP a su propia API route: depende de `NEXT_PUBLIC_SITE_URL` (vacío en local → `fetch('')` revienta) y es frágil en producción (round-trip serverless / Attack Challenge Mode de Vercel). La lógica compartida vive en `src/features/auth/services/`, la consumen route + action.
 4. **Email de cambio de contraseña** (`updatePassword`) usa Resend vía `sendPasswordChanged()` — NO Supabase.
 5. **Verificar dominio en Resend** antes de producción (DNS).
-6. **Crear webhook en Resend** apuntando a `https://ecoai.capitalhubapp.com/api/webhooks/resend` y guardar el signing secret en `RESEND_WEBHOOK_SECRET`.
+6. **Crear webhook en Resend** apuntando a `https://os.capitalhubapp.com/api/webhooks/resend` y guardar el signing secret en `RESEND_WEBHOOK_SECRET`.
 
 ## Variables de entorno requeridas
 
@@ -101,7 +101,7 @@ RESEND_WEBHOOK_SECRET=whsec_xxx
 EMAIL_FROM="Adrián Villanueva <adrian@mail.capitalhubapp.com>"
 EMAIL_REPLY_TO=hola@capitalhubapp.com
 NEXT_PUBLIC_APP_NAME="Capital Hub OS"
-NEXT_PUBLIC_SITE_URL=https://ecoai.capitalhubapp.com
+NEXT_PUBLIC_SITE_URL=https://os.capitalhubapp.com
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # alias soportado: SUPABASE_SERVICE_KEY
 ```
 

@@ -92,7 +92,7 @@ Plan IDs (2026-05-04):
 
 ## URL del webhook (productivo)
 
-`https://ecoai.capitalhubapp.com/api/whop/webhook` — confirmado 2026-05-01. Vercel actual está en cuenta de Marco; cuando se migre a cuenta de Adrián/Capital Hub el dominio sigue siendo el mismo.
+`https://os.capitalhubapp.com/api/whop/webhook` — confirmado 2026-05-01. Vercel actual está en cuenta de Marco; cuando se migre a cuenta de Adrián/Capital Hub el dominio sigue siendo el mismo.
 
 ## Configuración pendiente en Whop dashboard (acción manual de Marco)
 
@@ -100,8 +100,8 @@ Por cada producto (MES, AÑO, BONUS) hay 2 cosas que configurar — **NO conozco
 
 1. **Desactivar emails que Whop envía al cliente** (welcome, recibos, recordatorios de renovación, etc.). Solo nuestros emails Resend deben llegar al cliente.
 2. **Configurar el redirect post-purchase** (success_url o equivalente) a:
-   - Producto MES → `https://ecoai.capitalhubapp.com/mifge/upsell-anual`
-   - Producto AÑO → `https://ecoai.capitalhubapp.com/mifge/agenda`
+   - Producto MES → `https://os.capitalhubapp.com/mifge/upsell-anual`
+   - Producto AÑO → `https://os.capitalhubapp.com/mifge/agenda`
    - Producto BONUS → mismo que MES (es order bump)
 3. **Desvincular cualquier "experience" / "Discord" / "Telegram" / hub Whop** que dé acceso interno a una comunidad Whop al cliente. El cliente solo accede a Capital Hub App vía magic link nuestro.
 

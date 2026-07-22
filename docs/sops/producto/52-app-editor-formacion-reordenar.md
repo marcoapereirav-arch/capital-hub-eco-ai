@@ -18,7 +18,7 @@ La **App de alumnos/formadores** es un repo APARTE del OS. No confundirlos.
 
 | Dato | Valor |
 |---|---|
-| Directorio local | `/Users/marcoantonio/Desktop/Marco-Codes/App Capital Hub/` (código en `web/`) |
+| Directorio local | `/Users/marcoantonio/Marco-Codes/App Capital Hub/` (código en `web/`) |
 | Repo GitHub | `marcoapereirav-arch/capital-hub-app` (GitHub personal de Marco) |
 | Stack | React 19 + **Vite** (NO Next.js) + TypeScript + Tailwind 3.4 |
 | Dominio producción | `app.capitalhubapp.com` (Vercel, deploy en `main`) |

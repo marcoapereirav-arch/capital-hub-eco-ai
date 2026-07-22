@@ -19,7 +19,7 @@ Eso es todo. Los lead magnets son la **capa previa al free trial MIFGE**: captur
 |---|---|
 | Stage del CRM al que entran los opt-ins | `lead` (nuevo stage 1, sin automatización de salida) |
 | Atribución cuando el lead descarga 2+ LMs | **First-touch** (`first_touch_lead_magnet_id` nunca se sobreescribe) + lista cronológica completa visible al expandir la ficha |
-| Dónde se entrega el recurso | **Siempre dentro de nuestro ecosistema**, slug interno (`ecoai.capitalhubapp.com/lm/<slug>`). Nunca Drive, Notion ni links externos |
+| Dónde se entrega el recurso | **Siempre dentro de nuestro ecosistema**, slug interno (`os.capitalhubapp.com/lm/<slug>`). Nunca Drive, Notion ni links externos |
 | Filtro anti-compartir el link del recurso | **Nivel A** (token JWT firmado por lead) en MVP. Diseñado pensando en Nivel C (Instagram OAuth + match con username) que va a Someday |
 | Quién crea el lead magnet | **El agente Claude** (yo) en el 99% de los casos vía chat. Existe botón manual en `/webs/lead-magnets` para emergencias |
 | Cuándo Adrián toca ManyChat | **UNA SOLA VEZ** en setup inicial (configura el flow "Lead Magnet Router"). Después nunca más |
@@ -181,7 +181,7 @@ ALTER TABLE mifge_leads ADD COLUMN manychat_subscriber_id text UNIQUE;
 
 ### Cómo funciona
 
-El DM de ManyChat envía `https://ecoai.capitalhubapp.com/lm/<slug>?t=<jwt>`. El JWT está firmado con `MANYCHAT_WEBHOOK_SECRET` (o un secret dedicado `LM_JWT_SECRET`) y lleva:
+El DM de ManyChat envía `https://os.capitalhubapp.com/lm/<slug>?t=<jwt>`. El JWT está firmado con `MANYCHAT_WEBHOOK_SECRET` (o un secret dedicado `LM_JWT_SECRET`) y lleva:
 
 ```json
 {
@@ -222,7 +222,7 @@ Ver tarea `t_manychat_connect_panel` para los pasos extremadamente detallados. R
 
 1. Crear nuevo Flow "Lead Magnet Router".
 2. Trigger: cualquier comentario en cualquier post de IG.
-3. Step 1: External Request → POST `https://ecoai.capitalhubapp.com/api/manychat/lm-router` con Bearer auth.
+3. Step 1: External Request → POST `https://os.capitalhubapp.com/api/manychat/lm-router` con Bearer auth.
 4. Step 2: Conditional sobre `lm_matched` recibido.
 5. Step 3 (si matched): DM con `{{lm_delivery_link}}`.
 6. Step 4 (opcional): tag `lead_magnet_optin`.

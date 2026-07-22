@@ -124,7 +124,7 @@ Solo role ADMIN. Permite:
 - `student_invites` (validación token de activación)
 
 ## Endpoints externos
-- POST/GET `https://ecoai.capitalhubapp.com/api/auth/student-invite-accept` (validación + activación)
+- POST/GET `https://os.capitalhubapp.com/api/auth/student-invite-accept` (validación + activación)
 - (Pendiente) endpoint del catálogo filtrado por unlocks
 
 ## Variables de entorno (Vercel)

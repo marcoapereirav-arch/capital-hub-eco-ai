@@ -11,7 +11,7 @@ Reemplazo de Calendly. Sistema interno donde Adrián publica disponibilidad y lo
 ## Dos lados
 
 ### 1. Pública `/agenda`
-URL: `https://ecoai.capitalhubapp.com/agenda`
+URL: `https://os.capitalhubapp.com/agenda`
 
 Para el lead. Muestra los slots disponibles que tiene Adrián las próximas 2 semanas.
 
@@ -27,7 +27,7 @@ Flujo del lead:
 5. Submit → confirmación inmediata + email + .ics descargable + link Zoom
 
 ### 2. Admin `/calendario`
-URL: `https://ecoai.capitalhubapp.com/calendario`
+URL: `https://os.capitalhubapp.com/calendario`
 
 Para Adrián / equipo. 3 tabs:
 
@@ -88,7 +88,7 @@ Si Adrián cancela en su Google Calendar, el sistema NO lo detecta (no hay sync 
 - Cuenta dueña: adrianvillanuevarios@gmail.com
 - Status: **In production** (refresh tokens indefinidos)
 - Scopes: calendar.events + userinfo.email + openid
-- Redirect URI: https://ecoai.capitalhubapp.com/api/admin/google-calendar/callback
+- Redirect URI: https://os.capitalhubapp.com/api/admin/google-calendar/callback
 - Client ID + Secret: en Vercel envvars (GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET)
 
 ## Variables que pueden romperlo

@@ -168,7 +168,7 @@ order: 12
 | GitHub | `capital-hub-eco-ai` | `capital-hub-app` |
 | Framework | Next.js 16 + React 19 | React 19 + Vite |
 | Vercel project | `capital-hub-eco-ai` | `capital-hub-app` |
-| Dominio | `ecoai.capitalhubapp.com` | `app.capitalhubapp.com` (DNS pendiente) |
+| Dominio | `os.capitalhubapp.com` | `app.capitalhubapp.com` (DNS pendiente) |
 | Supabase | **`aglyoyqtzozdnusltjxe`** (unificada) | **misma** |
 | Auth | Supabase Auth + BYOE (Resend invitations, no usa emails Supabase) | Supabase Auth + magic link del OS |
 | Emails | Resend + React Email + `_layout` brand | Hereda templates del OS |
@@ -176,7 +176,7 @@ order: 12
 ## Reglas operativas críticas
 
 1. **Una sola Supabase para ambos productos.** Los contactos del OS son los users de la App.
-2. **OAuth Google del calendar es del OS**, no de la App. La redirect URL siempre va a `ecoai.capitalhubapp.com`.
+2. **OAuth Google del calendar es del OS**, no de la App. La redirect URL siempre va a `os.capitalhubapp.com`.
 3. **Magic links de alumno se generan en el OS** (donde está el service role key y la lógica de venta) y se envían vía Resend al alumno. El alumno los abre en la App.
 4. **Refresh tokens de Google son indefinidos solo si la app Google Cloud está "In production"**. Si está en "Testing", caducan a los 7 días. Verificar siempre In Production.
 5. **Producto único por alumno** por defecto. La BD permite varios pero la UI default selecciona 1 (anti objeto-brillante).

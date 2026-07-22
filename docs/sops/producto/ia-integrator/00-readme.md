@@ -40,7 +40,7 @@ Los tres documentos cuentan la misma historia, en capas de profundidad creciente
 
 ## Notas de trabajo
 
-- **Origen:** los 3 manuales vienen de NVISION y se **adaptaron a Capital Hub** (2026-07-01). El doc 03 (Git) ya usa los repos reales (`capital-hub-eco-ai` / `capital-hub-app`), el dominio real (`ecoai.capitalhubapp.com`) y su ejemplo dejó de ser una foto congelada de otro proyecto: ahora es un caso de Capital Hub (rediseño del funnel Test de Personalidad).
+- **Origen:** los 3 manuales vienen de NVISION y se **adaptaron a Capital Hub** (2026-07-01). El doc 03 (Git) ya usa los repos reales (`capital-hub-eco-ai` / `capital-hub-app`), el dominio real (`os.capitalhubapp.com`) y su ejemplo dejó de ser una foto congelada de otro proyecto: ahora es un caso de Capital Hub (rediseño del funnel Test de Personalidad).
 - **Docs 01 y 02** son el mismo manual en dos tamaños (resumen y completo): coherentes entre sí, terminología idéntica, ya genéricos (sin marca ajena).
 - **Voz:** el doc 03 conserva el tono "Para Marco / la IA te dice". Si la formación es 100% para alumnos, en la pasada visual se puede generalizar a "Para ti". Lo dejo tal cual hasta que lo decidas.
 - Estos manuales describen el flujo Vibe Coding **de libro**. En Capital Hub el agente trabaja **prod-first** (casi siempre `commit + push` directo a `main`; ramas solo para lo grande) y **sube solo al terminar cada bloque** sin que el usuario lo pida (SOP `producto/04`, regla #3). Es material general para alumnos, no el reglamento interno de este repo.

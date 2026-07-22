@@ -12,12 +12,12 @@ Cuando un usuario ve contenido viejo (ej. 404 en una ruta que ya funciona, UI si
 
 **URL para limpiar TODO automáticamente:**
 ```
-https://ecoai.capitalhubapp.com/reset-cache
+https://os.capitalhubapp.com/reset-cache
 ```
 
 Opcional con redirect después de limpiar:
 ```
-https://ecoai.capitalhubapp.com/reset-cache?next=/cualquier-ruta
+https://os.capitalhubapp.com/reset-cache?next=/cualquier-ruta
 ```
 
 ### Qué hace la página

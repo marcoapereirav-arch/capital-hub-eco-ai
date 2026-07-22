@@ -27,7 +27,7 @@ La password está guardada en `.env.local` (gitignored) bajo `TEST_AGENT_PASSWOR
 | App  | `public.users.role` | `ADMIN` |
 
 Eso le da acceso TOTAL a:
-- OS (`ecoai.capitalhubapp.com/*`)
+- OS (`os.capitalhubapp.com/*`)
 - App (`app.capitalhubapp.com/*`)
 - Endpoints `/api/admin/*`
 

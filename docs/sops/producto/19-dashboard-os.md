@@ -7,7 +7,7 @@ area: producto
 # Dashboard operaciones — vista panorámica del negocio
 
 ## URL
-`https://ecoai.capitalhubapp.com/` (raíz del OS)
+`https://os.capitalhubapp.com/` (raíz del OS)
 
 ## Para qué sirve
 Pantalla principal del OS. Es lo primero que ve un admin al entrar. Muestra el estado del negocio en una sola vista.

@@ -179,7 +179,7 @@ if (!info.valid) return <Error />
 
 ## Cómo verificar manualmente el flow end-to-end
 
-1. Registra una venta nueva en `ecoai.capitalhubapp.com/sistema/ventas` con un email de prueba real (que tú controles)
+1. Registra una venta nueva en `os.capitalhubapp.com/sistema/ventas` con un email de prueba real (que tú controles)
 2. Revisa BD: debe haber 1 row en `student_invites` con ese email, `accepted_at=null`, `expires_at` 7 días en el futuro
 3. Revisa BD: debe haber 1 row en `email_logs` con `template=welcome_alumno_ht`, `status=sent`, `resend_id` no null
 4. Abre el email, click en "Activar mi acceso ahora"
