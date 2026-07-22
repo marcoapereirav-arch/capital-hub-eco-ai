@@ -1,16 +1,19 @@
 # Dependencies
-/node_modules
+# /node_modules* cubre tambien node_modules.nosync y los duplicados "node_modules 2" de iCloud
+/node_modules*
 /.pnp
 .pnp.js
 yarn.lock
-package-lock.json
 pnpm-lock.yaml
+# package-lock.json SI se commitea: sin el, Vercel resuelve dependencias frescas
+# en cada build y el deploy puede romperse sin que nadie toque codigo.
 
 # Testing
 /coverage
 
 # Next.js
-/.next/
+# /.next* cubre .next, .next.nosync y los duplicados ".next 2" de iCloud
+/.next*
 /out/
 *.rsc
 
@@ -82,7 +85,8 @@ supabase/.temp
 *.MOV
 *.mp4
 *.webm
-/assets/videos/
+# assets/ entero es media local (regla: "media va a assets/, gitignored")
+/assets/
 
 # Backup files
 *.bak
@@ -98,7 +102,3 @@ tsconfig.tsbuildinfo
 Update_task_adrian_y_marco
 *.transcript
 /transcripts/
-node_modules.nosync/
-
-# build cache fuera de iCloud sync
-.next.nosync/
