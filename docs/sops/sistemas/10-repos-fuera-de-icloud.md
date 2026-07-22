@@ -46,6 +46,23 @@ pwd
 ```
 Si aparece `Desktop`, estas en la copia vieja. Salte y vete a `/Users/marcoantonio/Marco-Codes/Capital Hub/`.
 
+## Ramas cerradas en la misma pasada (2026-07-22)
+
+El repo arrastraba 6 ramas, todas con el contenido ya dentro de `main`. Se verificaron comparando el **arbol** (`git rev-parse <rama>^{tree}`), no el SHA del commit: un squash-merge cambia el SHA pero deja el contenido identico.
+
+| Rama | SHA | Por que era redundante |
+|---|---|---|
+| `brandkit-dedup` | `5c90f9e` | Arbol identico al de `origin/main`. PR #5 mergeado |
+| `brandkit-proceso` | `47231f4` | Arbol identico al de `origin/main`. PR #4 mergeado |
+| `brandkit-dojo` | `ea955d4` | Arbol = el del commit `021b1da`, ya en main. PR #1 mergeado, #2 cerrado |
+| `brandkit-knowledge-fix` | `b91bf1e` | Mismo arbol que `brandkit-dojo`. PR #3 mergeado |
+| `feat/manychat-dm-stage` | `a8a0f45` | Ancestro directo de `origin/main` |
+| `backup/marco-pre-merge-...` | `e520546` | Ancestro de `origin/main`. El funnel LT8 esta en main y ademas evolucionado |
+
+Cero PRs abiertos. Las 4 ramas `brandkit-*` eran 4 intentos duplicados de los mismos 2 arreglos.
+
+**Regla:** para saber si una rama tiene trabajo unico, comparar arboles, no SHAs. `git log origin/main..<rama>` puede listar commits que en realidad ya estan en main con otro SHA.
+
 ## Aprendizaje
 
 - Un repo de trabajo **nunca** va dentro de una carpeta sincronizada por iCloud/Dropbox/Drive. El sync no entiende de `node_modules` ni de caches de build, y sus conflictos se manifiestan como bugs fantasma en el compilador.
