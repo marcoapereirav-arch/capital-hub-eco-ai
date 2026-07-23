@@ -31,13 +31,34 @@ iCloud sincronizaba el repo entero, incluidos `node_modules` y `.next`. Cuando d
 
 Se usaban `node_modules.nosync/` y `.next.nosync/` (mas symlinks) para sacar esas carpetas del sync. Fuera de iCloud sobran. El `.gitignore` ahora usa `/.next*` y `/node_modules*`, que cubren de una vez la carpeta normal, la `.nosync` y cualquier duplicado ` 2` que quede.
 
-## La copia vieja sigue existiendo
+## La copia vieja ya no existe (cerrado 2026-07-22)
 
-`/Users/marcoantonio/Desktop/Marco-Codes/Capital Hub/` **no se borro**. Se verifico que no contiene nada unico: su base de objetos git es identica objeto por objeto (6751 = 6751), mismos stashes, mismo reflog, mismos untracked, `.env.local` identico byte a byte.
+`/Users/marcoantonio/Desktop/Marco-Codes/` entero desaparecio. Antes de que se fuera se verifico que no contenia nada unico: base de objetos git identica objeto por objeto (6751 = 6751), mismos stashes, mismo reflog, mismos untracked, `.env.local` identico byte a byte.
 
-**Riesgo vivo:** si alguien (o un agente) abre esa carpeta por error y commitea ahi, se crea divergencia silenciosa. Y el `.env.local` de dentro sigue subiendo a iCloud.
+### GOTCHA: al juntar las dos carpetas, la basura resucito
 
-**Pendiente de decision de Marco:** borrarla. Son 3,9 GB. Hasta entonces, nadie trabaja ahi.
+Al consolidar la carpeta vieja sobre la nueva, macOS fusiono los directorios. El `.git` bueno se mantuvo (`470385f`), pero **los untracked de la copia vieja reaparecieron en el arbol de trabajo**, deshaciendo la limpieza del commit `5d4ad30`. Volvieron 7 items, todos verificados como redundantes antes de borrarlos otra vez:
+
+| Resucitado | Por que era basura |
+|---|---|
+| `ch-copy-test-landing-optin.md` | identico al que ya vive en `docs/funnels-source/` |
+| `docs/sops/marketing/brand/01-experimento-brandkit-dojo.md` | version vieja del fichero ya renombrado a `01-brandkit-oficial.md` |
+| `docs/sops/marketing/brand/Brandkit_Capital_Hub.html` | borrado a proposito en `8dc1a49`, sustituido por `src/app/brandkit/` |
+| `public/brandkit.html` | idem |
+| `src/app/(public)/formacion/ia-integrator 2/` | duplicado byte a byte del original trackeado |
+| `src/app/api/notifications/send/` | ruta muerta eliminada en `cc125d7` (sin callers) |
+| `ui-nomenclatura-doc/` | identico al que ya vive en `docs/ui-nomenclatura/` |
+
+**Regla:** cuando se consolidan dos copias de un repo, `git status` del resultado NO esta limpio aunque el `.git` sea el bueno. Hay que revisar los untracked uno a uno: los que vienen de la copia vieja pueden ser ficheros que se borraron a proposito. Comprobar cada uno con `git hash-object` contra el blob del commit que lo elimino antes de decidir.
+
+## Stashes cerrados (2026-07-22)
+
+Los 2 trabajos aparcados se cerraron para dejar el repo limpio. Los commits siguen en la base de objetos y se pueden recuperar con `git stash apply <sha>`:
+
+| SHA | Que era | Por que se cierra |
+|---|---|---|
+| `76f19b61a732751cfb0b2a969109ec7729fc1046` | `main-wip-2026-07-08` (next-env + puerto en package.json) | Obsoleto: el `-p 3100` ya esta en main y `next-env.d.ts` lo regenera Next solo |
+| `dee003196ad0cf3f7f753a4a525cfe92e0797d65` | retirada de formacion del OS + SOP 02/51 + role-access | Decision de producto nunca tomada; quedo pausada por un build roto. Las paginas de formacion siguen vivas en main. Rehacerlo es borrar ficheros, trivial |
 
 ## Como comprobar que estas en el sitio bueno
 
