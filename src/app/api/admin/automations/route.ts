@@ -128,6 +128,32 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // Stats del acceso al test (funnel v2): el clic del botón del email que cualifica
+  const { count: tpAccesoCount } = await admin
+    .from("contact_journey_events")
+    .select("*", { count: "exact", head: true })
+    .eq("type", "acceso_test_personalidad")
+  const { data: lastTpAcceso } = await admin
+    .from("contact_journey_events")
+    .select("created_at")
+    .eq("type", "acceso_test_personalidad")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Emails de acceso al test programados (Resend scheduledAt)
+  const { count: tpAccesoEmailCount } = await admin
+    .from("email_logs")
+    .select("*", { count: "exact", head: true })
+    .eq("template", "test_personalidad_acceso")
+  const { data: lastTpAccesoEmail } = await admin
+    .from("email_logs")
+    .select("created_at")
+    .eq("template", "test_personalidad_acceso")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   // Stats del funnel Webinar (opt-in)
   const { count: webinarOptinCount } = await admin
     .from("contact_journey_events")
@@ -489,6 +515,53 @@ export async function GET() {
       lastRun: lastTpOptin?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastTpOptin?.created_at),
       totalExecutions: tpOptinCount ?? 0,
+    },
+    {
+      id: "test_personalidad_email_acceso",
+      category: "email",
+      label: "Test Personalidad · email del acceso a los 7 minutos",
+      description:
+        "Cada opt-in programa (Resend scheduledAt) el email con el acceso al test, que llega a los 7 minutos mientras el lead ve la VSL en la página de gracias. Sin cron ni cola propia. El retraso es editable desde el engranaje de /webs. Se envía siempre, haya agendado o no: es la promesa a cambio de sus datos.",
+      trigger: "POST /api/optin/test-personalidad (programa el envío en el momento del opt-in)",
+      actions: [
+        "Renderiza la plantilla 'test_personalidad_acceso' (editable y pausable en /email-marketing)",
+        "Programa el envío con Resend a los N minutos (default 7)",
+        "El botón del email apunta a /api/funnel/test-personalidad/acceso, no a Equilibria",
+        "Registra el envío en email_logs con metadata.scheduled_at",
+      ],
+      relatedTables: ["email_logs", "email_template_overrides", "app_settings"],
+      status: (tpAccesoEmailCount ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (tpAccesoEmailCount ?? 0) > 0
+          ? `Programando entregas · ${tpAccesoEmailCount} emails`
+          : "Cableado · sin opt-ins reales todavía",
+      lastRun: lastTpAccesoEmail?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastTpAccesoEmail?.created_at),
+      totalExecutions: tpAccesoEmailCount ?? 0,
+    },
+    {
+      id: "test_personalidad_acceso_cualifica",
+      category: "crm",
+      label: "Test Personalidad · el clic del email cualifica al lead",
+      description:
+        "El lead pulsa el botón del email y pasa por /api/funnel/test-personalidad/acceso antes de llegar a la landing del test. Ahí se le sube el stage a 'Lead cualificado' (con guarda de no retroceso), se avisa al equipo y se manda el evento a Meta. Así el setter sabe a quién escribir primero y las campañas pueden optimizar por calidad. Idea de JP en la reunión del 18-jul-2026.",
+      trigger: "GET /api/funnel/test-personalidad/acceso?c=<slug> (botón del email)",
+      actions: [
+        "Sube stage a 'lead_cualificado' respetando el no retroceso (no degrada agendado ni alumno)",
+        "Inserta contact_journey_event 'acceso_test_personalidad'",
+        "Dispara Meta CAPI 'test_personalidad_cualificado' (solo la primera vez)",
+        "Notifica al equipo (campana + push) para priorizar el seguimiento",
+        "Redirige a /test-personalidad/test pase lo que pase (nunca le falla al lead)",
+      ],
+      relatedTables: ["contacts", "contact_journey_events", "meta_events_log", "notifications"],
+      status: (tpAccesoCount ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (tpAccesoCount ?? 0) > 0
+          ? `Cualificando leads · ${tpAccesoCount} accesos`
+          : "Cableado · sin clics reales todavía",
+      lastRun: lastTpAcceso?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastTpAcceso?.created_at),
+      totalExecutions: tpAccesoCount ?? 0,
     },
     {
       id: "webinar_optin",

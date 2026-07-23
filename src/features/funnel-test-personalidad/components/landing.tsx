@@ -345,9 +345,9 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           utm_source: utmSource,
         }),
       })
+      const payload = await res.json().catch(() => ({} as { slug?: string; error?: string }))
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError(data?.error ?? "Algo salió mal. Inténtalo otra vez.")
+        setError(payload?.error ?? "Algo salió mal. Inténtalo otra vez.")
         setLoading(false)
         return
       }
@@ -358,7 +358,13 @@ function OptinModal({ onClose }: { onClose: () => void }) {
         phone: phone.trim(),
         contentName: "Test Personalidad opt-in",
       }).catch(() => {})
-      router.push("/test-personalidad/gracias")
+      // El slug opaco del contacto viaja a la gracias para prellenar el Calendly
+      // sin exponer email ni id en la URL (ver PRP-007).
+      router.push(
+        payload?.slug
+          ? `/test-personalidad/gracias?c=${encodeURIComponent(payload.slug)}`
+          : "/test-personalidad/gracias",
+      )
     } catch {
       setError("Sin conexión. Revisa tu internet y vuelve a intentarlo.")
       setLoading(false)

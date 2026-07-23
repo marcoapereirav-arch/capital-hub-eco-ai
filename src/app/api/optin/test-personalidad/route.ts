@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
+import { render } from "@react-email/render"
 import { z } from "zod"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/notify-admins"
+import { sendEmail } from "@/lib/email/send-email"
+import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
+import { getTestPersonalidadSettings } from "@/features/funnel-test-personalidad/get-settings"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -19,6 +23,17 @@ const optinSchema = z.object({
   // Atribución: de qué fuente/afiliado vino (utm_source del link). Opcional.
   utm_source: z.string().max(80).trim().optional(),
 })
+
+/**
+ * Origen público real de la petición (el lead puede estar en ch.capitalhubapp.com,
+ * en os. o en localhost). Se usa para construir el link del email de acceso.
+ */
+function resolveOrigin(req: Request): string {
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host")
+  const proto = req.headers.get("x-forwarded-proto") || "https"
+  if (host) return `${proto}://${host}`
+  return process.env.NEXT_PUBLIC_FUNNEL_BASE_URL || "https://ch.capitalhubapp.com"
+}
 
 function slugify(s: string): string {
   return s
@@ -94,6 +109,9 @@ export async function POST(req: Request) {
 
   // Upsert contacto por email
   let contactId: string | null = null
+  // Slug opaco del contacto. Viaja a la gracias (prefill del Calendly) y al email
+  // de acceso (identifica al lead sin exponer id ni email en la URL). Ver PRP-007.
+  let contactSlug: string | null = null
   let action: "created" | "updated" = "created"
   // Si el contacto YA estaba más allá de 'lead' (agendado, seguimiento, alumno…) y
   // vuelve a pasar por el opt-in, NO lo degradamos a lead y avisamos al equipo.
@@ -101,12 +119,13 @@ export async function POST(req: Request) {
   {
     const { data: existing } = await admin
       .from("contacts")
-      .select("id, stage, pipeline_id, affiliate_slug")
+      .select("id, slug, stage, pipeline_id, affiliate_slug")
       .ilike("email", email)
       .maybeSingle()
 
     if (existing) {
       contactId = existing.id
+      contactSlug = (existing.slug as string) ?? null
       action = "updated"
       if (existing.stage && existing.stage !== "lead") recurringFromStage = existing.stage
       const update: Record<string, unknown> = { full_name, phone, updated_at: new Date().toISOString() }
@@ -134,6 +153,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Error guardando el lead. Inténtalo de nuevo." }, { status: 500 })
       }
       contactId = created.id
+      contactSlug = slug
     }
   }
 
@@ -156,6 +176,38 @@ export async function POST(req: Request) {
           : "Reenvió opt-in en la landing del Test de Personalidad",
       data: { email, action, source },
     })
+  }
+
+  // Email con el acceso al test, PROGRAMADO a los N minutos (default 7).
+  // Es la pieza central del funnel v2: el lead se queda viendo la VSL mientras espera,
+  // y el clic de este botón es lo que lo marca como Lead cualificado. Ver PRP-007.
+  // Se envía siempre (haya agendado o no): es la promesa a cambio de sus datos.
+  if (contactSlug) {
+    try {
+      const settings = await getTestPersonalidadSettings()
+      const origin = resolveOrigin(req)
+      const accessUrl = `${origin}/api/funnel/test-personalidad/acceso?c=${encodeURIComponent(contactSlug)}`
+      const firstName = full_name.split(" ")[0] || full_name
+      const html = await render(TestPersonalidadAccesoEmail({ firstName, accessUrl }))
+      await sendEmail({
+        template: "test_personalidad_acceso",
+        to: email,
+        toName: full_name,
+        subject: "Aquí tienes tu test de personalidad",
+        html,
+        scheduledAt: `in ${settings.emailDelayMinutes} minutes`,
+        metadata: {
+          funnel: "test_personalidad",
+          contact_id: contactId,
+          action,
+          delay_minutes: settings.emailDelayMinutes,
+        },
+        vars: { firstName, accessUrl },
+      })
+    } catch (e) {
+      // Nunca bloquea el opt-in: el lead ya está guardado y va a ver la VSL igual.
+      console.error("[optin/test-personalidad] email de acceso falló (no bloquea)", e)
+    }
   }
 
   // Push + in-app al equipo: nuevo lead del test de personalidad.
@@ -204,5 +256,6 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage })
+  // `slug` lo usa la landing para redirigir a /test-personalidad/gracias?c=<slug>
+  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage, slug: contactSlug })
 }

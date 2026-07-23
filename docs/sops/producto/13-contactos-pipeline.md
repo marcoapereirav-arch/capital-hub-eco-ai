@@ -27,7 +27,7 @@ Las 2 vistas comparten data pero tienen URLs propias y propósito distinto.
 
 ```
 Camino feliz:
-  lead → agendado → alumno
+  lead → lead_cualificado → agendado → alumno
 
 Salidas (estados terminales o ramas):
   seguimiento · no_show · perdido
@@ -35,12 +35,26 @@ Salidas (estados terminales o ramas):
 
 | value (BD) | label UI | Cuándo aplica |
 |------------|----------|---------------|
+| `dm` | DM | Comentó el reel del webinar, aún sin dejar datos. **Solo en el pipeline `webinar`** |
 | `lead` | Lead | Dejó sus datos (opt-in landing /test-personalidad, futuras integraciones ManyChat) |
+| `lead_cualificado` | Lead cualificado | Pulsó el botón del email y abrió su acceso al test. Intención real, todavía sin agendar. **Solo en el pipeline `test-personalidad`** (ver SOP marketing/07) |
 | `agendado` | Agendado | Lead reservó llamada en /agenda |
 | `alumno` | Alumno | Compró (widget Registrar venta dispara esto) |
-| `seguimiento` | Seguimiento | Tras llamada sin cierre — hay potencial |
+| `seguimiento` | Seguimiento | Tras llamada sin cierre, hay potencial |
 | `no_show` | No show | Tenía llamada agendada y no asistió |
 | `perdido` | Perdido | Descartado / no quiere comprar |
+
+**Escalera del no retroceso** (`src/lib/pipeline/stage-guard.ts`): `dm(0) → lead(1) → lead_cualificado(2) → agendado(3) → alumno(4)`. Las automatizaciones nunca bajan a un contacto de escalón, y nunca degradan a un `alumno`. Los movimientos manuales en el kanban sí pueden ir en cualquier dirección: son decisión humana deliberada.
+
+**Un stage puede existir solo en algunos pipelines.** El CHECK de `contacts.stage` acepta todos los valores canónicos, pero cada pipeline muestra únicamente las columnas que tenga en `pipeline_stages`. `dm` es del webinar; `lead_cualificado` es del test. Si un pipeline gana la señal que lo justifica, se replica ahí con una migración.
+
+**Al añadir un stage nuevo hay que tocar, en el mismo commit:**
+1. El CHECK `contacts_stage_check` (si no, los UPDATE fallan **en silencio**).
+2. `pipeline_stages` del pipeline que lo usa, con su `sort_order` y corriendo los siguientes.
+3. `STAGE_RANK` en `stage-guard.ts` (si no, cae por la rama de "stage desconocido" y permite degradar).
+4. El mapa `STAGE_LABELS` de `/api/admin/contacts/[id]` (notificaciones de movimiento manual).
+5. Los colores del badge en `contactos-page.tsx`.
+6. Este SOP.
 
 **Decisión Marco 2026-06-15 (revisión):** se eliminan `conversacion` y `comento_no_follow` porque:
 - `conversacion` no se podía mover automáticamente (el setter habla en IG nativo, invisible)

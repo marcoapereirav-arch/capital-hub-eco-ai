@@ -26,6 +26,16 @@ export type SendEmailInput = {
    * inviteUrl: 'https://...' }. Si no hay override, se ignora.
    */
   vars?: Record<string, string | number>
+  /**
+   * Envío programado (ISO 8601 o lenguaje natural admitido por Resend, ej "in 7 minutes").
+   * Soportado por el SDK de Resend 6.12.2 (`scheduledAt`), verificado en
+   * node_modules/resend/dist/index.d.mts. Se usa en el funnel del test para entregar
+   * el acceso a los 7 minutos sin cron ni tabla de cola (ver PRP-007).
+   *
+   * OJO: la comprobación de plantilla pausada ocurre AL PROGRAMAR, no al entregar.
+   * Si se pausa la plantilla dentro de la ventana de espera, el email igualmente sale.
+   */
+  scheduledAt?: string
 }
 
 /**
@@ -99,6 +109,7 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; r
         { name: "template", value: input.template },
         ...(overrideUsed ? [{ name: "override", value: "1" }] : []),
       ],
+      ...(input.scheduledAt ? { scheduledAt: input.scheduledAt } : {}),
       ...(input.attachments && input.attachments.length > 0 && {
         attachments: input.attachments.map((a) => ({
           filename: a.filename,
@@ -127,7 +138,11 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; r
     resend_id: resendId ?? null,
     status,
     error: error ?? null,
-    metadata: { ...(input.metadata ?? {}), override_used: overrideUsed },
+    metadata: {
+      ...(input.metadata ?? {}),
+      override_used: overrideUsed,
+      ...(input.scheduledAt ? { scheduled_at: input.scheduledAt } : {}),
+    },
     lead_id: input.leadId ?? null,
     call_id: input.callId ?? null,
   })

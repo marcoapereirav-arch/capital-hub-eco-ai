@@ -48,6 +48,8 @@ export const PREF_KEYS = NOTIFICATION_PREFS.map((p) => p.key)
 
 const TYPE_TO_PREF: Record<string, string> = {
   lead: "lead",
+  // v2 del funnel del test: abrió el acceso desde el email (ver PRP-007)
+  lead_cualificado: "lead",
   recurring_optin_webinar: "lead",
   recurring_optin_test_personalidad: "lead",
   agenda: "agenda",

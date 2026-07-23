@@ -72,6 +72,8 @@ export type CapiEventName =
   | `mifge_lm_${string}`
   // Funnel Test de Personalidad (ver SOP marketing/07-funnel-test-personalidad)
   | "test_personalidad_lead"
+  // v2: el lead pulsó el botón del email y abrió la landing del test (intención real)
+  | "test_personalidad_cualificado"
   // Funnel Webinar (ver SOP marketing/08-funnel-webinar)
   | "webinar_lead"
   // Eventos estándar de Meta (mejor optimización de campañas)

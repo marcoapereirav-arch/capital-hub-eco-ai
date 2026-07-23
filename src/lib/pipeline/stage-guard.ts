@@ -4,15 +4,23 @@
  * Regla: en transiciones AUTOMÁTICAS el stage nunca retrocede, y NUNCA se degrada
  * a un contacto que ya es 'alumno' (won).
  *
- * Ladder lineal de avance: dm(0) → lead(1) → agendado(2) → alumno(3).
+ * Ladder lineal de avance: dm(0) → lead(1) → lead_cualificado(2) → agendado(3) → alumno(4).
  * 'dm' = comentó en el reel (aún no dejó datos). Al hacer opt-in pasa a 'lead'.
+ * 'lead_cualificado' = pulsó el botón del email y llegó a la landing del test
+ * (intención real demostrada, todavía sin agendar). Ver PRP-007 y SOP marketing/07.
  * Las ramas (no_show, perdido) no están en el ladder: desde ellas SÍ se puede
  * re-enganchar hacia adelante (ej.: un 'perdido' que vuelve a agendar → 'agendado').
  *
  * Esto NO aplica a movimientos MANUALES en el kanban (override humano deliberado),
  * solo a las automatizaciones (booking, etc.).
  */
-const STAGE_RANK: Record<string, number> = { dm: 0, lead: 1, agendado: 2, alumno: 3 }
+const STAGE_RANK: Record<string, number> = {
+  dm: 0,
+  lead: 1,
+  lead_cualificado: 2,
+  agendado: 3,
+  alumno: 4,
+}
 const WON_STAGES = new Set(["alumno"])
 
 /**

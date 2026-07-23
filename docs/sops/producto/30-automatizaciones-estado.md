@@ -58,8 +58,12 @@ area: producto
 | 🔴 | `manychat_webhook` | Webhook ManyChat → POST `/api/webhooks/manychat` | **PENDING**: FALTA configurar External Request en panel ManyChat (Marco/Adrián). El endpoint está listo. |
 | 🔴 | `manychat_webinar_router` | POST `/api/manychat/webinar-router` (External Request ManyChat) | **PENDING** hasta que Adrián conecte el External Request en el flow del reel (pasos en SOP 20). Comentario del reel → contacto en pipeline **Webinar** (stage `lead`, @IG capturado en el comentario) + tags + Meta CAPI + devuelve link con `mc_id`. Endpoint **verificado en producción** 2026-07-07. `live` cuando lleguen comentarios reales. |
 | 🟢/🟡 | `test_personalidad_optin` | POST `/api/optin/test-personalidad` | Funnel Test Personalidad: crea contacto `lead` + pipeline + tags origen/fuente + atribución afiliado + Meta CAPI + notif si contacto recurrente. `live` cuando hay opt-ins. |
+| 🟡 | `test_personalidad_email_acceso` | POST `/api/optin/test-personalidad` (programa el envío) | **Funnel v2 (2026-07-23).** Cada opt-in programa con `scheduledAt` de Resend el email con el acceso al test, que llega a los **7 minutos** mientras el lead ve la VSL. Sin cron ni cola propia. Retraso editable en el engranaje de `/webs`. Plantilla `test_personalidad_acceso`, editable y pausable en `/email-marketing`. `live` cuando haya opt-ins reales. |
+| 🟡 | `test_personalidad_acceso_cualifica` | GET `/api/funnel/test-personalidad/acceso?c=<slug>` (botón del email) | **Funnel v2 (2026-07-23).** El clic del email sube el contacto a stage **`lead_cualificado`** (con guarda de no retroceso), deja journey event, dispara Meta CAPI `test_personalidad_cualificado` y avisa al equipo. Redirige a `/test-personalidad/test` **pase lo que pase**. Idea de JP en la reunión del 18-jul: separar lead de lead válido para optimizar por calidad. `live` cuando haya clics reales. |
 
 ## Decisiones tomadas
+
+- **2026-07-23:** registradas las 2 automatizaciones del funnel del test v2 (`test_personalidad_email_acceso` y `test_personalidad_acceso_cualifica`) en el mismo bloque en que se construyeron. Ver SOP marketing/07 y PRP-007.
 
 - **2026-06-16:** Eliminadas del panel automatizaciones "fantasma" que aparecían `live` sin estarlo. Ahora `live` requiere evidencia real (cron run en 24h o evento webhook en 7d).
 - **ManyChat queda como `pending`** hasta que Adrián configure el External Request en su panel ManyChat. Es honesto, no mostramos cosas como activas si no lo están.

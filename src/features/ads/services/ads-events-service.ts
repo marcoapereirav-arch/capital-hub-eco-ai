@@ -37,6 +37,7 @@ export const KNOWN_EVENTS = [
   "mifge_call_attended",
   "mifge_lead_magnet_optin",
   "test_personalidad_lead",
+  "test_personalidad_cualificado",
   "webinar_lead",
 ] as const
 
@@ -50,6 +51,7 @@ export const EVENT_LABELS: Record<string, string> = {
   mifge_call_attended: "Llamada atendida",
   mifge_lead_magnet_optin: "Opt-in Lead Magnet (agregado)",
   test_personalidad_lead: "Lead (opt-in Test Personalidad)",
+  test_personalidad_cualificado: "Lead cualificado (abrió el test)",
   webinar_lead: "Lead (opt-in Webinar)",
 }
 

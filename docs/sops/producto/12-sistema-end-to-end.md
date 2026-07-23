@@ -206,12 +206,15 @@ new → contacted → booked → attended → won
 
 Cada contacto tiene **UN solo `pipeline_id`**. El pipeline refleja **el camino por el que entró al sistema**, no su estado actual. El stage cambia, el pipeline_id NO.
 
-### Los dos pipelines actuales
+### Los pipelines actuales
 
 | Pipeline | Slug | is_default | ¿Quién va aquí? |
 |---|---|---|---|
 | **General** | `general` | **true** | Lead que llega SIN contexto (link de agenda directo, DM, referral, alguien le pasa el calendario sin más) |
 | **Test Personalidad** | `test-personalidad` | false | Lead que pasó por la landing del test, dejó email en el optin, vino con ese contexto |
+| **Webinar** | `webinar` | false | Lead que reservó plaza en el webinar semanal (ver SOP marketing/08) |
+
+> **Los stages canónicos viven en el SOP producto/13.** Los nombres en inglés que aparecen más abajo en este documento son de la versión vieja y NO son los de la BD. Cada pipeline muestra solo las columnas que tiene en `pipeline_stages`: `dm` es exclusivo del webinar y `lead_cualificado` es exclusivo del test (funnel v2, 2026-07-23).
 
 ### Reglas de asignación (cableadas en código)
 

@@ -7,32 +7,94 @@ order: 7
 
 Canal **principal** de captación de leads de Capital Hub (confirmado Marco 2026-06-15). No confundir con "captura solo desde Instagram": este funnel es la fuente real de leads.
 
+> **VERSIÓN VIGENTE: v2** (2026-07-23), decidida en la reunión Adrián + Marco + Pat + JP + Giustina del 18-jul-2026. Transcript: `transcripts/2026-07-18_marco_adrian_funnel_ht.md`. Construcción: `.claude/PRPs/PRP-007-funnel-test-personalidad-v2.md`.
+> La v1 está más abajo, en "Histórico v1", para entender de dónde viene.
+
 ## Qué es
 
-Una landing pública (`/test-personalidad`) que ofrece **gratis** el test de personalidad de **Equilibria** (empresa colaboradora, el test NO es nuestro). El lead hace opt-in, recibe el acceso al test en la página de gracias, lo hace fuera de nuestro sitio y vuelve con el resultado por Instagram o WhatsApp, donde el setter conversa **manualmente**.
+Una landing pública (`/test-personalidad`) que ofrece **gratis** el test de personalidad de **Equilibria** (empresa colaboradora, el test NO es nuestro). El lead hace opt-in y, mientras espera su acceso, ve la **VSL de Adrián** con el **Calendly embebido** debajo. El acceso al test le llega por **email a los 7 minutos**. Al pulsarlo se le marca como **Lead cualificado** y aterriza en una landing nuestra desde la que abre Equilibria y manda su resultado por WhatsApp o Instagram.
 
-## Flujo end-to-end
+## Por qué cambió respecto a la v1
+
+| Problema de la v1 | Cómo lo resuelve la v2 |
+|---|---|
+| El lead saltaba a Equilibria en 3 segundos, sin escuchar nada de Capital Hub | La página de gracias es ahora la página de venta: VSL + Calendly |
+| No había reenganche: si no pulsaba en ese momento, se perdía | El email de los 7 minutos lo recupera |
+| El link al test era un `<a>` externo: no sabíamos quién lo abría | El clic pasa por nuestro endpoint y queda medido |
+| Todos los opt-in valían igual: el setter escribía a ciegas | Stage **Lead cualificado**: el que abre el test sube solo de columna |
+
+**La restricción que manda en todo el diseño:** el test es de Equilibria, vive fuera de nuestro dominio y **no podemos detectar cuándo lo termina** ni redirigirlo de vuelta. Por eso la medición se hace en el clic del email, que es el último punto que sí controlamos.
+
+## Flujo end-to-end (v2)
 
 ```
-1. Adrián difunde el test (Reels, stories, ads, conversaciones)
-2. Lead llega a /test-personalidad (landing)
-3. Pulsa un botón → se abre el POP-UP con el formulario opt-in
-4. Rellena: nombre + email + teléfono (LOS 3 OBLIGATORIOS)
-5. Submit → POST /api/optin/test-personalidad:
+0. Anuncio de Adrián (a cámara, estilo genuino) o difusión orgánica
+1. Lead llega a /test-personalidad (landing, copy v1 sin cambios)
+2. Pulsa un botón → se abre el POP-UP con el formulario opt-in
+3. Rellena: nombre + email + teléfono (LOS 3 OBLIGATORIOS)
+4. Submit → POST /api/optin/test-personalidad:
    - Upsert contacto por email (stage='lead' si es nuevo)
-   - pipeline = "Test Personalidad" (slug 'test-personalidad') — NO el General.
+   - pipeline = "Test Personalidad" (slug 'test-personalidad'). NO el General.
      Si el contacto ya tenía pipeline_id, se PRESERVA (SOP 12/13).
    - phone guardado en el contacto (contactable por WhatsApp)
    - tag auto 'origen:test_personalidad' · origin/source 'landing_test_personalidad'
    - journey event 'optin_test_personalidad'
-   - redirige a /test-personalidad/gracias
-6. Gracias: agradece + botón "Abrir el test" (link Equilibria, pestaña nueva)
-   + protocolo de 3 pasos: captura del resultado → enviarla por el MISMO chat
-   de Instagram que ya tenían abierto, o por WhatsApp de Adrián.
-7. Lead hace el test en Equilibria y manda screenshot → setter conversa manual
-8. Si quiere agendar → setter le pasa /agenda?email=... → stage 'agendado' auto
-9. Llamada → 'alumno'/'seguimiento'/'perdido' auto vía Registrar venta
+   - NUEVO v2: PROGRAMA el email de acceso a los 7 minutos (Resend scheduledAt)
+   - NUEVO v2: devuelve el slug opaco del contacto
+   - redirige a /test-personalidad/gracias?c=<slug>
+5. GRACIAS = PÁGINA DE VENTA (v2):
+   - "Tu test llega a tu correo en 7 minutos. Mientras tanto, mira este vídeo."
+   - VSL de Adrián (Bunny Stream)
+   - CALENDLY EMBEBIDO justo debajo, visible desde el segundo 0
+   - Prefill del Calendly con nombre y email, resueltos en el server desde el slug
+   - Si reserva → /reservar/gracias (vídeo de preparación) → stage 'agendado'
+     (lo mueve el webhook de Calendly, que ya funcionaba)
+   - NO lleva botón de WhatsApp: se quitó por fricción
+6. A los 7 minutos llega el email 'test_personalidad_acceso'
+   - Su botón NO va a Equilibria: va a /api/funnel/test-personalidad/acceso?c=<slug>
+7. Ese endpoint es EL DISPARADOR DE CALIFICACIÓN:
+   - stage → 'lead_cualificado' (con guarda de no retroceso)
+   - journey event 'acceso_test_personalidad'
+   - Meta CAPI 'test_personalidad_cualificado' (solo la primera vez)
+   - notifica al equipo (campana + push) para priorizar el seguimiento
+   - redirige a /test-personalidad/test PASE LO QUE PASE
+8. /test-personalidad/test (landing nuestra):
+   - Botón "Abrir el test" → Equilibria en pestaña nueva
+   - Protocolo de 3 pasos + botones de Instagram (recomendado) y WhatsApp
+9. Lead hace el test y manda screenshot → setter conversa manual
+10. Si agenda → stage 'agendado' auto. Llamada → 'alumno'/'seguimiento'/'perdido'
+    auto vía Registrar venta
 ```
+
+## Stage nuevo: Lead cualificado
+
+Idea de JP en la reunión ("lead válido"). El pipeline Test Personalidad queda:
+
+```
+Lead → Lead cualificado → Agendado → Seguimiento → Alumno
+                                            ↓
+                                    No show / Perdido
+```
+
+- **Key**: `lead_cualificado`. **Rótulo**: "Lead cualificado". **Color**: `#4ADE80` (verde claro del brandkit).
+- **Solo en el pipeline `test-personalidad`.** El pipeline `webinar` no tiene la señal del clic del email, así que una columna vacía ahí sería ruido. Se replica si el webinar gana esa señal.
+- **Qué significa**: pulsó el botón del email y abrió el acceso al test. Intención real demostrada, todavía sin agendar. El setter escribe a estos primero.
+- Escalera del no retroceso (`stage-guard.ts`): `dm(0) → lead(1) → lead_cualificado(2) → agendado(3) → alumno(4)`.
+- Migración: `supabase/migrations/20260723120000_pipeline_stage_lead_cualificado.sql`.
+
+## El email de los 7 minutos
+
+- Plantilla `test_personalidad_acceso`, **editable y pausable** desde `/email-marketing` → Plantillas. El override en BD es la fuente de verdad.
+- **Sin cron y sin tabla de cola**: se programa en el propio opt-in con `scheduledAt` del SDK de Resend (verificado en la 6.12.2). El retraso es editable desde el engranaje de `/webs` (`email_delay_minutes`, default 7).
+- **Se envía siempre**, haya agendado o no. Es la promesa a cambio de sus datos.
+- **Gotcha**: la comprobación de "plantilla pausada" ocurre AL PROGRAMAR, no al entregar. Si se pausa la plantilla dentro de esos 7 minutos, el email igualmente sale.
+- **El botón del email debe apuntar SIEMPRE al endpoint de acceso**, nunca al link directo de Equilibria. Si alguien lo cambia, se pierde la calificación y la medición entera del funnel.
+
+## Regla dura del endpoint de acceso
+
+`/api/funnel/test-personalidad/acceso` **nunca le falla al lead**. Si no hay slug, si el contacto no existe, si la BD peta o si Meta peta, igualmente redirige a la landing del test. Marcar es secundario; entregar el test es lo principal.
+
+El identificador que viaja en la URL es `contacts.slug` (opaco, ya existente). **Nunca** se expone el UUID ni el email en la query string.
 
 ## Estructura de la landing (copy aprobado por Marco)
 
@@ -46,27 +108,45 @@ Fuente del copy: `ch-copy-test-landing-optin.md` (raíz del repo).
 
 ## Configuración centralizada
 
-`src/features/funnel-test-personalidad/config.ts` (un solo sitio):
+`src/features/funnel-test-personalidad/config.ts` (un solo sitio). Todos los valores se pueden sobreescribir **sin deploy** desde el engranaje de `/webs`:
 
 | Valor | Contenido |
 |---|---|
 | `TEST_URL` | `https://pdi.equilibria.com/#/instructions/FULLES` |
 | `WHATSAPP_NUMBER` | `34611874062` (Adrián, sin `+` ni espacios) |
 | `INSTAGRAM_HANDLE` | `adrianvillanuevarios` |
+| `VIDEO_GUID` | GUID del VSL en Bunny. **Vacío hasta que Adrián lo grabe.** Con el vacío la gracias no se rompe: oculta el reproductor y el resto del funnel sigue funcionando |
+| `BUNNY_LIBRARY_ID` | `686883` (la misma library que `/reservar/gracias`) |
+| `CALENDLY_URL` | `https://calendly.com/adrian-sales-capital/online-coffee` |
+| `EMAIL_DELAY_MINUTES` | `7` |
 
 ## Archivos
 
-- Landing: `src/features/funnel-test-personalidad/components/landing.tsx`
-- Gracias: `src/features/funnel-test-personalidad/components/thank-you.tsx`
+- Landing opt-in: `src/features/funnel-test-personalidad/components/landing.tsx`
+- Gracias (VSL + Calendly): `src/features/funnel-test-personalidad/components/thank-you.tsx`
+- Landing del test: `src/features/funnel-test-personalidad/components/test-landing.tsx`
 - Config: `src/features/funnel-test-personalidad/config.ts`
-- Endpoint: `src/app/api/optin/test-personalidad/route.ts`
-- Rutas: `src/app/(public)/test-personalidad/page.tsx` (+ `/gracias`)
+- Ajustes editables: `src/features/funnel-test-personalidad/get-settings.ts`
+- Opt-in: `src/app/api/optin/test-personalidad/route.ts`
+- Acceso que califica: `src/app/api/funnel/test-personalidad/acceso/route.ts`
+- Plantilla de email: `src/lib/email/templates/test-personalidad-acceso.tsx`
+- Rutas: `src/app/(public)/test-personalidad/page.tsx` (+ `/gracias`, + `/test`)
+- Migración del stage: `supabase/migrations/20260723120000_pipeline_stage_lead_cualificado.sql`
 
-La landing se muestra **siempre** (force-dynamic), sin gate draft/published, hasta nueva orden.
+La landing se muestra **siempre** (force-dynamic), sin gate draft/published, hasta nueva orden. `/test-personalidad/test` va con `robots: noindex` porque es página de entrega privada.
 
 ## Tracking Meta (Pixel + CAPI)
 
-El opt-in dispara el evento **`test_personalidad_lead`** (custom) + **`Lead`** (estándar Meta) cuando el lead se guarda OK, usando el helper `track()` (`src/lib/meta/pixel-client.ts`): Pixel browser + Conversions API server-side con el **mismo `event_id`** para deduplicación. Incluye las UTMs (first-touch) automáticamente. Se registra en la tabla `meta_events_log` y es visible en el panel `/ads` (Tracker).
+Dos eventos, uno por cada nivel de intención. Esto es lo que pidió JP para poder optimizar por calidad y no solo por volumen.
+
+| Evento | Cuándo | Dónde se dispara |
+|---|---|---|
+| `test_personalidad_lead` + `Lead` (estándar) | Opt-in guardado OK | Cliente, helper `track()` |
+| `test_personalidad_cualificado` | Clic del botón del email (primera vez) | Servidor, `sendCapiEvent` |
+
+El del opt-in usa el helper `track()` (`src/lib/meta/pixel-client.ts`): Pixel browser + Conversions API server-side con el **mismo `event_id`** para deduplicación. Incluye las UTMs (first-touch) automáticamente. Ambos se registran en `meta_events_log` y son visibles en el panel `/ads` (Tracker).
+
+Todo evento nuevo debe registrarse en los **tres** sitios o el Tracker lo muestra como desconocido: `capi-client.ts` (`CapiEventName`), `/api/meta/capi/track` (`ALLOWED_EVENTS`) y `ads-events-service.ts` (`KNOWN_EVENTS` + `EVENT_LABELS`).
 
 - Evento registrado en: `capi-client.ts` (CapiEventName), `/api/meta/capi/track` (ALLOWED_EVENTS), `ads-events-service.ts` (KNOWN_EVENTS + label).
 - Si Meta falla, NO bloquea la redirección a `/gracias` (catch silencioso).
@@ -124,6 +204,31 @@ Funnel `web_reservar` en `/webs`. Cubre los dos caminos (lead que ya hizo el tes
 De momento SIN ManyChat: el setter abre IG/WhatsApp manualmente. Cuando se reactive: comentario en Reel con keyword o story reply → envía el link de la landing. La fuente única hoy es `/test-personalidad`.
 
 ## Cambios versionados
+
+### 2026-07-23 (v2) — VSL + Calendly + email de los 7 minutos + Lead cualificado
+
+Reunión Adrián + Marco + Pat + JP + Giustina del 18-jul-2026. Transcript en `transcripts/2026-07-18_marco_adrian_funnel_ht.md`. Construcción documentada en `PRP-007`.
+
+Qué cambia:
+1. **La página de gracias deja de entregar el test.** Pasa a ser la página de venta: aviso de espera, VSL de Adrián (Bunny) y **Calendly embebido visible desde el segundo 0** (Pat: "yo lo pondría desde el principio"). Al reservar va a `/reservar/gracias`, que ya existía.
+2. **El test se entrega por email a los 7 minutos**, programado con `scheduledAt` de Resend desde el propio opt-in. Sin cron ni tabla de cola.
+3. **Landing nueva `/test-personalidad/test`**: destino del email. Se lleva el protocolo de captura y los botones de Instagram y WhatsApp que antes vivían en la gracias.
+4. **Stage `lead_cualificado`** entre Lead y Agendado, solo en el pipeline del test. Lo dispara el clic del botón del email.
+5. **Evento Meta `test_personalidad_cualificado`** para optimizar por calidad de lead.
+6. Ajustes nuevos editables sin deploy en `/webs`: `video_guid`, `calendly_url`, `email_delay_minutes`.
+
+Decisiones cerradas en esa reunión y que NO hay que volver a debatir:
+- **Fuera el botón de WhatsApp de la página de gracias.** Giustina señaló la fricción ("si pido un test y ya me están diciendo manda mensaje o espera, me olvido"). El WhatsApp vive en la landing del test.
+- **Nada de automatizar WhatsApp** de momento: permisos, políticas y coste. JP: "mantenerlo simple y analógico". Queda en roadmap, hablando con Pere.
+- **No se quita el formulario.** Giustina: es la única forma de tener la base de datos.
+- **Se sigue usando Equilibria**, no un test propio. Da autoridad ("no es mío, es de gente con 20 años de experiencia") y es más rápido de lanzar. Test propio queda en roadmap.
+- **El botón de agenda se ve desde el principio.** Si la calidad de las llamadas baja, se retrasa dentro del vídeo.
+
+Pendiente al cerrar esta versión: **Adrián tiene que grabar la VSL**. Hasta entonces `video_guid` está vacío y la gracias muestra el resto del funnel sin reproductor.
+
+### Histórico v1
+
+Lo de abajo describe la v1 (opt-in y salto directo a Equilibria desde la gracias). Se conserva para entender de dónde viene el funnel. **No es el comportamiento vigente.**
 
 ### 2026-06-22 — Copy nuevo + pop-up + teléfono + URLs reales
 - Rediseño de la landing con el copy aprobado de Marco (`ch-copy-test-landing-optin.md`): 2 secciones (Hero + "Qué es este test") y formulario en **pop-up** (antes era inline de 1 pantalla).

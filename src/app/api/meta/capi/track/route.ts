@@ -14,6 +14,7 @@ const ALLOWED_EVENTS: CapiEventName[] = [
   "mifge_monthly_purchased",
   "mifge_call_attended",
   "test_personalidad_lead",
+  "test_personalidad_cualificado",
   "webinar_lead",
 ]
 

@@ -112,8 +112,20 @@ Si refresh token Google Calendar deja de funcionar → email + push a Marco y Ad
 - `GET /api/admin/email/logs` — log de envíos con filtros
 - `POST /api/email/webhooks/resend` — receptor de eventos Resend
 
+## Envío programado (`scheduledAt`)
+
+`sendEmail()` acepta un campo opcional `scheduledAt` que se pasa tal cual al SDK de Resend (soportado desde la 6.12.2, verificado en `node_modules/resend/dist/index.d.mts`). Admite ISO 8601 o lenguaje natural (`"in 7 minutes"`).
+
+Sirve para entregar un email con retraso **sin cron y sin tabla de cola propia**. Primer uso: el email de acceso del funnel del test, que se programa en el opt-in y llega a los 7 minutos mientras el lead ve la VSL (ver SOP marketing/07 y PRP-007).
+
+**Gotchas:**
+- **La comprobación de "plantilla pausada" ocurre AL PROGRAMAR, no al entregar.** Si alguien pausa la plantilla desde `/email-marketing` dentro de la ventana de espera, el email igualmente sale. Para cancelarlo de verdad haría falta guardar el id de Resend y llamar a `emails.cancel()`.
+- En `email_logs` el envío programado se registra con `status='sent'` en el momento de programarlo, más `metadata.scheduled_at` con la hora pedida. Es lo honesto: Resend lo aceptó y lo va a entregar, pero todavía no ha salido.
+- La ventana de programación de Resend es corta (horas). Para retrasos largos hace falta un cron.
+
 ## Reglas operativas
 - **Cada email tiene un único `resend_id`.** Es la clave para enlazar logs con webhooks.
+- **`skipped_paused` NO pasa el CHECK de `email_logs.status`.** El constraint solo admite `sent, failed, bounced, complained, opened, clicked, unsubscribed`. `send-email.ts` intenta insertar `skipped_paused` cuando una plantilla está pausada y ese insert falla en silencio (va con `.then(()=>null,()=>null)`). Consecuencia: **hoy un email bloqueado por pausa no deja rastro en el log.** Detectado el 2026-07-23 al construir el funnel v2. Se arregla ampliando el CHECK con una migración.
 - **opened_at se guarda solo en la PRIMERA apertura.** Aperturas siguientes no sobrescriben.
 - **clicked_at se guarda en el PRIMER click.** Click count agregado se hace en queries.
 - **Si Resend dice bounce, el contacto NO debe recibir más emails automáticos.** Sistema marca status=failed pero no implementa supresión automática (pendiente).

@@ -14,6 +14,7 @@ import { AgendaReminder30minEmail } from "@/lib/email/templates/agenda-reminder-
 import { NoShowEmail } from "@/lib/email/templates/no-show"
 import { PasswordChangedEmail } from "@/lib/email/templates/password-changed"
 import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
+import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -60,6 +61,21 @@ const TEMPLATES: Template[] = [
       firstName: "{{firstName}}",
       whatsappUrl: "{{whatsappUrl}}",
       dateLabel: "{{dateLabel}}",
+    })),
+  },
+  {
+    key: "test_personalidad_acceso",
+    label: "Acceso al test de personalidad (7 min)",
+    description: "Email que entrega el acceso al test. Se PROGRAMA en el opt-in y llega a los 7 minutos, mientras el lead ve la VSL en la pagina de gracias. El boton pasa por nuestro endpoint de acceso: ese clic es el que marca al contacto como Lead cualificado.",
+    category: "lifecycle",
+    group: "captacion",
+    trigger: "Cada opt-in en /test-personalidad. Envio programado a los 7 minutos (editable en el engranaje de /webs). Se envia siempre, haya agendado o no.",
+    frequency: "alta",
+    variables: ["firstName", "accessUrl"],
+    defaultSubject: "Aquí tienes tu test de personalidad",
+    renderDefault: () => render(TestPersonalidadAccesoEmail({
+      firstName: "{{firstName}}",
+      accessUrl: "{{accessUrl}}",
     })),
   },
   {

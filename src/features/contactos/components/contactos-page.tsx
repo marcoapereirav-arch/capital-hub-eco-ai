@@ -460,6 +460,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                       stage.value === "no_show" && "border-red-500/40 text-red-400",
                       stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
                       stage.value === "agendado" && "border-amber-500/40 text-amber-400",
+                      stage.value === "lead_cualificado" && "border-[#4ADE80]/40 text-[#4ADE80]",
                       stage.value === "lead" && "border-cyan-500/40 text-cyan-400"
                     )}>
                       {stage.label}

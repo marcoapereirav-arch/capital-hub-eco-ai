@@ -130,7 +130,8 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     // automatizaciones. Así mover una tarjeta a mano también "activa las notificaciones".
     try {
       const STAGE_LABELS: Record<string, string> = {
-        lead: "Lead", agendado: "Agendado", seguimiento: "Seguimiento",
+        lead: "Lead", lead_cualificado: "Lead cualificado",
+        agendado: "Agendado", seguimiento: "Seguimiento",
         no_show: "No show", alumno: "Alumno", perdido: "Perdido",
       }
       const toLabel = STAGE_LABELS[parsed.data.stage as string] ?? parsed.data.stage

@@ -1,154 +1,204 @@
 "use client"
 
-import { Camera, MessageCircle, ExternalLink, CheckCircle2 } from "lucide-react"
-import { FUNNEL_TEST_PERSONALIDAD } from "../config"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Mail } from "lucide-react"
+import { LoadingScreen } from "@/components/ui/loading-screen"
+import { FUNNEL_TEST_PERSONALIDAD, bunnyEmbedUrl } from "../config"
 
 /**
- * Página de Gracias del Funnel Test Personalidad.
- * Brandkit Capital Hub: base monocromo B&W + verde de acento (#22C55E). Tipografía
- * normal y limpia (Inter Tight / Inter), sin labels mono espaciados.
+ * Página de Gracias del Funnel Test Personalidad (v2, ver PRP-007 y SOP marketing/07).
  *
- * Hace 3 cosas (copy de Marco):
- *   1. Agradece y confirma que ya está dentro.
- *   2. Entrega el LINK del test de Equilibria (abre en pestaña nueva).
- *   3. Explica el protocolo: hacer captura del resultado y enviarla por el MISMO
- *      chat de Instagram que ya tenía abierto, o por WhatsApp de Adrián.
+ * En v1 esta página entregaba el link del test y el lead se iba en 3 segundos.
+ * En v2 es la PÁGINA DE VENTA del funnel. Decidido en la reunión del 18-jul-2026:
  *
- * Los links (test/whatsapp/instagram) llegan por props desde el server (editables
- * desde el popup ⚙️ de /webs); si no, caen al default de config.ts.
+ *   1. Avisa de que el test llega por email en N minutos (default 7).
+ *   2. Mientras espera, el lead ve la VSL de Adrián (Bunny Stream).
+ *   3. Justo debajo, el Calendly embebido, VISIBLE DESDE EL SEGUNDO 0
+ *      (Pat, 22:20: "yo lo pondría desde el principio").
+ *   4. Al reservar, Calendly emite `calendly.event_scheduled` y vamos a
+ *      /reservar/gracias, que ya tiene el vídeo de preparación de la llamada.
+ *
+ * NO lleva botón de WhatsApp: se quitó por fricción (Giustina, 53:49). El WhatsApp
+ * vive ahora en la landing del test, que es donde tiene sentido.
+ *
+ * Si `videoGuid` está vacío (Adrián todavía no ha grabado la VSL) la página NO se
+ * rompe: oculta el reproductor y mantiene el resto del funnel funcionando.
+ *
+ * Brandkit: base monocromo B&W + verde de acento (#22C55E), Inter Tight / Inter.
  */
 type Props = {
-  testUrl?: string
-  whatsapp?: string
-  instagram?: string
+  videoGuid?: string
+  bunnyLibraryId?: string
+  calendlyUrl?: string
+  emailDelayMinutes?: number
+  /** Prefill del Calendly. Se resuelve en el server desde el slug, nunca por query string. */
+  leadName?: string
+  leadEmail?: string
 }
 
-export function TestPersonalidadThankYou({ testUrl, whatsapp, instagram }: Props = {}) {
-  const resolvedTestUrl = testUrl || FUNNEL_TEST_PERSONALIDAD.TEST_URL
-  const resolvedWhatsapp = whatsapp || FUNNEL_TEST_PERSONALIDAD.WHATSAPP_NUMBER
-  const resolvedInstagram = instagram || FUNNEL_TEST_PERSONALIDAD.INSTAGRAM_HANDLE
-  const whatsappHref = `https://wa.me/${resolvedWhatsapp}?text=${encodeURIComponent(
-    "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
-  )}`
-  const instagramHref = `https://instagram.com/${resolvedInstagram}`
+export function TestPersonalidadThankYou({
+  videoGuid,
+  bunnyLibraryId,
+  calendlyUrl,
+  emailDelayMinutes,
+  leadName,
+  leadEmail,
+}: Props = {}) {
+  const router = useRouter()
+  const calendlyRef = useRef<HTMLDivElement>(null)
+  const [calendlyReady, setCalendlyReady] = useState(false)
+  const [calendlyHeight, setCalendlyHeight] = useState(720)
+
+  const guid = videoGuid || FUNNEL_TEST_PERSONALIDAD.VIDEO_GUID
+  const libraryId = bunnyLibraryId || FUNNEL_TEST_PERSONALIDAD.BUNNY_LIBRARY_ID
+  const minutos = emailDelayMinutes ?? FUNNEL_TEST_PERSONALIDAD.EMAIL_DELAY_MINUTES
+
+  const widgetUrl = (() => {
+    const u = new URL(calendlyUrl || FUNNEL_TEST_PERSONALIDAD.CALENDLY_URL)
+    u.searchParams.set("hide_gdpr_banner", "1")
+    if (leadName) u.searchParams.set("name", leadName)
+    if (leadEmail) u.searchParams.set("email", leadEmail)
+    return u.toString()
+  })()
+
+  // Carga del widget de Calendly (mismo patrón verificado en /reservar)
+  useEffect(() => {
+    const SRC = "https://assets.calendly.com/assets/external/widget.js"
+    function init() {
+      const w = window as unknown as {
+        Calendly?: { initInlineWidget: (o: { url: string; parentElement: HTMLElement }) => void }
+      }
+      if (w.Calendly && calendlyRef.current) {
+        calendlyRef.current.innerHTML = ""
+        w.Calendly.initInlineWidget({ url: widgetUrl, parentElement: calendlyRef.current })
+      }
+    }
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${SRC}"]`)
+    if (existing && (window as unknown as { Calendly?: unknown }).Calendly) {
+      init()
+    } else if (!existing) {
+      const s = document.createElement("script")
+      s.src = SRC
+      s.async = true
+      s.onload = init
+      document.body.appendChild(s)
+    } else {
+      existing.addEventListener("load", init)
+    }
+    // Si por lo que sea no llega page_height, no dejar el loader colgado
+    const t = setTimeout(() => setCalendlyReady(true), 6000)
+    return () => clearTimeout(t)
+  }, [widgetUrl])
+
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (typeof e.origin !== "string" || !e.origin.includes("calendly.com")) return
+      const data = e.data as { event?: string; payload?: { height?: string } }
+      if (data?.event === "calendly.event_scheduled") {
+        router.push("/reservar/gracias")
+        return
+      }
+      if (data?.event === "calendly.page_height" && data.payload?.height) {
+        const h = parseInt(data.payload.height, 10)
+        if (!Number.isNaN(h) && h > 300) {
+          setCalendlyHeight(h)
+          setCalendlyReady(true)
+        }
+      }
+    }
+    window.addEventListener("message", onMessage)
+    return () => window.removeEventListener("message", onMessage)
+  }, [router])
+
   return (
     <main
       className="relative min-h-[100dvh] overflow-hidden text-[#F5F6F7]"
       style={{ backgroundColor: "#0F0F12", fontFamily: "'Inter', sans-serif" }}
     >
-      {/* Acento verde sutil arriba a la derecha, coherente con el landing */}
+      {/* Acento verde sutil, coherente con el resto del funnel */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0"
         style={{ background: "radial-gradient(640px 360px at 88% -6%, rgba(34,197,94,0.10), transparent 68%)" }}
       />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-5 md:px-8 py-12 md:py-20 flex flex-col min-h-[100dvh]">
+      <div className="relative z-10 mx-auto max-w-2xl px-5 md:px-8">
         {/* Marca */}
-        <div className="mb-12 md:mb-16">
-          <span className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+        <header className="pt-8 md:pt-12">
+          <span
+            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+          >
             Capital Hub
           </span>
-        </div>
+        </header>
 
-        <div className="flex-1 flex flex-col justify-center">
-          {/* Confirmación */}
-          <div className="inline-flex items-center gap-2 mb-5">
-            <CheckCircle2 className="h-5 w-5 text-[#22C55E]" />
+        {/* Aviso del email */}
+        <div className="pt-10 md:pt-14">
+          <div className="mb-5 inline-flex items-center gap-2">
+            <Mail className="h-5 w-5 text-[#22C55E]" />
             <span className="text-[13px] text-[#9CA3AF]">Ya estás dentro</span>
           </div>
 
           <h1
-            className="text-3xl md:text-4xl font-medium leading-[1.12] tracking-tight mb-4 text-white"
+            className="mb-4 text-3xl font-medium leading-[1.12] tracking-tight text-white md:text-4xl"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            Gracias. Tu acceso al test está listo.
+            Tu test llega a tu correo en {minutos} minutos.
           </h1>
-          <p className="text-base md:text-lg text-[#D1D5DB] leading-relaxed mb-10 max-w-xl">
-            Pulsa el botón para abrir el test. Son 15 minutos y al terminar verás tu resultado en
-            cuatro colores. Después seguimos contigo para decirte qué profesión digital encaja de
-            verdad con tu perfil.
+          <p className="mb-3 max-w-xl text-base leading-relaxed text-[#D1D5DB] md:text-lg">
+            Mientras tanto, mira este vídeo. Es lo que te va a ayudar a entender qué hacer con tu
+            resultado cuando lo tengas.
           </p>
-
-          {/* CTA principal: abrir el test */}
-          <a
-            href={resolvedTestUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tp-open group relative block w-full max-w-md h-13 px-6 py-3.5 rounded-none bg-white text-[#0F0F12] font-semibold inline-flex items-center justify-center gap-2 overflow-hidden text-base mb-3"
-            style={{ fontFamily: "'Inter Tight', sans-serif" }}
-          >
-            <span aria-hidden className="tp-open-fill" />
-            <span className="tp-open-label relative z-10">Abrir el test</span>
-            <ExternalLink className="tp-open-label relative z-10 h-4 w-4" />
-          </a>
-          <p className="text-[13px] text-[#6B7280] mb-12 max-w-md">
-            Se abre en una pestaña nueva — vuelve aquí cuando lo termines.
+          <p className="mb-9 text-[13px] text-[#6B7280]">
+            Si no te llega, revisa la carpeta de spam.
           </p>
-
-          {/* Protocolo: cómo enviar el resultado */}
-          <div className="border border-[#2A2D34] bg-[#18181B] p-5 md:p-6 max-w-md">
-            <p className="text-[13px] text-[#9CA3AF] mb-4">
-              Cuando termines, esto es lo que tienes que hacer
-            </p>
-
-            <ol className="space-y-3 mb-6">
-              <li className="flex gap-3 text-sm text-[#D1D5DB] leading-relaxed">
-                <span className="text-[#22C55E] font-semibold shrink-0">1.</span>
-                <span>
-                  Haz <strong className="text-white">captura de pantalla</strong> de tu resultado
-                  (los cuatro colores).
-                </span>
-              </li>
-              <li className="flex gap-3 text-sm text-[#D1D5DB] leading-relaxed">
-                <span className="text-[#22C55E] font-semibold shrink-0">2.</span>
-                <span>
-                  Envíanosla por el <strong className="text-white">mismo chat de Instagram</strong>{" "}
-                  donde ya estábamos hablando, o por el WhatsApp de Adrián.
-                </span>
-              </li>
-              <li className="flex gap-3 text-sm text-[#D1D5DB] leading-relaxed">
-                <span className="text-[#22C55E] font-semibold shrink-0">3.</span>
-                <span>Te leemos tu resultado y te decimos el siguiente paso.</span>
-              </li>
-            </ol>
-
-            <a
-              href={instagramHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 h-12 bg-white text-[#0F0F12] font-semibold hover:bg-[#F5F6F7] transition-colors mb-2"
-              style={{ fontFamily: "'Inter Tight', sans-serif" }}
-            >
-              <Camera className="h-4 w-4" />
-              <span className="flex-1 text-left text-sm">Enviar mi resultado por Instagram</span>
-              <span className="text-[11px] font-semibold text-[#22C55E]">Recomendado</span>
-            </a>
-
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 h-11 border border-[#3F3F46] hover:border-[#22C55E] hover:bg-[#22C55E]/10 transition-colors text-sm text-[#F5F6F7]"
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span className="flex-1 text-left">O por WhatsApp de Adrián</span>
-            </a>
-          </div>
         </div>
 
-        <footer className="pt-12 text-[13px] text-[#6B7280]">
+        {/* VSL de Adrián. Si todavía no hay vídeo, no se pinta nada y el funnel sigue vivo. */}
+        {guid ? (
+          <div className="mb-10 overflow-hidden rounded-lg border border-[#2A2D34] bg-black">
+            <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+              <iframe
+                src={bunnyEmbedUrl(guid, libraryId)}
+                loading="lazy"
+                title="Vídeo de Adrián Villanueva"
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full border-0"
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {/* Calendly embebido, visible desde el principio */}
+        <div className="mb-6">
+          <h2
+            className="mb-2 text-xl font-medium tracking-tight text-white md:text-2xl"
+            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+          >
+            ¿Quieres que lo veamos juntos?
+          </h2>
+          <p className="mb-5 max-w-xl text-[15px] leading-relaxed text-[#9CA3AF]">
+            Reserva una sesión de orientación de 15 minutos. Es gratis y te decimos qué profesión
+            digital encaja de verdad contigo.
+          </p>
+        </div>
+
+        <div className="relative mb-14 overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/40 ring-1 ring-white/10">
+          {!calendlyReady && (
+            <div className="absolute inset-0 z-10">
+              <LoadingScreen fullscreen={false} className="absolute inset-0" />
+            </div>
+          )}
+          <div ref={calendlyRef} style={{ minWidth: 320, height: calendlyHeight }} />
+        </div>
+
+        <footer className="pb-8 text-[13px] text-[#6B7280]">
           © Capital Hub · Adrián Villanueva
         </footer>
       </div>
-
-      <style>{`
-        .tp-open-fill { position:absolute; inset:0; background:#22C55E; transform: scaleX(0); transform-origin:left; transition: transform 0.4s cubic-bezier(0.22,0.61,0.36,1); }
-        .tp-open:hover .tp-open-fill { transform: scaleX(1); }
-        .tp-open-label { transition: color 0.3s ease; }
-        .tp-open:hover .tp-open-label { color: #FFFFFF; }
-        @media (prefers-reduced-motion: reduce) { .tp-open-fill { transition: none; } }
-      `}</style>
     </main>
   )
 }
