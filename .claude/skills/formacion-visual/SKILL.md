@@ -10,6 +10,14 @@ description: "Convierte un documento de formación (un .md del Knowledge) en una
 
 ---
 
+## Regla número CERO: esto vive en la App, no en el OS
+
+**¿La va a ver un alumno? Entonces va en la App** (`capital-hub-app`), nunca en el OS. Es la REGLA DE ORO del SOP `producto/02` y se ha roto ya dos veces (2026-07-02 y 2026-07-24), las dos veces construyendo la formación en el OS.
+
+**Antes de crear el primer archivo:** abrir el repo de la App y comprobar si la guía **ya existe** (`web/src/features/guides/registry.tsx`). En julio de 2026 se rehizo en el OS material que ya estaba portado a la App.
+
+---
+
 ## Regla número uno
 
 **El documento del Knowledge es la fuente. La página es su reflejo.**
@@ -30,19 +38,33 @@ description: "Convierte un documento de formación (un .md del Knowledge) en una
 
 ---
 
-## Dónde vive todo
+## Dónde vive todo (repo de la App)
 
 ```
-src/features/formacion-ia-integrator/components/
-  formacion-fx.tsx     EL MOTOR: atmósfera, keyframes, hook de scroll. No se toca sin motivo.
-  formacion-kit.tsx    LAS PIEZAS: Hero, Cards, Steps, Timeline, Warn, Toc, NodeLine...
-  portada.tsx          El índice de la formación
-  <entrenamiento>.tsx  Una página por documento
+web/src/features/guides/
+  kit/fx.tsx        EL MOTOR: atmósfera, keyframes, hook de scroll. No se toca sin motivo.
+  kit/kit.tsx       LAS PIEZAS: Hero, Cards, Steps, Timeline, Warn, Toc, NodeLine...
+  <clave>/          Una carpeta por guía (partida en partes si pasa de 500 líneas)
+  registry.tsx      guide_key -> componente
 
-src/app/(public)/formacion/<formacion>/<slug>/page.tsx
+web/src/pages/training/
+  FormationHubPage.tsx   El hub donde se agrupan los recursos por tipo
+  ResourceViewer.tsx     El visor: pone el header, el volver y le inyecta `nav` a la guía
+web/src/lib/nav-origen.ts  Volver al sitio exacto (ruta + scroll)
 ```
 
-**Nunca se escribe CSS nuevo en una página.** Si hace falta una pieza que no está, **se añade al kit** y desde ahí la usan todas.
+**El texto fuente** sigue en el Knowledge del OS: `docs/sops/producto/<carpeta>/NN-*.md`.
+
+**Nunca se escribe CSS nuevo en una guía.** Si hace falta una pieza que no está, **se añade al kit** y desde ahí la usan todas.
+
+**Una guía no conoce rutas ni ids.** Recibe `nav` (`GuiaNav`) con `abrirGuia(guideKey)` y `volverAlHub()`. Si necesita llevar a otro sitio, se amplía `GuiaNav`, no se mete un `<Link>` a pelo.
+
+## Publicar una guía nueva
+
+1. Componente en `features/guides/<clave>/`, montado con el kit.
+2. Registrarlo en `registry.tsx` con su `guide_key`.
+3. Crear la fila en `resources` (`type='GUIDE'`, `guide_key`, `formation_id`, `display_order`) y enlazarla a sus lecciones.
+4. El hub, el visor y el panel de admin ya funcionan solos: no hay que tocarlos.
 
 ---
 
@@ -67,14 +89,14 @@ src/app/(public)/formacion/<formacion>/<slug>/page.tsx
 
 ### Tipografía
 
-- **Titulares**: `'Inter Tight', sans-serif`, `font-medium`, `tracking-[-0.03em]` en el hero y `-0.01em` en los `<Lead>`.
-- **Cuerpo**: `'Inter', sans-serif`, tamaños `15px` y `16px`, `leading-relaxed`.
-- **Código, nombres de archivo, comandos y diagramas**: `var(--font-mono)`.
+- **Titulares**: clase `font-display`, `font-medium`, `tracking-[-0.03em]` en el hero y `-0.01em` en los `<Lead>`.
+- **Cuerpo**: la fuente por defecto, tamaños `15px` y `16px`, `leading-relaxed`.
+- **Código, nombres de archivo, comandos y diagramas**: clase `font-mono`. **Nunca** `style={{fontFamily}}` a pelo: en la App esa variable CSS no existe.
 - **Prohibido**: mayúsculas con letter-spacing ancho en cuerpo de texto. Solo se usan en las etiquetas pequeñas de sección (`tracking-[0.12em]`, tamaño 12-13px). Es la REGLA de tipografía normal y legible.
 
 ### Motion
 
-Ya está resuelto en `formacion-fx.tsx`. Se usa así:
+Ya está resuelto en `kit/fx.tsx`. Se usa así:
 
 - `vc-load` con `animationDelay` escalonado: lo que se ve al cargar.
 - `vc-line`: cada línea del titular sube con clip. La última línea va en verde.
@@ -87,11 +109,11 @@ Ya está resuelto en `formacion-fx.tsx`. Se usa así:
 
 ## Las piezas del kit
 
-Importar siempre de `./formacion-kit` (o `../formacion-kit`).
+Importar siempre de `../kit/kit`.
 
 | Pieza | Para qué |
 |---|---|
-| `FormacionPage` | Shell: atmósfera, cabecera con volver, contenedor y pie. Toda página empieza aquí |
+| `GuiaPage` | Contenedor de la guía: atmósfera, motion y ancho. Toda guía empieza aquí. **No pone header ni botón de volver**: eso lo pone el `ResourceViewer` |
 | `Hero` | Portada de la página: eyebrow, titular en 2 líneas, entradilla y cue de scroll |
 | `SectionHead` | El separador numerado de sección. Lleva `id` para el índice |
 | `Section` | Contenedor con el respiro correcto entre secciones |
@@ -106,6 +128,7 @@ Importar siempre de `./formacion-kit` (o `../formacion-kit`).
 | `Split` | Comparación a dos caras: mal/bien, sin/con, se pierde/se conserva |
 | `Terms` | Tabla de dos columnas: término y definición, tú y la IA, skill y qué hace |
 | `Code` | Bloque de código o comando. Dos o tres líneas, nunca un muro |
+| `CodeLine` | **Una línea de código suelta** dentro de una tarjeta o comparación. Obligatoria: un `<p className="font-mono">` a pelo se sale de la caja |
 | `Mono` | Un término técnico dentro de una frase |
 | `Chips` | Fila de etiquetas cortas: vocabulario, comandos |
 | `Flow` | Resumen de un recorrido en una línea mono |
@@ -151,10 +174,39 @@ Máximo 500 líneas por archivo (regla del proyecto). Si un entrenamiento no cab
 
 ### 6. Cerrar bien
 
-- `Closing` con el paso siguiente y su botón.
-- Ruta en `src/app/(public)/formacion/.../page.tsx` con `metadata` (title y description, ambos en español).
-- Actualizar la portada de la formación para que la página nueva aparezca.
-- Actualizar el `00-readme.md` de la carpeta del Knowledge.
+- `Closing` con el paso siguiente y su botón (via `nav`, no con un enlace a pelo).
+- Registrar la guía en `registry.tsx` y crear su fila en `resources`.
+- Actualizar el `00-readme.md` de la carpeta del Knowledge y el SOP `producto/51`.
+
+---
+
+## El desbordamiento: lo que SIEMPRE hay que mirar
+
+**Un texto largo sin espacios no tiene por dónde partirse y se sale de su caja.** Le pasa a las líneas de código, las claves, las URLs y los nombres de archivo. Marco lo pilló el 2026-07-24 en la caja "Mal" del Entrenamiento 1 y no se puede repetir.
+
+Está cerrado a nivel de motor (`kit/fx.tsx`), y aun así **hay que comprobarlo en cada pasada**:
+
+```css
+.vc-root code, .vc-root pre, .vc-break { overflow-wrap: anywhere; word-break: break-word; }
+.vc-root pre { overflow-x: auto; max-width: 100%; }
+```
+
+Reglas al escribir:
+- Línea de código suelta en una tarjeta o comparación → **`<CodeLine>`**, nunca un `<p className="font-mono">`.
+- Bloque de varias líneas → **`<Code>`** (hace scroll horizontal dentro de su caja).
+- Cualquier caja con contenido flexible → `min-w-0` en el hijo, o el flex/grid no la deja encoger.
+
+**Comprobación automática** (pegar en la consola del navegador o en el script de Playwright):
+
+```js
+[...document.querySelectorAll('*')].filter(el =>
+  el.scrollWidth > el.clientWidth + 2 &&
+  getComputedStyle(el).overflowX === 'visible' &&
+  el.getBoundingClientRect().right > window.innerWidth + 2
+)
+```
+
+Debe devolver **array vacío**, en escritorio y en móvil (390px).
 
 ---
 
@@ -162,15 +214,17 @@ Máximo 500 líneas por archivo (regla del proyecto). Si un entrenamiento no cab
 
 Si alguna sale que no, la página no está terminada:
 
+- [ ] Se ha construido **en la App**, y la guía no existía ya allí.
 - [ ] El contenido es fiel al `.md`. No hay nada inventado ni nada perdido.
 - [ ] Cero emojis y cero guion largo, en la página y en el `.md`.
+- [ ] **Cero desbordamiento**: la comprobación de arriba devuelve vacío en escritorio y en móvil.
 - [ ] No hay dos párrafos seguidos sin una pieza visual entre medias.
 - [ ] Todos los bloques importantes llevan `data-reveal`.
 - [ ] Los colores son solo los de la tabla de arriba.
 - [ ] Si hay más de 8 secciones, tiene `Toc`.
 - [ ] Ningún archivo pasa de 500 líneas.
-- [ ] Existe la ruta con su `metadata` y la portada enlaza a ella.
-- [ ] `npm run typecheck` pasa.
+- [ ] La guía está en `registry.tsx` y tiene su fila en `resources`, y se abre desde el hub.
+- [ ] `npx tsc --noEmit -p tsconfig.app.json` pasa en la App.
 - [ ] Se ha visto en el navegador, en escritorio **y en móvil**.
 - [ ] El `00-readme.md` de la carpeta del Knowledge está al día.
 
@@ -186,10 +240,18 @@ Si alguna sale que no, la página no está terminada:
 
 **Páginas con candado de "próximamente".** Si se anuncia algo, se construye. No se publica una tarjeta bloqueada salvo que Marco lo pida.
 
+**Construir en el repo equivocado.** Dos veces se ha hecho la formación en el OS. Va en la App. Y antes de empezar, mirar si la guía ya existe allí.
+
+**Texto sin espacios que se sale de la caja.** Ver la sección de desbordamiento. Se comprueba SIEMPRE, en escritorio y en móvil.
+
+**`position: sticky` que no pega.** Si una cabecera no se queda fija, mirar los ancestros: un `overflow` distinto de `visible` (aunque sea `overflow-x: hidden` en el `body`) crea un contenedor de scroll y rompe el sticky. La solución no es quitar la protección de scroll horizontal: es `overflow-x: clip`, que recorta igual sin crear contenedor.
+
 **Claves de ejemplo con formato real.** Un material de formación que explica qué es una API key suele traer un ejemplo tipo `sk_live_...`. GitHub lo detecta como clave de verdad y **bloquea el push** (protección de secretos). La solución **nunca** es desbloquearlo desde GitHub: se cambia el ejemplo por un placeholder que no pueda confundirse con una clave (`sk_live_ESTO_ES_UN_EJEMPLO_NO_UNA_KEY`). Se cambia **en el `.md` y en la página**, y enseña exactamente lo mismo.
 
 ---
 
 ## Trabajo en rama
 
-Una página de formación nueva o una reescritura de contenido **no es un cambio fácil**: se abre rama desde `dev` (`feat/...`). Un retoque de copy en una página que ya existe sí puede ir directo a `main`.
+Una guía nueva o una reescritura de contenido **no es un cambio fácil**: se abre rama desde `dev` (`feat/...`) **en el repo de la App**. Un retoque de copy en una guía que ya existe sí puede ir directo a `main`.
+
+Ojo: normalmente el trabajo toca **dos repos** (la App para el código, el OS para el texto del Knowledge y esta skill). Los dos se commitean y se pushean en el mismo bloque.

@@ -3,7 +3,7 @@ title: Entrenamiento 2 · Cómo usar el sistema
 order: 2
 ---
 
-> Versión visual: [/formacion/ia-integrator/entrenamiento-2](/formacion/ia-integrator/entrenamiento-2)
+> **Versión visual**: guía `entrenamiento-2` en la App, dentro del [hub de recursos de la formación](https://app.capitalhubapp.com/training/formations/1/hub). El código vive en el repo `capital-hub-app` (`web/src/features/guides/entrenamiento-2/`), no en el OS.
 
 # Entrenamiento 2 · Cómo usar el sistema
 

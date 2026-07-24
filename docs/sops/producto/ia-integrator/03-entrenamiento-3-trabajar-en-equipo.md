@@ -3,7 +3,7 @@ title: Entrenamiento 3 · Trabajar en equipo
 order: 3
 ---
 
-> Versión visual: [/formacion/ia-integrator/entrenamiento-3](/formacion/ia-integrator/entrenamiento-3)
+> **Versión visual**: guía `entrenamiento-3` en la App, dentro del [hub de recursos de la formación](https://app.capitalhubapp.com/training/formations/1/hub). El código vive en el repo `capital-hub-app` (`web/src/features/guides/entrenamiento-3/`), no en el OS.
 
 # Entrenamiento 3 · Trabajar en equipo
 

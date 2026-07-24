@@ -3,7 +3,7 @@ title: Entrenamiento 1 · Cómo funciona todo
 order: 1
 ---
 
-> Versión visual: [/formacion/ia-integrator/entrenamiento-1](/formacion/ia-integrator/entrenamiento-1)
+> **Versión visual**: guía `entrenamiento-1` en la App, dentro del [hub de recursos de la formación](https://app.capitalhubapp.com/training/formations/1/hub). El código vive en el repo `capital-hub-app` (`web/src/features/guides/entrenamiento-1/`), no en el OS.
 
 # Entrenamiento 1 · Cómo funciona construir un software con IA
 
