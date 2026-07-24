@@ -82,9 +82,17 @@ Lead → Lead cualificado → Agendado → Seguimiento → Alumno
 - Escalera del no retroceso (`stage-guard.ts`): `dm(0) → lead(1) → lead_cualificado(2) → agendado(3) → alumno(4)`.
 - Migración: `supabase/migrations/20260723120000_pipeline_stage_lead_cualificado.sql`.
 
+## El hueco de la VSL
+
+El marco del vídeo **siempre se pinta**, con el mismo tamaño y posición que tendrá el vídeo final (16:9). Mientras `video_guid` esté vacío muestra un placeholder de marca ("El vídeo se está preparando"). En cuanto se pega el GUID en el engranaje de `/webs`, el reproductor aparece exactamente en ese hueco, **sin mover nada de la página y sin tocar código ni hacer deploy**.
+
+Marco lo pidió así el 2026-07-23: quiere entregar el vídeo y que se enchufe de una, sin que la página cambie de forma.
+
 ## El email de los 7 minutos
 
 - Plantilla `test_personalidad_acceso`, **editable y pausable** desde `/email-marketing` → Plantillas. El override en BD es la fuente de verdad.
+- **Vista previa**: `/api/admin/email/preview/test_personalidad_acceso` (requiere estar logueado). Sirve para comprobar a ojo a dónde apunta cada botón antes de encender nada.
+- Lleva **tres** botones: el principal al acceso del test, más **Instagram y WhatsApp** con los mismos destinos que la landing del test. Duplicados a propósito (Marco, 2026-07-23): el lead tiene el canal de contacto a mano aunque nunca abra la landing.
 - **Sin cron y sin tabla de cola**: se programa en el propio opt-in con `scheduledAt` del SDK de Resend (verificado en la 6.12.2). El retraso es editable desde el engranaje de `/webs` (`email_delay_minutes`, default 7).
 - **Se envía siempre**, haya agendado o no. Es la promesa a cambio de sus datos.
 - **Gotcha**: la comprobación de "plantilla pausada" ocurre AL PROGRAMAR, no al entregar. Si se pausa la plantilla dentro de esos 7 minutos, el email igualmente sale.
@@ -224,7 +232,12 @@ Decisiones cerradas en esa reunión y que NO hay que volver a debatir:
 - **Se sigue usando Equilibria**, no un test propio. Da autoridad ("no es mío, es de gente con 20 años de experiencia") y es más rápido de lanzar. Test propio queda en roadmap.
 - **El botón de agenda se ve desde el principio.** Si la calidad de las llamadas baja, se retrasa dentro del vídeo.
 
-Pendiente al cerrar esta versión: **Adrián tiene que grabar la VSL**. Hasta entonces `video_guid` está vacío y la gracias muestra el resto del funnel sin reproductor.
+Pendiente al cerrar esta versión: **Adrián tiene que grabar la VSL**. Hasta entonces `video_guid` está vacío y la gracias muestra el placeholder en el hueco del vídeo.
+
+Pasada de ajustes de Marco el mismo día, antes de publicar:
+1. **El hueco del vídeo se pinta siempre**, con placeholder de marca. Antes, sin GUID, no se pintaba nada y la página cambiaba de forma al añadir el vídeo.
+2. **El email lleva también los botones de Instagram y WhatsApp**, con los mismos destinos que la landing del test.
+3. **La plantilla se añadió al endpoint de vista previa** (`/api/admin/email/preview/test_personalidad_acceso`) para poder comprobar a dónde apunta cada botón sin mandar un email de verdad.
 
 ### Histórico v1
 

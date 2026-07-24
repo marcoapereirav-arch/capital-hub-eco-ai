@@ -71,11 +71,13 @@ const TEMPLATES: Template[] = [
     group: "captacion",
     trigger: "Cada opt-in en /test-personalidad. Envio programado a los 7 minutos (editable en el engranaje de /webs). Se envia siempre, haya agendado o no.",
     frequency: "alta",
-    variables: ["firstName", "accessUrl"],
+    variables: ["firstName", "accessUrl", "whatsappUrl", "instagramUrl"],
     defaultSubject: "Aquí tienes tu test de personalidad",
     renderDefault: () => render(TestPersonalidadAccesoEmail({
       firstName: "{{firstName}}",
       accessUrl: "{{accessUrl}}",
+      whatsappUrl: "{{whatsappUrl}}",
+      instagramUrl: "{{instagramUrl}}",
     })),
   },
   {

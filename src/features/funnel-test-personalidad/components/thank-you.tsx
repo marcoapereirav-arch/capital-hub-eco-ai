@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Mail } from "lucide-react"
+import { Mail, Play } from "lucide-react"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { FUNNEL_TEST_PERSONALIDAD, bunnyEmbedUrl } from "../config"
 
@@ -156,10 +156,13 @@ export function TestPersonalidadThankYou({
           </p>
         </div>
 
-        {/* VSL de Adrián. Si todavía no hay vídeo, no se pinta nada y el funnel sigue vivo. */}
-        {guid ? (
-          <div className="mb-10 overflow-hidden rounded-lg border border-[#2A2D34] bg-black">
-            <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+        {/* VSL de Adrián. El marco SIEMPRE se pinta, con el mismo tamaño y posición que
+            tendrá el vídeo final. Mientras no haya GUID muestra un placeholder de marca;
+            en cuanto Marco pegue el GUID en el engranaje de /webs, el reproductor aparece
+            exactamente en este hueco, sin mover nada de la página ni tocar código. */}
+        <div className="mb-10 overflow-hidden rounded-lg border border-[#2A2D34] bg-black">
+          <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+            {guid ? (
               <iframe
                 src={bunnyEmbedUrl(guid, libraryId)}
                 loading="lazy"
@@ -168,9 +171,28 @@ export function TestPersonalidadThankYou({
                 allowFullScreen
                 className="absolute inset-0 h-full w-full border-0"
               />
-            </div>
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#141418] px-6 text-center">
+                <span
+                  aria-hidden
+                  className="flex h-14 w-14 items-center justify-center rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10"
+                >
+                  <Play className="ml-0.5 h-6 w-6 text-[#22C55E]" fill="currentColor" />
+                </span>
+                <p
+                  className="text-[15px] font-medium text-[#F5F6F7]"
+                  style={{ fontFamily: "'Inter Tight', sans-serif" }}
+                >
+                  El vídeo se está preparando
+                </p>
+                <p className="max-w-xs text-[13px] leading-relaxed text-[#6B7280]">
+                  En un momento estará aquí. Mientras tanto puedes reservar tu sesión justo
+                  debajo.
+                </p>
+              </div>
+            )}
           </div>
-        ) : null}
+        </div>
 
         {/* Calendly embebido, visible desde el principio */}
         <div className="mb-6">

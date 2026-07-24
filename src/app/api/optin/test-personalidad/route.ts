@@ -187,8 +187,16 @@ export async function POST(req: Request) {
       const settings = await getTestPersonalidadSettings()
       const origin = resolveOrigin(req)
       const accessUrl = `${origin}/api/funnel/test-personalidad/acceso?c=${encodeURIComponent(contactSlug)}`
+      // Mismos destinos que los botones de la landing del test, para que el lead
+      // tenga el canal de contacto a mano aunque no llegue a abrirla.
+      const whatsappUrl = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(
+        "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
+      )}`
+      const instagramUrl = `https://instagram.com/${settings.instagram}`
       const firstName = full_name.split(" ")[0] || full_name
-      const html = await render(TestPersonalidadAccesoEmail({ firstName, accessUrl }))
+      const html = await render(
+        TestPersonalidadAccesoEmail({ firstName, accessUrl, whatsappUrl, instagramUrl }),
+      )
       await sendEmail({
         template: "test_personalidad_acceso",
         to: email,
@@ -202,7 +210,7 @@ export async function POST(req: Request) {
           action,
           delay_minutes: settings.emailDelayMinutes,
         },
-        vars: { firstName, accessUrl },
+        vars: { firstName, accessUrl, whatsappUrl, instagramUrl },
       })
     } catch (e) {
       // Nunca bloquea el opt-in: el lead ya está guardado y va a ver la VSL igual.

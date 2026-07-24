@@ -17,6 +17,8 @@ import { WelcomeAlumnoHTEmail } from "@/lib/email/templates/welcome-alumno-ht"
 import { TeamInviteEmail } from "@/lib/email/templates/team-invite"
 import { InternalErrorAlert } from "@/lib/email/templates/internal-error-alert"
 import { InternalGCalAlert } from "@/lib/email/templates/internal-gcal-alert"
+import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
+import { FUNNEL_TEST_PERSONALIDAD } from "@/features/funnel-test-personalidad/config"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -25,6 +27,16 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://os.capitalhubapp.com
 
 // Datos demo para cada template (suficiente para previsualizar)
 const previews: Record<string, () => Promise<string>> = {
+  // Funnel del test v2: el email que llega a los 7 minutos. El botón principal apunta
+  // al endpoint de acceso (que califica al lead), NUNCA al link directo de Equilibria.
+  test_personalidad_acceso: () => render(TestPersonalidadAccesoEmail({
+    firstName: "Andrés",
+    accessUrl: `${APP_URL}/api/funnel/test-personalidad/acceso?c=andres_ab12cd`,
+    whatsappUrl: `https://wa.me/${FUNNEL_TEST_PERSONALIDAD.WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
+    )}`,
+    instagramUrl: `https://instagram.com/${FUNNEL_TEST_PERSONALIDAD.INSTAGRAM_HANDLE}`,
+  })),
   welcome_trial: () => render(WelcomeTrialEmail({
     fullName: "Israel Ramírez",
     appUrl: "https://app.capitalhubapp.com",
