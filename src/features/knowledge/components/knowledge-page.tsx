@@ -3,7 +3,7 @@
 import { useState } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { ChevronRight, FileText, Folder, Palette } from "lucide-react"
+import { ChevronRight, ClipboardList, FileText, Folder, Palette } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { PageNavHeader, type PageNavGroup } from "@/features/shell/components/page-nav-header"
 import { cn } from "@/lib/utils"
@@ -15,6 +15,22 @@ interface KnowledgePageProps {
 
 const BRANDKIT_ID = "__brandkit"
 const BRAND_FOLDER = "brand"
+const REPORTE_FUNNEL_TEST_V2_ID = "__reporte_funnel_test_v2"
+const PRODUCTO_FOLDER = "producto"
+
+/**
+ * Items del Knowledge que NO son markdown sino una PÁGINA VIVA de la app, embebida
+ * por iframe. Patrón del brandkit: la página es la única fuente, aquí solo se apunta.
+ * Prohibido crear copias .html estáticas en public/ (segunda fuente que se
+ * desincroniza, ver SOP marketing/brand/01).
+ */
+const EMBEDDED_PAGES: Record<string, { src: string; title: string }> = {
+  [BRANDKIT_ID]: { src: "/brandkit", title: "Brandkit Capital Hub" },
+  [REPORTE_FUNNEL_TEST_V2_ID]: {
+    src: "/reportes/funnel-test-personalidad-v2",
+    title: "Reporte técnico · Funnel Test Personalidad v2",
+  },
+}
 
 type Item = { id: string; label: string; icon: LucideIcon }
 type FolderDef = { id: string; label: string; description: string; items: Item[] }
@@ -49,7 +65,19 @@ export function KnowledgePage({ folders: knowledgeFolders }: KnowledgePageProps)
       id: f.id,
       label: f.label,
       description: f.description,
-      items: f.sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })),
+      items: [
+        // Reportes técnicos (páginas vivas) arriba del todo de su cuadrante.
+        ...(f.id === PRODUCTO_FOLDER
+          ? [
+              {
+                id: REPORTE_FUNNEL_TEST_V2_ID,
+                label: "Reporte · Funnel Test Personalidad v2",
+                icon: ClipboardList,
+              },
+            ]
+          : []),
+        ...f.sops.map((s) => ({ id: s.slug, label: s.title, icon: FileText })),
+      ],
     })),
   ]
 
@@ -221,11 +249,12 @@ function ItemGrid({
 }
 
 function ContentView({ itemId, sops }: { itemId: string; sops: Sop[] }) {
-  if (itemId === BRANDKIT_ID) {
+  const embedded = EMBEDDED_PAGES[itemId]
+  if (embedded) {
     return (
       <iframe
-        src="/brandkit"
-        title="Brandkit Capital Hub"
+        src={embedded.src}
+        title={embedded.title}
         className="w-full h-full border-0 bg-[#0F0F12]"
       />
     )

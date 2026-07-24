@@ -128,6 +128,14 @@ Fuente del copy: `ch-copy-test-landing-optin.md` (raíz del repo).
 | `CALENDLY_URL` | `https://calendly.com/adrian-sales-capital/online-coffee` |
 | `EMAIL_DELAY_MINUTES` | `7` |
 
+## Reporte técnico en el Knowledge
+
+Hay un reporte visual de todo lo construido en **Knowledge > Producto > "Reporte · Funnel Test Personalidad v2"**. Explica pieza por pieza qué se hizo, con los enlaces a cada sitio del OS, y qué falta.
+
+Es una **página viva de la app** (`src/app/reportes/funnel-test-personalidad-v2/page.tsx`) embebida por iframe, igual que el brandkit. **No es un `.html` estático en `public/`**: eso sería una segunda fuente que se desincroniza (el bug del 2026-07-08 con el brandkit). Para cambiarlo se edita ese `.tsx` y ya.
+
+El registro de páginas embebidas vive en `EMBEDDED_PAGES`, en `src/features/knowledge/components/knowledge-page.tsx`. Para añadir otro reporte: crear la página bajo `src/app/reportes/`, añadir su entrada al mapa y engancharla a la carpeta que toque.
+
 ## Archivos
 
 - Landing opt-in: `src/features/funnel-test-personalidad/components/landing.tsx`
