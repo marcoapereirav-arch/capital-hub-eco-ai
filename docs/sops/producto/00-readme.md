@@ -28,4 +28,4 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 
 | Carpeta | Qué contiene |
 |---------|--------------|
-| [ia-integrator/](ia-integrator/00-readme.md) | **Formación IA Integrator** — manuales de Vibe Coding (construir software hablando con la IA) + Git explicado sin tecnicismos. Material de presentación de la formación |
+| [ia-integrator/](ia-integrator/00-readme.md) | **Formación IA Integrator**: los tres entrenamientos (cómo funciona todo · cómo usar el sistema · trabajar en equipo). Cada uno tiene su página visual en `/formacion/ia-integrator`. Se construyen con la skill `formacion-visual` |

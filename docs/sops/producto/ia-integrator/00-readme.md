@@ -1,51 +1,68 @@
 ---
 title: IA Integrator
-description: Formación · manuales de Vibe Coding + Git
+description: Formación · los tres entrenamientos
 order: 0
 ---
 
-# Formación IA Integrator — material de presentación
+# Formación IA Integrator: los tres entrenamientos
 
-Esta carpeta contiene los manuales que se usan como **material de presentación de la formación IA Integrator** de Capital Hub. Enseñan a una persona **no técnica** a construir su propio software **hablándole a una IA** (Vibe Coding), con las mismas reglas de orden y seguridad que usa un programador de verdad.
+Esta carpeta contiene **el material oficial de la formación IA Integrator** de Capital Hub. Enseña a una persona **no técnica** a construir su propio software **hablándole a una IA**, con las reglas de orden y seguridad que hacen que no se rompa nada.
 
-## El flow que enseñan (de qué van)
+**El alumno no escribe código en ningún momento.**
 
-Los tres documentos cuentan la misma historia, en capas de profundidad creciente:
+## Los tres entrenamientos
 
-1. **La idea central** — Tú dices **QUÉ** quieres; la IA escribe el código, lo prueba y lo deja funcionando. Tu trabajo es **dirigir, mirar y aprobar** (eres el director de la película, no el que maneja la cámara).
+| # | Documento | Qué es | Página visual |
+|---|-----------|--------|---------------|
+| 01 | [Entrenamiento 1 · Cómo funciona todo](01-entrenamiento-1-como-funciona-todo.md) | El más largo. Qué es cada cosa por dentro: frontend y backend, UI y UX, base de datos, API y API keys, las herramientas, el viaje del código, la regla de oro, el contexto y cómo construye la IA | [/formacion/ia-integrator/entrenamiento-1](/formacion/ia-integrator/entrenamiento-1) |
+| 02 | [Entrenamiento 2 · Cómo usar el sistema](02-entrenamiento-2-como-usar-el-sistema.md) | El día a día del alumno: abrir sesión con `/primer`, decir el objetivo, aprobar el plan, revisar, publicar y cerrar | [/formacion/ia-integrator/entrenamiento-2](/formacion/ia-integrator/entrenamiento-2) |
+| 03 | [Entrenamiento 3 · Trabajar en equipo](03-entrenamiento-3-trabajar-en-equipo.md) | Solo si en el proyecto trabaja más de una persona: meter a alguien nuevo, el día a día compartido, conflictos y reglas del equipo | [/formacion/ia-integrator/entrenamiento-3](/formacion/ia-integrator/entrenamiento-3) |
 
-2. **Los 4 lugares donde vive el trabajo** — y su viaje, siempre en el mismo orden:
-   - **Localhost** (tu ordenador, solo lo ves tú) → se construye y se prueba SIEMPRE aquí primero.
-   - **Rama** (una mesa aparte) → solo para cosas grandes o arriesgadas, sin tocar lo bueno.
-   - **main** (la versión oficial, en la nube) → solo entra lo que ya está listo.
-   - **Producción** (la web pública) → se publica sola al llegar a `main`.
+**El orden importa.** El 2 da por sabido el 1. El 3 da por sabidos el 1 y el 2, y no hace falta si el alumno trabaja solo.
 
-   `idea → localhost → [rama si es grande] → main → producción (live)`
+## Reglas de esta carpeta
 
-3. **Guardar y publicar** — `commit` (guardar una versión = cerrar un sobre etiquetado), `push` (subirla a la nube = echarlo al buzón), `merge` (unir una rama a main = volver del desvío a la carretera). El alumno **no dice estas palabras**: dice *"publícalo"* y la IA hace la secuencia correcta.
+- **El `.md` es la fuente. La página visual es su reflejo.** Si cambia el texto de un entrenamiento, se cambia aquí primero y luego en el componente. Nunca al revés y nunca solo en uno de los dos.
+- **Cero emojis** en el texto (REGLA #8 del SOP `producto/04`). Los avisos que en el original iban con un emoji de advertencia se convierten en el bloque `<Warn>` del kit visual.
+- **Cero guion largo** (REGLA #7).
+- Los tres se renderizan en `/knowledge` del OS como carpeta propia (el servicio lee las subcarpetas de cada cuadrante).
 
-4. **¿main o rama?** — Lo decide la IA: pequeño y seguro → directo a `main`; grande, nuevo o delicado (pagos, login, datos) → primero una `rama`.
+## Cómo se construyen las páginas visuales
 
-5. **El vocabulario del alumno** — es mínimo: `/primer` · *"quiero que…"* · *"cambia esto"* · **"publícalo"** · *"tíralo"* · *"ciérralo"*.
+Con la skill **`formacion-visual`** (`.claude/skills/formacion-visual/`), que fija el estilo: fondo `#0F0F12`, verde de marca `#22C55E`, Inter Tight en titulares, motion de entrada y reveals al scroll, diagramas que se dibujan solos.
 
-6. **Las 3 reglas que no se saltan** — `primer` siempre al empezar; no dar nada por bueno sin verlo en local; no está terminado hasta que está live.
+El código vive en `src/features/formacion-ia-integrator/`:
 
-## Los documentos
+```
+components/
+  formacion-fx.tsx     atmósfera + keyframes + hook de scroll (motor)
+  formacion-kit.tsx    las piezas de montaje (Hero, Cards, Steps, Warn, Toc…)
+  portada.tsx          el índice de los tres
+  entrenamiento-1/     partido en partes por tamaño
+  entrenamiento-2.tsx
+  entrenamiento-3.tsx
+```
 
-| # | Documento | Qué es | Cuándo usarlo en la formación |
-|---|-----------|--------|-------------------------------|
-| 01 | [Vibe Coding — Al grano](01-vibecoding-al-grano.md) | El método entero en 1 página | Primer contacto / resumen para tener a mano |
-| 02 | [Vibe Coding — El método completo](02-vibecoding-workflow.md) | La versión larga: paso a paso, ejemplos, chuletas, glosario | El cuerpo de la clase |
-| 03 | [Git explicado sin tecnicismos](03-git-explicado.md) | Profundización solo en Git (commit/push/merge, ramas) | Deep dive para quien quiera entender el "por debajo" |
-
-## Notas de trabajo
-
-- **Origen:** los 3 manuales vienen de NVISION y se **adaptaron a Capital Hub** (2026-07-01). El doc 03 (Git) ya usa los repos reales (`capital-hub-eco-ai` / `capital-hub-app`), el dominio real (`os.capitalhubapp.com`) y su ejemplo dejó de ser una foto congelada de otro proyecto: ahora es un caso de Capital Hub (rediseño del funnel Test de Personalidad).
-- **Docs 01 y 02** son el mismo manual en dos tamaños (resumen y completo): coherentes entre sí, terminología idéntica, ya genéricos (sin marca ajena).
-- **Voz:** el doc 03 conserva el tono "Para Marco / la IA te dice". Si la formación es 100% para alumnos, en la pasada visual se puede generalizar a "Para ti". Lo dejo tal cual hasta que lo decidas.
-- Estos manuales describen el flujo Vibe Coding **de libro**. En Capital Hub el agente trabaja **prod-first** (casi siempre `commit + push` directo a `main`; ramas solo para lo grande) y **sube solo al terminar cada bloque** sin que el usuario lo pida (SOP `producto/04`, regla #3). Es material general para alumnos, no el reglamento interno de este repo.
+**Ninguna página inventa estilos por su cuenta.** Si hace falta una pieza nueva, se añade al kit.
 
 ## Cambios versionados
 
-- **2026-07-01** — Creación. Se movieron aquí los 3 manuales que estaban sueltos en `docs/` (`Manual_VibeCoding_AlGrano`, `Manual_VibeCoding_Workflow`, `Manual_Git_NVISION`), renombrados y con frontmatter. Material de presentación de la formación IA Integrator.
-- **2026-07-01** — Adaptación NVISION → Capital Hub. Doc 03 (Git): repos `nvision-saas`/`nvision-setup` → `capital-hub-eco-ai`/`capital-hub-app`; ejemplo "caso real" congelado (rama `security/regla-no-leer-secretos` + add-login) → ejemplo Capital Hub (rediseño funnel Test de Personalidad) con dominio real. Docs 01/02 no tenían marca ajena. Pendiente: pasada visual + (opcional) render en `/knowledge` del OS (hoy el servicio no lee subcarpetas).
+### 2026-07-24 · Contenido nuevo: los tres entrenamientos sustituyen a los manuales viejos
+
+Marco: el contenido anterior estaba mal. Se retira entero y se sustituye por sus tres entrenamientos.
+
+**Fuera** (contenido retirado, no se conserva): `01-vibecoding-al-grano.md`, `02-vibecoding-workflow.md`, `03-git-explicado.md`. Venían de NVISION adaptados, y contaban un flujo que no es el que se enseña.
+
+**Dentro**: los tres entrenamientos de Marco, con su texto tal cual. Dos cambios mínimos y solo esos:
+1. Fuera los emojis (REGLA #8). Los avisos que los llevaban son ahora bloques `<Warn>` en la página.
+2. La clave de ejemplo de Stripe del Entrenamiento 1 (`sk_live_4eC39Hq...`) pasa a ser `sk_live_ESTO_ES_UN_EJEMPLO_NO_UNA_KEY`. **Motivo**: tenía formato de clave real y la protección de secretos de GitHub bloqueaba el push. No se desactiva la protección: se cambia el ejemplo. Enseña lo mismo y además es coherente con lo que el propio entrenamiento predica.
+
+**Qué cambia en el producto:**
+- Las tres páginas visuales quedan construidas y abiertas. Antes solo existía la primera y las otras dos salían con candado.
+- Rutas nuevas: `/entrenamiento-1`, `/entrenamiento-2`, `/entrenamiento-3`. Se retiran `/vibe-coding` y los slugs que nunca llegaron a existir (`/vibe-coding-completo`, `/git`).
+- Nace `formacion-kit.tsx`: las piezas de montaje compartidas. Antes cada página se escribía a mano.
+- Nace la skill `formacion-visual`, para que cualquier página de formación futura salga con este mismo diseño sin volver a explicarlo.
+- El Entrenamiento 1 lleva **índice lateral** que se sigue solo al bajar, porque es tres veces más largo que los otros dos.
+
+### 2026-07-01 · Creación (retirada)
+Se movieron aquí los 3 manuales que estaban sueltos en `docs/` y se adaptaron de NVISION a Capital Hub. Ese contenido queda retirado el 2026-07-24.

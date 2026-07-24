@@ -117,6 +117,7 @@ export function FormacionStyles() {
       .vc-in .vc-node { opacity: 1; transform: scale(1); }
       .vc-in .vc-node-1 { transition-delay: 0.10s } .vc-in .vc-node-2 { transition-delay: 0.34s }
       .vc-in .vc-node-3 { transition-delay: 0.58s } .vc-in .vc-node-4 { transition-delay: 0.82s }
+      .vc-in .vc-node-5 { transition-delay: 1.06s } .vc-in .vc-node-6 { transition-delay: 1.30s }
       .vc-flow { opacity: 0; } .vc-in .vc-flow { opacity: 1; transition: opacity 0.4s ease 0.5s; }
 
       /* Chips de vocabulario: entran en secuencia */
