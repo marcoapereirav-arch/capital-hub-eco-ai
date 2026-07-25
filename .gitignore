@@ -102,3 +102,6 @@ tsconfig.tsbuildinfo
 Update_task_adrian_y_marco
 *.transcript
 /transcripts/
+
+# Material de entrega para otro ecosistema (fuente, no forma parte de este repo)
+ENTREGA-otro-ecosistema/
