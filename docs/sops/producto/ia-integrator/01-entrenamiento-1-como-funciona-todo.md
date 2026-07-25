@@ -404,13 +404,16 @@ Mucha gente cree que la rama vive en el chat. **No: vive en la carpeta.** Todos 
 UNA ventana del IDE  =  UNA carpeta  =  UNA rama  =  UN chat
 ```
 
-## Si necesitas hacer dos cosas a la vez
+## Si te surge otra cosa a mitad
 
-**Lo normal: no lo necesitas.** Termina una, publícala, empieza la otra.
+**Una sola cosa a la vez, siempre.** Si estás con un proyecto y te surge otra cosa:
 
-**Si de verdad lo necesitas:** se lo pides a la IA y **ella prepara una carpeta de trabajo aparte**, conectada al mismo proyecto. Tú no la copias a mano: la crea ella, y cuando terminas, la borra.
+1. La apuntas.
+2. Cierras el proyecto que tienes abierto.
+3. Haces lo otro.
+4. Vuelves a abrir el proyecto y sigues.
 
-> **Esto no es lo mismo que duplicar tu proyecto.** Duplicarlo tú a mano es lo que está prohibido (regla 3). Lo que hace la IA es abrir una segunda vista del mismo proyecto, no una copia suelta.
+Nada de trabajar en dos cosas al mismo tiempo.
 
 ## Nunca guardes tu proyecto en una nube que sincroniza sola
 
@@ -718,8 +721,8 @@ Dos chats en la misma carpeta acaban mezclando código de ramas distintas.
 **2 · Abre siempre la carpeta del proyecto, nunca la carpeta madre.**
 Si abres la madre, la IA ve todos tus proyectos mezclados y toca el que no es.
 
-**3 · No copies ni dupliques la carpeta de tu proyecto.**
-Si hay que moverlo o trabajar en dos cosas a la vez, se lo pides a la IA y lo hace ella.
+**3 · Una sola cosa a la vez, y no dupliques la carpeta.**
+Si te surge otra cosa: la apuntas, cierras el proyecto, la haces y luego vuelves a abrir y sigues. Si hay que mover la carpeta, se lo pides a la IA.
 
 **4 · No guardes tu proyecto en iCloud, Drive ni Dropbox.**
 Duplican y renombran archivos sin avisar. La copia de seguridad la hace GitHub.

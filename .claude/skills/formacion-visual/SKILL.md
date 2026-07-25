@@ -87,6 +87,11 @@ web/src/lib/nav-origen.ts  Volver al sitio exacto (ruta + scroll)
 
 **Prohibido cualquier otro color.** Nada de violeta, cian, rosa ni degradados de colores. Base monocroma más verde. El ámbar existe únicamente dentro de `<Warn>`.
 
+### Iconos prohibidos
+
+- **`Sparkles` (la estrellita de lucide) está PROHIBIDO.** Marco lo vetó el 2026-07-24: es el icono genérico de "IA" y no encaja con el brandkit. No se usa en ninguna guía, hub, tarjeta de recurso ni eyebrow. Si al portar código ajeno viene con `Sparkles`, se sustituye por un icono que signifique lo que representa (una guía → `BookOpen`, una rama → `GitBranch`, etc.).
+- Regla general: el icono tiene que *significar* algo del contenido, no ser decorativo genérico. Nada de estrellitas, destellos ni chispas.
+
 ### Tipografía
 
 - **Titulares**: clase `font-display`, `font-medium`, `tracking-[-0.03em]` en el hero y `-0.01em` en los `<Lead>`.
