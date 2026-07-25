@@ -12,7 +12,7 @@ Esta carpeta contiene **el material oficial de la formación IA Integrator** de 
 
 Todo esto vive como **recursos del hub de la formación en la App** (`app.capitalhubapp.com`), no en el OS. El texto fuente vive aquí, en el Knowledge.
 
-## Los seis recursos
+## Los siete recursos
 
 | # | Documento | Qué es | Guía en la App |
 |---|-----------|--------|----------------|
@@ -22,6 +22,7 @@ Todo esto vive como **recursos del hub de la formación en la App** (`app.capita
 | 04 | [Diccionario · Cómo se llama cada cosa](04-diccionario.md) | Glosario en cristiano: frontend, API, commit, deploy... Para volver a mirar una palabra cuando no suene | `diccionario` |
 | — | Catálogo de piezas de interfaz | Enseña cómo se llama cada parte de una app (barra superior, sidebar, tarjeta...) con una **maqueta interactiva**. Es código (React), no un `.md`: vive en la App en `features/guides/nomenclatura-ui/` | `nomenclatura-ui` |
 | — | Roadmap del setup | Asistente de **27 pasos** para montar el ecosistema desde cero (instalar editor, cuentas, primer proyecto, deploy, dominio). Código, se pinta a pantalla completa. Vive en la App en `features/guides/roadmap-setup/` | `roadmap-setup` |
+| — | Skills disponibles | Las skills que trae el ecosistema, agrupadas por para qué sirven (puesta en marcha, construir, contenido, mantenimiento). Cada una: qué hace y cuándo usarla. **Antes vivía dentro del roadmap**; Marco la sacó como recurso aparte. Vive en la App en `features/guides/skills/` | `skills` |
 
 **El orden importa** en los entrenamientos. El 2 da por sabido el 1. El 3 da por sabidos el 1 y el 2, y no hace falta si el alumno trabaja solo. El Diccionario, el Catálogo y el Roadmap son de consulta.
 
@@ -65,7 +66,7 @@ Marco pasó la carpeta `ENTREGA-otro-ecosistema/` (material completo de la forma
 - **Entrenamiento 1**: la parte "hacer dos cosas a la vez" (que hablaba de una carpeta de trabajo aparte) cambia a **"una sola cosa a la vez"** (apunta, cierra el proyecto, hazlo, vuelve). Regla 3 igual. Aplicado al `.md` y a la guía.
 - **Icono estrellita (`Sparkles`) PROHIBIDO** (Marco): fuera de todo el área de formación (hub, tarjetas, visor, lecciones). Sustituido por iconos que significan algo. Añadido como veto en la skill `formacion-visual`.
 
-El hub queda con **6 recursos** (3 entrenamientos + diccionario + catálogo + roadmap). El Catálogo y el Roadmap no tienen `.md`: su fuente es el código en la App. Rama de la App: `feat/hub-recursos-entrenamientos`.
+El hub queda con **7 recursos** (3 entrenamientos + diccionario + catálogo + roadmap + skills). El Catálogo y el Roadmap no tienen `.md`: su fuente es el código en la App. Rama de la App: `feat/hub-recursos-entrenamientos`.
 
 ### 2026-07-24 · Contenido nuevo: los tres entrenamientos sustituyen a los manuales viejos
 
