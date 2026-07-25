@@ -1,5 +1,6 @@
 ---
 name: memory-manager
+scope: template
 description: |
   Sistema de memoria persistente POR PROYECTO. Guarda conocimiento en .claude/memory/ dentro del repo,
   versionado con git, compartido con el equipo. Reemplaza la auto-memory de Claude Code que es local

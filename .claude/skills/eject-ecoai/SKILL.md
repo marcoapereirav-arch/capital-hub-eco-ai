@@ -1,5 +1,6 @@
 ---
 name: eject-ecoai
+scope: template
 description: "DESTRUCTIVO: Eliminar NVISION® del proyecto y dejar solo el software funcional. Activar cuando el usuario dice: quiero quitar NVISION®, eject, remover el template, limpiar el proyecto, o distribuir el codigo sin la fabrica. SIEMPRE confirmar antes de ejecutar."
 allowed-tools: Read, Write, Edit, Bash
 ---

@@ -1,5 +1,6 @@
 ---
 name: image-generation
+scope: template
 description: |
   Generar y editar imagenes usando OpenRouter + Gemini. Usar cuando el usuario pide crear,
   generar o editar imagenes, thumbnails, logos, banners, ilustraciones, o cualquier asset visual.

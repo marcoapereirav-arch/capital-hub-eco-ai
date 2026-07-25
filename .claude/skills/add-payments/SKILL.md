@@ -1,5 +1,6 @@
 ---
 name: add-payments
+scope: template
 description: |
   Integra sistema de pagos con Polar (Merchant of Record) en tu proyecto Next.js + Supabase.
   Crea checkout, webhooks, base de datos y frontend completo.

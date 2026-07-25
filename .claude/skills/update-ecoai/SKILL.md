@@ -1,5 +1,6 @@
 ---
 name: update-ecoai
+scope: template
 description: "Actualizar la plantilla NVISION® del proyecto a la ultima version, RESPETANDO skills externos que el dueño haya añadido manualmente. Activar cuando el usuario dice: actualiza la plantilla, hay nueva version, update NVISION, quiero la ultima version, o cuando se detecta que el template esta desactualizado."
 allowed-tools: Read, Bash, Glob
 ---
@@ -29,12 +30,12 @@ grep "alias nvision" ~/.zshrc
 grep "alias nvision" ~/.bashrc
 ```
 
-El alias tiene este formato:
+El alias NUEVO **descarga siempre lo último de GitHub** y NO depende de ninguna ruta local:
 ```bash
-alias nvision="cp -r /ruta/al/repo/nvision-setup/nvision/. ."
+alias nvision='T=$(mktemp -d) && git clone -q --depth 1 https://github.com/marcoapereirav-arch/nvision-setup.git "$T" && git -C "$T" archive HEAD:nvision | tar -x && rm -rf "$T"'
 ```
 
-**Extrae la ruta del repo madre** (la parte entre `cp -r ` y `/nvision/.`).
+**Si el alias del usuario usa un formato viejo** (`cp -r ...`, o `git -C /ruta archive HEAD:nvision` que depende de un clon local que se queda desactualizado), reemplázalo por el de arriba. Este clona fresco de GitHub cada vez, así que `nvision` siempre trae la última versión sin tener que actualizar ningún repo local a mano.
 
 Si no encuentras el alias, pregunta al usuario:
 > No encontré el alias `nvision`. Por favor, indica la ruta donde tienes clonado el repositorio de NVISION®.

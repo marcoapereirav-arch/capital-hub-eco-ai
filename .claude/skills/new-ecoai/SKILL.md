@@ -1,57 +1,68 @@
 ---
 name: new-ecoai
-description: "Crear el entorno base de un Ecosistema de IA: sidebar desplegable, pantalla Knowledge con 4 cuadrantes (Marketing/Ventas/Producto/Finanzas), pantalla Configuraciones, tablas Supabase base (profiles + knowledges), BUSINESS_LOGIC.md inicial, ciberseguridad base. Activar cuando el usuario escribe /new-ecoai o dice: crear ecosistema, empezar ecosistema de IA, inicializar el entorno, arrancar proyecto nuevo."
+scope: template
+description: "Crear el BACKEND de un Ecosistema de IA (el OS): tablas Supabase (roles + profiles.role_id + knowledges con el contrato del Visual Knowledge: 4 cuadrantes de negocio + 2 areas Personal/Reglas), BUSINESS_LOGIC.md, CLAUDE.md, ciberseguridad base. Pregunta UNA cosa: Solo OS u OS+APP. NO construye la pantalla visual del Knowledge (eso lo hace /visual-knowledge, el Visual Knowledge). Activar cuando el usuario escribe /new-ecoai o dice: crear ecosistema, empezar ecosistema de IA, inicializar el entorno, arrancar proyecto nuevo."
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # Crear con NVISION®
 
-Este skill crea el entorno base de un proyecto NVISION®. El dueño puede elegir entre tres caminos según lo que necesite construir.
+Este skill crea el entorno base de un proyecto NVISION®. El dueño puede elegir entre dos caminos según lo que necesite construir.
+
+## ⚡ MODELO ACTUAL (autoritativo · 2026-06-22) — leer ANTES que nada
+
+Este skill crea **el BACKEND del OS + el SHELL VISUAL BASE del OS**. Este modelo manda por encima de cualquier sección antigua de más abajo:
+
+- **2 opciones (NO 3):** (1) Solo mi OS · (2) Mi OS + mi APP. El OS se crea SIEMPRE. NO existe "app sin OS".
+- **OS** = backend + centro de operaciones (con su shell visual). **APP** = la cara que usan los clientes. **Visual Knowledge** (skill `/visual-knowledge`) = el **UPGRADE 3D** del Knowledge (NO crea el sistema; sustituye la sección Knowledge básica por el cerebro 3D + Google Drive).
+- **Crea (backend):** `roles` + `profiles.role_id` (primer user = admin) + `knowledges` (contrato del Visual Knowledge: `slug, title, description, content_md, quadrant, subfolder, position, active, archived_at`) + `BUSINESS_LOGIC.md` + `CLAUDE.md` + security. RLS **solo admin**.
+- **Crea (shell visual base del OS):** el **layout del OS** (`src/app/(admin)/layout.tsx`) con un **sidebar COLAPSABLE** a la izquierda (lista de secciones desde un registro, empezando por **Knowledge** como sección #1 / pantalla inicial), y **abajo-izquierda** un **botón "Ir a la APP"** (SOLO si se eligió OS+APP) **+ botón de Perfil debajo**. Todo con el **brandkit del proyecto**, **responsive/móvil impecable**. Es una base funcional: aunque NO se aplique `/visual-knowledge`, el OS ya se ve y se navega bien hecho. Ver sección **"FLUJO (3) — Shell visual base del OS"**.
+- **El Knowledge aquí es la versión BÁSICA** (lista navegable de cuadrantes/carpetas). `/visual-knowledge` la sustituye luego por el cerebro 3D, dentro del MISMO shell.
+- **Sin silencio:** construye con normalidad; el usuario ve cómo va quedando a medida que avanza el roadmap. No escondas el progreso ni fuerces previsualizaciones.
+- **Botón "Ir a la APP" SOLO si OS+APP.** Si es Solo OS, NO lo construyas.
+- **Branding del usuario siempre, NUNCA NVISION** en lo que construyas (ver reglas absolutas del CLAUDE.md).
+- **El build CONSERVA lo que ya viene hecho.** El Dashboard (métricas con KPIs + gráficos), el shell del OS, el Knowledge y el Perfil YA están montados de fábrica. En el prompt final de build NO los reconstruyas ni los reemplaces: consérvalos y solo aplícales la marca. Reconstruir el Dashboard desde cero (perdiendo los KPIs/gráficos que ya venían) es un ERROR.
+- **UN SOLO branding para OS y APP.** Si hay APP, debe verse con el MISMO sistema de diseño que el OS (mismo tema oscuro, mismo token `brand`, mismas superficies/tarjetas y tipografía). PROHIBIDO inventar un estilo distinto para la APP (p.ej. APP neobrutalist mientras el OS es oscuro). Es UN producto, UN look.
+- Knowledge canónico: `ia-modelo-os-app-ecosistema`.
+
+---
 
 ## ANTES DE EMPEZAR — pregunta una sola cosa al dueño
 
 Muestra exactamente este mensaje y espera respuesta antes de tocar nada:
 
 ```
-Hola. Vamos a ayudarte a montar tu proyecto usando la metodología NVISION®. Antes de empezar necesito que me digas una sola cosa:
+Hola. Vamos a montar tu Ecosistema de IA con la metodología NVISION®. Antes de empezar, una sola cosa:
 
-¿Qué quieres construir?
+¿Qué vas a montar?
 
-  (A) Solo el ECOSISTEMA DE IA
-      El panel de operación de tu negocio digital. Knowledge en 4
-      cuadrantes (Marketing, Ventas, Producto, Finanzas),
-      Configuraciones, y todo el chasis listo para que vayas
-      enchufando plugins (CRM, métricas, automatizaciones, etc.)
-      iterando con la IA.
+  (1) Solo mi OS
+      Tu centro de operaciones para gestionar tu negocio por
+      dentro: tu Knowledge (4 cuadrantes de negocio — Marketing,
+      Ventas, Producto, Finanzas — + 2 áreas: Personal y Reglas),
+      dashboards, métricas, automatizaciones y tu equipo con roles.
 
-  (B) Solo una APLICACIÓN / SaaS específico
-      El producto digital que vas a vender o entregar a tus
-      usuarios finales (un tracker de hábitos, un tracker de
-      finanzas, una plataforma de cursos, lo que sea). Sin panel
-      admin de Ecosistema.
+  (2) Mi OS + mi APP
+      Lo anterior y, además, la APP: lo que entregas a tus
+      clientes (un tracker de finanzas, de hábitos, tu SaaS, lo
+      que crees). Misma base de datos: tu OS mide lo que pasa en
+      tu APP.
 
-  (C) AMBAS COSAS  ← lo más común
-      Panel admin del Ecosistema de IA para tu uso interno
-      (operar tu negocio) + zona de aplicación pública donde
-      vas a construir tu SaaS para tus usuarios. Todo en el
-      mismo proyecto, misma base de datos, mismo deploy.
+Importante: elijas lo que elijas, en cualquier momento puedes
+pedirme que añada lo otro. Si hoy montas solo tu OS y mañana
+quieres una APP para tus clientes, dímelo y te la creo. Y al revés.
 
-Importante: independientemente de lo que elijas ahora, en
-cualquier momento puedes pedirme que añada lo que no escogiste.
-Si eliges solo Ecosistema y mañana quieres una app para tus
-usuarios, dímelo y te creo el entorno. Y al revés. No te bloqueas
-con esta decisión.
-
-Responde A, B o C.
+Responde 1 o 2.
 ```
 
 Espera la respuesta. Luego ejecuta el flujo correspondiente:
 
-- **Respuesta A** → ejecuta secciones 1, 2, 3, 4, 5 (BUSINESS_LOGIC + Migration + Knowledges seed + CLAUDE.md + security headers) y secciones 6-12 (shell admin con sidebar, 4 cuadrantes, Configuraciones). NO crea `(app)/`.
-- **Respuesta B** → ejecuta secciones 1, 4, 5, 6 adaptados para SaaS puro: `BUSINESS_LOGIC.md` sin la parte de Knowledge en 4 cuadrantes, sin tabla `knowledges`, sin shell admin de Ecosistema. Crea estructura `src/app/(app)/` vacía + `src/app/(auth)/` (heredada). El dueño construye el SaaS con la IA después. NO crea Knowledge ni Configuraciones del Ecosistema.
-- **Respuesta C** → ejecuta TODO el flujo: secciones 1-12 + ADEMÁS crea `src/app/(app)/` vacía como zona de aplicación pública para usuarios finales del dueño. El `BUSINESS_LOGIC.md` documenta la arquitectura dual.
+- **Respuesta 1 (Solo OS)** → crea el BACKEND del OS (secciones 1, 4, 5: Migration con `roles` + `profiles.role_id` + `knowledges` + `CLAUDE.md` + security headers + seeds [sección 3] + `BUSINESS_LOGIC.md`) **+ el shell visual base del OS** (ver "FLUJO (3) — Shell visual base del OS") con el Knowledge BÁSICO como sección #1. **SIN** botón "Ir a la APP" (eso es solo OS+APP). El cerebro 3D del Knowledge lo monta `/visual-knowledge` después. NO crea la zona `(app)/` de clientes.
+- **Respuesta 2 (OS + APP)** → todo lo de (1) + manda UN solo mensaje con las preguntas fáciles de la APP (cómo se llama · qué hace en una frase · para quién · las 3-5 cosas que el usuario podrá hacer · qué datos maneja · cómo entran los usuarios · si cobra) → escribe la spec de la APP en `BUSINESS_LOGIC.md` + crea la base de la zona `(app)/` (la cara de tus clientes) + `(auth)/`. **El producto NO se construye aquí** (se construye en el paso de build del roadmap, leyendo el Knowledge + BUSINESS_LOGIC).
 
-**Si el dueño responde algo distinto a A/B/C**, vuelve a mostrar el mensaje. No avances sin una respuesta válida.
+**Si el dueño responde algo distinto a 1/2**, vuelve a mostrar el mensaje. No avances sin una respuesta válida.
+
+> ⚠️ El **UPGRADE 3D** del Knowledge (cerebro neuronal) lo hace SIEMPRE `/visual-knowledge`, NUNCA new-ecoai. new-ecoai crea el backend **+ el shell visual base** con el Knowledge BÁSICO (sección #1); `/visual-knowledge` sustituye esa sección por el 3D. El contrato real es `knowledges` con `quadrant`/`content_md`.
 
 ---
 
@@ -69,11 +80,125 @@ Antes de tocar nada, lee el contenido de la sección **"MANUAL DEL ECOSISTEMA DE
 
 ---
 
-## FLUJO OPCIÓN A — Solo Ecosistema de IA
+## FLUJO (3) — Shell visual base del OS (YA VIENE en el template · solo lo ajustas)
 
-> Esta sección describe qué construir si la persona respondió **A** a la pregunta inicial.
-> Para opción B, ver sección "FLUJO OPCIÓN B" más abajo.
-> Para opción C (ambas), ejecutar este flujo A + el flujo B + ajustes que se indican en "FLUJO OPCIÓN C".
+> ⚡ **El shell del OS YA viene de fábrica con `nvision`.** NO lo construyas de cero, NO montes otro, NO crees un "Panel OS" suelto aparte. Estos archivos **ya existen en el proyecto**:
+> - `src/app/(admin)/layout.tsx` → el shell: gate auth+admin + sidebar + `<main>` donde se renderiza cada sección.
+> - `src/features/os-shell/OsSidebar.tsx` → sidebar **COLAPSABLE** (drawer en móvil) con **2 secciones: Dashboard + Knowledge** + (abajo) botón "Ir a la APP" (si OS+APP) + botón Perfil.
+> - `src/app/(admin)/page.tsx` → redirige a `/dashboard` (pantalla **Home** del OS).
+> - `src/app/(admin)/dashboard/page.tsx` + `src/features/dashboard/DashboardClient.tsx` → **Dashboard** (Home): 9 KPIs (facturación, clientes, ticket medio, frecuencia, margen, beneficio, retención, churn, LTV) + gráficos con datos de ejemplo + filtro de fechas. **Siempre presente** (Solo OS y OS+APP).
+> - `src/app/(admin)/knowledge/page.tsx` → Knowledge BÁSICO. `/visual-knowledge` lo reemplaza por el 3D, **dentro de este mismo shell** (encajado en `<main>`).
+> - `src/app/(admin)/perfil/page.tsx` + `src/features/perfil/PerfilClient.tsx` → Perfil (cuenta + notificaciones).
+> - `src/app/(app)/app/page.tsx` + `src/app/(app)/layout.tsx` → la APP (en `/app`) con botón "Volver al OS" (solo admin).
+
+**Lo ÚNICO que hace new-ecoai con el shell:**
+1. Si la opción es **OS + APP** → pon `const HAS_APP = true` en `src/app/(admin)/layout.tsx` (aparece el botón "Ir a la APP"). Si es **Solo OS**, déjalo en `false` (sin botón APP; tampoco hace falta la zona `(app)/`).
+2. **Aplica la marca del proyecto al token `brand`:** pon el color de acento del usuario en `--brand` de `src/app/globals.css` (formato `"R G B"`, p.ej. `45 212 191`) + su tipografía. Con esto, **OS + Dashboard + Knowledge + login + perfil salen branded automáticamente** (todos usan la clase `brand`). NUNCA un color de NVISION.
+3. Reemplaza el `title`/`description` de `src/app/layout.tsx` por el **nombre/marca del proyecto** (white-label).
+4. (Opcional) Pasa el nombre del proyecto al Dashboard: `<DashboardClient brandName="Mi Marca" />`.
+
+**El Knowledge ES la pantalla del OS, dentro del shell. NO lo saques a una pantalla suelta ni dupliques el shell.**
+
+### Código de referencia (YA está en el proyecto · NO lo recrees · solo míralo para rebrandear)
+
+`src/features/os-shell/sections.ts` (registro; los plugins lo amplían):
+```ts
+export type OsSection = { id: string; label: string; href: string }
+// Knowledge SIEMPRE primero. Los plugins añaden aquí sus secciones.
+export const osSections: OsSection[] = [
+  { id: 'knowledge', label: 'Knowledge', href: '/knowledge' },
+]
+```
+
+`src/app/(admin)/layout.tsx` (el shell; envuelve las secciones del OS):
+```tsx
+import { OsSidebar } from '@/features/os-shell/OsSidebar'
+import { createClient } from '@/lib/supabase/server'
+
+// HAS_APP: new-ecoai pone true (opción OS+APP) o false (opción Solo OS).
+const HAS_APP = false // ← AJUSTAR según la opción elegida
+
+export default async function OsLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return (
+    <div className="flex min-h-screen">
+      <OsSidebar hasApp={HAS_APP} userEmail={user?.email ?? ''} />
+      <main className="min-w-0 flex-1">{children}</main>
+    </div>
+  )
+}
+```
+
+`src/features/os-shell/OsSidebar.tsx` (colapsable + botones abajo):
+```tsx
+'use client'
+import { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { osSections } from './sections'
+
+export function OsSidebar({ hasApp, userEmail }: { hasApp: boolean; userEmail: string }) {
+  const [open, setOpen] = useState(true)
+  const pathname = usePathname()
+  return (
+    <aside className={`${open ? 'w-60' : 'w-16'} sticky top-0 flex h-screen shrink-0 flex-col border-r transition-[width] duration-200`}>
+      <div className="flex items-center justify-between p-3">
+        {open && <span className="font-display text-sm">{/* nombre del proyecto (brandkit) */}</span>}
+        <button onClick={() => setOpen(o => !o)} aria-label={open ? 'Colapsar' : 'Expandir'} className="rounded-lg p-2 hover:bg-white/5">
+          {open ? '«' : '»'}
+        </button>
+      </div>
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2">
+        {osSections.map(s => {
+          const active = pathname.startsWith(s.href)
+          return (
+            <Link key={s.id} href={s.href} title={s.label}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${active ? 'bg-white/10' : 'hover:bg-white/5'}`}>
+              <span className="shrink-0">◇</span>
+              {open && <span className="truncate">{s.label}</span>}
+            </Link>
+          )
+        })}
+      </nav>
+      <div className="space-y-1 border-t p-2">
+        {hasApp && (
+          <Link href="/app" title="Ir a la APP" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/5">
+            <span>▶</span>{open && <span>Ir a la APP</span>}
+          </Link>
+        )}
+        <Link href="/perfil" title="Perfil" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-white/5">
+          <span>☉</span>{open && <span className="truncate">{userEmail || 'Perfil'}</span>}
+        </Link>
+      </div>
+    </aside>
+  )
+}
+```
+
+`src/app/(admin)/page.tsx` → redirige a la sección inicial:
+```tsx
+import { redirect } from 'next/navigation'
+export default function OsIndex() { redirect('/knowledge') }
+```
+
+`src/app/(admin)/knowledge/page.tsx` → Knowledge BÁSICO: lee la tabla `knowledges` y lista cuadrantes/carpetas (navegable). `/visual-knowledge` reemplaza esta página por el cerebro 3D.
+
+### Reglas del shell (no negociables)
+- **Colapsable de verdad** (botón abre/cierra); en **móvil = drawer con overlay**, nunca fijo ocupando media pantalla.
+- **Botón "Ir a la APP" SOLO si OS+APP** (`hasApp`). En Solo OS, NO lo pongas.
+- **Perfil SIEMPRE**, debajo del botón APP.
+- **Brandkit del proyecto** en colores/tipografía (de la identidad guardada en Knowledge), NUNCA grises random ni "construido con NVISION".
+- **Responsive/móvil impecable** (safe-areas, touch targets ≥44px).
+- Constrúyelo como parte del flujo normal del roadmap (sin esconderlo ni forzar previsualizaciones).
+
+---
+
+## FLUJO (1) — Solo mi OS
+
+> Esta sección describe qué construir si la persona respondió **1 (Solo mi OS)**.
+> Para la opción **2 (OS + APP)**: ejecuta este flujo + los ajustes de "FLUJO (2) — OS + APP" más abajo.
+> Recuerda: aquí se crea el BACKEND **+ el shell visual base del OS** (FLUJO 3) con el Knowledge básico. El UPGRADE 3D lo monta `/visual-knowledge` en el paso siguiente.
 
 ### Archivos a Crear
 
@@ -113,8 +238,10 @@ Arquitectura: **Feature-First** (cada plugin tiene carpeta autocontenida en `src
 
 ## 2. Estructura de rutas
 
-- **Rutas protegidas** (requieren auth): dentro de route group `(app)/`. Sidebar + header visibles.
-- **Rutas públicas** (sin auth): a nivel raíz, fuera de route groups protegidos.
+- **OS** (zona del dueño/equipo, rol admin): el Visual Knowledge + dashboards/métricas.
+- **APP** (`(app)/`, clientes): el producto que usan tus clientes finales.
+- **Rutas públicas** (sin auth): a nivel raíz, fuera de los route groups protegidos.
+- Tras login, el routing por rol decide a cuál va cada quien (admin → OS, user → APP).
 
 **Regla anclada:** cuando el dueño solicite crear cualquier sección con cara pública (funnels, lead magnets, presentaciones, recursos, landings), la IA **pregunta** si esa sección estará abierta o requerirá auth/rol específico. La respuesta determina dónde se crea la carpeta.
 
@@ -131,11 +258,12 @@ Arquitectura: **Feature-First** (cada plugin tiene carpeta autocontenida en `src
 
 ## 4. Knowledge
 
-- 4 cuadrantes: **Marketing**, **Ventas**, **Producto**, **Finanzas**.
-- Tabla `knowledges` en Supabase.
-- Archivos espejo en `.claude/knowledges/[cuadrante]/` (sincronizados desde BD).
-- Soporta formato `md` (texto enriquecido) y `html` (vista renderizada, útil para Brandkits).
-- **TODAS las IAs leen TODOS los knowledges:** Claude Code vía archivos espejo, IA in-app vía BD directa, futuras IAs vía BD.
+- **4 cuadrantes de negocio** (Marketing, Ventas, Producto, Finanzas) + **2 áreas** (Personal, Reglas).
+- Tablas `knowledges` + `knowledge_folders` + `knowledge_settings` (contrato del Visual Knowledge). RLS: solo admin.
+- Cada doc: `slug`, `title`, `description`, `content_md`, `quadrant`, `folder_id`, `active`.
+- La cara visual es el **Visual Knowledge** (cerebro 3D), que monta `/visual-knowledge`.
+- Archivos espejo en `.claude/knowledges/[quadrant]/` (sincronizados desde BD).
+- **TODAS las IAs leen TODOS los knowledges:** Claude Code vía archivos espejo, IA in-app vía BD directa.
 
 ---
 
@@ -182,6 +310,7 @@ Formato de cada entrada:
 - Sanitización con Zod en formularios y APIs.
 - 2FA opcional con TOTP para admin.
 - `.gitignore` excluye `.env.local` y `.mcp.json`.
+- Secretos: ningún agente lee el contenido de `.env*` — solo copia opaca. Los valores los pega el dueño (ver REGLA ABSOLUTA en CLAUDE.md).
 
 Capas adicionales (rate limiting, captcha, audit log, CSP granular) → disponibles vía skill `/add-security` (opcional).
 ```
@@ -197,37 +326,62 @@ Aplicar vía Supabase MCP con `apply_migration`:
 ```sql
 -- ============================================================
 -- INIT ECOSISTEMA DE IA
--- Tablas base: profiles + knowledges
+-- Tablas base: roles + profiles + knowledges
+-- (mismo contrato que lee el Visual Knowledge: tabla UNICA del proyecto, RLS por rol admin)
 -- ============================================================
 
--- PROFILES: datos del dueño del ecosistema
+-- ROLES: jerarquia de acceso del ecosistema (el dueno es admin; su equipo, user)
+CREATE TABLE IF NOT EXISTS public.roles (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name text UNIQUE NOT NULL,
+  created_at timestamptz DEFAULT now() NOT NULL
+);
+INSERT INTO public.roles (name) VALUES ('admin'), ('user') ON CONFLICT (name) DO NOTHING;
+
+-- PROFILES: datos del dueno del ecosistema (+ role_id para el control por rol)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email text NOT NULL,
   full_name text,
   avatar_url text,
+  role_id uuid REFERENCES public.roles(id),
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users view own profile" ON public.profiles
+-- Nombres unificados con add-login (dueño del esquema) + drop-if-exists = idempotente
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users update own profile" ON public.profiles
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
 -- Trigger: crear profile automáticamente al signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
+DECLARE
+  v_role_id uuid;
+  v_admin_exists boolean;
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, avatar_url)
+  -- El PRIMER usuario del ecosistema es admin (el dueno); el resto, user (equipo o clientes).
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles p JOIN public.roles r ON p.role_id = r.id WHERE r.name = 'admin'
+  ) INTO v_admin_exists;
+
+  SELECT id INTO v_role_id FROM public.roles
+    WHERE name = CASE WHEN v_admin_exists THEN 'user' ELSE 'admin' END;
+
+  INSERT INTO public.profiles (id, email, full_name, avatar_url, role_id)
   VALUES (
     new.id,
     new.email,
     COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
-    new.raw_user_meta_data->>'avatar_url'
+    new.raw_user_meta_data->>'avatar_url',
+    v_role_id
   );
   RETURN new;
 END;
@@ -238,39 +392,37 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
--- KNOWLEDGES: SOPs del negocio en 4 cuadrantes
-CREATE TYPE cuadrante_enum AS ENUM ('marketing', 'ventas', 'producto', 'finanzas');
-CREATE TYPE knowledge_format AS ENUM ('md', 'html');
-
+-- KNOWLEDGES: el cerebro del negocio. Tabla UNICA del proyecto (no por-usuario).
+-- Mismo contrato EXACTO que lee el Visual Knowledge (cerebro 3D):
+--   id, slug, title, description, content_md, quadrant, subfolder, position, active, archived_at, timestamps.
+--   (la skill Visual Knowledge anade folder_id + knowledge_folders + knowledge_settings al activarse.)
+-- 4 cuadrantes de negocio (marketing|ventas|producto|finanzas) + 2 areas (personal|reglas).
 CREATE TABLE IF NOT EXISTS public.knowledges (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  owner_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  cuadrante cuadrante_enum NOT NULL,
+  slug text UNIQUE NOT NULL,
   title text NOT NULL,
-  format knowledge_format NOT NULL DEFAULT 'md',
-  content text NOT NULL DEFAULT '',
-  is_seed boolean DEFAULT false,
+  description text DEFAULT '',
+  content_md text NOT NULL DEFAULT '',
+  quadrant text NOT NULL,  -- 'marketing'|'ventas'|'producto'|'finanzas'|'personal'|'reglas'
+  subfolder text,
   position integer DEFAULT 0,
+  active boolean DEFAULT true,
+  archived_at timestamptz,
   created_at timestamptz DEFAULT now() NOT NULL,
   updated_at timestamptz DEFAULT now() NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_knowledges_owner ON public.knowledges(owner_id);
-CREATE INDEX IF NOT EXISTS idx_knowledges_cuadrante ON public.knowledges(owner_id, cuadrante);
+CREATE INDEX IF NOT EXISTS idx_knowledges_quadrant ON public.knowledges(quadrant);
 
 ALTER TABLE public.knowledges ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users view own knowledges" ON public.knowledges
-  FOR SELECT USING (auth.uid() = owner_id);
-
-CREATE POLICY "Users insert own knowledges" ON public.knowledges
-  FOR INSERT WITH CHECK (auth.uid() = owner_id);
-
-CREATE POLICY "Users update own knowledges" ON public.knowledges
-  FOR UPDATE USING (auth.uid() = owner_id);
-
-CREATE POLICY "Users delete own knowledges" ON public.knowledges
-  FOR DELETE USING (auth.uid() = owner_id);
+-- RLS: SOLO admin (dueno/equipo) accede al Knowledge. Los clientes NUNCA lo ven.
+DROP POLICY IF EXISTS "admin_all_knowledges" ON public.knowledges;
+CREATE POLICY "admin_all_knowledges" ON public.knowledges FOR ALL TO public
+USING (
+  EXISTS (SELECT 1 FROM public.profiles p JOIN public.roles r ON p.role_id = r.id
+          WHERE p.id = auth.uid() AND r.name = 'admin')
+);
 
 -- Trigger updated_at
 CREATE OR REPLACE FUNCTION public.set_updated_at()
@@ -288,19 +440,35 @@ CREATE TRIGGER knowledges_updated_at
 CREATE TRIGGER profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
+
+-- ── Hardening de seguridad ──────────────────────────────────────────
+-- El setting "Enable automatic RLS" de Supabase crea la funcion event-trigger
+-- public.rls_auto_enable() con EXECUTE abierto a PUBLIC/anon/authenticated, y el
+-- auditor de seguridad lo marca. El event trigger se dispara solo (no se llama a
+-- mano), asi que ese grant sobra. Revocamos EXECUTE si la funcion existe
+-- (idempotente). NO la pases a SECURITY INVOKER: rompe el ALTER TABLE que hace.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'rls_auto_enable'
+  ) THEN
+    REVOKE EXECUTE ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+  END IF;
+END $$;
 ```
 
 ---
 
 ### 3. Knowledges seed iniciales
 
-Después de la migración, inserta los 3 knowledges seed. **Usa el `owner_id` del primer profile creado** (el dueño que está inicializando el ecosistema). Si no hay aún profile creado (porque `/add-login` no se ejecutó), guarda los seeds en archivos `.claude/knowledges/[cuadrante]/[slug].md` y los inserta a BD el primer skill que cree un profile.
+Después de la migración, inserta los 3 knowledges seed vía `apply_migration` (corre como service role, sin choque con la RLS admin). Cada seed lleva: `slug` (único, kebab-case), `title`, `description`, `content_md`, `quadrant`. **NO lleva `owner_id`** — el Knowledge es único del proyecto, no por-usuario. En paralelo guarda el espejo en `.claude/knowledges/[quadrant]/[slug].md`.
 
-**3.1 — Knowledge "Sobre el Ecosistema de IA" en cuadrante Producto** (formato `md`):
+**3.1 — Knowledge "Sobre el Ecosistema de IA"** (`slug: sobre-el-ecosistema-de-ia`, `quadrant: producto`, en `content_md`):
 
 El contenido es el texto literal completo de la sección **"MANUAL DEL ECOSISTEMA DE IA — TEXTO LITERAL"** al final de este SKILL.md.
 
-**3.2 — Knowledge "Manual del Proyecto" en cuadrante Producto** (formato `md`, placeholder):
+**3.2 — Knowledge "Manual del Proyecto"** (`slug: manual-del-proyecto`, `quadrant: producto`, en `content_md`, placeholder):
 
 ```markdown
 # Manual del Proyecto
@@ -321,7 +489,7 @@ El contenido es el texto literal completo de la sección **"MANUAL DEL ECOSISTEM
 (Rellenar)
 ```
 
-**3.3 — Knowledge "Brandkit" en cuadrante Marketing** (formato `html`, placeholder):
+**3.3 — Knowledge "Brandkit"** (`slug: brandkit`, `quadrant: marketing`, HTML guardado en `content_md`, placeholder):
 
 ```html
 <!DOCTYPE html>
@@ -355,7 +523,7 @@ El contenido es el texto literal completo de la sección **"MANUAL DEL ECOSISTEM
 
 ### 4. `CLAUDE.md` (raíz del proyecto) — reglas duras
 
-Sobrescribe el CLAUDE.md heredado con este contenido:
+EXTIENDE el CLAUDE.md heredado (NO lo sobrescribas): conserva las reglas base + la seccion **MEMORIA & KNOWLEDGE**, y añade debajo el siguiente bloque de reglas especificas del proyecto:
 
 ```markdown
 # CLAUDE.md — Reglas duras del Ecosistema de IA
@@ -454,704 +622,150 @@ export default nextConfig;
 
 ---
 
-### 6. Layout principal con shell
+### 6-12. (Capa visual) — la construye el Visual Knowledge, NO new-ecoai
 
-Archivo: `src/app/(app)/layout.tsx`
-
-```tsx
-import { Sidebar } from '@/features/shell/components/Sidebar';
-import { Header } from '@/features/shell/components/Header';
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-screen flex-col bg-white text-black">
-      <Header />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
-}
-```
+`new-ecoai` **no crea ninguna pantalla**. El cerebro 3D del Knowledge lo monta `/visual-knowledge` (Visual Knowledge) en el paso siguiente del roadmap; el resto del producto, el paso de build. new-ecoai solo deja el **BACKEND** listo (migración + seeds + `BUSINESS_LOGIC.md` + `CLAUDE.md` + `next.config.ts`).
 
 ---
 
-### 7. Header component
-
-Archivo: `src/features/shell/components/Header.tsx`
-
-```tsx
-export function Header() {
-  const projectName = process.env.NEXT_PUBLIC_PROJECT_NAME || 'Ecosistema';
-
-  return (
-    <header className="border-b border-neutral-200 px-6 py-4">
-      <h1 className="text-lg font-semibold">{projectName}</h1>
-    </header>
-  );
-}
-```
-
----
-
-### 8. Sidebar desplegable
-
-Archivo: `src/features/shell/components/Sidebar.tsx`
-
-```tsx
-'use client';
-
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-
-const items = [
-  { href: '/knowledge', label: 'Knowledge', position: 'top' as const },
-  { href: '/configuraciones', label: 'Configuraciones', position: 'bottom' as const },
-];
-
-export function Sidebar() {
-  const [open, setOpen] = useState(true);
-  const pathname = usePathname();
-
-  return (
-    <aside
-      className={`flex flex-col justify-between border-r border-neutral-200 bg-neutral-50 transition-all duration-200 ${open ? 'w-56' : 'w-12'}`}
-    >
-      <div>
-        <button
-          onClick={() => setOpen(!open)}
-          className="m-2 rounded p-2 hover:bg-neutral-200"
-          aria-label="Toggle sidebar"
-        >
-          ☰
-        </button>
-        <nav className="flex flex-col">
-          {items.filter(i => i.position === 'top').map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`px-4 py-2 text-sm transition-colors hover:bg-neutral-200 ${pathname.startsWith(item.href) ? 'bg-neutral-200 font-medium' : ''}`}
-            >
-              {open ? item.label : item.label[0]}
-            </Link>
-          ))}
-        </nav>
-      </div>
-      <nav className="mb-2 flex flex-col">
-        {items.filter(i => i.position === 'bottom').map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`px-4 py-2 text-sm transition-colors hover:bg-neutral-200 ${pathname.startsWith(item.href) ? 'bg-neutral-200 font-medium' : ''}`}
-          >
-            {open ? item.label : item.label[0]}
-          </Link>
-        ))}
-      </nav>
-    </aside>
-  );
-}
-```
-
----
-
-### 9. Página Knowledge (4 cuadrantes)
-
-Archivo: `src/app/(app)/knowledge/page.tsx`
-
-```tsx
-import Link from 'next/link';
-
-const cuadrantes = [
-  { slug: 'marketing', label: 'Marketing', icon: '📁' },
-  { slug: 'ventas', label: 'Ventas', icon: '📁' },
-  { slug: 'producto', label: 'Producto', icon: '📁' },
-  { slug: 'finanzas', label: 'Finanzas', icon: '📁' },
-];
-
-export default function KnowledgePage() {
-  return (
-    <div className="p-8">
-      <h2 className="mb-8 text-2xl font-semibold">Knowledge</h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {cuadrantes.map(c => (
-          <Link
-            key={c.slug}
-            href={`/knowledge/${c.slug}`}
-            className="flex flex-col items-center justify-center rounded-lg border border-neutral-200 bg-white p-8 transition-all hover:border-neutral-400 hover:shadow-sm"
-          >
-            <span className="mb-2 text-4xl">{c.icon}</span>
-            <span className="text-lg font-medium">{c.label}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-### 10. Página de cuadrante (lista de knowledges)
-
-Archivo: `src/app/(app)/knowledge/[cuadrante]/page.tsx`
-
-```tsx
-import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-
-const validCuadrantes = ['marketing', 'ventas', 'producto', 'finanzas'];
-
-export default async function CuadrantePage({
-  params,
-}: {
-  params: Promise<{ cuadrante: string }>;
-}) {
-  const { cuadrante } = await params;
-  if (!validCuadrantes.includes(cuadrante)) notFound();
-
-  const supabase = await createClient();
-  const { data: knowledges } = await supabase
-    .from('knowledges')
-    .select('*')
-    .eq('cuadrante', cuadrante)
-    .order('position', { ascending: true });
-
-  return (
-    <div className="p-8">
-      <Link href="/knowledge" className="mb-4 inline-block text-sm text-neutral-600 hover:underline">
-        ← Knowledge
-      </Link>
-      <h2 className="mb-8 text-2xl font-semibold capitalize">{cuadrante}</h2>
-      <div className="space-y-2">
-        {knowledges?.map(k => (
-          <Link
-            key={k.id}
-            href={`/knowledge/${cuadrante}/${k.id}`}
-            className="block rounded-md border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-400"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{k.title}</span>
-              <span className="text-xs uppercase tracking-wider text-neutral-400">{k.format}</span>
-            </div>
-          </Link>
-        ))}
-        {(!knowledges || knowledges.length === 0) && (
-          <p className="text-sm text-neutral-500">
-            Aún no hay knowledges en este cuadrante. Crea uno con + Nuevo knowledge.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-```
-
----
-
-### 11. Página Configuraciones
-
-Archivo: `src/app/(app)/configuraciones/page.tsx`
-
-```tsx
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import { updateProfile } from '@/actions/profile';
-
-export default async function ConfiguracionesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect('/login');
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  return (
-    <div className="p-8 max-w-xl">
-      <h2 className="mb-8 text-2xl font-semibold">Configuraciones</h2>
-      <form action={updateProfile} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Nombre</label>
-          <input
-            name="full_name"
-            defaultValue={profile?.full_name || ''}
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Correo</label>
-          <input
-            name="email"
-            type="email"
-            defaultValue={profile?.email || ''}
-            disabled
-            className="w-full rounded-md border border-neutral-300 bg-neutral-100 px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Foto (URL)</label>
-          <input
-            name="avatar_url"
-            defaultValue={profile?.avatar_url || ''}
-            className="w-full rounded-md border border-neutral-300 px-3 py-2"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-md bg-black px-4 py-2 text-white hover:bg-neutral-800"
-        >
-          Guardar
-        </button>
-      </form>
-    </div>
-  );
-}
-```
-
----
-
-### 12. Root page redirect
-
-Archivo: `src/app/page.tsx`
-
-```tsx
-import { redirect } from 'next/navigation';
-
-export default function RootPage() {
-  redirect('/knowledge');
-}
-```
-
----
-
-### Flujo de Ejecución — Opción A
+### Flujo de Ejecución — (1) Solo mi OS
 
 1. Verifica que el proyecto está recién clonado y `npm install` está hecho.
-2. **Aplica la migración SQL** vía Supabase MCP (`apply_migration`) con el SQL de la sección 2.
+2. **Aplica la migración SQL** vía Supabase MCP (`apply_migration`) con el SQL de la sección 2 (roles + profiles.role_id + knowledges con el contrato del Visual Knowledge).
 3. **Inserta los 3 knowledges seed** (sección 3). El knowledge "Sobre el Ecosistema de IA" lleva el contenido literal del MANUAL más abajo.
 4. **Sobrescribe `BUSINESS_LOGIC.md`** en raíz con el contenido de la sección 1.
-5. **Sobrescribe `CLAUDE.md`** en raíz con el contenido de la sección 4.
-6. **Sobrescribe `next.config.ts`** con la sección 5 (security headers).
-7. **Crea los componentes** del entorno base (secciones 6-12).
-8. **Verifica con Playwright MCP** que el shell se ve correctamente (sidebar desplegable, header, 4 cuadrantes).
-9. Muestra el mensaje final al usuario.
+5. **Extiende `CLAUDE.md`** en raíz: conserva las reglas base + la sección MEMORIA & KNOWLEDGE, y añade el contenido de la sección 4. NUNCA borres la sección MEMORIA & KNOWLEDGE.
+5b. **Crea el Knowledge espejo de `BUSINESS_LOGIC.md`** en el cuadrante Producto (tabla `knowledges`) y ancla la regla: editar uno = actualizar el otro en el mismo turno.
+6. **Verifica** que `next.config.ts` ya trae los security headers (vienen en la plantilla); si faltan, añádelos (sección 5).
+7. **NO crees ninguna pantalla.** El backend queda listo. La cara visual del Knowledge la monta `/visual-knowledge` en el paso siguiente del roadmap.
+8. Muestra el mensaje final al usuario.
 
 ---
 
-### Mensaje Final — Opción A
+### Mensaje Final — (1) Solo mi OS
 
 ```
-Tu Ecosistema de IA está listo.
+El BACKEND de tu OS está listo.
 
 Lo que tienes ahora:
 - BUSINESS_LOGIC.md inicial en raíz (ficha técnica del proyecto)
 - CLAUDE.md con reglas duras
-- Tablas Supabase: profiles + knowledges con RLS
+- Tablas Supabase: roles + profiles (tú eres admin) + knowledges
+  (contrato del Visual Knowledge), todo con RLS
 - 3 knowledges seed: "Sobre el Ecosistema de IA" (Producto),
   "Manual del Proyecto" (Producto), "Brandkit" (Marketing)
-- Shell completo:
-  · Header con nombre del proyecto arriba-izquierda
-  · Sidebar desplegable con Knowledge + Configuraciones
-  · Pantalla Knowledge con 4 cuadrantes (Marketing, Ventas,
-    Producto, Finanzas)
-  · Pantalla Configuraciones con nombre/correo/foto
+- 4 cuadrantes de negocio + 2 áreas (Personal, Reglas)
 - Security headers configurados en next.config.ts
 
-Tus siguientes pasos están dentro del roadmap NVISION®. Síguelo
-ahí.
+Ya puedes ver tu OS montado con tu marca (el menú a la izquierda y
+tu Knowledge). En el siguiente paso del roadmap, /visual-knowledge
+convierte ese Knowledge en tu cerebro 3D navegable.
 
 Recordatorio importante:
-Hoy elegiste solo el Ecosistema de IA. Si en cualquier momento
-quieres añadir una aplicación / SaaS específico para tus
-usuarios finales (un tracker, una plataforma de cursos, lo que
-sea), simplemente dímelo y te creo el entorno conectado a este
-mismo proyecto. No te bloqueas con esta decisión.
+Hoy elegiste solo tu OS. Si en cualquier momento quieres añadir
+tu APP (lo que usan tus clientes: un tracker, tu SaaS, lo que
+sea), dímelo y te la creo conectada a este mismo proyecto. No te
+bloqueas con esta decisión.
 ```
 
 ---
 
-## FLUJO OPCIÓN B — Solo aplicación / SaaS específico
+## FLUJO (2) — OS + APP
 
-> Esta sección describe qué construir si la persona respondió **B**.
-> NO se construye Knowledge, ni los 4 cuadrantes, ni la tabla `knowledges`, ni los knowledges seed, ni el sidebar admin. Solo el chasis técnico de un SaaS público para usuarios finales.
+> Esta sección describe qué construir si la persona respondió **2 (OS + APP)**.
+> Es la combinación: ejecutas el flujo (1) completo (el BACKEND del OS) y ADEMÁS creas la base de la **APP** (la cara que usan tus clientes) en `src/app/(app)/`. Misma base de datos, mismo proyecto, mismo deploy: el OS mide lo que pasa en la APP.
 
 ### Pregunta extra (antes de construir nada)
 
 Muestra exactamente este mensaje y espera respuesta:
 
 ```
-Vale, vamos a construir el chasis de tu SaaS. Cuéntame en
-2-3 frases:
-
-  - ¿Cómo se llama tu producto?
-  - ¿Qué hace, en una frase?
-  - ¿Para quién es?
-
-Ejemplo: "Mi producto se llama Habitia. Es un tracker de hábitos
-con racha diaria y recordatorios. Es para personas que quieren
-construir rutinas saludables y medir su progreso."
-
-Con tu descripción, construyo el chasis base. Después tú me vas
-pidiendo features iterando.
-```
-
-Guarda la respuesta como `<DESCRIPCIÓN_SAAS>`. La usarás como contenido del `BUSINESS_LOGIC.md` y como contexto para el placeholder de la app.
-
-### Archivos a Crear — Opción B
-
-#### B.1 `BUSINESS_LOGIC.md` (raíz)
-
-```markdown
-# BUSINESS_LOGIC.md — [Nombre del producto]
-
-> Ficha técnica del proyecto. Se actualiza automáticamente cuando se enchufa un plugin o se modifica una decisión técnica.
-
----
-
-## 0. Qué es este proyecto
-
-[Pegar literal la <DESCRIPCIÓN_SAAS> del dueño]
-
-Proyecto creado con la plantilla NVISION® en modo "Solo aplicación / SaaS específico". No incluye el panel admin del Ecosistema de IA.
-
----
-
-## 1. Stack técnico
-
-| Capa | Tecnología |
-|------|------------|
-| Framework | Next.js 16 + React 19 + TypeScript |
-| Estilos | Tailwind CSS 3.4 |
-| Backend | Supabase (Auth + Database + RLS + Storage) |
-| Validación | Zod |
-| Estado | Zustand (cuando aplique) |
-| Deploy | Vercel |
-
-Arquitectura: **Feature-First** (cada feature del SaaS vive en `src/features/[feature]/`).
-
----
-
-## 2. Estructura de rutas
-
-- `src/app/(app)/*` — rutas del SaaS (requieren auth tras `/add-login`).
-- `src/app/(auth)/*` — login, signup, password reset (cuando se ejecute `/add-login`).
-- Rutas públicas en raíz (`/`, `/landing`, etc.) — accesibles sin auth.
-
----
-
-## 3. Auth
-
-- Pendiente de ejecutar `/add-login` para activar Supabase Auth.
-- Tabla `profiles` ya creada con RLS.
-
----
-
-## 4. Arquitectura de Datos
-
-### Tablas base
-- `profiles` — datos del dueño / usuarios del SaaS.
-
-### Tablas añadidas por features
-*(Vacío al crear. Cada feature añade aquí sus tablas.)*
-
----
-
-## 5. Features instaladas
-
-*(Vacío al crear. Auto-actualizado cuando se construyan features con la IA.)*
-
----
-
-## 6. Plugins instalados
-
-*(Vacío al crear. Auto-actualizado por skills enchufables: `/add-login`, `/add-payments`, `/add-emails`, `/add-mobile`, `/ai`.)*
-
-Mismo formato que en la opción A.
-
----
-
-## 7. Decisiones técnicas registradas
-
-*(Vacío al crear.)*
-
----
-
-## 8. Ciberseguridad base
-
-Igual que opción A: security headers, HaveIBeenPwned, RLS, Zod, 2FA opcional.
-```
-
-#### B.2 Migration SQL (Supabase MCP `apply_migration`)
-
-```sql
--- Tabla profiles (sin tabla knowledges en opción B)
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-  email text NOT NULL,
-  full_name text,
-  avatar_url text,
-  created_at timestamptz DEFAULT now() NOT NULL,
-  updated_at timestamptz DEFAULT now() NOT NULL
-);
-
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users view own profile" ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users update own profile" ON public.profiles
-  FOR UPDATE USING (auth.uid() = id);
-
--- Trigger (igual que opción A)
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.profiles (id, email, full_name, avatar_url)
-  VALUES (new.id, new.email,
-    COALESCE(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
-    new.raw_user_meta_data->>'avatar_url');
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- updated_at trigger
-CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS trigger AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER profiles_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW EXECUTE PROCEDURE public.set_updated_at();
-```
-
-#### B.3 `CLAUDE.md` (raíz)
-
-Igual que la opción A (mismas reglas duras: app nativa, mobile-first, RLS, no borrar sin permiso, single source of truth, etc.) **pero quita la mención del manual del Ecosistema** y añade una línea:
-
-> "Este proyecto es un SaaS específico (modo B). La descripción del producto vive en `BUSINESS_LOGIC.md` sección 0."
-
-#### B.4 `next.config.ts`
-
-Idéntico al de la opción A (security headers).
-
-#### B.5 Estructura `src/app/(app)/`
-
-Crea:
-- `src/app/(app)/layout.tsx` — layout simple con header (nombre del producto) + sidebar minimalista (configurable). Sin Knowledge ni cuadrantes.
-- `src/app/(app)/page.tsx` — landing del producto autenticado con placeholder:
-
-```tsx
-export default function ProductHome() {
-  return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-semibold mb-4">[Nombre del producto]</h1>
-      <p className="text-neutral-600 mb-8">
-        [Descripción breve del producto]
-      </p>
-      <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-8 text-center">
-        <p className="text-neutral-500">
-          Tu producto se construye aquí. Dile a la IA qué feature quieres
-          añadir y se construye iterando.
-        </p>
-      </div>
-    </div>
-  );
-}
-```
-
-- `src/app/(app)/configuraciones/page.tsx` — pantalla de configuraciones del dueño (nombre, foto, correo).
-
-#### B.6 `src/app/page.tsx` (raíz)
-
-```tsx
-import { redirect } from 'next/navigation';
-export default function RootPage() {
-  redirect('/app');
-}
-```
-
-### Flujo de Ejecución — Opción B
-
-1. Verifica proyecto recién clonado y `npm install` hecho.
-2. Pregunta extra (descripción del SaaS).
-3. Aplica migración SQL (solo `profiles`).
-4. Sobrescribe `BUSINESS_LOGIC.md` con el contenido B.1 (rellenando `<DESCRIPCIÓN_SAAS>`).
-5. Sobrescribe `CLAUDE.md` con la versión B.3.
-6. Sobrescribe `next.config.ts` (security headers).
-7. Crea componentes de B.5 y B.6.
-8. Muestra mensaje final.
-
-### Mensaje Final — Opción B
-
-```
-Tu chasis de SaaS está listo.
-
-Lo que tienes ahora:
-- BUSINESS_LOGIC.md con la descripción de tu producto
-- CLAUDE.md con reglas duras (diseño app nativa, mobile-first, RLS,
-  datos del dueño)
-- Tabla Supabase profiles con RLS
-- Estructura src/app/(app)/ con landing placeholder + configuraciones
-- Security headers en next.config.ts
-
-Tus siguientes pasos están dentro del roadmap NVISION®. Síguelo
-ahí.
-
-Recordatorio importante:
-Hoy elegiste solo el SaaS específico (sin Ecosistema de IA). Si en
-cualquier momento quieres añadir tu propio panel de operación
-(tu Ecosistema de IA con Knowledge en 4 cuadrantes, automatizaciones
-de marketing/ventas/producto/finanzas, plugins de CRM, métricas, etc.),
-simplemente dímelo y te lo creo conectado a este mismo proyecto.
-Tu Ecosistema sería tu centro de operaciones interno mientras
-tus usuarios siguen accediendo a tu SaaS sin cambios.
-```
-
----
-
-## FLUJO OPCIÓN C — Ambas (Ecosistema + SaaS específico)
-
-> Esta sección describe qué construir si la persona respondió **C**.
-> Es la combinación: ejecutas el flujo A completo PARA el panel admin del dueño, y ADEMÁS construyes el chasis del SaaS público para usuarios finales (variante de B). Misma base de datos, mismo proyecto, mismo deploy.
-
-### Pregunta extra (antes de construir nada)
-
-Muestra exactamente este mensaje y espera respuesta:
-
-```
-Vale, vamos a construir tu Ecosistema admin + tu SaaS para
-usuarios, todo en el mismo proyecto. Cuéntame en 2-3 frases
-sobre el producto público:
-
-  - ¿Cómo se llama tu producto (el SaaS para tus usuarios)?
-  - ¿Qué hace, en una frase?
-  - ¿Para quién es?
-
-Ejemplo: "Mi producto se llama Habitia. Es un tracker de hábitos
-con racha diaria. Es para personas que quieren construir rutinas."
-
-Con tu descripción, construyo:
-  - El Ecosistema de IA admin (Knowledge en 4 cuadrantes,
-    Configuraciones, panel de operación de tu negocio).
-  - El chasis del SaaS público (zona donde construirás tu producto
-    para tus usuarios iterando con la IA).
+Vale, vamos a montar tu OS + tu APP, todo en el mismo proyecto.
+Cuéntame de tu APP (responde todo junto, con una idea basta):
+
+  - ¿Cómo se llama tu APP? (ej: "FinTrack")
+  - ¿Qué hace, en una frase? (ej: "lleva las finanzas personales")
+  - ¿Para quién es? (ej: "mis clientes de mentoría")
+  - Las 3-5 cosas que el usuario podrá hacer (ej: registrar
+    gastos, ver gráficas, recibir alertas)
+  - ¿Qué datos maneja? (ej: transacciones, categorías, presupuestos)
+  - ¿Cómo entran los usuarios? (abierto / por invitación / de pago)
+  - ¿Cobras? (gratis / suscripción / pago único)
+
+Con tu descripción, dejo listo:
+  - El backend de tu OS (Knowledge en 4 cuadrantes + 2 áreas, roles).
+    La cara visual la enciendes con /visual-knowledge.
+  - La base de tu APP (la zona donde tus clientes la usarán; se
+    construye en el paso de build del roadmap).
 ```
 
 Guarda la respuesta como `<DESCRIPCIÓN_SAAS>`.
 
-### Archivos a Crear — Opción C
+### Archivos a Crear — (2) OS + APP
 
-Ejecuta TODO lo de la opción A (secciones 1-12: BUSINESS_LOGIC + Migration con `profiles` + `knowledges` + 3 knowledges seed + CLAUDE.md + next.config.ts + shell admin con sidebar + 4 cuadrantes + Configuraciones).
+Ejecuta TODO el flujo **(1) Solo mi OS** (Migration con `roles` + `profiles.role_id` + `knowledges` + 3 seeds + `CLAUDE.md` + `BUSINESS_LOGIC.md` + `next.config.ts`). El backend del OS queda listo (la cara visual del Knowledge la monta `/visual-knowledge` después).
 
-**ADEMÁS** añade lo siguiente:
+**ADEMÁS** añade la base de la **APP** (la cara que usan tus clientes):
 
-#### C.1 `BUSINESS_LOGIC.md` — modificaciones a la versión de A
+#### C.1 `BUSINESS_LOGIC.md` — sección de la APP
 
-Después de la sección 0 (Qué es este proyecto) en el BUSINESS_LOGIC.md de la opción A, **inserta esta sección nueva 0.5**:
+Después de la sección 0 (Qué es este proyecto), inserta esta sección **0.5** con la spec que dio el dueño en el intake:
 
 ```markdown
-## 0.5 Producto público (SaaS para usuarios finales)
+## 0.5 La APP (lo que usan tus clientes)
 
-[Pegar literal la <DESCRIPCIÓN_SAAS> del dueño]
+[Pegar literal la descripción de la APP del dueño: nombre, qué hace, para quién, las 3-5 cosas que el usuario podrá hacer, datos que maneja, cómo entran, si cobra]
 
-Este proyecto tiene arquitectura DUAL:
+Arquitectura DUAL en el mismo proyecto y la misma base de datos:
+- **OS** (zona del dueño/equipo) — donde operas tu negocio (Visual Knowledge, dashboards, métricas).
+- **APP** (`src/app/(app)/*`) — la cara que usan tus clientes finales. Es el producto descrito arriba.
 
-- **Zona admin** (`src/app/(admin)/*`) — solo el dueño accede.
-  Contiene su Ecosistema de IA (Knowledge en 4 cuadrantes,
-  Configuraciones, plugins de operación).
-- **Zona pública / SaaS** (`src/app/(app)/*`) — usuarios finales
-  acceden tras login. Es el producto del dueño descrito arriba.
-
-Cuando se ejecute `/add-login` después, el `proxy.ts` aplicará
-lógica de roles: rol `admin` accede a `(admin)/*`, rol `user`
-solo a `(app)/*`.
+El OS mide lo que pasa en la APP (misma BD). Cuando se ejecute `/add-login`, el routing por rol manda al dueño/equipo (admin) al OS y a los clientes (user) a la APP.
 ```
 
-#### C.2 Reorganizar la estructura del shell de A
+#### C.2 Base de la APP — `src/app/(app)/`
 
-El layout `src/app/(app)/layout.tsx` de la opción A pasa a ser **`src/app/(admin)/layout.tsx`**. Esto agrupa el panel del Ecosistema bajo el route group `(admin)`.
+Crea SOLO la base de la APP (el producto se construye de verdad en el paso de build del roadmap):
+- `src/app/(app)/layout.tsx` — layout de cara al cliente (sin nada del OS).
+- `src/app/(app)/page.tsx` — placeholder con el nombre + descripción de la APP, listo para que el build lo convierta en el producto.
 
-Toda la lógica de sidebar, header, 4 cuadrantes, Configuraciones se mueve a `(admin)/`:
-- `src/app/(admin)/layout.tsx`
-- `src/app/(admin)/knowledge/page.tsx`
-- `src/app/(admin)/knowledge/[cuadrante]/page.tsx`
-- `src/app/(admin)/configuraciones/page.tsx`
+> El producto NO se construye aquí. La pantalla del OS (Visual Knowledge) la monta `/visual-knowledge`; la APP la construye el paso de build leyendo el Knowledge + `BUSINESS_LOGIC.md`.
 
-#### C.3 Estructura `src/app/(app)/` (zona pública del SaaS)
-
-Crea (igual que en opción B pero con un placeholder específico que diga "tu producto"):
-- `src/app/(app)/layout.tsx` — layout simple para usuarios finales (sin sidebar admin, header con nombre del producto).
-- `src/app/(app)/page.tsx` — landing del producto autenticado con placeholder + descripción del SaaS pegada literal.
-
-#### C.4 `src/app/page.tsx` (raíz)
-
-```tsx
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-
-export default async function RootPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return redirect('/login');
-
-  // Por default todos van a /app. Cuando se ejecute /add-login,
-  // proxy.ts redirigirá rol=admin a /admin/knowledge.
-  return redirect('/app');
-}
-```
-
-### Flujo de Ejecución — Opción C
+### Flujo de Ejecución — (2) OS + APP
 
 1. Verifica proyecto recién clonado y `npm install`.
-2. Pregunta extra (descripción del SaaS público).
-3. Ejecuta TODO el flujo de la opción A (migración con `profiles` + `knowledges`, knowledges seed, CLAUDE.md, BUSINESS_LOGIC.md, next.config.ts, componentes del shell).
-4. Aplica las modificaciones C.1 a C.4 (renombrar route group del shell a `(admin)/`, crear estructura `(app)/`, modificar `BUSINESS_LOGIC.md` con sección 0.5, root page con redirect).
-5. Verifica con Playwright que ambas zonas se ven bien.
-6. Muestra mensaje final.
+2. Haz el intake de la APP (las preguntas de "Pregunta extra" de arriba, en UN mensaje).
+3. Ejecuta TODO el flujo **(1) Solo mi OS** (backend: roles + profiles + knowledges + seeds + CLAUDE.md + BUSINESS_LOGIC.md + next.config.ts).
+4. Añade C.1 (sección 0.5 de la APP en BUSINESS_LOGIC) + C.2 (base de `(app)/`).
+5. Muestra el mensaje final.
 
-### Mensaje Final — Opción C
+### Mensaje Final — (2) OS + APP
 
 ```
-Tu Ecosistema de IA + chasis de SaaS público están listos.
+El BACKEND de tu OS + la base de tu APP están listos.
 
 Lo que tienes ahora:
 
-PANEL ADMIN (solo tú):
-- /admin/knowledge — los 4 cuadrantes (Marketing, Ventas, Producto, Finanzas)
-- /admin/configuraciones — tus datos
-- Tabla knowledges con 3 seeds y RLS
+TU OS (solo tú y tu equipo):
+- Tablas roles + profiles (tú eres admin) + knowledges (contrato
+  del Visual Knowledge), todo con RLS
+- 4 cuadrantes de negocio + 2 áreas (Personal, Reglas)
+- 3 knowledges seed
 
-SaaS PÚBLICO (tus usuarios finales):
-- /app — landing del producto con descripción
-- Placeholder listo para construir tu producto iterando
+TU APP (lo que usarán tus clientes):
+- Base en src/app/(app)/ con el nombre y la descripción de tu APP
+- Lista para construirse en el paso de build
 
 COMÚN:
-- BUSINESS_LOGIC.md con arquitectura dual documentada
+- BUSINESS_LOGIC.md con la arquitectura OS + APP documentada
 - CLAUDE.md con reglas duras
-- Tabla profiles con RLS
 - Security headers en next.config.ts
 
-Tus siguientes pasos están dentro del roadmap NVISION®. Síguelo
-ahí.
+Ya puedes ver tu OS montado con tu marca (Dashboard + Knowledge).
+/visual-knowledge convierte el Knowledge en tu cerebro 3D navegable.
+Tu producto (la APP) lo terminas de montar en el paso de build.
+
+Sigue el roadmap NVISION® para los siguientes pasos.
 ```
 
 ---
@@ -1191,16 +805,15 @@ Personas que operan un negocio digital o prestan servicios online y necesitan co
 
 ## 4. Anatomía del entorno base
 
-Cuando el dueño ejecuta /new-ecoai, queda listo:
+Cuando el dueño ejecuta /new-ecoai, queda listo el **backend del OS**:
 
-- Esquina superior izquierda: nombre del ecosistema (default "Ecosistema").
-- Sidebar izquierdo desplegable con dos items fijos: Knowledge (arriba) y Configuraciones (abajo).
-- Pantalla Knowledge: 4 cuadrantes en grilla (Marketing, Ventas, Producto, Finanzas) en formato de carpetas.
-- Pantalla Configuraciones: nombre, foto, correo del dueño.
+- Tablas en Supabase: `roles` (el dueño es admin) + `profiles` + `knowledges` / `knowledge_folders` / `knowledge_settings`, todo con RLS.
+- El Knowledge sembrado con sus 4 cuadrantes de negocio + 2 áreas (Personal, Reglas) y 3 seeds.
+- `BUSINESS_LOGIC.md`, `CLAUDE.md` y security headers.
 
-No existe menú de usuario, ni sistema de invitaciones, ni dashboard de métricas, ni plugins instalados. El entorno base es el chasis vacío sobre el que el dueño construye.
+Todavía no hay nada visual. La cara del Knowledge — el **Visual Knowledge**, un cerebro 3D navegable — la enciende el dueño en el paso siguiente con `/visual-knowledge`. El resto del producto se construye iterando con la IA.
 
-## 5. Los 4 cuadrantes
+## 5. Los 4 cuadrantes de negocio + 2 áreas
 
 ### Marketing
 Branding, copy, contenidos, captación, posicionamiento, identidad visual. Seed inicial: Brandkit (HTML).
@@ -1213,6 +826,16 @@ Arquitectura, plugins instalados, decisiones técnicas, stack. Seed inicial: Man
 
 ### Finanzas
 Ingresos, costos, suscripciones, gastos, proyecciones. Seed inicial: vacío.
+
+---
+
+Aparte de los 4 cuadrantes de negocio hay **2 áreas independientes** (no son cuadrantes):
+
+### Personal
+La persona detrás del negocio: historia, hábitos, filosofía, misión/visión, journal, ideas.
+
+### Reglas
+Cómo debe comportarse la IA: tono comunicacional, palabras prohibidas, "siempre haz X".
 
 ### Naturaleza de un Knowledge
 
@@ -1231,11 +854,11 @@ Una fuente, múltiples canales.
 
 **Setup (una sola vez):** seguir el roadmap publicado. Termina escribiendo `nvision` en la terminal de Antigravity dentro de una carpeta vacía. La plantilla se clona.
 
-**Crear el entorno (una sola vez):** `/new-ecoai`. El agente genera todo automáticamente sin preguntar.
+**Crear el entorno (una sola vez):** `/new-ecoai`. El agente pregunta una cosa (Solo OS u OS + APP) y monta el backend. La cara visual del Knowledge la enciendes después con `/visual-knowledge`.
 
 **Identidad visual:** el dueño define su Brandkit. La IA aplica esa identidad a todo el entorno.
 
-**Iterar y enchufar plugins (continuo):** el dueño habla con la IA en lenguaje natural. Ejemplos: "quiero un CRM con pipeline", "necesito un panel con métricas de Instagram", "añade dictado por voz". La IA construye el plugin, lo enchufa al sidebar, crea las tablas necesarias y actualiza BUSINESS_LOGIC.md.
+**Iterar (continuo):** el dueño habla con la IA en lenguaje natural. Ejemplos: "quiero un CRM con pipeline", "necesito un panel con métricas de Instagram", "añade dictado por voz". La IA construye lo pedido, crea las tablas necesarias y actualiza BUSINESS_LOGIC.md.
 
 **Despliegue:** Vercel + dominio propio.
 
@@ -1244,7 +867,7 @@ Una fuente, múltiples canales.
 Cualquier capacidad enchufable: CRM, dashboard, calendario, herramienta de contenido, integración con redes, auditor, motor de ideas, lo que sea.
 
 Anatomía:
-- Entrada nueva en el sidebar.
+- Una sección nueva en tu OS.
 - Carpeta src/features/[plugin]/ con la lógica.
 - Tablas Supabase con RLS.
 - Knowledges asociados en los cuadrantes.
@@ -1270,13 +893,15 @@ No hay catálogo cerrado. Cada idea del dueño es un plugin potencial.
 
 - **Ecosistema**: el proyecto entero (entorno base + plugins + knowledges + datos del dueño).
 - **Entorno base**: lo que /new-ecoai deja listo antes de cualquier plugin.
-- **Hub**: la pantalla principal de Knowledge con los 4 cuadrantes.
-- **Cuadrante**: una de las 4 áreas (Marketing, Ventas, Producto, Finanzas).
+- **OS**: el centro de operaciones del dueño (backend). **APP**: la cara que usan los clientes.
+- **Visual Knowledge**: la cara visual del Knowledge — un cerebro 3D navegable (skill `/visual-knowledge`). Primera sección visible del OS.
+- **Cuadrante**: una de las 4 áreas de negocio del Knowledge (Marketing, Ventas, Producto, Finanzas). Aparte hay 2 áreas: Personal y Reglas.
 - **Knowledge**: instrucción operativa dentro de un cuadrante. SOP que entrena a las IAs.
 - **Plugin**: capacidad enchufable al ecosistema.
 - **Dueño**: la persona que opera el ecosistema.
 - **`nvision`**: comando shell que clona la plantilla en una carpeta vacía.
-- **`/new-ecoai`**: comando que crea el entorno base sin preguntas.
+- **`/new-ecoai`**: comando que crea el backend del OS (pregunta Solo OS u OS + APP).
+- **`/visual-knowledge`**: comando que enciende el Visual Knowledge (cerebro 3D).
 ```
 
 ---
@@ -1284,7 +909,13 @@ No hay catálogo cerrado. Cada idea del dueño es un plugin potencial.
 ## Notas
 
 - Este skill **no** ejecuta `/add-login` automáticamente. La persona lo activa después con `/add-login` para tener auth Email/Password + Google OAuth.
-- Si Supabase no tiene credenciales configuradas (`.env.local` vacío), se muestra al final mensaje pidiendo configurarlas antes de aplicar la migración.
-- Los knowledges seed son `is_seed=true` para que la persona sepa que son del chasis base.
+- **Configuración de secretos (Nivel 0 · `.env.local` manual) — regla dura.** Ver "⚡⚡⚡ REGLA ABSOLUTA — PROHIBIDO LEER FICHEROS DE SECRETOS" en `CLAUDE.md`. Flujo:
+  1. La IA crea el fichero con copia opaca: `cp .env.local.example .env.local` (solo placeholders).
+  2. La IA **lista las KEYS** necesarias para lo que se está montando; NUNCA lee ni pide valores por chat.
+  3. **El dueño pega los valores** en `.env.local` con su editor.
+  4. La IA verifica **solo existencia/formato**: `grep -c '^NOMBRE_VAR=' .env.local` (→ 0/1), nunca el valor.
+  5. Si un valor falta o parece mal, la IA **avisa al dueño para que lo revise** — no inspecciona el contenido.
+- Si Supabase no tiene credenciales configuradas (`.env.local` vacío → `grep -c` da 0), se muestra al final mensaje pidiendo al dueño que las pegue antes de aplicar la migración. La IA NO lee `.env.local` para comprobarlo.
+- Los knowledges seed ("Sobre el Ecosistema de IA", "Manual del Proyecto", "Brandkit") vienen de fábrica; la persona los edita o añade más.
 
 *El Ecosistema de IA es de quien lo opera.*

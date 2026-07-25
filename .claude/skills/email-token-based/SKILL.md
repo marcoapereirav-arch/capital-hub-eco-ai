@@ -1,5 +1,6 @@
 ---
 name: email-token-based
+scope: template
 description: |
   Instala el sistema de emails SIN Supabase (custom token-based auth flow): TODO el correo
   sale por Resend con tokens propios; Supabase Auth (GoTrue) NO envia ni un solo email.

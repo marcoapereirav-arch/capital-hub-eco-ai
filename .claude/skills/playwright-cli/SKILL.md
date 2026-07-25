@@ -1,32 +1,26 @@
 ---
 name: playwright-cli
-description: "Testing automatizado con Playwright CLI. Navega la app, llena formularios, hace click, toma screenshots, y genera reportes. Activar cuando el usuario dice: testea esto, revisa que funcione, hay un bug, verificalo, checalo en el browser, o despues de implementar una feature para validar."
+description: "Testing y QA automatizado con Playwright. Navega la app, llena formularios, hace click, toma screenshots y genera reportes. Usa el Playwright MCP para flujos interactivos y el CLI de Playwright para capturas rapidas, codegen y test suites. Activar cuando el usuario dice: testea esto, revisa que funcione, hay un bug, verificalo, checalo en el browser, o despues de implementar una feature para validar."
+scope: template
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
-# Skill: QA Automatizado con Playwright CLI
+# Skill: QA Automatizado con Playwright
 
 > Ejecutar QA: $ARGUMENTS
 
 ---
 
-## Por Que CLI en vez de MCP
+## Dos herramientas, cada una para lo suyo
 
-Playwright MCP inyecta snapshots completos de pagina directamente en el context window. Esto consume muchos tokens y puede causar ruido para flujos conocidos.
+- **Playwright MCP** (interactivo): conducir el navegador paso a paso — navegar, hacer click, llenar formularios, leer el estado de la pagina. Es la forma real de automatizar una interaccion multi-paso. Tools: `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_fill_form`, `browser_take_screenshot`, `browser_wait_for`.
+- **Playwright CLI** (`npx playwright ...`): tareas no interactivas — capturas rapidas, grabar flujos (`codegen`) y correr suites de test (`test`).
 
-Playwright CLI en cambio:
-- Guarda datos de pagina a disco (archivos YAML/screenshots) en vez de llenar el contexto
-- Menos tokens consumidos, mayor precision para flujos definidos
-- Claude ya sabe usar shell commands, cero overhead de carga de herramientas
-- Los artefactos quedan en disco para revision posterior
-
-**Cuando usar MCP en vez de CLI**: Exploracion interactiva de paginas desconocidas o debugging visual en tiempo real. Para todo lo demas, CLI.
+**Principio sticky-notes**: NO volcar snapshots completos al contexto. Toma snapshots dirigidos, guarda screenshots a disco, lee detalle on-demand.
 
 ---
 
-## Prerequisitos
-
-Instalar Chromium si no esta instalado:
+## Prerrequisitos
 
 ```bash
 npx playwright install chromium
@@ -34,101 +28,95 @@ npx playwright install chromium
 
 ---
 
-## Comandos Core de Playwright CLI
+## Comandos CLI reales (ojo a la sintaxis)
 
 ```bash
-# Navegar a una pagina
-npx playwright navigate http://localhost:3000
+# Screenshot — URL y ARCHIVO son POSICIONALES (NO existe --output)
+npx playwright screenshot http://localhost:3000 captura.png
+npx playwright screenshot --full-page http://localhost:3000/precios precios.png
 
-# Tomar screenshot
-npx playwright screenshot http://localhost:3000 --output screenshot.png
+# Mobile (iPhone): viewport explicito
+npx playwright screenshot --viewport-size=375,812 http://localhost:3000/login login-mobile.png
 
-# Click en un elemento
-npx playwright click "text=Sign In"
+# Grabar un flujo y generar codigo (abre navegador, registra acciones)
+npx playwright codegen http://localhost:3000
 
-# Llenar un campo de formulario
-npx playwright fill "#email" "test@example.com"
+# Correr la suite de tests del proyecto (si hay archivos *.spec.ts)
+npx playwright test
+```
 
-# Obtener snapshot de pagina (accessibility tree como YAML)
-npx playwright snapshot http://localhost:3000
+> NO existen `npx playwright navigate|click|fill|snapshot`. Esas acciones interactivas se hacen con el **Playwright MCP** (abajo), no con el CLI.
+
+---
+
+## Acciones interactivas (Playwright MCP)
+
+```
+browser_navigate({ url })                 # ir a una pagina
+browser_snapshot()                        # accessibility tree (dirigido, sin volcar al contexto)
+browser_click({ element, ref })           # click
+browser_type({ element, ref, text })      # escribir en un campo
+browser_fill_form({ fields: [...] })      # llenar varios campos de golpe
+browser_take_screenshot({ filename })     # captura a disco
+browser_wait_for({ text | time })         # esperar a que algo aparezca/pase
 ```
 
 ---
 
-## Flujo QA en 6 Fases
+## Flujo QA en 6 fases
 
 ### Fase 1: SETUP
-
-Leer los requerimientos del test. Identificar que necesita testing.
-
-- Que feature o bug se esta verificando?
-- Cuales son los criterios de exito?
-- Que URL/rutas estan involucradas?
-- Se necesitan datos de prueba?
-
-Crear el directorio de artefactos:
+Leer requerimientos: que feature/bug se verifica, criterios de exito, rutas involucradas, datos de prueba.
 
 ```bash
 mkdir -p .qa-reports/[YYYY-MM-DD]-[nombre]/screenshots
 ```
 
 ### Fase 2: PROVISION
-
-Preparar datos de prueba si son necesarios.
-
-- Crear usuario de prueba via Supabase MCP si aplica
-- Preparar datos en BD que el flujo necesite
-- Verificar que el servidor de desarrollo esta corriendo
+Preparar datos de prueba (usuario via Supabase MCP si aplica) y verificar que el server corre.
 
 ```bash
-# Verificar que la app esta corriendo
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
 ```
 
 ### Fase 3: NAVIGATE
+Abrir la app con el MCP y capturar el estado inicial.
 
-Abrir la app y navegar a las paginas relevantes.
+```
+browser_navigate({ url: 'http://localhost:3000/[ruta]' })
+browser_take_screenshot({ filename: '.qa-reports/[fecha]-[nombre]/screenshots/01-inicio.png' })
+```
 
+Para una captura puntual sin sesion interactiva, el CLI vale:
 ```bash
-# Screenshot inicial de la pagina
-npx playwright screenshot http://localhost:3000/[ruta] --output .qa-reports/[fecha]-[nombre]/screenshots/01-inicio.png
+npx playwright screenshot http://localhost:3000/[ruta] .qa-reports/[fecha]-[nombre]/screenshots/01-inicio.png
 ```
 
 ### Fase 4: TEST
+Conducir el flujo con el MCP (click/fill) y capturar antes/despues de cada accion critica.
 
-Ejecutar los pasos del test. Llenar formularios, hacer clicks, verificar resultados.
-
-```bash
-# Ejemplo: test de login
-npx playwright screenshot http://localhost:3000/login --output .qa-reports/[fecha]-[nombre]/screenshots/02-login-page.png
-npx playwright fill "#email" "test@example.com"
-npx playwright fill "#password" "testpassword"
-npx playwright click "text=Sign In"
-npx playwright screenshot http://localhost:3000/dashboard --output .qa-reports/[fecha]-[nombre]/screenshots/03-after-login.png
 ```
-
-Tomar screenshot ANTES y DESPUES de cada accion critica.
+browser_navigate({ url: 'http://localhost:3000/login' })
+browser_fill_form({ fields: [
+  { name: 'email', value: 'test@example.com' },
+  { name: 'password', value: 'testpassword' }
+] })
+browser_click({ element: 'boton Sign In' })
+browser_wait_for({ text: 'Dashboard' })
+browser_take_screenshot({ filename: '.qa-reports/[fecha]-[nombre]/screenshots/03-after-login.png' })
+```
 
 ### Fase 5: DOCUMENT
-
-Guardar snapshots de pagina solo cuando se necesite inspeccionar estructura.
-
-```bash
-# Solo si necesitas ver la estructura del DOM
-npx playwright snapshot http://localhost:3000/[ruta] > .qa-reports/[fecha]-[nombre]/snapshot-[paso].yaml
-```
-
-**Principio sticky-notes**: NO volcar snapshots completos al contexto. Leer el archivo YAML solo cuando se necesite inspeccionar algo especifico. Resumen primero, detalles on-demand.
+Snapshot dirigido SOLO cuando necesites inspeccionar estructura: `browser_snapshot()` y guarda el resumen, no el arbol completo.
 
 ### Fase 6: REPORT
-
-Generar reporte markdown con hallazgos.
+Generar reporte markdown con hallazgos (template abajo).
 
 ---
 
 ## Template del Reporte
 
-Crear el archivo `.qa-reports/[YYYY-MM-DD]-[nombre]/report.md`:
+Crear `.qa-reports/[YYYY-MM-DD]-[nombre]/report.md`:
 
 ```markdown
 # QA Report: [Feature/Bug Name]
@@ -137,50 +125,33 @@ Crear el archivo `.qa-reports/[YYYY-MM-DD]-[nombre]/report.md`:
 **Status**: PASSED | FAILED | PARTIALLY_FIXED
 
 ## Test Steps
-1. [Descripcion del paso] - Screenshot: `screenshots/01-nombre.png`
-2. [Descripcion del paso] - Screenshot: `screenshots/02-nombre.png`
-3. ...
+1. [Paso] - Screenshot: `screenshots/01-nombre.png`
+2. ...
 
 ## Findings
 - [Issue encontrado o confirmacion de que funciona]
-- [Comportamiento inesperado observado]
 
 ## Screenshots
 - `screenshots/01-inicio.png` - Estado inicial
-- `screenshots/02-accion.png` - Despues de [accion]
 - ...
 
 ## Recommendations
-- [Fix sugerido o mejora]
-- [Siguiente paso]
+- [Fix sugerido o siguiente paso]
 ```
 
 ---
 
-## Modos de Uso
+## Modos de uso
 
 | Comando | Que hace |
 |---------|----------|
-| `/qa verify [flujo]` | Verificar que un flujo funciona correctamente |
-| `/qa reproduce [bug]` | Intentar reproducir un bug reportado |
-| `/qa full [feature]` | QA completo de una feature (happy path + edge cases) |
-
-### Ejemplo: `/qa verify login flow`
-
-```
-Fase 1: SETUP - Verificar flujo de login. Criterio: usuario puede loguearse y ver dashboard.
-Fase 2: PROVISION - Verificar que existe usuario de prueba en BD.
-Fase 3: NAVIGATE - Ir a /login, tomar screenshot.
-Fase 4: TEST - Llenar email/password, click Sign In, verificar redireccion a /dashboard.
-Fase 5: DOCUMENT - Screenshots en cada paso.
-Fase 6: REPORT - Generar report.md con status PASSED/FAILED.
-```
+| `/playwright-cli verify [flujo]` | Verificar que un flujo funciona correctamente |
+| `/playwright-cli reproduce [bug]` | Intentar reproducir un bug reportado |
+| `/playwright-cli full [feature]` | QA completo de una feature (happy path + edge cases) |
 
 ---
 
-## Directorio de Output
-
-Todos los artefactos de QA se guardan en:
+## Directorio de output
 
 ```
 .qa-reports/
@@ -188,18 +159,16 @@ Todos los artefactos de QA se guardan en:
     report.md
     screenshots/
       01-nombre.png
-      02-nombre.png
       ...
-    snapshot-[paso].yaml  (solo si se necesito)
 ```
 
 ---
 
 ## Reglas
 
-- SIEMPRE crear el directorio de artefactos antes de empezar
-- SIEMPRE tomar screenshots en cada paso critico
-- NUNCA volcar snapshots YAML completos al contexto (leerlos on-demand)
-- SIEMPRE generar el reporte al final, incluso si todo paso
-- Si el servidor no esta corriendo, avisar al usuario en vez de fallar silenciosamente
-- Los screenshots se guardan en disco, NO se insertan inline en el reporte (solo paths)
+- SIEMPRE crear el directorio de artefactos antes de empezar.
+- Flujo interactivo (click/fill/multi-paso) → Playwright MCP. Captura puntual / codegen / test suite → CLI.
+- NUNCA volcar snapshots completos al contexto (leerlos on-demand).
+- Screenshots a disco, NO inline en el reporte (solo paths).
+- SIEMPRE generar el reporte al final, incluso si todo paso.
+- Si el server no corre, avisar al usuario en vez de fallar en silencio.

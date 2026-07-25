@@ -1,5 +1,6 @@
 ---
 name: add-emails
+scope: template
 description: |
   Integra sistema de correos transaccionales con Resend + React Email en tu proyecto Next.js + Supabase.
   Configura cliente, templates profesionales, batch sending y unsubscribe management.

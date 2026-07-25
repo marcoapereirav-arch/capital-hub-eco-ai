@@ -1,5 +1,6 @@
 ---
 name: website-3d
+scope: template
 description: >
   Crear landing pages cinematicas estilo Apple con scroll-driven video animation + copy de alta conversion.
   Toma un video de producto y construye un sitio donde el video avanza/retrocede con el scroll.

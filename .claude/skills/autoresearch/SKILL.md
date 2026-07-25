@@ -1,5 +1,6 @@
 ---
 name: autoresearch
+scope: template
 description: |
   Auto-optimizacion autonoma de skills usando el patron de Karpathy.
   Toma cualquier skill, define evals binarias, y corre un loop autonomo:

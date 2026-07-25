@@ -1,5 +1,6 @@
 ---
 name: add-login
+scope: template
 description: "Inyectar sistema de autenticacion completo: login, signup, password reset, profiles, Google OAuth, y RLS. Activar cuando el usuario dice: necesito login, agregar registro, autenticacion, que los usuarios puedan entrar, crear cuentas, o proteger rutas."
 allowed-tools: Read, Write, Edit, Bash
 ---
@@ -38,7 +39,13 @@ Inyecta autenticacion B2B production-ready con Supabase + Next.js 16.
 
 ## Archivos a Crear
 
-### 1. `proxy.ts` (root)
+> ⚠️ **SOLO PANTALLAS DE AUTH.** Esta skill construye **únicamente** las pantallas de auth (login, signup, reset/update password, callback) — **nada de landing, marketing ni otras pantallas**.
+>
+> **El branding ya está puesto — NO lo rebrandees a mano.** `new-ecoai` define el color de marca del proyecto (token `brand` en `globals.css` + `tailwind.config.ts`) ANTES de que se ejecute add-login. Las plantillas de abajo usan ese token (`bg-brand`, `ring-brand`, `text-brand`, `text-brand-contrast`), así que el login sale **automáticamente con la marca del usuario**. Si el usuario aún no definió su marca, el token está en neutro limpio. **NUNCA** un color de otra marca (ni dorado, ni azul, ni el de NVISION).
+
+### 1. `src/proxy.ts` (va en `src/`, NUNCA en la raíz)
+
+> ⚠️ En proyectos con carpeta `src/` (como este template), Next 16 SOLO detecta el proxy en `src/proxy.ts`. En la raíz lo ignora y las rutas quedan SIN proteger (devuelven 200, no redirigen a /login). Créalo SIEMPRE en `src/proxy.ts`; tras crearlo, limpia la caché con `rm -rf .next` para que se regenere.
 
 ```typescript
 import { NextResponse, type NextRequest } from 'next/server'
@@ -87,8 +94,10 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Rutas protegidas
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard')
+  // Rutas protegidas: el OS (/dashboard, /knowledge, /perfil — admin) y la APP (/app — clientes).
+  // El gate de ROL del OS lo refuerza ademas el layout (admin); aqui cortamos en el edge.
+  const isProtectedRoute = ['/dashboard', '/knowledge', '/perfil', '/app'].some((p) =>
+    request.nextUrl.pathname.startsWith(p))
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
                       request.nextUrl.pathname.startsWith('/signup') ||
                       request.nextUrl.pathname.startsWith('/callback')
@@ -98,7 +107,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Ya logueado: vuelve a la raiz; la app enruta por rol (admin -> OS, cliente -> APP).
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return supabaseResponse
@@ -139,6 +149,24 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
+// Routing por ROL: el dueno/equipo (admin) aterriza en su OS; los clientes, en la APP.
+const OS_HOME = '/dashboard'    // el OS arranca en el Dashboard (dentro del shell (admin)/)
+const APP_HOME = '/app'         // donde vive la APP (lo que usan tus clientes)
+
+async function postLoginDestination(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return '/login'
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('roles(name)')
+    .eq('id', user.id)
+    .single()
+  const roleName = (profile as { roles?: { name?: string } } | null)?.roles?.name
+  return roleName === 'admin' ? OS_HOME : APP_HOME
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
@@ -152,7 +180,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect(await postLoginDestination(supabase))
 }
 
 export async function signup(formData: FormData) {
@@ -204,7 +232,7 @@ export async function updatePassword(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect(await postLoginDestination(supabase))
 }
 
 export async function updateProfile(formData: FormData) {
@@ -338,20 +366,20 @@ export function LoginForm() {
             name="email"
             type="email"
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500 shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium">
-            Password
+            Contraseña
           </label>
           <input
             id="password"
             name="password"
             type="password"
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500 shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
 
@@ -362,14 +390,14 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="w-full rounded-md bg-brand px-4 py-2 font-semibold text-brand-contrast hover:bg-brand/90 disabled:opacity-50"
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? 'Entrando...' : 'Entrar'}
         </button>
 
-        <p className="text-center text-sm text-gray-600">
-          <Link href="/forgot-password" className="text-blue-600 hover:underline">
-            Forgot password?
+        <p className="text-center text-sm text-neutral-400">
+          <Link href="/forgot-password" className="text-brand hover:underline">
+            ¿Olvidaste tu contraseña?
           </Link>
         </p>
       </form>
@@ -420,13 +448,13 @@ export function SignupForm() {
             name="email"
             type="email"
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500 shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
 
         <div>
           <label htmlFor="password" className="block text-sm font-medium">
-            Password
+            Contraseña
           </label>
           <input
             id="password"
@@ -434,7 +462,7 @@ export function SignupForm() {
             type="password"
             required
             minLength={6}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500 shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
         </div>
 
@@ -445,9 +473,9 @@ export function SignupForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="w-full rounded-md bg-brand px-4 py-2 font-semibold text-brand-contrast hover:bg-brand/90 disabled:opacity-50"
         >
-          {loading ? 'Creating account...' : 'Create Account'}
+          {loading ? 'Creando cuenta...' : 'Crear cuenta'}
         </button>
       </form>
     </div>
@@ -486,7 +514,7 @@ export function ForgotPasswordForm() {
   if (success) {
     return (
       <div className="text-center">
-        <p className="text-green-600">Check your email for a reset link.</p>
+        <p className="text-emerald-400">Te enviamos un enlace para restablecerla. Revisa tu correo.</p>
       </div>
     )
   }
@@ -502,7 +530,7 @@ export function ForgotPasswordForm() {
           name="email"
           type="email"
           required
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500 shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </div>
 
@@ -513,9 +541,9 @@ export function ForgotPasswordForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+        className="w-full rounded-md bg-brand px-4 py-2 font-semibold text-brand-contrast hover:bg-brand/90 disabled:opacity-50"
       >
-        {loading ? 'Sending...' : 'Send Reset Link'}
+        {loading ? 'Enviando...' : 'Enviar enlace'}
       </button>
     </form>
   )
@@ -550,7 +578,7 @@ export function UpdatePasswordForm() {
     <form action={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="password" className="block text-sm font-medium">
-          New Password
+          Nueva contraseña
         </label>
         <input
           id="password"
@@ -558,7 +586,7 @@ export function UpdatePasswordForm() {
           type="password"
           required
           minLength={6}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 placeholder-neutral-500 shadow-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
         />
       </div>
 
@@ -569,9 +597,9 @@ export function UpdatePasswordForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+        className="w-full rounded-md bg-brand px-4 py-2 font-semibold text-brand-contrast hover:bg-brand/90 disabled:opacity-50"
       >
-        {loading ? 'Updating...' : 'Update Password'}
+        {loading ? 'Guardando...' : 'Guardar contraseña'}
       </button>
     </form>
   )
@@ -597,19 +625,19 @@ import { LoginForm } from '@/features/auth/components'
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-neutral-100">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          <h1 className="text-3xl font-bold">Bienvenido de nuevo</h1>
+          <p className="mt-2 text-neutral-400">Entra a tu cuenta</p>
         </div>
 
         <LoginForm />
 
-        <p className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link href="/signup" className="text-blue-600 hover:underline">
-            Sign up
+        <p className="text-center text-sm text-neutral-400">
+          ¿No tienes cuenta?{' '}
+          <Link href="/signup" className="text-brand hover:underline">
+            Crear cuenta
           </Link>
         </p>
       </div>
@@ -626,19 +654,19 @@ import { SignupForm } from '@/features/auth/components'
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-neutral-100">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Create account</h1>
-          <p className="mt-2 text-gray-600">Get started for free</p>
+          <h1 className="text-3xl font-bold">Crear cuenta</h1>
+          <p className="mt-2 text-neutral-400">Empieza gratis</p>
         </div>
 
         <SignupForm />
 
-        <p className="text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Sign in
+        <p className="text-center text-sm text-neutral-400">
+          ¿Ya tienes cuenta?{' '}
+          <Link href="/login" className="text-brand hover:underline">
+            Entrar
           </Link>
         </p>
       </div>
@@ -654,17 +682,17 @@ import Link from 'next/link'
 
 export default function CheckEmailPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-neutral-100">
       <div className="w-full max-w-md space-y-8 p-8 text-center">
-        <h1 className="text-3xl font-bold">Check your email</h1>
-        <p className="text-gray-600">
-          We've sent you a confirmation link. Please check your email to complete your registration.
+        <h1 className="text-3xl font-bold">Revisa tu correo</h1>
+        <p className="text-neutral-400">
+          Te enviamos un enlace de confirmación. Ábrelo para completar tu registro.
         </p>
         <Link
           href="/login"
-          className="inline-block text-blue-600 hover:underline"
+          className="inline-block text-brand hover:underline"
         >
-          Back to login
+          Volver al login
         </Link>
       </div>
     </div>
@@ -680,18 +708,18 @@ import { ForgotPasswordForm } from '@/features/auth/components'
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-neutral-100">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Reset password</h1>
-          <p className="mt-2 text-gray-600">Enter your email to receive a reset link</p>
+          <p className="mt-2 text-neutral-400">Enter your email to receive a reset link</p>
         </div>
 
         <ForgotPasswordForm />
 
-        <p className="text-center text-sm text-gray-600">
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Back to login
+        <p className="text-center text-sm text-neutral-400">
+          <Link href="/login" className="text-brand hover:underline">
+            Volver al login
           </Link>
         </p>
       </div>
@@ -707,11 +735,11 @@ import { UpdatePasswordForm } from '@/features/auth/components'
 
 export default function UpdatePasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-neutral-100">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold">Set new password</h1>
-          <p className="mt-2 text-gray-600">Enter your new password below</p>
+          <p className="mt-2 text-neutral-400">Enter your new password below</p>
         </div>
 
         <UpdatePasswordForm />
@@ -730,7 +758,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') ?? '/'
 
   if (code) {
     const supabase = await createClient()
@@ -758,7 +786,7 @@ interface GoogleSignInButtonProps {
 }
 
 export function GoogleSignInButton({
-  redirectTo = '/dashboard',
+  redirectTo = '/',
   label = 'Continuar con Google',
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false)
@@ -789,7 +817,7 @@ export function GoogleSignInButton({
       type="button"
       onClick={handleGoogleSignIn}
       disabled={loading}
-      className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
+      className="flex w-full items-center justify-center gap-3 rounded-md border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-neutral-200 shadow-sm transition-colors hover:bg-neutral-800 disabled:opacity-50"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -810,10 +838,10 @@ export function AuthDivider() {
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-gray-300" />
+        <div className="w-full border-t border-neutral-700" />
       </div>
       <div className="relative flex justify-center text-sm">
-        <span className="bg-white px-2 text-gray-500">o</span>
+        <span className="bg-neutral-950 px-2 text-neutral-500">o</span>
       </div>
     </div>
   )
@@ -831,8 +859,10 @@ export function AuthDivider() {
 ```
 Usa el MCP de Supabase con `apply_migration` para ejecutar:
 
--- Tabla profiles
-create table public.profiles (
+-- Tabla profiles · esquema CANONICO (add-login es el dueño del esquema profiles).
+-- 100% idempotente: si ya se ejecuto /new-ecoai (que crea profiles), esto NO rompe
+-- ni duplica policies. Mismos nombres de policy que new-ecoai.
+create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
   email text not null,
   full_name text,
@@ -840,14 +870,19 @@ create table public.profiles (
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
+-- por si existia una version vieja sin estas columnas
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists avatar_url text;
 
--- RLS
+-- RLS (drop-if-exists antes de create = re-ejecutable, sin duplicar)
 alter table public.profiles enable row level security;
 
+drop policy if exists "Users can view own profile" on public.profiles;
 create policy "Users can view own profile"
   on public.profiles for select
   using (auth.uid() = id);
 
+drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
   on public.profiles for update
   using (auth.uid() = id);
@@ -862,17 +897,42 @@ begin
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
     new.raw_user_meta_data->>'avatar_url'
-  );
+  )
+  on conflict (id) do nothing;
   return new;
 end;
 $$ language plpgsql security definer;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 ```
 
 4. Mostrar mensaje de completacion
+
+---
+
+## Configuración automática de Supabase Auth (ejecútala ANTES del mensaje final)
+
+Deja la auth de Supabase configurada **por API**, sin que el usuario toque el dashboard. Usa el `SUPABASE_ACCESS_TOKEN` y el `project_ref` que ya están en el `.mcp.json` del proyecto (`PORT` = el puerto real donde corre el dev server: 3000/3001…):
+
+```bash
+curl -s -X PATCH "https://api.supabase.com/v1/projects/PROJECT_REF/config/auth" \
+  -H "Authorization: Bearer SUPABASE_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "site_url": "http://localhost:PORT",
+    "uri_allow_list": "http://localhost:PORT/**",
+    "mailer_autoconfirm": true
+  }'
+```
+
+- `site_url` + `uri_allow_list` → para que los redirects de auth funcionen en local.
+- `mailer_autoconfirm: true` → desactiva "Confirm email" (el signup loguea al instante; sin esto habría que confirmar por correo).
+- Si dudas de los nombres de campo, haz primero un `GET` al mismo endpoint y míralos. **NUNCA muestres el token en el chat.**
+- ⚠️ **Role-aware con confirm-email off:** al desactivar la confirmación, tras el signup el usuario queda **auto-logueado** → el redirect post-login DEBE ser role-aware (`postLoginDestination`: admin → OS, cliente → APP). NO mandes ciegamente a la APP, o el admin acaba en la pantalla equivocada.
+- **Google OAuth NO se puede automatizar** (requiere Google Cloud) → ese sí queda como paso manual (ver mensaje final).
 
 ---
 
@@ -889,7 +949,7 @@ Incluye:
 - Password Reset completo
 - Tabla profiles (creada vía MCP) con full_name y avatar_url de Google
 - Hook useAuth() con user + profile
-- Rutas protegidas (/dashboard)
+- Rutas protegidas (la APP en /app; el OS se afina en el build)
 - Callback OAuth (/callback)
 - Action updateProfile() para editar perfil
 
@@ -902,9 +962,7 @@ Configurar credenciales:
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbG...
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-3. En Authentication > URL Configuration:
-   - Site URL: http://localhost:3000
-   - Redirect URLs: http://localhost:3000/**
+3. Site URL + Redirect URLs + Confirm email: YA configurados automáticamente por mí vía API (no toques el dashboard).
 
 4. Para Google OAuth:
    a. Google Cloud Console > APIs & Services > Credentials
@@ -916,7 +974,7 @@ Configurar credenciales:
 
 5. npm run dev
 
-Listo para probar en /login (Email/Password + Google)
+Auth lista: login/signup/reset ya construidos con la marca del proyecto.
 ```
 
 ---

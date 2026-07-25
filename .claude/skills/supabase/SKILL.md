@@ -1,5 +1,6 @@
 ---
 name: supabase
+scope: template
 description: |
   Todo lo relacionado con Supabase: crear tablas, migraciones, RLS, queries, metricas, CRUD,
   auth, storage, logs, y operaciones de datos.
@@ -45,14 +46,38 @@ Ejecuta el MEGAPROMPT al final de este archivo para generar `references/schema.m
 
 ## Cargar Credenciales
 
-SIEMPRE ejecutar antes de cualquier query:
+> 🔐 **Regla dura (ver "REGLA ABSOLUTA — PROHIBIDO LEER FICHEROS DE SECRETOS" en CLAUDE.md).**
+> Ningún agente lee el VALOR de un secreto. Preferencia de operación:
+
+### Opción preferida — Supabase MCP (sin tocar secretos)
+Para estructura, queries, logs y migraciones usa el **MCP de Supabase**. Las credenciales
+las guarda el servidor MCP (en `.mcp.json` / su config), **nunca entran al shell ni al
+transcript de la IA**. Esta es la vía por defecto:
+
+```
+list_tables · execute_sql("SELECT ...") · apply_migration · get_logs · get_advisors
+```
+
+Antes de usarlo, comprobar solo EXISTENCIA (no el valor):
+```bash
+grep -c '^SUPABASE_PROJECT_REF=' .env   # → 0/1, jamás el valor
+```
+
+### Excepción sancionada — `curl` a la Management API
+SOLO si una operación no está cubierta por el MCP y exige `curl`, se permite cargar las
+credenciales a variables de shell con el patrón siguiente. El valor **se consume dentro del
+`export` y NUNCA se imprime** (sin `echo`, sin `cat`, sin mostrarlo). Preferir SIEMPRE el MCP.
 
 ```bash
+# EXCEPCIÓN: solo cuando el MCP no cubre la operación. El valor nunca se imprime.
 export SUPABASE_URL=$(grep '^SUPABASE_URL=' .env | cut -d= -f2)
 export SUPABASE_SERVICE_KEY=$(grep '^SUPABASE_SERVICE_KEY=' .env | cut -d= -f2)
 export SUPABASE_PAT=$(grep '^SUPABASE_PAT=' .env | cut -d= -f2)
 export SUPABASE_PROJECT_REF=$(grep '^SUPABASE_PROJECT_REF=' .env | cut -d= -f2)
 ```
+
+Prohibido a partir de aquí: `echo $SUPABASE_SERVICE_KEY`, `printenv`, `cat .env`, o cualquier
+comando que vuelque el valor a la salida.
 
 ---
 

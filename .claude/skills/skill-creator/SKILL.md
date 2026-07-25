@@ -1,5 +1,6 @@
 ---
 name: skill-creator
+scope: template
 description: Crear nuevos skills para extender la fabrica. Guia paso a paso con scripts de inicializacion, validacion y empaquetado. Usar cuando el usuario quiere crear un skill personalizado o extender las capacidades del agente.
 license: MIT
 ---

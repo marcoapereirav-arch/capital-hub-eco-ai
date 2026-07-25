@@ -1,5 +1,6 @@
 ---
 name: primer
+scope: template
 description: "Cargar contexto completo del proyecto al inicio de una conversacion. Lee BUSINESS_LOGIC.md, estructura de features, estado de la BD, y configuracion actual. Activar cuando el agente no tiene contexto del proyecto o el usuario dice: que tenemos, donde estamos, dame contexto, resumeme el proyecto."
 allowed-tools: Read, Grep, Glob, Bash
 ---
@@ -26,7 +27,7 @@ No hay decisiones tecnicas que tomar. El stack esta definido:
 src/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/            # Route group: paginas sin sidebar
-│   ├── (main)/            # Route group: paginas con sidebar
+│   ├── (app)/             # Route group: paginas protegidas con sidebar
 │   └── api/               # API Routes
 ├── features/              # Todo colocalizado por feature
 │   └── [feature-name]/
@@ -107,7 +108,7 @@ Si el dueño responde algo distinto a 1/2, vuelve a mostrar el mensaje.
 
 ### 0. Leer el concepto del Ecosistema de IA (PRIMERO)
 
-**ANTES de cualquier otro paso**, lee el knowledge **"Sobre el Ecosistema de IA"** del cuadrante Producto (tabla `knowledges` en Supabase, o archivo espejo en `.claude/knowledges/producto/sobre-el-ecosistema-de-ia.md`). Ese texto contiene el manual completo del concepto que define la arquitectura del proyecto. Sin esto, no entiendes qué tipo de proyecto es ni cómo trabajar.
+**ANTES de cualquier otro paso**, lee el **Knowledge** del proyecto (tabla `knowledges` en Supabase) — TODOS los cuadrantes relevantes (Marketing, Ventas, Producto, Finanzas, Personal, Reglas), empezando por **"Sobre el Ecosistema de IA"** (cuadrante Producto), que define la arquitectura. **Regla universal: cualquier IA lee el Knowledge antes de actuar** (ver sección MEMORIA & KNOWLEDGE en CLAUDE.md). Si el proyecto es recién creado y aún no tiene Knowledge, continúa.
 
 Después, lee también los demás knowledges seed del cuadrante Producto (especialmente "Manual del Proyecto") para entender el negocio específico del dueño.
 

@@ -1,154 +1,37 @@
-# Skills System - NVISION® V4
+# Skills System - NVISION®
 
-> Todo es un Skill. Hot reload. Auto-discovery. Zero config.
+> Inventario GENERADO automaticamente desde el frontmatter de cada SKILL.md.
+> NO editar a mano. Regenerar con `npm run skills:inventory`.
+> Para crear un skill nuevo usa `/skill-creator`.
 
----
+**Total: 24 skills**
 
-## Inventario de Skills (26 total)
+## Template · vienen en la plantilla, los reciben los alumnos al clonar/update (24)
 
-### Invocables por el Usuario (/)
+| Skill | Que hace |
+|-------|----------|
+| `add-emails` | Integra sistema de correos transaccionales con Resend + React Email en tu proyecto Next.js + Supabase |
+| `add-login` | Inyectar sistema de autenticacion completo: login, signup, password reset, profiles, Google OAuth, y RLS |
+| `add-mobile` | Convierte tu Next.js en PWA instalable + sistema de notificaciones push completo |
+| `add-payments` | Integra sistema de pagos con Polar (Merchant of Record) en tu proyecto Next.js + Supabase |
+| `ai` | Agregar capacidades de IA a la app usando templates de Vercel AI SDK v5 + OpenRouter |
+| `autoresearch` | Auto-optimizacion autonoma de skills usando el patron de Karpathy |
+| `bucle-agentico` | Ejecutar features complejas por fases con mapeo de contexto real antes de cada fase |
+| `eject-ecoai` | DESTRUCTIVO: Eliminar NVISION® del proyecto y dejar solo el software funcional |
+| `email-token-based` | Instala el sistema de emails SIN Supabase (custom token-based auth flow): TODO el correo |
+| `frontend-design` | Create distinctive, production-grade frontend interfaces with high design quality |
+| `image-generation` | Generar y editar imagenes usando OpenRouter + Gemini |
+| `memory-manager` | Sistema de memoria persistente POR PROYECTO |
+| `migrate-ecoai` | Migra un Ecosistema de IA EXISTENTE (creado con una version vieja de new-ecoai) al contrato nuevo del Knowledg |
+| `new-ecoai` | Crear el BACKEND de un Ecosistema de IA (el OS): tablas Supabase (roles + profiles.role_id + knowledges con el |
+| `playwright-cli` | Testing y QA automatizado con Playwright |
+| `primer` | Cargar contexto completo del proyecto al inicio de una conversacion |
+| `prp` | Planificar una feature compleja antes de implementarla |
+| `skill-creator` | Crear nuevos skills para extender la fabrica |
+| `supabase` | Todo lo relacionado con Supabase: crear tablas, migraciones, RLS, queries, metricas, CRUD, |
+| `visual-knowledge` | Convierte la pantalla de Knowledge de un Ecosistema de IA en un cerebro neuronal 3D navegable (WebGL con react |
+| `template-doctor` | Repara un proyecto NVISION ya creado aplicando los arreglos de base de la plantilla que update-ecoai NO alcanz |
+| `update-ecoai` | Actualizar la plantilla NVISION® del proyecto a la ultima version, RESPETANDO skills externos que el dueño hay |
+| `video-visuals` | Genera paquetes visuales narrativos completos estilo sketchnote para videos, presentaciones, |
+| `website-3d` | Crear landing pages cinematicas estilo Apple con scroll-driven video animation + copy de alta conversion |
 
-| Skill | Comando | Descripcion |
-|-------|---------|-------------|
-| `new-ecoai` | `/new-ecoai` | Entrevista de negocio → BUSINESS_LOGIC.md |
-| `landing` | `/landing` | Landing cinematica: scroll-driven video + copy AIDA/PAS + glass-morphism |
-| `primer` | `/primer` | Inicializar contexto del proyecto |
-| `add-login` | `/add-login` | Auth completo Supabase (login, signup, password reset, profiles, RLS) |
-| `add-payments` | `/add-payments` | Pagos con Polar (MoR): checkout, webhooks, suscripciones, acceso |
-| `add-emails` | `/add-emails` | Emails transaccionales: Resend + React Email + batch + unsubscribe |
-| `email-token-based` | `/email-token-based` | Emails SIN Supabase (custom token flow): Resend + tokens propios (auth_tokens), reset password + confirmacion |
-| `add-mobile` | `/add-mobile` | PWA instalable + push notifications (iOS compatible) |
-| `eject-ecoai` | `/eject-ecoai` | Remover NVISION® del proyecto (DESTRUCTIVO) |
-| `update-ecoai` | `/update-ecoai` | Actualizar a ultima version |
-| `bucle-agentico` | `/bucle-agentico` | Bucle Agentico para sistemas complejos (por fases) |
-| `sprint` | `/sprint` | Bucle Agentico para tareas rapidas |
-| `prp` | `/prp [feature]` | Generar Product Requirements Proposal |
-| `ai` | `/ai [template]` | Implementar AI Templates (chat, RAG, vision, tools) |
-| `qa` | `/qa [descripcion]` | QA automatizado con Playwright CLI |
-| `skill-creator` | `/skill-creator` | Crear nuevos skills |
-| `memory-manager` | `/memory-manager` | Memoria persistente por proyecto (reemplaza auto-memory) |
-| `image-generation` | `/image-generation` | Generar/editar imagenes con OpenRouter + Gemini |
-| `autoresearch` | `/autoresearch [skill]` | Auto-optimizar skills con loop autonomo (Karpathy) |
-
-### Invocables por Claude (automaticos)
-
-| Skill | Se activa cuando... |
-|-------|---------------------|
-| `backend` | Tareas de Server Actions, APIs, logica de negocio, validaciones |
-| `frontend` | UI/UX, componentes React, Tailwind, animaciones |
-| `supabase-admin` | Migraciones, RLS, queries SQL, auth config |
-| `codebase-analyst` | Analisis de patrones, convenciones, arquitectura |
-| `vercel-deployer` | Deploy, env vars, dominios, rollbacks |
-| `documentacion` | Actualizar docs despues de cambios en codigo |
-| `calidad` | Testing, quality gates, validacion |
-
----
-
-## Estructura de un Skill
-
-```
-skill-name/
-├── SKILL.md              # Requerido: frontmatter YAML + instrucciones
-├── scripts/              # Opcional: codigo ejecutable (.py, .sh, .js)
-├── references/           # Opcional: docs de referencia (>5k palabras)
-└── assets/               # Opcional: templates, imagenes, fonts
-```
-
-### Frontmatter YAML
-
-```yaml
----
-name: skill-name                    # Identificador (lowercase, hyphens, max 64 chars)
-description: Que hace               # Claude usa esto para decidir cuando activarlo
-argument-hint: "[argumento]"        # Hint en autocomplete (opcional)
-user-invocable: false               # Solo Claude puede invocarlo (opcional)
-disable-model-invocation: true      # Solo el usuario puede invocarlo (opcional)
-allowed-tools: Read, Write, Bash    # Tools permitidos sin pedir permiso (opcional)
-model: claude-sonnet-4-6            # Modelo especifico (opcional)
-context: fork                       # Ejecuta en subagent aislado (opcional)
-agent: Explore                      # Tipo de agente (opcional)
----
-```
-
-### Variables de Sustitucion
-
-| Variable | Descripcion |
-|----------|-------------|
-| `$ARGUMENTS` | Todos los argumentos del usuario |
-| `$ARGUMENTS[N]` o `$N` | Argumento por indice (0-based) |
-| `${CLAUDE_SESSION_ID}` | ID de sesion actual |
-| `${CLAUDE_SKILL_DIR}` | Directorio del skill |
-| `` !`comando` `` | Inyeccion de contexto dinamico (ejecuta shell) |
-
-### Progressive Disclosure
-
-1. **Metadata** (~100 palabras) - Siempre en contexto (frontmatter)
-2. **SKILL.md** (<5k palabras) - Cuando se activa
-3. **Resources** (unlimited) - Bajo demanda (scripts/, references/, assets/)
-
----
-
-## Memoria Persistente (.claude/memory/)
-
-NVISION® incluye un sistema de memoria persistente POR PROYECTO que reemplaza la auto-memory de Claude Code.
-
-**Por que?** La auto-memory de Claude Code guarda notas en `~/.claude/projects/` (local a tu maquina). Eso significa que no viaja con el repo, no es versionado, no es compartido con tu equipo, y Claude decide que guardar sin tu control.
-
-**Como funciona:**
-- `.claude/memory/MEMORY.md` es el indice (max 200 lineas, se carga automaticamente)
-- Carpetas por tipo: `user/`, `feedback/`, `project/`, `reference/`
-- Git-versioned: cada cambio es un commit que puedes revertir
-- El skill `memory-manager` gestiona cuando consultar y cuando guardar
-
-**Activacion:** La primera vez que se usa el skill `memory-manager`, automaticamente deshabilita la auto-memory de Claude Code en `.claude/settings.json` y crea la estructura de carpetas.
-
----
-
-## Recursos Compartidos
-
-Los skills referencian estos directorios (NO se mueven):
-
-| Recurso | Path | Usado por |
-|---------|------|-----------|
-| PRP Template | `.claude/PRPs/prp-base.md` | Skill `prp` |
-| AI Templates | `.claude/skills/ai/references/` | Skill `ai` |
-| Design Systems | `.claude/design-systems/` | Directo (5 sistemas) |
-
----
-
-## Crear un Nuevo Skill
-
-```bash
-# Opcion 1: Usar skill-creator
-/skill-creator
-
-# Opcion 2: Manual
-mkdir .claude/skills/mi-skill
-# Crear SKILL.md con frontmatter + instrucciones
-```
-
-### Checklist
-
-- [ ] SKILL.md con YAML frontmatter valido (name + description)
-- [ ] Contenido <5k palabras, forma imperativa
-- [ ] Scripts con --help y manejo de errores
-- [ ] References para docs >5k palabras
-- [ ] Descripcion clara de cuando usarlo
-
----
-
-## Migracion V3 → V4
-
-| V3 | V4 |
-|----|-----|
-| `.claude/commands/*.md` | `.claude/skills/*/SKILL.md` |
-| `.claude/agents/*.md` | `.claude/skills/*/SKILL.md` (user-invocable: false, context: fork) |
-| `.claude/prompts/*.md` | `.claude/skills/*/SKILL.md` |
-| Agentes como archivos sueltos | Frontmatter `agent:` y `context: fork` en skills |
-| AI Templates como docs | Skill `/ai` con `references/` colocalizados |
-| PRPs como template suelto | Skill `/prp` que genera PRPs con context: fork |
-
----
-
-*NVISION® V4: Todo es un Skill.*
-*Basado en Claude Code Skills 2.0 (CC 2.1.0+)*

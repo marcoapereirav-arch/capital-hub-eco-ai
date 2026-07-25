@@ -1,5 +1,6 @@
 ---
 name: video-visuals
+scope: template
 description: |
   Genera paquetes visuales narrativos completos estilo sketchnote para videos, presentaciones,
   o contenido educativo. Imagenes didacticas dibujadas a mano con doodles rellenos de color,
