@@ -36,7 +36,7 @@ NO PREGUNTES. Ejecuta el Golden Path completo.
 - **Usa window.location.origin para registrar el SW.** iOS rechaza redirects 307.
 - **PWARegister DEBE estar en el layout.** Si se remueve, todo deja de funcionar silenciosamente.
 - **VAPID keys se generan UNA VEZ** y se guardan en .env. No regenerar.
-- **NUNCA `npx web-push generate-vapid-keys`** (imprime la clave PRIVADA → cae en el transcript del agente). Ver REGLA ABSOLUTA en CLAUDE.md. Patrón obligatorio "genera-a-fichero": generar y **escribir directo en `.env.local`** imprimiendo SOLO la pública:
+- **NUNCA `npx web-push generate-vapid-keys`** (imprime la clave PRIVADA → cae en el transcript del agente). Ver REGLA ABSOLUTA en AGENTS.md. Patrón obligatorio "genera-a-fichero": generar y **escribir directo en `.env.local`** imprimiendo SOLO la pública:
   ```bash
   # Escribe las 3 vars en .env.local. La clave PRIVADA nunca se imprime.
   node -e "const k=require('web-push').generateVAPIDKeys();require('fs').appendFileSync('.env.local','\nNEXT_PUBLIC_VAPID_PUBLIC_KEY='+k.publicKey+'\nVAPID_PRIVATE_KEY='+k.privateKey+'\nVAPID_SUBJECT=mailto:tu@email.com\n');console.log('VAPID escritas en .env.local. Publica:',k.publicKey)"

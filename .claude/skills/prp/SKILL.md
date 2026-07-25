@@ -1,7 +1,7 @@
 ---
 name: prp
 scope: template
-description: "Planificar una feature compleja antes de implementarla. Genera un PRP (Product Requirements Proposal) con objetivo, comportamiento, modelo de datos, y fases. Activar SIEMPRE antes de bucle-agentico, o cuando el usuario dice: planea esto, necesito un sistema de X, quiero agregar algo grande."
+description: "Planificar ANTES de construir. Genera un PRP (Product Requirements Proposal) con objetivo, comportamiento, modelo de datos y fases. SE ACTIVA SOLO, sin que se lo pidan: en cuanto el dueño describe algo que hay que construir y no es un cambio trivial. Ejemplos que lo disparan: quiero que la gente pueda X, necesito una seccion de X, me gustaria añadir X, hazme un X, quiero un sistema de X, planea esto, deberiamos tener X. Tambien SIEMPRE antes de bucle-agentico, y siempre que la tarea toque varios archivos o base de datos + codigo + UI. NO se activa para: cambiar un texto, un color o un margen, arreglar un fallo puntual y localizado, una consulta a la base de datos, o responder una pregunta. En la duda, se activa."
 context: fork
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---

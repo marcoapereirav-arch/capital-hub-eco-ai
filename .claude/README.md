@@ -139,7 +139,6 @@ npm run typecheck    # TypeScript check
 | `landing` | `/landing` | Landing page de alta conversion (entrevista + ejecucion) |
 | `primer` | `/primer` | Inicializar contexto del proyecto |
 | `add-login` | `/add-login` | Auth completo Supabase (login, signup, password reset, profiles, RLS) |
-| `eject-ecoai` | `/eject-ecoai` | Remover NVISION® del proyecto (DESTRUCTIVO) |
 | `update-ecoai` | `/update-ecoai` | Actualizar a ultima version |
 | `bucle-agentico` | `/bucle-agentico` | Bucle Agentico para sistemas complejos (por fases) |
 | `sprint` | `/sprint` | Bucle Agentico para tareas rapidas |
@@ -247,7 +246,6 @@ Sistemas de diseno visuales en `.claude/design-systems/`.
 │   ├── landing/              # Landing pages
 │   ├── primer/               # Context initialization
 │   ├── add-login/            # Auth completo
-│   ├── eject-ecoai/             # Remover SF
 │   ├── update-ecoai/            # Actualizar SF
 │   ├── bucle-agentico/       # Bucle Agentico BLUEPRINT
 │   ├── sprint/               # Bucle Agentico SPRINT

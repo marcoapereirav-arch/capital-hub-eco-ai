@@ -46,7 +46,7 @@ Ejecuta el MEGAPROMPT al final de este archivo para generar `references/schema.m
 
 ## Cargar Credenciales
 
-> 🔐 **Regla dura (ver "REGLA ABSOLUTA — PROHIBIDO LEER FICHEROS DE SECRETOS" en CLAUDE.md).**
+> 🔐 **Regla dura (ver "REGLA ABSOLUTA — PROHIBIDO LEER FICHEROS DE SECRETOS" en AGENTS.md).**
 > Ningún agente lee el VALOR de un secreto. Preferencia de operación:
 
 ### Opción preferida — Supabase MCP (sin tocar secretos)

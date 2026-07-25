@@ -122,7 +122,7 @@ Otros componentes actualizados:
 - .claude/README.md, settings.json, etc.
 
 Archivos del proyecto NO modificados:
-- CLAUDE.md (tu configuración del proyecto)
+- AGENTS.md (tu configuración del proyecto)
 - BUSINESS_LOGIC.md (tu ficha técnica)
 - .mcp.json (tus credenciales)
 - .env.local (tus variables)
@@ -134,5 +134,5 @@ Archivos del proyecto NO modificados:
 
 - Este skill **NO** ejecuta `rm -rf .claude/`. Es destructivo y eliminaría skills externos.
 - Si un skill externo tiene el MISMO nombre que un skill oficial de la plantilla, prevalece el de la plantilla (se reemplaza). Esto es por diseño: la plantilla es la fuente de verdad para skills oficiales.
-- Si el dueño quiere "forzar reset completo" (restaurar todo a la plantilla madre, perdiendo skills externos), ejecutar `/eject-ecoai` seguido de copiar manualmente desde el repo madre. No es algo que este skill haga.
-- Los archivos del proyecto (`CLAUDE.md`, `BUSINESS_LOGIC.md`, `src/`, etc.) **nunca** se tocan.
+- Si el dueño quiere "forzar reset completo" (restaurar todo a la plantilla madre, perdiendo skills externos), hay que copiar manualmente desde el repo madre. No es algo que este skill haga.
+- Los archivos del proyecto (`AGENTS.md`, `BUSINESS_LOGIC.md`, `src/`, etc.) **nunca** se tocan.

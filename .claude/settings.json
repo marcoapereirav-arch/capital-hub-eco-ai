@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(vercel:*)",
+      "Bash(npx vercel:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)",
+      "Bash(supabase db push:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.mcp.json)",
+      "Read(./**/*.pem)",
+      "Read(./**/*.key)",
+      "Bash(cat .env*)",
+      "Bash(cat .mcp.json)",
+      "Bash(rm -rf:*)",
+      "Bash(git clean:*)"
+    ]
+  }
+}

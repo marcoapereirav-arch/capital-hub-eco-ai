@@ -1,7 +1,7 @@
 ---
 name: new-ecoai
 scope: template
-description: "Crear el BACKEND de un Ecosistema de IA (el OS): tablas Supabase (roles + profiles.role_id + knowledges con el contrato del Visual Knowledge: 4 cuadrantes de negocio + 2 areas Personal/Reglas), BUSINESS_LOGIC.md, CLAUDE.md, ciberseguridad base. Pregunta UNA cosa: Solo OS u OS+APP. NO construye la pantalla visual del Knowledge (eso lo hace /visual-knowledge, el Visual Knowledge). Activar cuando el usuario escribe /new-ecoai o dice: crear ecosistema, empezar ecosistema de IA, inicializar el entorno, arrancar proyecto nuevo."
+description: "Crear el BACKEND de un Ecosistema de IA (el OS): tablas Supabase (roles + profiles.role_id + knowledges con el contrato del Visual Knowledge: 4 cuadrantes de negocio + 2 areas Personal/Reglas), BUSINESS_LOGIC.md, AGENTS.md, ciberseguridad base. Pregunta UNA cosa: Solo OS u OS+APP. NO construye la pantalla visual del Knowledge (eso lo hace /visual-knowledge, el Visual Knowledge). Activar cuando el usuario escribe /new-ecoai o dice: crear ecosistema, empezar ecosistema de IA, inicializar el entorno, arrancar proyecto nuevo."
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -15,12 +15,12 @@ Este skill crea **el BACKEND del OS + el SHELL VISUAL BASE del OS**. Este modelo
 
 - **2 opciones (NO 3):** (1) Solo mi OS · (2) Mi OS + mi APP. El OS se crea SIEMPRE. NO existe "app sin OS".
 - **OS** = backend + centro de operaciones (con su shell visual). **APP** = la cara que usan los clientes. **Visual Knowledge** (skill `/visual-knowledge`) = el **UPGRADE 3D** del Knowledge (NO crea el sistema; sustituye la sección Knowledge básica por el cerebro 3D + Google Drive).
-- **Crea (backend):** `roles` + `profiles.role_id` (primer user = admin) + `knowledges` (contrato del Visual Knowledge: `slug, title, description, content_md, quadrant, subfolder, position, active, archived_at`) + `BUSINESS_LOGIC.md` + `CLAUDE.md` + security. RLS **solo admin**.
+- **Crea (backend):** `roles` + `profiles.role_id` (primer user = admin) + `knowledges` (contrato del Visual Knowledge: `slug, title, description, content_md, quadrant, subfolder, position, active, archived_at`) + `BUSINESS_LOGIC.md` + `AGENTS.md` + security. RLS **solo admin**.
 - **Crea (shell visual base del OS):** el **layout del OS** (`src/app/(admin)/layout.tsx`) con un **sidebar COLAPSABLE** a la izquierda (lista de secciones desde un registro, empezando por **Knowledge** como sección #1 / pantalla inicial), y **abajo-izquierda** un **botón "Ir a la APP"** (SOLO si se eligió OS+APP) **+ botón de Perfil debajo**. Todo con el **brandkit del proyecto**, **responsive/móvil impecable**. Es una base funcional: aunque NO se aplique `/visual-knowledge`, el OS ya se ve y se navega bien hecho. Ver sección **"FLUJO (3) — Shell visual base del OS"**.
 - **El Knowledge aquí es la versión BÁSICA** (lista navegable de cuadrantes/carpetas). `/visual-knowledge` la sustituye luego por el cerebro 3D, dentro del MISMO shell.
 - **Sin silencio:** construye con normalidad; el usuario ve cómo va quedando a medida que avanza el roadmap. No escondas el progreso ni fuerces previsualizaciones.
 - **Botón "Ir a la APP" SOLO si OS+APP.** Si es Solo OS, NO lo construyas.
-- **Branding del usuario siempre, NUNCA NVISION** en lo que construyas (ver reglas absolutas del CLAUDE.md).
+- **Branding del usuario siempre, NUNCA NVISION** en lo que construyas (ver reglas absolutas del AGENTS.md).
 - **El build CONSERVA lo que ya viene hecho.** El Dashboard (métricas con KPIs + gráficos), el shell del OS, el Knowledge y el Perfil YA están montados de fábrica. En el prompt final de build NO los reconstruyas ni los reemplaces: consérvalos y solo aplícales la marca. Reconstruir el Dashboard desde cero (perdiendo los KPIs/gráficos que ya venían) es un ERROR.
 - **UN SOLO branding para OS y APP.** Si hay APP, debe verse con el MISMO sistema de diseño que el OS (mismo tema oscuro, mismo token `brand`, mismas superficies/tarjetas y tipografía). PROHIBIDO inventar un estilo distinto para la APP (p.ej. APP neobrutalist mientras el OS es oscuro). Es UN producto, UN look.
 - Knowledge canónico: `ia-modelo-os-app-ecosistema`.
@@ -57,7 +57,7 @@ Responde 1 o 2.
 
 Espera la respuesta. Luego ejecuta el flujo correspondiente:
 
-- **Respuesta 1 (Solo OS)** → crea el BACKEND del OS (secciones 1, 4, 5: Migration con `roles` + `profiles.role_id` + `knowledges` + `CLAUDE.md` + security headers + seeds [sección 3] + `BUSINESS_LOGIC.md`) **+ el shell visual base del OS** (ver "FLUJO (3) — Shell visual base del OS") con el Knowledge BÁSICO como sección #1. **SIN** botón "Ir a la APP" (eso es solo OS+APP). El cerebro 3D del Knowledge lo monta `/visual-knowledge` después. NO crea la zona `(app)/` de clientes.
+- **Respuesta 1 (Solo OS)** → crea el BACKEND del OS (secciones 1, 4, 5: Migration con `roles` + `profiles.role_id` + `knowledges` + `AGENTS.md` + security headers + seeds [sección 3] + `BUSINESS_LOGIC.md`) **+ el shell visual base del OS** (ver "FLUJO (3) — Shell visual base del OS") con el Knowledge BÁSICO como sección #1. **SIN** botón "Ir a la APP" (eso es solo OS+APP). El cerebro 3D del Knowledge lo monta `/visual-knowledge` después. NO crea la zona `(app)/` de clientes.
 - **Respuesta 2 (OS + APP)** → todo lo de (1) + manda UN solo mensaje con las preguntas fáciles de la APP (cómo se llama · qué hace en una frase · para quién · las 3-5 cosas que el usuario podrá hacer · qué datos maneja · cómo entran los usuarios · si cobra) → escribe la spec de la APP en `BUSINESS_LOGIC.md` + crea la base de la zona `(app)/` (la cara de tus clientes) + `(auth)/`. **El producto NO se construye aquí** (se construye en el paso de build del roadmap, leyendo el Knowledge + BUSINESS_LOGIC).
 
 **Si el dueño responde algo distinto a 1/2**, vuelve a mostrar el mensaje. No avances sin una respuesta válida.
@@ -280,7 +280,7 @@ Arquitectura: **Feature-First** (cada plugin tiene carpeta autocontenida en `src
 
 ## 6. Plugins instalados
 
-*(Vacío al crear. Auto-actualizado por skills enchufables: `/add-login`, `/add-payments`, `/add-emails`, `/add-mobile`, `/ai`, plugins propios.)*
+*(Vacío al crear. Auto-actualizado por skills enchufables: `/add-login`, `/add-emails`, `/email-token-based`, `/add-mobile`, `/ai`, plugins propios.)*
 
 Formato de cada entrada:
 
@@ -310,7 +310,7 @@ Formato de cada entrada:
 - Sanitización con Zod en formularios y APIs.
 - 2FA opcional con TOTP para admin.
 - `.gitignore` excluye `.env.local` y `.mcp.json`.
-- Secretos: ningún agente lee el contenido de `.env*` — solo copia opaca. Los valores los pega el dueño (ver REGLA ABSOLUTA en CLAUDE.md).
+- Secretos: ningún agente lee el contenido de `.env*` — solo copia opaca. Los valores los pega el dueño (ver REGLA ABSOLUTA en AGENTS.md).
 
 Capas adicionales (rate limiting, captcha, audit log, CSP granular) → disponibles vía skill `/add-security` (opcional).
 ```
@@ -521,12 +521,12 @@ El contenido es el texto literal completo de la sección **"MANUAL DEL ECOSISTEM
 
 ---
 
-### 4. `CLAUDE.md` (raíz del proyecto) — reglas duras
+### 4. `AGENTS.md` (raíz del proyecto) — reglas duras
 
-EXTIENDE el CLAUDE.md heredado (NO lo sobrescribas): conserva las reglas base + la seccion **MEMORIA & KNOWLEDGE**, y añade debajo el siguiente bloque de reglas especificas del proyecto:
+EXTIENDE el AGENTS.md heredado (NO lo sobrescribas): conserva las reglas base + la seccion **MEMORIA & KNOWLEDGE**, y añade debajo el siguiente bloque de reglas especificas del proyecto:
 
 ```markdown
-# CLAUDE.md — Reglas duras del Ecosistema de IA
+# AGENTS.md — Reglas duras del Ecosistema de IA
 
 > Este archivo se carga automáticamente al inicio de cada sesión de Claude Code.
 > Las reglas aquí son **innegociables**.
@@ -554,7 +554,7 @@ Artefactos temporales (screenshots, logs, dumps) van a `.test-artifacts/` (ocult
 `BUSINESS_LOGIC.md` siempre refleja el estado real del proyecto. Si algo se construye sin documentarse aquí, no existe oficialmente.
 
 ### 7. Auto-actualización del BUSINESS_LOGIC.md
-Cuando se ejecuta cualquier skill que añade capacidad nueva (`/add-login`, `/add-payments`, `/add-emails`, `/add-mobile`, `/ai`, plugins propios), el skill debe escribir una entrada en la sección 6 ("Plugins instalados") de `BUSINESS_LOGIC.md` al final de su ejecución.
+Cuando se ejecuta cualquier skill que añade capacidad nueva (`/add-login`, `/add-emails`, `/email-token-based`, `/add-mobile`, `/ai`, plugins propios), el skill debe escribir una entrada en la sección 6 ("Plugins instalados") de `BUSINESS_LOGIC.md` al final de su ejecución.
 
 ### 8. Rutas públicas vs protegidas
 Cuando el dueño solicite crear cualquier sección con cara pública (funnel, lead magnet, presentación, recurso, landing), la IA **pregunta** si esa sección estará abierta o requerirá auth antes de elegir dónde crearla.
@@ -624,7 +624,7 @@ export default nextConfig;
 
 ### 6-12. (Capa visual) — la construye el Visual Knowledge, NO new-ecoai
 
-`new-ecoai` **no crea ninguna pantalla**. El cerebro 3D del Knowledge lo monta `/visual-knowledge` (Visual Knowledge) en el paso siguiente del roadmap; el resto del producto, el paso de build. new-ecoai solo deja el **BACKEND** listo (migración + seeds + `BUSINESS_LOGIC.md` + `CLAUDE.md` + `next.config.ts`).
+`new-ecoai` **no crea ninguna pantalla**. El cerebro 3D del Knowledge lo monta `/visual-knowledge` (Visual Knowledge) en el paso siguiente del roadmap; el resto del producto, el paso de build. new-ecoai solo deja el **BACKEND** listo (migración + seeds + `BUSINESS_LOGIC.md` + `AGENTS.md` + `next.config.ts`).
 
 ---
 
@@ -634,7 +634,7 @@ export default nextConfig;
 2. **Aplica la migración SQL** vía Supabase MCP (`apply_migration`) con el SQL de la sección 2 (roles + profiles.role_id + knowledges con el contrato del Visual Knowledge).
 3. **Inserta los 3 knowledges seed** (sección 3). El knowledge "Sobre el Ecosistema de IA" lleva el contenido literal del MANUAL más abajo.
 4. **Sobrescribe `BUSINESS_LOGIC.md`** en raíz con el contenido de la sección 1.
-5. **Extiende `CLAUDE.md`** en raíz: conserva las reglas base + la sección MEMORIA & KNOWLEDGE, y añade el contenido de la sección 4. NUNCA borres la sección MEMORIA & KNOWLEDGE.
+5. **Extiende `AGENTS.md`** en raíz: conserva las reglas base + la sección MEMORIA & KNOWLEDGE, y añade el contenido de la sección 4. NUNCA borres la sección MEMORIA & KNOWLEDGE.
 5b. **Crea el Knowledge espejo de `BUSINESS_LOGIC.md`** en el cuadrante Producto (tabla `knowledges`) y ancla la regla: editar uno = actualizar el otro en el mismo turno.
 6. **Verifica** que `next.config.ts` ya trae los security headers (vienen en la plantilla); si faltan, añádelos (sección 5).
 7. **NO crees ninguna pantalla.** El backend queda listo. La cara visual del Knowledge la monta `/visual-knowledge` en el paso siguiente del roadmap.
@@ -649,7 +649,7 @@ El BACKEND de tu OS está listo.
 
 Lo que tienes ahora:
 - BUSINESS_LOGIC.md inicial en raíz (ficha técnica del proyecto)
-- CLAUDE.md con reglas duras
+- AGENTS.md con reglas duras
 - Tablas Supabase: roles + profiles (tú eres admin) + knowledges
   (contrato del Visual Knowledge), todo con RLS
 - 3 knowledges seed: "Sobre el Ecosistema de IA" (Producto),
@@ -703,7 +703,7 @@ Guarda la respuesta como `<DESCRIPCIÓN_SAAS>`.
 
 ### Archivos a Crear — (2) OS + APP
 
-Ejecuta TODO el flujo **(1) Solo mi OS** (Migration con `roles` + `profiles.role_id` + `knowledges` + 3 seeds + `CLAUDE.md` + `BUSINESS_LOGIC.md` + `next.config.ts`). El backend del OS queda listo (la cara visual del Knowledge la monta `/visual-knowledge` después).
+Ejecuta TODO el flujo **(1) Solo mi OS** (Migration con `roles` + `profiles.role_id` + `knowledges` + 3 seeds + `AGENTS.md` + `BUSINESS_LOGIC.md` + `next.config.ts`). El backend del OS queda listo (la cara visual del Knowledge la monta `/visual-knowledge` después).
 
 **ADEMÁS** añade la base de la **APP** (la cara que usan tus clientes):
 
@@ -735,7 +735,7 @@ Crea SOLO la base de la APP (el producto se construye de verdad en el paso de bu
 
 1. Verifica proyecto recién clonado y `npm install`.
 2. Haz el intake de la APP (las preguntas de "Pregunta extra" de arriba, en UN mensaje).
-3. Ejecuta TODO el flujo **(1) Solo mi OS** (backend: roles + profiles + knowledges + seeds + CLAUDE.md + BUSINESS_LOGIC.md + next.config.ts).
+3. Ejecuta TODO el flujo **(1) Solo mi OS** (backend: roles + profiles + knowledges + seeds + AGENTS.md + BUSINESS_LOGIC.md + next.config.ts).
 4. Añade C.1 (sección 0.5 de la APP en BUSINESS_LOGIC) + C.2 (base de `(app)/`).
 5. Muestra el mensaje final.
 
@@ -758,7 +758,7 @@ TU APP (lo que usarán tus clientes):
 
 COMÚN:
 - BUSINESS_LOGIC.md con la arquitectura OS + APP documentada
-- CLAUDE.md con reglas duras
+- AGENTS.md con reglas duras
 - Security headers en next.config.ts
 
 Ya puedes ver tu OS montado con tu marca (Dashboard + Knowledge).
@@ -809,7 +809,7 @@ Cuando el dueño ejecuta /new-ecoai, queda listo el **backend del OS**:
 
 - Tablas en Supabase: `roles` (el dueño es admin) + `profiles` + `knowledges` / `knowledge_folders` / `knowledge_settings`, todo con RLS.
 - El Knowledge sembrado con sus 4 cuadrantes de negocio + 2 áreas (Personal, Reglas) y 3 seeds.
-- `BUSINESS_LOGIC.md`, `CLAUDE.md` y security headers.
+- `BUSINESS_LOGIC.md`, `AGENTS.md` y security headers.
 
 Todavía no hay nada visual. La cara del Knowledge — el **Visual Knowledge**, un cerebro 3D navegable — la enciende el dueño en el paso siguiente con `/visual-knowledge`. El resto del producto se construye iterando con la IA.
 
@@ -909,7 +909,7 @@ No hay catálogo cerrado. Cada idea del dueño es un plugin potencial.
 ## Notas
 
 - Este skill **no** ejecuta `/add-login` automáticamente. La persona lo activa después con `/add-login` para tener auth Email/Password + Google OAuth.
-- **Configuración de secretos (Nivel 0 · `.env.local` manual) — regla dura.** Ver "⚡⚡⚡ REGLA ABSOLUTA — PROHIBIDO LEER FICHEROS DE SECRETOS" en `CLAUDE.md`. Flujo:
+- **Configuración de secretos (Nivel 0 · `.env.local` manual) — regla dura.** Ver "⚡⚡⚡ REGLA ABSOLUTA — PROHIBIDO LEER FICHEROS DE SECRETOS" en `AGENTS.md`. Flujo:
   1. La IA crea el fichero con copia opaca: `cp .env.local.example .env.local` (solo placeholders).
   2. La IA **lista las KEYS** necesarias para lo que se está montando; NUNCA lee ni pide valores por chat.
   3. **El dueño pega los valores** en `.env.local` con su editor.

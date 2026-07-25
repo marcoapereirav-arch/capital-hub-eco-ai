@@ -68,7 +68,6 @@ Delega tareas complejas usando los skills especializados:
 - `new-ecoai` - Crear nueva aplicacion desde cero
 - `landing` - Crear landing page de alta conversion
 - `add-login` - Inyectar sistema de autenticacion completo
-- `eject-ecoai` - Eliminar configuracion NVISION®
 - `update-ecoai` - Actualizar a la ultima version
 
 ---
@@ -108,7 +107,7 @@ Si el dueño responde algo distinto a 1/2, vuelve a mostrar el mensaje.
 
 ### 0. Leer el concepto del Ecosistema de IA (PRIMERO)
 
-**ANTES de cualquier otro paso**, lee el **Knowledge** del proyecto (tabla `knowledges` en Supabase) — TODOS los cuadrantes relevantes (Marketing, Ventas, Producto, Finanzas, Personal, Reglas), empezando por **"Sobre el Ecosistema de IA"** (cuadrante Producto), que define la arquitectura. **Regla universal: cualquier IA lee el Knowledge antes de actuar** (ver sección MEMORIA & KNOWLEDGE en CLAUDE.md). Si el proyecto es recién creado y aún no tiene Knowledge, continúa.
+**ANTES de cualquier otro paso**, lee el **Knowledge** del proyecto (tabla `knowledges` en Supabase) — TODOS los cuadrantes relevantes (Marketing, Ventas, Producto, Finanzas, Personal, Reglas), empezando por **"Sobre el Ecosistema de IA"** (cuadrante Producto), que define la arquitectura. **Regla universal: cualquier IA lee el Knowledge antes de actuar** (ver sección MEMORIA & KNOWLEDGE en AGENTS.md). Si el proyecto es recién creado y aún no tiene Knowledge, continúa.
 
 Después, lee también los demás knowledges seed del cuadrante Producto (especialmente "Manual del Proyecto") para entender el negocio específico del dueño.
 
@@ -116,7 +115,7 @@ Después, lee también los demás knowledges seed del cuadrante Producto (especi
 
 **Archivos que SIEMPRE existen en la plantilla** (léelos siempre):
 
-1. `CLAUDE.md` (raíz) — reglas duras del proyecto.
+1. `AGENTS.md` (raíz) — reglas duras del proyecto. (`CLAUDE.md` y `GEMINI.md` son accesos directos al mismo archivo.)
 2. `BUSINESS_LOGIC.md` (raíz) — ficha técnica del proyecto + plugins instalados (sección 6).
 
 **Cualquier OTRO archivo `.md` que el dueño haya creado** (léelos también si existen, sea cual sea su nombre):
@@ -141,7 +140,7 @@ Extrae de toda esta lectura:
 - **Nombre del proyecto**
 - **Stack técnico**
 - **Plugins instalados** (sección 6 de BUSINESS_LOGIC.md)
-- **Reglas duras del proyecto** (CLAUDE.md)
+- **Reglas duras del proyecto** (AGENTS.md)
 - **Contexto adicional** que el dueño haya documentado a mano (en cualquier `.md` extra)
 - **Cambios recientes** (de `git log`)
 

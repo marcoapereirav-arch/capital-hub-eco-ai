@@ -159,7 +159,7 @@ El sistema se BLINDA con cada error. Cuando algo falla:
 |---------------|------------------|
 | Especifico de esta feature | PRP actual (seccion Aprendizajes) |
 | Aplica a multiples features | Skill relevante (`.claude/skills/*/SKILL.md`) |
-| Aplica a TODO el proyecto | `CLAUDE.md` (seccion No Hacer) |
+| Aplica a TODO el proyecto | `AGENTS.md` (seccion No Hacer) |
 
 El conocimiento persiste. El mismo error NUNCA ocurre dos veces en este proyecto ni en proyectos futuros.
 
