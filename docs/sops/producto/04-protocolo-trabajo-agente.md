@@ -183,7 +183,25 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 
 ---
 
+## REGLA #10: SIEMPRE entregar el link de localhost (en puerto LIBRE)
+
+**Cada vez que haga o entregue algo en localhost, le doy a Marco el link. SIEMPRE, sin que lo pida.** Un cambio visual "terminado" del que Marco no tiene link es una entrega a medias: él necesita abrirlo y verlo con sus propios ojos.
+
+**How to apply:**
+- Al terminar cualquier trabajo que se ve en local (página, UI, rediseño, fix visual): termino el mensaje con el link exacto, ej: `http://localhost:3101/dashboard`.
+- El servidor **tiene que estar CORRIENDO** cuando doy el link (no vale un link a un server apagado). No mato el `dev` después de entregar.
+- Uso un puerto **LIBRE** del rango 3100 a 3200 (REGLA #9). **Nunca el 3000** (siempre ocupado por otra cosa de Marco). Antes de dar el link, verifico que el puerto está libre y sirviendo ESTE proyecto: `for p in 3100 3101 3102 3103; do lsof -ti tcp:$p >/dev/null 2>&1 && echo "$p ocupado" || echo "$p libre"; done`, y arranco en uno libre: `npm run dev -- -p 31XX`.
+- Si la pantalla necesita login (ej: `/dashboard`), se lo digo: "abre el link y entra con tu usuario; verás el cambio con tus datos reales".
+- Este link NO es publicar. Publicar (push a main a producción) sigue necesitando orden explícita ("publícalo"). El link de localhost es solo para que Marco revise antes.
+
+**Why:** Marco lo pidió el 2026-07-26. Rediseñé el embudo del dashboard y le describí el resultado sin darle ningún link para verlo, así que no pudo revisar nada. Regla dura: si toco algo que se ve en local, entrego el link, en un puerto libre y con el server encendido.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-26: REGLA #10 añadida (link de localhost siempre)
+Marco: siempre que entregue o haga algo en localhost, tengo que darle el link, en un puerto libre (nunca el 3000) y con el server corriendo. Detonante: rediseñé el embudo del dashboard y solo se lo describí, sin link para que lo viera.
 
 ### 2026-07-08: REGLA #9 añadida (puerto local)
 Fijado el rango de puerto local 3100 a 3200 para Capital Hub (`-p 3100` en `package.json`). Detonante: el localhost se caía por choque de puertos con otras cosas.
