@@ -29,6 +29,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-brand: rgb(var(--brand) / <alpha-value>);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -60,6 +61,7 @@
 @layer base {
   :root {
     --background: oklch(1 0 0);
+    --brand: 34 197 94;
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
