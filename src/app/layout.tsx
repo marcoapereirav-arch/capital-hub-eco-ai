@@ -12,7 +12,9 @@ const inter = Inter({
 
 const interTight = Inter_Tight({
   subsets: ['latin'],
-  variable: '--font-heading',
+  // Variable propia (no la pisa el stack Apple-first de --font-heading en globals),
+  // asi cuando la referenciamos explicitamente renderiza Inter Tight de verdad.
+  variable: '--font-inter-tight',
 })
 
 const jetbrainsMono = JetBrains_Mono({

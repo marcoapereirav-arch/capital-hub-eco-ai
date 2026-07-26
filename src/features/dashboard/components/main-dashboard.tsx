@@ -311,9 +311,9 @@ function KpiCard({
       />
       <div className="flex items-center gap-2">
         <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-brand" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-400">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-neutral-500">{label}</span>
       </div>
-      <div className="mt-3 text-[26px] font-bold leading-none tabular-nums text-neutral-50 sm:text-[30px]">
+      <div className="dash-ff mt-3 text-[26px] font-bold leading-none tabular-nums text-neutral-50 sm:text-[30px]">
         {fmt(v)}
       </div>
       {delta && (
@@ -404,7 +404,7 @@ function Funnel({
       )}
       {branches.length > 0 && (
         <div className="mt-4 border-t border-white/[0.08] pt-3">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-normal text-neutral-500">
             Salidas del embudo
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -417,7 +417,7 @@ function Funnel({
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: col }} />
-                    <span className="text-[10px] uppercase tracking-wider text-neutral-400">{b.label}</span>
+                    <span className="text-[10px] uppercase tracking-normal text-neutral-400">{b.label}</span>
                   </div>
                   <div className="mt-1 text-lg font-bold tabular-nums text-neutral-100">{b.count}</div>
                 </div>
@@ -577,7 +577,7 @@ function StatRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center gap-3 border-l-2 border-brand/40 pl-3">
       <div>
         <div className="text-base font-bold text-neutral-100 tabular-nums">{value}</div>
-        <div className="text-[10px] uppercase tracking-wide text-neutral-500">{label}</div>
+        <div className="text-[10px] uppercase tracking-normal text-neutral-500">{label}</div>
       </div>
     </div>
   )
@@ -872,25 +872,28 @@ export function MainDashboard() {
         @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.35}}.pulse-dot{animation:pulse-dot 1.8s ease-in-out infinite}
         @keyframes barw{from{width:0}}.barw{animation:barw 1.2s cubic-bezier(.16,1,.3,1) forwards}
         @keyframes funnel-in{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}.funnel-in{animation:funnel-in .8s cubic-bezier(.16,1,.3,1) both}
-        .dash-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:rgb(var(--brand));font-weight:600}
-        .dash-tgold{background:linear-gradient(180deg,#fff 0%,rgb(var(--brand)) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .dash-ff{font-family:var(--font-inter-tight),"Inter Tight",system-ui,sans-serif}
+        .dash-eyebrow{font-family:var(--font-inter-tight),"Inter Tight",sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#868b92;font-weight:600}
+        .dash-h1{font-family:var(--font-inter-tight),"Inter Tight",sans-serif;font-weight:700;letter-spacing:-.025em;color:#F5F6F7}
       `}</style>
 
       <div className="relative mx-auto max-w-6xl">
-        {/* TELEMETRIA */}
+        {/* CABECERA */}
         <div className="hud-in flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="dash-eyebrow flex items-center gap-2">
               <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-brand" /> Centro de operaciones {"·"} en vivo
             </div>
-            <h1 className="dash-tgold mt-1.5 text-3xl font-bold leading-none tracking-tight sm:text-[38px]">
-              Centro de mando {"·"} Capital Hub
+            <h1 className="dash-h1 mt-2 text-[30px] leading-[1.05] sm:text-[40px]">
+              Centro de mando <span className="text-neutral-500">{"·"}</span> Capital Hub
             </h1>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end justify-center">
-              <div className="text-3xl font-bold tabular-nums leading-none text-neutral-100 sm:text-[34px]">{clock}</div>
-              <div className="mt-1 text-[11px] capitalize text-neutral-400">{dateStr}</div>
+              <div className="dash-ff text-3xl font-semibold tabular-nums leading-none text-neutral-100 sm:text-[34px]">
+                {clock}
+              </div>
+              <div className="mt-1 text-[11px] capitalize text-neutral-500">{dateStr}</div>
             </div>
             <div className="h-9 w-px bg-white/10" />
             <PeriodFilter onChange={setRange} defaultPreset="30d" />
@@ -909,8 +912,8 @@ export function MainDashboard() {
               key={r.l}
               className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3"
             >
-              <span className="text-[10px] uppercase tracking-wider text-neutral-400">{r.l}</span>
-              <span className="text-sm font-bold tabular-nums text-neutral-50">{r.v}</span>
+              <span className="text-[10px] uppercase tracking-normal text-neutral-500">{r.l}</span>
+              <span className="dash-ff text-sm font-semibold tabular-nums text-neutral-50">{r.v}</span>
             </div>
           ))}
         </div>
@@ -920,7 +923,7 @@ export function MainDashboard() {
           <div className="relative grid items-center gap-2 md:grid-cols-[1fr_1.1fr_1fr]" style={{ minHeight: 360 }}>
             <div className="z-10 px-6 py-6">
               <div className="dash-eyebrow">Facturación del periodo</div>
-              <div className="mt-2 text-[36px] font-extrabold leading-none tabular-nums text-neutral-100 sm:text-[44px]">
+              <div className="dash-ff mt-2.5 text-[40px] font-bold leading-none tabular-nums text-neutral-50 sm:text-[46px]">
                 {loading ? "…" : eur(kpis.revenue)}
               </div>
               {kpis.revenuePct !== null && !loading && (
@@ -1111,7 +1114,7 @@ export function MainDashboard() {
                       <div className="truncate text-sm font-medium text-neutral-100">{inv.full_name}</div>
                       <div className="truncate text-[11px] text-neutral-500">{inv.email}</div>
                     </div>
-                    <div className="hidden text-[10px] uppercase tracking-wider text-neutral-500 md:block">
+                    <div className="hidden text-[10px] uppercase tracking-normal text-neutral-500 md:block">
                       {inv.products.join(", ")}
                     </div>
                     <div className="hidden text-xs text-neutral-500 md:block">
@@ -1119,7 +1122,7 @@ export function MainDashboard() {
                     </div>
                     <span
                       className={cn(
-                        "rounded-md border px-1.5 py-0.5 text-[10px] uppercase tracking-wider",
+                        "rounded-md border px-1.5 py-0.5 text-[10px] uppercase tracking-normal",
                         inv.accepted_at
                           ? "border-emerald-500/40 text-emerald-400"
                           : "border-amber-500/40 text-amber-400",
