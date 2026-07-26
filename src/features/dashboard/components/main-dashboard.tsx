@@ -346,55 +346,55 @@ function Funnel({
 }) {
   const max = Math.max(...main.map((s) => s.count), 1)
   const n = main.length
-  // Ancho de cada tramo (34%..82% del carril) segun su volumen real.
-  const wOf = (c: number) => 34 + 48 * (c / max)
+  // Un embudo SIEMPRE se estrecha hacia abajo. Anchos monotonos decrecientes
+  // (aunque los conteos no bajen de forma perfecta); el numero real va en la
+  // cifra. Asi parece un embudo de verdad y nunca se deforma.
+  const widths: number[] = []
+  for (let i = 0; i < n; i++) {
+    const prop = 28 + 64 * (main[i].count / max)
+    const w = i === 0 ? prop : Math.min(prop, widths[i - 1] - 9)
+    widths.push(Math.max(12, w))
+  }
   return (
     <div className="px-5 pb-5 pt-4">
       {main.length === 0 ? (
         <p className="py-6 text-center text-[12px] text-neutral-500">Sin stages en este funnel.</p>
       ) : (
-        <div className="space-y-[3px]">
+        <div>
           {main.map((s, i) => {
             const col = colorOf(s.stage)
-            // Tramos CONECTADOS y centrados: el borde inferior de uno encaja con
-            // el superior del siguiente (embudo alineado, sin deformarse).
-            const topW = wOf(s.count)
-            const botW = i < n - 1 ? wOf(main[i + 1].count) : Math.max(20, topW * 0.52)
+            // Trapecios conectados: el borde inferior de uno = el superior del
+            // siguiente (embudo continuo, centrado, sin huecos).
+            const topW = widths[i]
+            const botW = i < n - 1 ? widths[i + 1] : Math.max(6, widths[i] * 0.5)
             const clip = `polygon(${(50 - topW / 2).toFixed(2)}% 0, ${(50 + topW / 2).toFixed(
               2,
             )}% 0, ${(50 + botW / 2).toFixed(2)}% 100%, ${(50 - botW / 2).toFixed(2)}% 100%)`
-            // Cada stage en SU color (del pipeline), como material pulido:
-            // brillo arriba, color pleno al centro, sombra abajo. Sin bordes neon.
-            const fill = `linear-gradient(176deg, color-mix(in srgb, ${col} 80%, #ffffff 20%) 0%, ${col} 46%, color-mix(in srgb, ${col} 60%, #05060a) 100%)`
             return (
-              <div key={s.stage} className="group flex items-center gap-4">
-                <div className="relative h-12 flex-1">
+              <div key={s.stage} className="flex items-center gap-4">
+                <div className="relative h-[54px] flex-1">
                   <div
-                    className="funnel-in absolute inset-0 transition-transform duration-300 group-hover:scale-[1.02]"
+                    className="funnel-in absolute inset-0"
                     style={{
                       clipPath: clip,
-                      background: fill,
-                      boxShadow:
-                        "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.28), 0 8px 20px -12px rgba(0,0,0,0.9)",
-                      animationDelay: `${i * 85}ms`,
+                      background: `linear-gradient(180deg, ${col} 0%, color-mix(in srgb, ${col} 82%, #000000) 100%)`,
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)",
+                      animationDelay: `${i * 80}ms`,
                     }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center gap-1.5">
-                    <span className="text-[13px] font-bold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+                  <div className="absolute inset-0 flex items-center justify-center gap-2">
+                    <span className="text-[14px] font-bold tabular-nums text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
                       {s.count}
                     </span>
                     {s.conversionFromPrev !== null && (
-                      <span className="rounded-full bg-black/30 px-1.5 py-px text-[9px] font-bold tabular-nums text-white/95">
+                      <span className="text-[10px] font-semibold tabular-nums text-white/75">
                         {s.conversionFromPrev}%
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex w-36 shrink-0 items-center gap-2">
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: col, boxShadow: `0 0 10px -1px ${col}` }}
-                  />
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: col }} />
                   <span className="text-[12px] font-medium leading-tight text-neutral-200">{s.label}</span>
                 </div>
               </div>
