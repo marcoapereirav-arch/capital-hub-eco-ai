@@ -345,43 +345,58 @@ function Funnel({
   colorOf: (stage: string) => string
 }) {
   const max = Math.max(...main.map((s) => s.count), 1)
+  const n = main.length
+  // Ancho de cada tramo (34%..82% del carril) segun su volumen real.
+  const wOf = (c: number) => 34 + 48 * (c / max)
   return (
     <div className="px-5 pb-5 pt-4">
       {main.length === 0 ? (
         <p className="py-6 text-center text-[12px] text-neutral-500">Sin stages en este funnel.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-[3px]">
           {main.map((s, i) => {
             const col = colorOf(s.stage)
-            const wid = 24 + 76 * (s.count / max)
+            // Tramos CONECTADOS y centrados: el borde inferior de uno encaja con
+            // el superior del siguiente (embudo alineado, sin deformarse).
+            const topW = wOf(s.count)
+            const botW = i < n - 1 ? wOf(main[i + 1].count) : Math.max(20, topW * 0.52)
+            const clip = `polygon(${(50 - topW / 2).toFixed(2)}% 0, ${(50 + topW / 2).toFixed(
+              2,
+            )}% 0, ${(50 + botW / 2).toFixed(2)}% 100%, ${(50 - botW / 2).toFixed(2)}% 100%)`
+            // Cada stage en SU color (del pipeline), como material pulido:
+            // brillo arriba, color pleno al centro, sombra abajo. Sin bordes neon.
+            const fill = `linear-gradient(176deg, color-mix(in srgb, ${col} 80%, #ffffff 20%) 0%, ${col} 46%, color-mix(in srgb, ${col} 60%, #05060a) 100%)`
             return (
-              <div key={s.stage} className="flex items-center gap-3">
-                <div className="relative mx-auto h-9" style={{ width: `${wid}%` }}>
+              <div key={s.stage} className="group flex items-center gap-4">
+                <div className="relative h-12 flex-1">
                   <div
-                    className="funnel-in absolute inset-0"
+                    className="funnel-in absolute inset-0 transition-transform duration-300 group-hover:scale-[1.02]"
                     style={{
-                      clipPath: "polygon(6% 0,94% 0,82% 100%,18% 100%)",
-                      background: `linear-gradient(180deg, ${col}, ${col}22)`,
-                      border: `1px solid ${col}`,
-                      boxShadow: `0 0 18px -5px ${col}`,
-                      animationDelay: `${i * 110}ms`,
+                      clipPath: clip,
+                      background: fill,
+                      boxShadow:
+                        "inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.28), 0 8px 20px -12px rgba(0,0,0,0.9)",
+                      animationDelay: `${i * 85}ms`,
                     }}
                   />
                   <div className="absolute inset-0 flex items-center justify-center gap-1.5">
-                    <span className="text-[12px] font-bold text-white tabular-nums">{s.count}</span>
+                    <span className="text-[13px] font-bold tabular-nums text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.6)]">
+                      {s.count}
+                    </span>
                     {s.conversionFromPrev !== null && (
-                      <span className="text-[10px] font-semibold text-white/70 tabular-nums">
+                      <span className="rounded-full bg-black/30 px-1.5 py-px text-[9px] font-bold tabular-nums text-white/95">
                         {s.conversionFromPrev}%
                       </span>
                     )}
                   </div>
                 </div>
-                <span
-                  className="w-24 shrink-0 text-[10px] font-semibold uppercase tracking-wide"
-                  style={{ color: col }}
-                >
-                  {s.label}
-                </span>
+                <div className="flex w-36 shrink-0 items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: col, boxShadow: `0 0 10px -1px ${col}` }}
+                  />
+                  <span className="text-[12px] font-medium leading-tight text-neutral-200">{s.label}</span>
+                </div>
               </div>
             )
           })}
@@ -398,13 +413,13 @@ function Funnel({
               return (
                 <div
                   key={b.stage}
-                  className="rounded-lg border px-3 py-2"
-                  style={{ backgroundColor: `${col}14`, borderColor: `${col}44` }}
+                  className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2"
                 >
-                  <div className="text-[10px] uppercase tracking-wider" style={{ color: col }}>
-                    {b.label}
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: col }} />
+                    <span className="text-[10px] uppercase tracking-wider text-neutral-400">{b.label}</span>
                   </div>
-                  <div className="mt-0.5 text-lg font-bold tabular-nums text-neutral-100">{b.count}</div>
+                  <div className="mt-1 text-lg font-bold tabular-nums text-neutral-100">{b.count}</div>
                 </div>
               )
             })}
@@ -860,22 +875,6 @@ export function MainDashboard() {
         .dash-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:rgb(var(--brand));font-weight:600}
         .dash-tgold{background:linear-gradient(180deg,#fff 0%,rgb(var(--brand)) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
       `}</style>
-
-      {/* motifs decorativos (glow verde + rejilla de puntos) */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(circle at 50% 0%, rgb(var(--brand)/0.13) 0%, transparent 55%)" }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: "radial-gradient(rgb(var(--brand)/0.4) 1px, transparent 1.5px)",
-          backgroundSize: "30px 30px",
-          opacity: 0.18,
-          maskImage: "radial-gradient(ellipse at 50% 18%, black, transparent 70%)",
-          WebkitMaskImage: "radial-gradient(ellipse at 50% 18%, black, transparent 70%)",
-        }}
-      />
 
       <div className="relative mx-auto max-w-6xl">
         {/* TELEMETRIA */}
