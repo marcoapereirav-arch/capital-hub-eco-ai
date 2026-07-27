@@ -7,26 +7,18 @@ import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { createBrowserClient } from "@supabase/ssr"
 import { cn } from "@/lib/utils"
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
-import { PipelineSelector } from "@/features/pipelines/components/pipeline-selector"
 import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
 
 // =============================================================================
-// Paleta de marca (brandkit Capital Hub: carbon laca + papel hueso + verde acento)
+// Paleta minimalista (carbon + verde de marca como acento minimo)
 // =============================================================================
 
-const CARBON = "#0F0F12" // laca negra mate (fondo de pagina)
-const SURFACE = "#131318" // carbon-2 (tarjetas)
-const PAPER = "#F4F1E8" // papel hueso (el gi)
-const INK = "#141414" // tinta sobre papel
-const INKMUT = "#57534A" // tinta apagada sobre papel
-const PLINE = "#D8D1BE" // hairline sobre papel
-const TXT = "#F5F6F7" // blanco roto (texto primario sobre carbon)
+const SURFACE = "#131318" // tarjetas
+const TXT = "#F5F6F7" // texto primario
 const MUT = "#A6AAB2" // texto de apoyo
-const MUT2 = "#7C818A" // texto terciario
-const LINE = "rgba(245,246,247,0.10)" // regla de 1px sobre carbon
-const GREEN = "#22C55E" // verde relleno/accion
-const GREENSOFT = "#4ADE80" // verde texto/icono sobre carbon
-const BELTS = ["#F5F6F7", "#4F7CC0", "#7B5BA6", "#856046", "#0F0F12"] // escala jiu-jitsu
+const MUT2 = "#7C818A" // texto terciario / labels
+const LINE = "rgba(245,246,247,0.08)" // reglas de 1px
+const GREENSOFT = "#4ADE80" // verde acento sobre carbon
 
 // =============================================================================
 // Tipos (datos REALES de Capital Hub)
@@ -131,98 +123,43 @@ function useCountUp(target: number, duration = 1400, delay = 0) {
 }
 
 // =============================================================================
-// Piezas de marca (isotipo CH, kicker numerado editorial, marcador de rotulador)
-// =============================================================================
-
-/** Isotipo CH: monograma en contenedor redondeado. La firma grafica de la marca. */
-function ChTile({ size = 38 }: { size?: number }) {
-  return (
-    <span
-      className="dash-tile"
-      style={{
-        width: size,
-        height: size,
-        fontSize: Math.round(size * 0.4),
-        borderRadius: Math.max(4, Math.round(size * 0.22)),
-      }}
-      aria-hidden
-    >
-      CH
-    </span>
-  )
-}
-
-/** Kicker numerado editorial: NN + nombre + regla fina. Columna vertebral del panel. */
-function Kick({ num, children }: { num: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="dash-ff text-[12px] font-bold tabular-nums" style={{ color: GREENSOFT }}>
-        {num}
-      </span>
-      <span className="dash-eyebrow whitespace-nowrap">{children}</span>
-      <span className="h-px flex-1" style={{ background: LINE }} />
-    </div>
-  )
-}
-
-/** Subrayado de rotulador (doble pasada, se dibuja solo al cargar). El unico verde del panel de papel. */
-function MarkUnder({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="dash-mark">
-      {children}
-      <svg className="dash-mark-svg" viewBox="0 0 220 16" preserveAspectRatio="none" aria-hidden>
-        <path
-          className="dash-draw"
-          pathLength={1}
-          vectorEffect="non-scaling-stroke"
-          strokeWidth={3.6}
-          d="M4 10 C 50 5, 120 3.5, 216 7"
-        />
-        <path
-          className="dash-draw"
-          pathLength={1}
-          vectorEffect="non-scaling-stroke"
-          strokeWidth={2.2}
-          style={{ animationDelay: "1.18s" }}
-          d="M14 13.5 C 70 10, 150 9, 198 11"
-        />
-      </svg>
-    </span>
-  )
-}
-
-// =============================================================================
-// Card base (carbon-2, radio recto 4px, una sola sombra difusa, sin glow)
+// Card base (minimalista: carbon-2, borde fino, radio suave, sin sombras duras)
 // =============================================================================
 
 function Card({
   children,
   className = "",
-  num,
   title,
+  count,
+  right,
   delay = 0,
 }: {
   children: React.ReactNode
   className?: string
-  num?: string
   title?: string
+  count?: number
+  right?: React.ReactNode
   delay?: number
 }) {
   return (
     <div
       className={cn(
-        "hud-in relative rounded-[4px] border border-white/10 transition-colors duration-300 hover:border-white/20",
+        "hud-in relative rounded-xl border transition-colors duration-300",
         className,
       )}
-      style={{
-        animationDelay: `${delay}ms`,
-        background: SURFACE,
-        boxShadow: "0 20px 40px -30px rgba(15,15,18,0.55)",
-      }}
+      style={{ animationDelay: `${delay}ms`, background: SURFACE, borderColor: LINE }}
     >
-      {num && (
-        <div className="px-5 pt-5">
-          <Kick num={num}>{title}</Kick>
+      {(title || right) && (
+        <div className="flex items-center justify-between gap-3 px-5 pt-5">
+          {title ? (
+            <span className="dash-eyebrow">
+              {title}
+              {count != null && <span style={{ color: MUT2 }}> · {count}</span>}
+            </span>
+          ) : (
+            <span />
+          )}
+          {right}
         </div>
       )}
       {children}
@@ -231,7 +168,7 @@ function Card({
 }
 
 // =============================================================================
-// KPI Card (count-up + delta REAL, monocromo + verde). Un motif por pieza.
+// KPI Card (count-up + delta REAL). Minimalista: sin barras, halos ni pulsos.
 // =============================================================================
 
 function KpiCard({
@@ -249,24 +186,15 @@ function KpiCard({
 }) {
   const v = useCountUp(value, 1400, 300 + i * 45)
   return (
-    <Card delay={80 + i * 35} className="p-5 sm:p-6">
-      <span className="text-[11px] font-semibold uppercase" style={{ color: MUT2 }}>
-        {label}
-      </span>
-      <div
-        className="dash-ff mt-3 text-[26px] font-black leading-none tabular-nums sm:text-[30px]"
-        style={{ color: TXT }}
-      >
+    <Card delay={80 + i * 35} className="p-5">
+      <span className="dash-eyebrow">{label}</span>
+      <div className="dash-ff mt-2.5 text-[24px] font-bold leading-none tabular-nums sm:text-[27px]" style={{ color: TXT }}>
         {fmt(v)}
       </div>
       {delta && (
         <div
-          className="mt-3 inline-flex items-center gap-1 rounded-[2px] px-2 py-1 text-[11px] font-bold"
-          style={
-            delta.up
-              ? { background: "rgba(34,197,94,0.12)", color: GREENSOFT }
-              : { color: MUT2 }
-          }
+          className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-semibold"
+          style={{ color: delta.up ? GREENSOFT : MUT2 }}
         >
           <span className="text-[9px]">{delta.up ? "▲" : "▾"}</span> {delta.text}
         </div>
@@ -290,7 +218,6 @@ function Funnel({
 }) {
   const max = Math.max(...main.map((s) => s.count), 1)
   const n = main.length
-  // Un embudo SIEMPRE se estrecha hacia abajo. Anchos monotonos decrecientes.
   const widths: number[] = []
   for (let i = 0; i < n; i++) {
     const prop = 28 + 64 * (main[i].count / max)
@@ -314,30 +241,29 @@ function Funnel({
             )}% 0, ${(50 + botW / 2).toFixed(2)}% 100%, ${(50 - botW / 2).toFixed(2)}% 100%)`
             return (
               <div key={s.stage} className="flex items-center gap-4">
-                <div className="relative h-[54px] flex-1">
+                <div className="relative h-[50px] flex-1">
                   <div
                     className="funnel-in absolute inset-0"
                     style={{
                       clipPath: clip,
                       background: `linear-gradient(180deg, ${col} 0%, color-mix(in srgb, ${col} 82%, #000000) 100%)`,
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)",
                       animationDelay: `${i * 80}ms`,
                     }}
                   />
                   <div className="absolute inset-0 flex items-center justify-center gap-2">
-                    <span className="dash-ff text-[14px] font-bold tabular-nums text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
+                    <span className="dash-ff text-[14px] font-bold tabular-nums text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
                       {s.count}
                     </span>
                     {s.conversionFromPrev !== null && (
-                      <span className="text-[10px] font-semibold tabular-nums text-white/75">
+                      <span className="text-[10px] font-semibold tabular-nums text-white/70">
                         {s.conversionFromPrev}%
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="flex w-36 shrink-0 items-center gap-2">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: col }} />
-                  <span className="text-[12px] font-medium leading-tight" style={{ color: TXT }}>
+                <div className="flex w-32 shrink-0 items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: col }} />
+                  <span className="text-[12px] leading-tight" style={{ color: MUT }}>
                     {s.label}
                   </span>
                 </div>
@@ -348,18 +274,14 @@ function Funnel({
       )}
       {branches.length > 0 && (
         <div className="mt-4 border-t pt-3" style={{ borderColor: LINE }}>
-          <p className="mb-2 text-[10px] font-semibold uppercase" style={{ color: MUT2 }}>
+          <p className="mb-2 text-[10px] uppercase" style={{ color: MUT2 }}>
             Salidas del embudo
           </p>
           <div className="grid grid-cols-2 gap-2">
             {branches.map((b) => {
               const col = colorOf(b.stage)
               return (
-                <div
-                  key={b.stage}
-                  className="rounded-[3px] border px-3 py-2"
-                  style={{ borderColor: LINE, background: CARBON }}
-                >
+                <div key={b.stage} className="rounded-lg border px-3 py-2" style={{ borderColor: LINE }}>
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: col }} />
                     <span className="text-[10px] uppercase" style={{ color: MUT2 }}>
@@ -397,16 +319,9 @@ function RecentFeed({
           Sin contactos en este periodo.
         </p>
       ) : (
-        items.slice(0, 7).map((c, i) => (
+        items.slice(0, 7).map((c) => (
           <div key={c.id} className="flex items-center gap-3">
-            <span
-              className="shrink-0 rounded-full"
-              style={
-                i === 0
-                  ? { width: 9, height: 9, background: GREEN, boxShadow: `0 0 8px -1px ${GREEN}` }
-                  : { width: 6, height: 6, background: "rgba(74,222,128,0.35)" }
-              }
-            />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "rgba(74,222,128,0.55)" }} />
             <div className="min-w-0 flex-1">
               <div className="truncate text-[12.5px]" style={{ color: TXT }}>
                 {c.full_name ?? "Contacto"}
@@ -474,12 +389,12 @@ function RevenueAreaChart({ data }: { data: { date: string; revenue: number }[] 
             </g>
           )
         })}
-        <path d={`${line(vals)} L${x(n)} ${y(0)} L${x(0)} ${y(0)} Z`} className="fill-brand/[0.12]" />
+        <path d={`${line(vals)} L${x(n)} ${y(0)} L${x(0)} ${y(0)} Z`} className="fill-brand/[0.10]" />
         <path
           d={line(vals)}
           fill="none"
           className="stroke-brand"
-          strokeWidth={2.6}
+          strokeWidth={2.4}
           strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
@@ -493,20 +408,14 @@ function RevenueAreaChart({ data }: { data: { date: string; revenue: number }[] 
         {hi !== null && data[hi] && (
           <g>
             <line x1={x(hi)} x2={x(hi)} y1={padT} y2={padT + plotH} className="stroke-brand/50" strokeWidth={1} />
-            <circle cx={x(hi)} cy={y(data[hi].revenue)} r={4.5} className="fill-brand" stroke={CARBON} strokeWidth={1.5} />
+            <circle cx={x(hi)} cy={y(data[hi].revenue)} r={4} className="fill-brand" stroke="#0F0F12" strokeWidth={1.5} />
           </g>
         )}
       </svg>
       {hi !== null && data[hi] && (
         <div
-          className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-[4px] border px-3.5 py-2.5"
-          style={{
-            left: `${(x(hi) / W) * 100}%`,
-            top: 4,
-            borderColor: LINE,
-            background: SURFACE,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
-          }}
+          className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border px-3.5 py-2.5"
+          style={{ left: `${(x(hi) / W) * 100}%`, top: 4, borderColor: LINE, background: "#16161a" }}
         >
           <div className="dash-ff text-[12px] font-bold" style={{ color: TXT }}>
             {new Date(data[hi].date).toLocaleDateString("es-ES", { weekday: "short", day: "2-digit", month: "short" })}
@@ -522,7 +431,25 @@ function RevenueAreaChart({ data }: { data: { date: string; revenue: number }[] 
 }
 
 // =============================================================================
-// Componente principal — CARA nueva (dojo + lujo), DATOS reales de Capital Hub
+// Fila de resumen (label + valor) del hero
+// =============================================================================
+
+function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="flex items-center gap-2 text-[12px]" style={{ color: MUT }}>
+        {accent && <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: GREENSOFT }} />}
+        {label}
+      </span>
+      <span className="dash-ff text-[14px] font-semibold tabular-nums" style={{ color: accent ? GREENSOFT : TXT }}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+// =============================================================================
+// Componente principal — minimalista, DATOS reales de Capital Hub
 // =============================================================================
 
 export function MainDashboard() {
@@ -540,7 +467,6 @@ export function MainDashboard() {
   const [salePrefill, setSalePrefill] =
     useState<React.ComponentProps<typeof RegistrarVentaModal>["prefill"]>(undefined)
 
-  // Fecha estatica (sin reloj corriendo: era el cliche nº1 del HUD).
   const dateStr = useMemo(
     () => new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }),
     [],
@@ -802,51 +728,40 @@ export function MainDashboard() {
   const noRevenue = revenueTimeSeries.every((p) => p.revenue === 0)
 
   // ---------------------------------------------------------------------------
-  // Render — El Parte (carbon + papel hueso)
+  // Render — minimalista
   // ---------------------------------------------------------------------------
   return (
     <div className="relative" style={{ color: TXT }}>
       <style>{`
-        @keyframes hud-in{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}.hud-in{opacity:0;animation:hud-in .7s cubic-bezier(.16,1,.3,1) forwards}
+        @keyframes hud-in{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}.hud-in{opacity:0;animation:hud-in .6s cubic-bezier(.16,1,.3,1) forwards}
         @keyframes funnel-in{from{opacity:0;transform:scaleX(.3)}to{opacity:1;transform:scaleX(1)}}.funnel-in{animation:funnel-in .8s cubic-bezier(.16,1,.3,1) both}
-        @keyframes dash-draw{to{stroke-dashoffset:0}}
         .dash-ff{font-family:var(--font-inter-tight),"Inter Tight",system-ui,sans-serif}
         .dash-eyebrow{font-family:var(--font-inter-tight),"Inter Tight",sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:normal;color:${MUT2};font-weight:600}
-        .dash-h1{font-family:var(--font-inter-tight),"Inter Tight",sans-serif;font-weight:800;letter-spacing:-.025em;color:${TXT}}
-        .dash-tile{display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-inter-tight),"Inter Tight",sans-serif;font-weight:800;letter-spacing:-.01em;line-height:1;flex:none;user-select:none;background:${CARBON};color:${TXT};border:1px solid rgba(245,246,247,0.2)}
-        .dash-paper{background:${PAPER};color:${INK};position:relative}
-        .dash-paper > *{position:relative;z-index:1}
-        .dash-paper::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-        .dash-mark{position:relative;white-space:nowrap}
-        .dash-mark-svg{position:absolute;left:-2%;bottom:-.16em;width:104%;height:.34em;overflow:visible}
-        .dash-paper .dash-mark-svg{mix-blend-mode:multiply}
-        .dash-draw{fill:none;stroke:${GREEN};stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:dash-draw 1s cubic-bezier(.5,0,.25,1) .9s forwards}
-        @media (prefers-reduced-motion:reduce){.hud-in{animation:none;opacity:1}.funnel-in{animation:none}.dash-draw{animation:none;stroke-dashoffset:0}}
+        .dash-h1{font-family:var(--font-inter-tight),"Inter Tight",sans-serif;font-weight:700;letter-spacing:-.02em;color:${TXT}}
+        .dash-select{font-family:var(--font-inter-tight),"Inter Tight",sans-serif}
+        .dash-select option{background:#16161a;color:${TXT}}
+        @media (prefers-reduced-motion:reduce){.hud-in{animation:none;opacity:1}.funnel-in{animation:none}}
       `}</style>
 
       <div className="mx-auto max-w-6xl">
         {/* CABECERA */}
         <header className="hud-in flex flex-wrap items-end justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <ChTile size={40} />
-            <div>
-              <div className="dash-eyebrow">Panel</div>
-              <h1 className="dash-h1 mt-1 text-[30px] leading-[1.05] sm:text-[40px]">
-                Centro de mando <span style={{ color: MUT2 }}>· Capital Hub</span>
-              </h1>
-            </div>
+          <div>
+            <div className="dash-eyebrow">Panel</div>
+            <h1 className="dash-h1 mt-1.5 text-[28px] leading-[1.05] sm:text-[36px]">
+              Centro de mando <span style={{ color: MUT2 }}>· Capital Hub</span>
+            </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="dash-ff text-[12px] capitalize" style={{ color: MUT2 }}>
+          <div className="flex items-center gap-3">
+            <span className="dash-ff hidden text-[12px] capitalize sm:block" style={{ color: MUT2 }}>
               {dateStr}
-            </div>
-            <div className="h-6 w-px" style={{ background: LINE }} />
+            </span>
             <PeriodFilter onChange={setRange} defaultPreset="30d" />
           </div>
         </header>
 
         {/* mini-lecturas REALES */}
-        <div className="hud-in mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4" style={{ animationDelay: "40ms" }}>
+        <div className="hud-in mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4" style={{ animationDelay: "40ms" }}>
           {[
             { l: "Ingresos", v: loading ? "…" : eur(kpis.revenue) },
             { l: "Ventas", v: loading ? "…" : String(kpis.ventas) },
@@ -855,130 +770,92 @@ export function MainDashboard() {
           ].map((r) => (
             <div
               key={r.l}
-              className="flex items-center justify-between rounded-[3px] border px-4 py-3"
+              className="flex items-center justify-between rounded-lg border px-4 py-3"
               style={{ borderColor: LINE, background: SURFACE }}
             >
               <span className="text-[10px] uppercase" style={{ color: MUT2 }}>
                 {r.l}
               </span>
-              <span className="dash-ff text-sm font-black tabular-nums" style={{ color: TXT }}>
+              <span className="dash-ff text-sm font-bold tabular-nums" style={{ color: TXT }}>
                 {r.v}
               </span>
             </div>
           ))}
         </div>
 
-        {/* 01 · HEROE — el parte impreso (papel hueso vs carbon) */}
-        <div
-          className="hud-in mt-6 grid overflow-hidden rounded-[4px] border md:grid-cols-[1.1fr_0.9fr]"
-          style={{ animationDelay: "80ms", borderColor: LINE, boxShadow: "0 20px 40px -30px rgba(15,15,18,0.55)" }}
-        >
-          {/* IZQUIERDA — papel hueso: la facturacion como parte impreso */}
-          <div className="dash-paper px-7 py-7" style={{ borderRight: `1px solid ${PLINE}` }}>
-            <div className="flex items-center gap-3">
-              <span className="dash-ff text-[12px] font-bold tabular-nums" style={{ color: "#15803D" }}>
-                01
-              </span>
-              <span className="text-[11px] font-semibold uppercase" style={{ color: INKMUT }}>
-                Facturación del periodo
-              </span>
-            </div>
-            <div className="mt-5">
-              <MarkUnder>
-                <span
-                  className="dash-ff text-[40px] font-black leading-none tabular-nums sm:text-[52px]"
-                  style={{ color: INK }}
-                >
-                  {loading ? "…" : eur(kpis.revenue)}
-                </span>
-              </MarkUnder>
-            </div>
-            {kpis.revenuePct !== null && !loading && (
-              <div
-                className="mt-4 inline-flex items-center gap-1 text-[12px] font-semibold"
-                style={{ color: kpis.revenuePct >= 0 ? "#15803D" : INKMUT }}
-              >
-                <span className="text-[10px]">{kpis.revenuePct >= 0 ? "▲" : "▾"}</span>
-                {kpis.revenuePct > 0 ? "+" : ""}
-                {kpis.revenuePct}% vs periodo anterior
+        {/* HERO — facturacion + resumen operativo (limpio, sin adornos) */}
+        <Card delay={100} className="mt-4">
+          <div className="grid gap-8 p-6 md:grid-cols-[minmax(0,1fr)_1px_minmax(0,0.9fr)]">
+            <div>
+              <span className="dash-eyebrow">Facturación del periodo</span>
+              <div className="dash-ff mt-3 text-[40px] font-bold leading-none tabular-nums sm:text-[48px]" style={{ color: TXT }}>
+                {loading ? "…" : eur(kpis.revenue)}
               </div>
-            )}
-            {/* libro mayor del periodo */}
-            <div className="mt-7">
-              {[
-                { l: "Cash collected", v: loading ? "…" : eur(kpis.cashCollected) },
-                { l: "Ventas", v: loading ? "…" : String(kpis.ventas) },
-                { l: "Ticket medio", v: loading || kpis.ventas === 0 ? "—" : eur(kpis.ticketMedio) },
-              ].map((s, i) => (
+              {kpis.revenuePct !== null && !loading && (
                 <div
-                  key={s.l}
-                  className="flex items-center justify-between py-2.5"
-                  style={{ borderTop: i === 0 ? "none" : `1px solid ${PLINE}` }}
+                  className="mt-3 inline-flex items-center gap-1 text-[12px] font-semibold"
+                  style={{ color: kpis.revenuePct >= 0 ? GREENSOFT : MUT2 }}
                 >
-                  <span className="text-[11px] uppercase" style={{ color: INKMUT }}>
-                    {s.l}
-                  </span>
-                  <span className="dash-ff text-[15px] font-bold tabular-nums" style={{ color: INK }}>
-                    {s.v}
-                  </span>
+                  <span className="text-[10px]">{kpis.revenuePct >= 0 ? "▲" : "▾"}</span>
+                  {kpis.revenuePct > 0 ? "+" : ""}
+                  {kpis.revenuePct}% vs periodo anterior
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* DERECHA — laca carbon: resumen operativo + marca de agua CH */}
-          <div className="relative overflow-hidden px-7 py-7" style={{ background: SURFACE }}>
-            <span
-              className="dash-ff pointer-events-none absolute select-none font-black leading-none"
-              style={{ right: -18, bottom: -56, fontSize: 240, color: "rgba(245,246,247,0.05)" }}
-              aria-hidden
-            >
-              CH
-            </span>
-            <div className="relative">
-              <div className="dash-eyebrow">Resumen del periodo</div>
-              <div className="mt-5 space-y-3.5">
+              )}
+              <div className="mt-7 grid grid-cols-3 gap-4">
                 {[
-                  { l: "Llamadas hechas", v: loading ? "…" : `${kpis.llamadasCompletadas} / ${kpis.llamadas}`, action: false },
-                  { l: "Show rate", v: loading ? "…" : `${kpis.showRate}%`, action: false },
-                  { l: "No-shows", v: loading ? "…" : String(kpis.noShows), action: false },
-                  { l: "Conversión llamada → venta", v: loading ? "…" : `${kpis.conversion}%`, action: true },
+                  { l: "Cash collected", v: loading ? "…" : eur(kpis.cashCollected) },
+                  { l: "Ventas", v: loading ? "…" : String(kpis.ventas) },
+                  { l: "Ticket medio", v: loading || kpis.ventas === 0 ? "—" : eur(kpis.ticketMedio) },
                 ].map((s) => (
-                  <div key={s.l} className="flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-[12px]" style={{ color: MUT }}>
-                      {s.action && (
-                        <span
-                          className="h-[9px] w-[9px] shrink-0 rounded-full"
-                          style={{ background: GREEN, boxShadow: `0 0 8px -1px ${GREEN}` }}
-                        />
-                      )}
-                      {s.l}
-                    </span>
-                    <span
-                      className="dash-ff text-[15px] font-bold tabular-nums"
-                      style={{ color: s.action ? GREENSOFT : TXT }}
-                    >
+                  <div key={s.l}>
+                    <div className="dash-ff text-[16px] font-semibold tabular-nums" style={{ color: TXT }}>
                       {s.v}
-                    </span>
+                    </div>
+                    <div className="mt-0.5 text-[10px] uppercase" style={{ color: MUT2 }}>
+                      {s.l}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* 02 embudo + 03 actividad */}
-        <div className="mt-7 grid gap-6 lg:grid-cols-2">
-          <Card delay={120}>
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
-              <div className="flex items-center gap-3">
-                <span className="dash-ff text-[12px] font-bold tabular-nums" style={{ color: GREENSOFT }}>
-                  02
-                </span>
-                <span className="dash-eyebrow">Embudo de conversión</span>
+            <div className="hidden md:block" style={{ background: LINE }} />
+
+            <div>
+              <span className="dash-eyebrow">Resumen del periodo</span>
+              <div className="mt-4 space-y-3.5">
+                <Stat label="Llamadas hechas" value={loading ? "…" : `${kpis.llamadasCompletadas} / ${kpis.llamadas}`} />
+                <Stat label="Show rate" value={loading ? "…" : `${kpis.showRate}%`} />
+                <Stat label="No-shows" value={loading ? "…" : String(kpis.noShows)} />
+                <Stat label="Conversión llamada → venta" value={loading ? "…" : `${kpis.conversion}%`} accent />
               </div>
-              <PipelineSelector pipelines={pipelines} activeId={activePipelineId} onChange={setActivePipelineId} />
             </div>
+          </div>
+        </Card>
+
+        {/* embudo + actividad */}
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <Card
+            delay={120}
+            title="Embudo de conversión"
+            right={
+              pipelines.length > 1 ? (
+                <select
+                  value={activePipelineId ?? ""}
+                  onChange={(e) => setActivePipelineId(e.target.value)}
+                  className="dash-select h-8 rounded-lg border bg-transparent px-2.5 text-[12px] outline-none transition-colors hover:border-white/20 focus:border-white/25"
+                  style={{ borderColor: LINE, color: MUT }}
+                  aria-label="Cambiar de embudo"
+                >
+                  {pipelines.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              ) : undefined
+            }
+          >
             <p className="px-5 pt-2 text-[11px]" style={{ color: MUT2 }}>
               {activePipeline?.name ?? "Pipeline"} {"·"} acumulado total
             </p>
@@ -991,7 +868,7 @@ export function MainDashboard() {
             )}
           </Card>
 
-          <Card delay={160} num="03" title="Actividad reciente">
+          <Card delay={160} title="Actividad reciente">
             {loading ? (
               <div className="flex h-40 items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin" style={{ color: MUT2 }} />
@@ -1002,18 +879,15 @@ export function MainDashboard() {
           </Card>
         </div>
 
-        {/* 04 · Indicadores (8 KPIs REALES) */}
-        <div className="hud-in mt-7" style={{ animationDelay: "60ms" }}>
-          <Kick num="04">Indicadores</Kick>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-6 sm:grid-cols-4">
+        {/* KPIs REALES (8) */}
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {kpiCards.map((k, i) => (
             <KpiCard key={k.label} label={k.label} value={loading ? 0 : k.value} fmt={k.fmt} delta={loading ? null : k.delta} i={i} />
           ))}
         </div>
 
-        {/* 05 · Ingresos · 30 dias (area chart REAL) */}
-        <Card delay={140} num="05" title="Ingresos · últimos 30 días" className="mt-7 pb-5">
+        {/* facturacion 30 dias */}
+        <Card delay={140} title="Ingresos · últimos 30 días" className="mt-4 pb-5">
           <div className="mt-3 flex items-center gap-4 px-5 text-[11px]">
             <span className="flex items-center gap-1.5 font-semibold text-brand">
               <span className="h-1.5 w-4 rounded-full bg-brand" />
@@ -1038,28 +912,18 @@ export function MainDashboard() {
           </div>
         </Card>
 
-        {/* 06 · Ventas por completar (real, interactivo) */}
+        {/* VENTAS POR COMPLETAR (real, interactivo) */}
         {pendingSales.length > 0 && (
-          <Card delay={160} className="mt-7">
-            <div className="px-5 pt-5">
-              <Kick num="06">Ventas por completar {"·"} {pendingSales.length}</Kick>
-            </div>
+          <Card delay={160} title="Ventas por completar" count={pendingSales.length} className="mt-4">
             <div className="mt-3 px-2 pb-2">
               {pendingSales.map((p, idx) => (
                 <div
                   key={p.id}
                   className="flex items-center gap-3 px-3 py-2.5"
-                  style={
-                    idx === 0
-                      ? {
-                          borderLeft: `3px solid ${GREEN}`,
-                          background: "linear-gradient(90deg, rgba(34,197,94,0.09), transparent 70%)",
-                        }
-                      : { borderTop: `1px solid ${LINE}` }
-                  }
+                  style={idx === 0 ? undefined : { borderTop: `1px solid ${LINE}` }}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium" style={{ color: TXT }}>
+                    <div className="truncate text-sm" style={{ color: TXT }}>
                       {p.full_name ?? p.email}
                     </div>
                     <div className="truncate text-[11px]" style={{ color: MUT2 }}>
@@ -1082,7 +946,8 @@ export function MainDashboard() {
                         close_type: "direct",
                       })
                     }
-                    className="inline-flex items-center gap-1 rounded-[3px] border border-brand/40 bg-brand/10 px-2.5 py-1 text-[11px] font-medium text-brand transition-colors hover:bg-brand/20"
+                    className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-medium transition-colors hover:border-white/25"
+                    style={{ borderColor: LINE, color: GREENSOFT }}
                   >
                     <ShoppingBag className="h-3.5 w-3.5" /> Registrar venta
                   </button>
@@ -1092,15 +957,15 @@ export function MainDashboard() {
           </Card>
         )}
 
-        {/* 07 · Invitaciones App (real, interactivo) */}
-        <Card delay={200} className="mt-7">
+        {/* INVITACIONES APP (real, interactivo) */}
+        <Card delay={200} className="mt-4">
           <div className="flex items-center justify-between gap-3 px-5 pt-5">
-            <div className="min-w-0 flex-1">
-              <Kick num="07">Invitaciones App {"·"} {invites.length}</Kick>
-            </div>
+            <span className="dash-eyebrow">
+              Invitaciones App <span style={{ color: MUT2 }}>· {invites.length}</span>
+            </span>
             <a
               href="/crm/contactos?stage=alumno"
-              className="inline-flex shrink-0 items-center gap-1 text-xs transition-colors hover:text-neutral-100"
+              className="inline-flex shrink-0 items-center gap-1 text-xs transition-colors"
               style={{ color: MUT }}
             >
               Ver todas <ArrowUpRight className="h-3 w-3" />
@@ -1124,7 +989,7 @@ export function MainDashboard() {
                     style={idx === 0 ? undefined : { borderTop: `1px solid ${LINE}` }}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium" style={{ color: TXT }}>
+                      <div className="truncate text-sm" style={{ color: TXT }}>
                         {inv.full_name}
                       </div>
                       <div className="truncate text-[11px]" style={{ color: MUT2 }}>
@@ -1138,11 +1003,11 @@ export function MainDashboard() {
                       {new Date(inv.created_at).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}
                     </div>
                     <span
-                      className="rounded-[2px] border px-1.5 py-0.5 text-[10px] uppercase"
+                      className="rounded-md border px-1.5 py-0.5 text-[10px] uppercase"
                       style={
                         inv.accepted_at
-                          ? { borderColor: "#1E5A36", color: GREENSOFT }
-                          : { borderColor: "rgba(245,246,247,0.14)", color: MUT2 }
+                          ? { borderColor: "rgba(74,222,128,0.35)", color: GREENSOFT }
+                          : { borderColor: LINE, color: MUT2 }
                       }
                     >
                       {inv.accepted_at ? "Activado" : "Pendiente"}
@@ -1150,7 +1015,7 @@ export function MainDashboard() {
                     <button
                       onClick={() => handleDeleteInvite(inv.id)}
                       disabled={deletingInvite === inv.id}
-                      className="rounded-[2px] p-1 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                      className="rounded-md p-1 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                       style={{ color: MUT2 }}
                       title="Eliminar invitación (solo super_admin)"
                     >
@@ -1167,21 +1032,7 @@ export function MainDashboard() {
           </div>
         </Card>
 
-        {/* firma de cierre: puntos-cinturon (jiu-jitsu) */}
-        <footer className="mt-8 flex items-center justify-between border-t py-8" style={{ borderColor: LINE }}>
-          <span className="dash-ff text-[12.5px]" style={{ color: MUT2 }}>
-            © Capital Hub
-          </span>
-          <div className="flex items-center gap-2">
-            {BELTS.map((c, i) => (
-              <span
-                key={i}
-                className="h-[9px] w-[9px] rounded-full"
-                style={{ background: c, border: "1px solid rgba(245,246,247,0.16)" }}
-              />
-            ))}
-          </div>
-        </footer>
+        <div className="h-8" />
       </div>
 
       {salePrefill && (

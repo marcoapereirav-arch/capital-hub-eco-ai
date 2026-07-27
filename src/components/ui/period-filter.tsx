@@ -147,50 +147,53 @@ export function PeriodFilter({
   const popover = open && mounted && popoverPos ? (
     <div
       style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
-      className="w-64 rounded-md border border-border bg-background shadow-2xl overflow-hidden"
+      className="w-64 overflow-hidden rounded-xl border border-white/10 bg-[#16161a] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)]"
     >
-      <div className="py-1">
-        {PRESETS.map((p) => (
-          <button
-            key={p.value}
-            onClick={() => selectPreset(p.value)}
-            className={cn(
-              "w-full text-left px-3 py-1.5 text-xs hover:bg-card transition-colors flex items-center justify-between",
-              value?.preset === p.value && "bg-card/60 text-foreground"
-            )}
-          >
-            <span>{p.label}</span>
-            {value?.preset === p.value && <span className="text-[10px] font-mono text-muted-foreground">✓</span>}
-          </button>
-        ))}
+      <div className="p-1.5">
+        {PRESETS.map((p) => {
+          const active = (value?.preset ?? defaultPreset) === p.value
+          return (
+            <button
+              key={p.value}
+              onClick={() => selectPreset(p.value)}
+              className={cn(
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] transition-colors",
+                active ? "bg-white/[0.06] text-neutral-50" : "text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-100",
+              )}
+            >
+              <span>{p.label}</span>
+              {active && <span className="h-1.5 w-1.5 rounded-full bg-brand" />}
+            </button>
+          )
+        })}
       </div>
 
-      <div className="border-t border-border px-3 py-3 space-y-2 bg-card/30">
-        <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground">Personalizado</div>
+      <div className="space-y-2.5 border-t border-white/10 px-3.5 py-3.5">
+        <div className="text-[10px] uppercase text-neutral-500">Personalizado</div>
         <div className="grid grid-cols-2 gap-2">
           <label className="space-y-1">
-            <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">Desde</span>
+            <span className="block text-[10px] text-neutral-500">Desde</span>
             <input
               type="date"
               value={customFrom}
               onChange={(e) => setCustomFrom(e.target.value)}
-              className="w-full h-7 rounded-sm border border-border bg-background px-2 text-xs"
+              className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 text-[12px] text-neutral-200 outline-none focus:border-white/25"
             />
           </label>
           <label className="space-y-1">
-            <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground block">Hasta</span>
+            <span className="block text-[10px] text-neutral-500">Hasta</span>
             <input
               type="date"
               value={customTo}
               onChange={(e) => setCustomTo(e.target.value)}
-              className="w-full h-7 rounded-sm border border-border bg-background px-2 text-xs"
+              className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 text-[12px] text-neutral-200 outline-none focus:border-white/25"
             />
           </label>
         </div>
         <button
           onClick={applyCustom}
           disabled={!customFrom || !customTo || customFrom > customTo}
-          className="w-full h-7 rounded-sm bg-foreground text-background text-[10px] font-mono uppercase tracking-wider disabled:opacity-30 hover:opacity-90"
+          className="h-8 w-full rounded-lg bg-brand text-[12px] font-semibold text-[#06210f] transition-opacity hover:opacity-90 disabled:opacity-30"
         >
           Aplicar rango
         </button>
@@ -203,11 +206,11 @@ export function PeriodFilter({
       <button
         ref={buttonRef}
         onClick={() => setOpen((s) => !s)}
-        className="inline-flex items-center gap-2 h-8 rounded-sm border border-border bg-background px-3 text-xs hover:bg-card transition-colors"
+        className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[12px] text-neutral-200 transition-colors hover:border-white/20 hover:bg-white/[0.05]"
       >
-        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="font-mono uppercase tracking-wider text-[10px]">{currentLabel}</span>
-        <ChevronDown className={cn("h-3 w-3 text-muted-foreground transition-transform", open && "rotate-180")} />
+        <Calendar className="h-3.5 w-3.5 text-neutral-500" />
+        <span className="font-medium">{currentLabel}</span>
+        <ChevronDown className={cn("h-3.5 w-3.5 text-neutral-500 transition-transform", open && "rotate-180")} />
       </button>
 
       {popover && createPortal(popover, document.body)}
