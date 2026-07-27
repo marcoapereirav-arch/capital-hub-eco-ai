@@ -101,3 +101,16 @@ Caja flotante en la esquina (o atajo de teclado). Crea task en Inbox con assigne
 - Toggle General ↔ Foco debe filtrar correctamente
 - Click "Vencidas" → debe ir a `/tasks` viendo solo las vencidas en lista, NO el board completo
 - Click en proyecto → `/projects/{id}` debe ocultar tareas done por default
+
+## Cambios versionados
+
+### 2026-07-27 · `/dashboard` = Centro de mando sobre metricas reales (piel minimalista)
+El dashboard de proyectos/tareas descrito arriba fue SUSTITUIDO en `/dashboard` por una cara nueva ("Centro de mando") montada sobre las **metricas reales** del negocio, NO sobre tareas. Componente: `src/features/dashboard/components/main-dashboard.tsx`. Datos reales (queries a `contacts`, `student_invites`, `calendar_bookings`): facturacion del periodo, cash collected, ventas, ticket medio, embudo del pipeline activo, actividad reciente, 8 KPIs, ingresos 30 dias, ventas por completar, invitaciones App. Filtro de periodo (`PeriodFilter`) arriba a la derecha.
+
+**Diseno (decidido por Marco, iterado):** minimalista y sobrio. Fondo carbon parejo, tarjetas limpias (borde 1px, radio suave), mucho aire, Inter Tight, verde SOLO como acento minimo. Se descartaron versiones recargadas (orbe HUD, y el "papel hueso / sello CH / cinturones" que se probo): no eran minimalistas. El brandkit es la referencia pero aplicado con contencion.
+
+**Dos cambios de componentes en el mismo bloque:**
+- `PeriodFilter` (`src/components/ui/period-filter.tsx`) rediseñado: de mono + mayusculas espaciadas a Inter Tight limpio (chip + dropdown sobrios, acento verde). Afecta a las 4 pantallas que lo usan (calendario, manychat, email-marketing, dashboard).
+- En la card del embudo se usa un `select` nativo limpio para SOLO cambiar de embudo. Se quito el `PipelineSelector` (con su boton "Configurar" que abria el gestor de pipelines viejo dentro del dashboard). Ese gestor sigue existiendo en el CRM (vista kanban de contactos), que es su sitio.
+
+> Pendiente: reescribir el cuerpo de este SOP (arriba describe el dashboard viejo de tareas/foco). Se conserva por historico hasta la reescritura.
