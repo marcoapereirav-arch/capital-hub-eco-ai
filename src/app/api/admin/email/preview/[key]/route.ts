@@ -74,8 +74,8 @@ const previews: Record<string, () => Promise<string>> = {
   })),
   optin_webinar: () => render(WebinarOptinEmail({
     firstName: "Israel",
-    whatsappUrl: `https://wa.me/34611874062?text=${encodeURIComponent("Hola Adrián, quiero acceder al evento del 8 de agosto.")}`,
-    dateLabel: "8 de agosto · en directo",
+    whatsappUrl: `https://wa.me/34611874062?text=${encodeURIComponent("Hola Adrián, quiero acceder al evento.")}`,
+    dateLabel: "8 de agosto",
   })),
   no_show: () => render(NoShowEmail({
     fullName: "Israel Ramírez",

@@ -339,19 +339,60 @@ export function WebEditModal({
               </div>
             ) : (
               <div className="mt-3 space-y-4">
-                {manifest.fields.map((f) => (
-                  <div key={f.key}>
-                    <label className="block text-xs font-medium text-foreground">{f.label}</label>
-                    {f.hint && <p className="mb-1.5 mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
-                    <input
-                      value={settings[f.key] ?? ""}
-                      onChange={(e) => setSettings((v) => ({ ...v, [f.key]: e.target.value }))}
-                      placeholder={f.default}
-                      disabled={saving}
-                      className="h-9 w-full rounded-sm border border-border bg-secondary px-3 font-mono text-[12px] text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
-                    />
-                  </div>
-                ))}
+                {manifest.fields.map((f) => {
+                  // Interruptor (toggle): guarda "1"/"0". Sin valor previo = ON por defecto.
+                  if (f.type === "toggle") {
+                    const on = (settings[f.key] ?? "") !== "0"
+                    return (
+                      <div key={f.key} className="flex items-start justify-between gap-3 rounded-sm border border-border bg-secondary/40 px-3 py-2.5">
+                        <div className="min-w-0">
+                          <label className="block text-xs font-medium text-foreground">{f.label}</label>
+                          {f.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={on}
+                          disabled={saving}
+                          onClick={() => setSettings((v) => ({ ...v, [f.key]: on ? "0" : "1" }))}
+                          className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-[#22C55E]" : "bg-border"}`}
+                        >
+                          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${on ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+                        </button>
+                      </div>
+                    )
+                  }
+                  // Fecha real (date): input nativo de fecha.
+                  if (f.type === "date") {
+                    return (
+                      <div key={f.key}>
+                        <label className="block text-xs font-medium text-foreground">{f.label}</label>
+                        {f.hint && <p className="mb-1.5 mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
+                        <input
+                          type="date"
+                          value={settings[f.key] ?? ""}
+                          onChange={(e) => setSettings((v) => ({ ...v, [f.key]: e.target.value }))}
+                          disabled={saving}
+                          className="h-9 w-full rounded-sm border border-border bg-secondary px-3 font-mono text-[12px] text-foreground focus:border-foreground focus:outline-none"
+                        />
+                      </div>
+                    )
+                  }
+                  // Texto (default).
+                  return (
+                    <div key={f.key}>
+                      <label className="block text-xs font-medium text-foreground">{f.label}</label>
+                      {f.hint && <p className="mb-1.5 mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
+                      <input
+                        value={settings[f.key] ?? ""}
+                        onChange={(e) => setSettings((v) => ({ ...v, [f.key]: e.target.value }))}
+                        placeholder={f.default}
+                        disabled={saving}
+                        className="h-9 w-full rounded-sm border border-border bg-secondary px-3 font-mono text-[12px] text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
+                      />
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

@@ -101,8 +101,11 @@ export function WebinarLanding({
     >
       <WbStyles />
 
-      {/* ════════ SECCIÓN 1 · HERO (una pantalla, la más importante) ════════ */}
-      <section ref={heroRef} className="wb-hero relative flex min-h-[100dvh] flex-col overflow-hidden">
+      {/* ════════ SECCIÓN 1 · HERO (una sola pantalla exacta, móvil y desktop) ════════
+          Toda la sección cabe en 100svh: espacios y tamaños fluidos (clamp con svh) y el
+          vídeo con altura acotada para que nada se corte y el botón esté siempre visible
+          sin bajar. No se quita ningún contenido. */}
+      <section ref={heroRef} className="wb-hero relative flex h-[100svh] flex-col overflow-hidden">
         {/* Capas de profundidad (parallax) */}
         <div aria-hidden className="wb-layer wb-glow-green" data-depth="8" />
         <div aria-hidden className="wb-layer wb-glow-white" data-depth="4" />
@@ -112,9 +115,9 @@ export function WebinarLanding({
         <div aria-hidden className="wb-grain" />
         <div aria-hidden className="wb-vignette" />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 md:px-8">
+        <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 md:px-8" style={{ minHeight: 0 }}>
           {/* Marca */}
-          <header className="wb-load flex items-center justify-between pt-7 md:pt-11" style={{ animationDelay: "0ms" }}>
+          <header className="wb-load flex shrink-0 items-center justify-between" style={{ paddingTop: "clamp(0.9rem, 2.4svh, 2.6rem)", animationDelay: "0ms" }}>
             <span
               className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]"
               style={{ fontFamily: "'Inter Tight', sans-serif" }}
@@ -126,9 +129,13 @@ export function WebinarLanding({
             </span>
           </header>
 
-          {/* Contenido hero centrado con perspectiva 3D */}
-          <div className="flex flex-1 flex-col justify-center py-10">
-            <p className="wb-load mb-6 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#9CA3AF] md:text-[15px]" style={{ animationDelay: "80ms" }}>
+          {/* Contenido hero centrado con perspectiva 3D. Ocupa el resto y se centra;
+              gaps fluidos para que todo entre en una pantalla. */}
+          <div
+            className="flex min-h-0 flex-1 flex-col justify-center"
+            style={{ gap: "clamp(0.5rem, 1.7svh, 1.15rem)", paddingTop: "clamp(0.5rem, 1.5svh, 1.25rem)", paddingBottom: "clamp(0.4rem, 1.2svh, 1rem)" }}
+          >
+            <p className="wb-load inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#9CA3AF] md:text-[15px]" style={{ animationDelay: "80ms" }}>
               <span className="inline-flex items-center gap-2 rounded-full border border-[#2A2D34] bg-white/[0.03] px-3 py-1">
                 <span className="wb-dot" /> Webinar en vivo
               </span>
@@ -140,25 +147,28 @@ export function WebinarLanding({
 
             <div className="wb-tilt">
               <h1
-                className="text-[1.9rem] font-medium leading-[1.06] tracking-[-0.022em] text-white [text-wrap:balance] md:text-[3.1rem]"
-                style={{ fontFamily: "'Inter Tight', sans-serif" }}
+                className="font-medium tracking-[-0.022em] text-white [text-wrap:balance]"
+                style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: "clamp(1.5rem, 5.1vw, 3.1rem)", lineHeight: 1.06 }}
               >
                 <span className="wb-line block" style={{ animationDelay: "150ms" }}>
                   En enero de 2022 dejé mi trabajo y gané{" "}
                   <span className="wb-money">4.000 € al mes</span>.
                 </span>
-                <span className="wb-line mt-3 block text-[1.3rem] font-normal leading-[1.2] text-[#C7CBD1] md:text-[1.95rem]" style={{ animationDelay: "320ms" }}>
+                <span
+                  className="wb-line block font-normal text-[#C7CBD1]"
+                  style={{ animationDelay: "320ms", marginTop: "clamp(0.3rem, 0.9svh, 0.7rem)", fontSize: "clamp(1.05rem, 3.3vw, 1.95rem)", lineHeight: 1.2 }}
+                >
                   Te enseño a hacer lo mismo en menos de{" "}
                   <span className="font-medium text-white">90 días</span>.
                 </span>
               </h1>
             </div>
 
-            {/* Descripción visual: lead + chips (concepts intactos, más escaneable) */}
-            <p className="wb-load mb-4 mt-7 max-w-xl text-[15px] leading-relaxed text-[#C7CBD1] md:text-lg" style={{ animationDelay: "540ms" }}>
+            {/* Descripción visual: lead + chips (conceptos intactos, más escaneable) */}
+            <p className="wb-load max-w-xl leading-relaxed text-[#C7CBD1]" style={{ animationDelay: "540ms", fontSize: "clamp(0.9rem, 2.4vw, 1.125rem)" }}>
               Un directo gratuito y en vivo donde te enseño el paso a paso:
             </p>
-            <div className="wb-load mb-9 flex flex-wrap gap-2.5" style={{ animationDelay: "640ms" }}>
+            <div className="wb-load flex flex-wrap gap-2" style={{ animationDelay: "640ms" }}>
               {[
                 "Qué profesión digital encaja contigo",
                 "Empezar sin montar un negocio",
@@ -166,7 +176,7 @@ export function WebinarLanding({
               ].map((t) => (
                 <span
                   key={t}
-                  className="wb-chip inline-flex items-center gap-2 rounded-full border border-[#2A2D34] bg-[#141418] px-3.5 py-2 text-[13px] text-[#D1D5DB] md:text-sm"
+                  className="wb-chip inline-flex items-center gap-2 rounded-full border border-[#2A2D34] bg-[#141418] px-3 py-1.5 text-[12.5px] text-[#D1D5DB] md:text-sm"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
                   {t}
@@ -174,11 +184,15 @@ export function WebinarLanding({
               ))}
             </div>
 
-            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). El hueco
-                SIEMPRE se pinta en 16:9. Sin GUID muestra un placeholder de marca; en cuanto
-                se pega el GUID en el ⚙️ de /webs, el vídeo aparece aquí sin tocar código. */}
-            <div className="wb-load mb-8 overflow-hidden rounded-xl border border-[#2A2D34] bg-black" style={{ animationDelay: "700ms" }}>
-              <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). Se mantiene
+                16:9, con altura acotada (clamp con svh) para caber en la pantalla. Sin GUID
+                muestra un placeholder de marca; al pegar el GUID en el ⚙️ de /webs, el vídeo
+                aparece aquí sin tocar código. */}
+            <div className="wb-load flex min-h-0 justify-center" style={{ animationDelay: "700ms" }}>
+              <div
+                className="relative aspect-[16/9] max-w-full overflow-hidden rounded-xl border border-[#2A2D34] bg-black"
+                style={{ height: "clamp(128px, 24svh, 250px)" }}
+              >
                 {videoGuid ? (
                   <iframe
                     src={bunnyEmbedUrl(videoGuid, bunnyLibraryId)}
@@ -189,18 +203,18 @@ export function WebinarLanding({
                     className="absolute inset-0 h-full w-full border-0"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#141418] px-6 text-center">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#141418] px-5 text-center">
                     <span
                       aria-hidden
-                      className="flex h-14 w-14 items-center justify-center rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10"
+                      className="flex h-11 w-11 items-center justify-center rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10"
                     >
-                      <Play className="ml-0.5 h-6 w-6 text-[#22C55E]" fill="currentColor" />
+                      <Play className="ml-0.5 h-5 w-5 text-[#22C55E]" fill="currentColor" />
                     </span>
-                    <p className="text-[15px] font-medium text-[#F5F6F7]" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+                    <p className="text-[14px] font-medium text-[#F5F6F7]" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
                       El vídeo se está preparando
                     </p>
-                    <p className="max-w-xs text-[13px] leading-relaxed text-[#6B7280]">
-                      En un momento estará aquí. Mientras tanto, reserva tu plaza justo debajo.
+                    <p className="max-w-xs text-[12px] leading-snug text-[#6B7280]">
+                      En un momento estará aquí. Reserva tu plaza justo debajo.
                     </p>
                   </div>
                 )}
@@ -209,12 +223,12 @@ export function WebinarLanding({
 
             <div className="wb-load" style={{ animationDelay: "760ms" }}>
               <MagneticButton onClick={() => setOpen(true)}>Reservar mi plaza gratis</MagneticButton>
-              <p className="mt-3 text-[13px] text-[#6B7280]">Plazas limitadas. Sin tarjeta, sin compromiso.</p>
+              <p className="mt-2 text-[13px] text-[#6B7280]">Plazas limitadas.</p>
             </div>
           </div>
 
           {/* Indicador de scroll */}
-          <div className="wb-load flex justify-center pb-7" style={{ animationDelay: "900ms" }}>
+          <div className="wb-load flex shrink-0 justify-center" style={{ paddingBottom: "clamp(0.5rem, 1.5svh, 1.5rem)", animationDelay: "900ms" }}>
             <span className="wb-scroll" aria-hidden />
           </div>
         </div>

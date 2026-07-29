@@ -197,15 +197,21 @@ export async function POST(req: Request) {
     })
   }
 
-  // Email de confirmación de la reserva + botón al WhatsApp PRIVADO de Adrián para
-  // conseguir la entrada. Coherente con la página de gracias y la estrategia del
-  // lanzamiento (2026-07-28). Se envía SIEMPRE (el número tiene default, no depende
-  // de configurar un grupo). Copy editable/pausable en /email-marketing ('optin_webinar').
+  // Email de confirmación de la reserva. El botón al WhatsApp PRIVADO de Adrián es
+  // OPCIONAL: se incluye solo si el interruptor "¿Incluir WhatsApp en el correo?" está
+  // activo en el ⚙️ de /webs (settings.emailWhatsappEnabled). El mensaje del botón es el
+  // mismo editable del funnel (settings.whatsappMessage). Copy editable/pausable en
+  // /email-marketing ('optin_webinar').
   try {
     const settings = await getWebinarSettings()
-    const waUrl = whatsappLink(settings.whatsappNumber, settings.whatsappMessage)
+    const waUrl = settings.emailWhatsappEnabled
+      ? whatsappLink(settings.whatsappNumber, settings.whatsappMessage)
+      : undefined
     const dateLabel = settings.dateLabel
     const firstName = full_name.split(" ")[0] || full_name
+    const subject = settings.emailWhatsappEnabled
+      ? "Tu plaza está reservada. Escríbenos por WhatsApp para tu entrada."
+      : "Tu plaza está reservada para el directo."
     const html = await render(
       WebinarOptinEmail({ firstName, whatsappUrl: waUrl, dateLabel }),
     )
@@ -213,10 +219,10 @@ export async function POST(req: Request) {
       template: "optin_webinar",
       to: email,
       toName: full_name,
-      subject: "Tu plaza está reservada. Escríbenos por WhatsApp para tu entrada.",
+      subject,
       html,
       metadata: { funnel: "webinar", contact_id: contactId, action },
-      vars: { firstName, whatsappUrl: waUrl, dateLabel },
+      vars: { firstName, whatsappUrl: waUrl ?? "", dateLabel },
     })
   } catch (e) {
     console.error("[optin/webinar] email de confirmación falló (no bloquea)", e)

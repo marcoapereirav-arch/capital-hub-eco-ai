@@ -62,8 +62,8 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
  * Se usa para resolver QUÉ item del nav corresponde a un pathname dado y aplicar el
  * permiso de ESE item específico, no del padre por convención de URL.
  *
- * Ejemplo: /webs/sistema NO es sub-ruta de /webs aunque la URL lo parezca — es un item
- * independiente del sidebar con su propio permiso. Marketing tiene /webs pero NO /webs/sistema.
+ * Ejemplo: /sistemas es un item independiente del sidebar con su propio permiso (antes
+ * vivía en /webs/sistema y por eso el OS lo agrupaba bajo Webs; ya no).
  *
  * Las sub-rutas DINÁMICAS sí heredan del padre. Ejemplo: /webs/[funnelId] hereda de /webs;
  * /contactos/[id] hereda de /contactos.
@@ -79,7 +79,7 @@ const ALL_NAV_HREFS = [
   "/calendario",
   "/email-marketing",
   "/webs",
-  "/webs/sistema",
+  "/sistemas",
   "/webs/lead-magnets",
   "/automatizaciones",
   "/ads",

@@ -23,6 +23,7 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 51 | [Recursos de formación (App)](51-recursos-formacion-app.md) | Recursos por formación enlazables a lecciones (M2M) en la App. Guías visuales (type GUIDE) via registry. Tablas resources + resource_lessons + RLS |
 | 52 | [Venta manual + ventas por completar](52-venta-manual-y-pendientes.md) | Mover a mano dispara notificaciones; popup ahora/más tarde al pasar a Alumno; botón "Registrar venta" en la ficha; bloque "Ventas por completar" en dashboard; columna `sale_pending` |
 | 53 | [Notificaciones al equipo (in-app + push)](53-notificaciones-push.md) | Helper central `notifyAdmins` (in-app + web-push) en lead, agenda, venta, CRM manual y sistema. SIN emojis (REGLA #8). Click lleva al lugar del evento (tabla de destinos). Preferencias por usuario en `/perfil` (tabla `notification_preferences`). Interruptor push por dispositivo. Requisitos push iOS |
+| 55 | [Sistema visual — hub](55-sistema-visual-hub.md) | `/sistemas`: hub con una tarjeta por sistema/workflow. Movido fuera de `/webs` (ya no se agrupa bajo Webs). Workflow del funnel del 8 en `/sistemas/webinar-08` (fecha y tag en vivo). Cómo añadir un sistema nuevo |
 
 ## Formaciones (material de presentación)
 

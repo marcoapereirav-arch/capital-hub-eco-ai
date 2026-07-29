@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { CalendarClock, CheckCircle2, BadgeCheck, ArrowRight } from "lucide-react"
-import { FUNNEL_WEBINAR, whatsappLink } from "../config"
+import { FUNNEL_WEBINAR, whatsappLink, webinarDateLabel } from "../config"
 
 /** Logo oficial de WhatsApp (glyph monocromo, hereda el color con currentColor). */
 function WhatsappIcon({ className }: { className?: string }) {
@@ -39,7 +39,7 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
     whatsappNumber || FUNNEL_WEBINAR.WHATSAPP_NUMBER,
     whatsappMessage || FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
   )
-  const resolvedDate = dateLabel || FUNNEL_WEBINAR.WEBINAR_DATE_LABEL
+  const resolvedDate = dateLabel || webinarDateLabel()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Al tocar el botón de WhatsApp marcamos al contacto (tag + evento en su timeline).

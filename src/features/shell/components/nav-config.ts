@@ -39,7 +39,7 @@ export const navSections: NavSection[] = [
       { title: "Calendario", href: "/calendario", icon: CalendarCheck },
       { title: "Email Marketing", href: "/email-marketing", icon: Mail },
       { title: "Webs", href: "/webs", icon: Globe },
-      { title: "Sistema visual", href: "/webs/sistema", icon: LayoutDashboard },
+      { title: "Sistema visual", href: "/sistemas", icon: LayoutDashboard },
       { title: "Automatizaciones", href: "/automatizaciones", icon: Zap },
       { title: "Lead Magnets", href: "/webs/lead-magnets", icon: Magnet },
       { title: "Ads", href: "/ads", icon: Megaphone },

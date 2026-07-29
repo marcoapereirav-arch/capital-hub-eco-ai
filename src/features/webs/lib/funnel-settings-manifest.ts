@@ -17,6 +17,8 @@ export type FunnelSettingField = {
   label: string
   hint?: string
   default: string
+  /** Tipo de control en el popup. Por defecto "text". */
+  type?: "text" | "date" | "toggle"
 }
 export type FunnelManifest = {
   slug: string
@@ -83,14 +85,28 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
       {
         key: "whatsapp_message",
         label: "Mensaje predefinido del WhatsApp",
-        hint: "El texto que el lead envía al pulsar el botón. Ej: «Hola Adrián, quiero acceder al evento del 8 de agosto».",
+        hint: "El texto que el lead envía al pulsar el botón. Se refleja al instante en el botón de la gracias y en el correo. Sin la fecha (la fecha va en el campo de abajo).",
         default: FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
       },
       {
+        key: "email_whatsapp",
+        label: "¿Incluir el botón de WhatsApp en el correo de confirmación?",
+        hint: "Si lo apagas, el correo confirma la plaza pero sin el botón de WhatsApp. El mensaje del botón es el de arriba.",
+        default: "on",
+        type: "toggle",
+      },
+      {
+        key: "webinar_date",
+        label: "Fecha del webinar",
+        hint: "La fecha real del directo. De aquí sale el tag del contacto (whatsapp-webinar-DD_MM_YYYY) y la fecha que se muestra en la landing. Cámbiala por cada webinar y todo se actualiza solo.",
+        default: FUNNEL_WEBINAR.WEBINAR_DATE,
+        type: "date",
+      },
+      {
         key: "date_label",
-        label: "Fecha/hora del webinar",
-        hint: "Lo que se muestra en la landing. Ej: «8 de agosto · 19:00h».",
-        default: FUNNEL_WEBINAR.WEBINAR_DATE_LABEL,
+        label: "Texto de la fecha en la landing (opcional)",
+        hint: "Vacío = se arma solo con la fecha de arriba (ej. «8 de agosto»). Rellénalo solo si quieres añadir algo, ej. «8 de agosto · 19:00h». No afecta al tag.",
+        default: "",
       },
       {
         key: "instagram",

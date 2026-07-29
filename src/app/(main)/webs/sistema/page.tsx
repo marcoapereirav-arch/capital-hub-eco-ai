@@ -1,5 +1,10 @@
-import { SistemaPage } from "@/features/sistema/components/sistema-page"
+import { redirect } from "next/navigation"
 
-export default function SistemaRoute() {
-  return <SistemaPage />
+/**
+ * "Sistema visual" se movió a su propia sección: /sistemas (hub de sistemas).
+ * Antes vivía aquí (/webs/sistema), por eso el OS lo agrupaba bajo Webs. Se redirige
+ * para no romper enlaces antiguos. El sistema end-to-end vive ahora en /sistemas/end-to-end.
+ */
+export default function SistemaVisualLegacyRedirect() {
+  redirect("/sistemas")
 }

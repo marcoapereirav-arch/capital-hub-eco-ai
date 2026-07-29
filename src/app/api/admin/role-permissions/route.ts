@@ -30,7 +30,7 @@ const NAV_SECTIONS = [
   { href: "/calendario", label: "Calendario", group: "Marketing" },
   { href: "/email-marketing", label: "Email Marketing", group: "Marketing" },
   { href: "/webs", label: "Webs", group: "Marketing" },
-  { href: "/webs/sistema", label: "Sistema visual", group: "Marketing" },
+  { href: "/sistemas", label: "Sistema visual", group: "Marketing" },
   { href: "/webs/lead-magnets", label: "Lead Magnets", group: "Marketing" },
   { href: "/automatizaciones", label: "Automatizaciones", group: "Marketing" },
   { href: "/ads", label: "Ads", group: "Marketing" },
