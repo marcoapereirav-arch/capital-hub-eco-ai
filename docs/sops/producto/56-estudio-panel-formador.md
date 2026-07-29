@@ -1,0 +1,151 @@
+---
+title: App · El Estudio (panel del formador) y las presentaciones visuales
+order: 56
+area: producto
+---
+
+# El Estudio: el panel del formador
+
+> Creado 2026-07-29. Marco: *"la parte formativa donde el formador configura todo
+> debe ser extremadamente profesional, dinámica, muy visual y muy intuitiva. Los
+> formadores, cuando intentan crear una lección o un módulo, les cuesta saber
+> dónde están las cosas. Tiene que cambiarlo todo. No quiero parches."*
+
+---
+
+## La idea, en una línea
+
+**El formador no navega: entra y ya está dentro de su formación.**
+
+Una sola pantalla (`/formador/f/:id`) con dos zonas que nunca desaparecen:
+
+| Zona | Qué es |
+|---|---|
+| **El árbol** (izquierda, 400px) | La formación entera: módulos, lecciones y material. Siempre visible, siempre en el mismo sitio. |
+| **El inspector** (derecha) | Lo que estás tocando ahora mismo. |
+
+Tocas algo en el árbol, cambia el inspector. Nunca se cambia de página, nunca se
+pierde el scroll. En móvil el inspector entra como hoja inferior y el árbol se
+queda detrás con el scroll intacto: al cerrar, vuelves al punto exacto.
+
+La selección vive en la URL (`?modulo=`, `?leccion=`, `?material=`, `?panel=ajustes`),
+así que el botón atrás del navegador funciona y un enlace se puede compartir.
+
+## El arreglo central
+
+**El botón de crear está SIEMPRE en el hueco donde va a aparecer lo creado.**
+
+El "+ Añadir lección aquí" vive dentro de su módulo, al final de sus lecciones,
+no al final de la página. Eso es lo que resuelve el "no sé dónde se crean las
+cosas", que es literalmente lo que Marco reportó.
+
+## Cómo se eligió el diseño
+
+No se improvisó. Se pidieron **tres propuestas independientes** con ángulos
+distintos (todo en una pantalla · guiado por pasos · taller de dos paneles) y las
+puntuaron **tres jueces** con criterios distintos:
+
+| Juez | Qué miraba |
+|---|---|
+| Formador novato | ¿Sabría crear un módulo sin que nadie me lo explique? |
+| Implementable | ¿Se construye con lo que ya existe sin romper lo que funciona? |
+| Marca | ¿Es de verdad un cambio de 180 grados o un parche disfrazado? |
+
+Ganó **El Estudio** con 23 de 30.
+
+---
+
+## Qué trae que antes no existía
+
+| Hueco que cierra | Antes |
+|---|---|
+| **Crear una formación desde la pantalla** | Imposible. Solo desde el panel legacy, que además está cerrado al formador. |
+| **Cambiar el tipo de módulo** (Técnico / Mentalidad) | Fijado a mano en el código (`content_type: 'TECHNICAL'`). Un módulo de mentalidad no se podía hacer. |
+| **El enlace de vídeo externo** | Escondido. Ahora va siempre visible, al lado de la zona de subida. |
+| **Subida de vídeo** | El identificador solo se guardaba al pulsar Guardar: cerrar el panel perdía una subida de 20 minutos. Ahora se guarda en cuanto termina. |
+| **Borrar algo** | `confirm()` del navegador, sin decir qué se llevaba por delante. Ahora se dice CON NÚMEROS y hay 10 segundos para deshacer. |
+| **Confirmación de guardado** | Solo se pintaban errores. Ahora hay testigo (Guardando / Guardado / No se guardó) y aviso en pantalla. |
+
+## Las presentaciones visuales
+
+El formador sube su material y sale una presentación con el estilo oficial, sin
+pasar por nadie. Tres pasos visibles: **Material · Revisión · Publicada**.
+
+1. **Material.** Sube un PDF, un `.md` o pega texto. Comprobado el 2026-07-29
+   contra OpenRouter: `anthropic/claude-opus-5` lee el PDF directamente como
+   content part `file`, así que no hace falta ninguna librería de PDF en el
+   navegador.
+   **El material se guarda ANTES de generar.** Si la generación falla, no se
+   pierde y se reintenta sin volver a subir nada.
+2. **Revisión.** Ve la presentación tal cual la verá el alumno. Pide arreglos por
+   escrito las veces que quiera (con historial de lo ya pedido y vuelta a la
+   versión anterior). **Mientras es borrador no la ve ningún alumno**, y eso lo
+   garantiza la RLS, no un filtro del navegador.
+3. **Publicada.** Solo cuando el formador acepta.
+
+### El editor de solo texto
+
+Para corregir una errata o afinar un titular. Los textos a un lado, la
+presentación real al otro: al escribir, el bloque se resalta y se trae a
+pantalla.
+
+**No puede romper el diseño, y no es cuestión de confiar en nadie:** los campos
+salen de `camposDeTexto(doc)` y se escriben con `conCampoCambiado`, que solo
+escribe sobre una clave que ya existía y ya era texto. Desde ahí es
+estructuralmente imposible añadir un bloque, cambiar un icono o alterar el orden.
+
+### Por qué una presentación son DATOS y no código
+
+Es una lista de bloques tipados que un renderer pinta con **el mismo kit visual**
+que usan las guías hechas a mano. Ver la skill `formacion-visual`, que es el
+molde único de los dos caminos. Consecuencias buscadas: el diseño no se puede
+desviar del brandkit, editar el texto es editar un campo, y no se renderiza HTML
+de nadie.
+
+**La regla de los tres sitios:** cambiar un bloque obliga a tocar el kit, el
+contrato (`documento.ts`) y el renderer más el prompt del generador. Si solo se
+toca uno, el generador produce algo que el renderer no sabe pintar y **se cae en
+silencio**.
+
+---
+
+## Dónde vive
+
+```
+web/src/features/estudio/
+  Puerta.tsx              /formador: resuelve a dónde entra y entra
+  EstudioPage.tsx         el armazón: barra + árbol + inspector
+  useEstudio.ts           la capa de datos. TODA escritura pasa por mustWrite
+  ui/Avisos.tsx           avisos, confirmación con números, deshacer, testigo
+  ui/BarraDePasos.tsx     Material / Revisión / Publicada
+  Arbol*.tsx              la columna izquierda (4 archivos)
+  CuadroDeMando.tsx       qué falta para publicar
+  AjustesFormacion.tsx    identidad, ruta, visibilidad, acceso, y CREAR
+  InspectorModulo.tsx     incluye el tipo de módulo
+  InspectorLeccion.tsx    contenido, vídeo, material
+  TallerPresentacion.tsx  paso 1
+  RevisionPresentacion.tsx paso 2
+  EditorTexto.tsx         el editor de solo texto
+```
+
+El editor viejo (`/admin/formaciones`) sigue alcanzable mientras esto se asienta.
+
+## Reglas que cumple
+
+Cero guion largo, cero emojis, cero icono `Sparkles`, cero `confirm()` del
+navegador, español neutro, copy al grano, mobile-first con zonas táctiles de
+44px, y **ningún botón visible que al pulsarlo no haga nada**: si no se puede
+hacer algo, no se pinta.
+
+Un formador en modo lectura (formación que no es suya) ve una cinta que lo
+explica y **ni un solo control de escritura**. Ver SOP [`producto/55`](55-formador-vs-admin.md).
+
+---
+
+## Cambios versionados
+
+### 2026-07-29 — Creación
+El Estudio publicado. Diseño elegido por panel de jueces, construido sobre los
+arreglos de raíz del mismo día (SOP 55 y SOP 50 v8). Verificado: TypeScript
+limpio, build de producción limpio, y las prohibiciones duras comprobadas a
+grep sobre el código nuevo.

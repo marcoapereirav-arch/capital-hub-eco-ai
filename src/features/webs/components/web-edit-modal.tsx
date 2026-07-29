@@ -10,15 +10,15 @@ import { getFunnelManifest } from "../lib/funnel-settings-manifest"
  * Modal ÚNICO de edición de un funnel. Concentra TODA la edición que antes vivía
  * inline en la tarjeta (con lápices por todas partes): nombre, subdominio (ch/os),
  * estado (published/draft), path base y, por cada step, su nombre + su path absoluto.
- * Además incluye la sección de "Links del funnel" (mismos campos que
- * funnel-settings-modal.tsx, GET/PUT a /api/admin/settings/funnel:<slug>).
+ * Además incluye la sección de "Links del funnel" (campos del manifiesto del funnel,
+ * GET/PUT a /api/admin/settings/funnel:<slug>).
  *
  * Reutiliza EXACTAMENTE los mismos endpoints que la tarjeta usaba:
  *   - PATCH /api/admin/webs/{id}            → { name, slug, status, hostname }
  *   - PATCH /api/admin/webs/{id}/steps/{id} → { name, slug }
  *   - GET/PUT /api/admin/settings/funnel:{slug} → ajustes de links
  *
- * Guardado optimista con estado saving/saved (igual que funnel-settings-modal).
+ * Guardado optimista con estado saving/saved.
  */
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-/_]*$/
@@ -150,7 +150,11 @@ export function WebEditModal({
       }
 
       // --- 3) Links del funnel (ajustes del manifiesto) ---
-      if (manifest) {
+      // GUARD anti-carrera: si el GET de los ajustes aún no resolvió, `settings` sigue en {}
+      // y este PUT (que es un REEMPLAZO total, no merge) machacaría los overrides guardados
+      // con cadenas vacías (borraría webinar_date, whatsapp_number, etc. y la landing/tag
+      // volverían al default). Solo guardamos los ajustes cuando ya cargaron.
+      if (manifest && !settingsLoading) {
         const value: Record<string, string> = {}
         for (const f of manifest.fields) value[f.key] = (settings[f.key] ?? "").trim()
         const res = await fetch(
@@ -413,7 +417,8 @@ export function WebEditModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || settingsLoading}
+            title={settingsLoading ? "Cargando los ajustes actuales…" : undefined}
             className="flex items-center gap-1.5 rounded-sm border border-foreground bg-foreground px-4 py-2 font-mono text-xs uppercase tracking-wide text-background disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="h-3.5 w-3.5" /> : null}

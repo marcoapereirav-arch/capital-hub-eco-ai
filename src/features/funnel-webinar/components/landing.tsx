@@ -117,14 +117,14 @@ export function WebinarLanding({
 
         <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-5 md:px-8" style={{ minHeight: 0 }}>
           {/* Marca */}
-          <header className="wb-load flex shrink-0 items-center justify-between" style={{ paddingTop: "clamp(0.9rem, 2.4svh, 2.6rem)", animationDelay: "0ms" }}>
+          <header className="wb-load flex shrink-0 items-center justify-between" style={{ paddingTop: "clamp(1rem, 2.7svh, 3rem)", animationDelay: "0ms" }}>
             <span
               className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]"
               style={{ fontFamily: "'Inter Tight', sans-serif" }}
             >
               Capital Hub
             </span>
-            <span className="hidden items-center gap-2 text-[13px] text-[#9CA3AF] sm:inline-flex">
+            <span className="hidden items-center gap-2 text-[12px] text-[#9CA3AF] sm:inline-flex">
               <span className="wb-dot" /> En directo
             </span>
           </header>
@@ -133,13 +133,13 @@ export function WebinarLanding({
               gaps fluidos para que todo entre en una pantalla. */}
           <div
             className="flex min-h-0 flex-1 flex-col justify-center"
-            style={{ gap: "clamp(0.5rem, 1.7svh, 1.15rem)", paddingTop: "clamp(0.5rem, 1.5svh, 1.25rem)", paddingBottom: "clamp(0.4rem, 1.2svh, 1rem)" }}
+            style={{ gap: "clamp(0.55rem, 1.9svh, 1.5rem)", paddingTop: "clamp(0.5rem, 1.4svh, 1.25rem)", paddingBottom: "clamp(0.4rem, 1svh, 1rem)" }}
           >
-            <p className="wb-load inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[#9CA3AF] md:text-[15px]" style={{ animationDelay: "80ms" }}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#2A2D34] bg-white/[0.03] px-3 py-1">
+            <p className="wb-load inline-flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[12px] text-[#9CA3AF] md:text-[13px]" style={{ animationDelay: "80ms" }}>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2A2D34] bg-white/[0.03] px-2.5 py-0.5">
                 <span className="wb-dot" /> Webinar en vivo
               </span>
-              <span className="rounded-full border border-[#22C55E]/30 bg-[#22C55E]/10 px-3 py-1 font-medium text-[#4ADE80]">
+              <span className="rounded-full border border-[#22C55E]/30 bg-[#22C55E]/10 px-2.5 py-0.5 font-medium text-[#4ADE80]">
                 Gratis
               </span>
               <span className="font-medium text-[#F5F6F7]">{dateLabel}</span>
@@ -148,7 +148,7 @@ export function WebinarLanding({
             <div className="wb-tilt">
               <h1
                 className="font-medium tracking-[-0.022em] text-white [text-wrap:balance]"
-                style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: "clamp(1.5rem, 5.1vw, 3.1rem)", lineHeight: 1.06 }}
+                style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: "clamp(1.3rem, 4.1vw, 2.35rem)", lineHeight: 1.08 }}
               >
                 <span className="wb-line block" style={{ animationDelay: "150ms" }}>
                   En enero de 2022 dejé mi trabajo y gané{" "}
@@ -156,7 +156,7 @@ export function WebinarLanding({
                 </span>
                 <span
                   className="wb-line block font-normal text-[#C7CBD1]"
-                  style={{ animationDelay: "320ms", marginTop: "clamp(0.3rem, 0.9svh, 0.7rem)", fontSize: "clamp(1.05rem, 3.3vw, 1.95rem)", lineHeight: 1.2 }}
+                  style={{ animationDelay: "320ms", marginTop: "clamp(0.35rem, 0.9svh, 0.65rem)", fontSize: "clamp(0.9rem, 2.5vw, 1.4rem)", lineHeight: 1.25 }}
                 >
                   Te enseño a hacer lo mismo en menos de{" "}
                   <span className="font-medium text-white">90 días</span>.
@@ -165,7 +165,7 @@ export function WebinarLanding({
             </div>
 
             {/* Descripción visual: lead + chips (conceptos intactos, más escaneable) */}
-            <p className="wb-load max-w-xl leading-relaxed text-[#C7CBD1]" style={{ animationDelay: "540ms", fontSize: "clamp(0.9rem, 2.4vw, 1.125rem)" }}>
+            <p className="wb-load max-w-xl leading-relaxed text-[#C7CBD1]" style={{ animationDelay: "540ms", fontSize: "clamp(0.82rem, 1.9vw, 0.98rem)" }}>
               Un directo gratuito y en vivo donde te enseño el paso a paso:
             </p>
             <div className="wb-load flex flex-wrap gap-2" style={{ animationDelay: "640ms" }}>
@@ -176,7 +176,7 @@ export function WebinarLanding({
               ].map((t) => (
                 <span
                   key={t}
-                  className="wb-chip inline-flex items-center gap-2 rounded-full border border-[#2A2D34] bg-[#141418] px-3 py-1.5 text-[12.5px] text-[#D1D5DB] md:text-sm"
+                  className="wb-chip inline-flex items-center gap-1.5 rounded-full border border-[#2A2D34] bg-[#141418] px-3 py-1 text-[12px] text-[#D1D5DB]"
                 >
                   <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
                   {t}
@@ -184,15 +184,12 @@ export function WebinarLanding({
               ))}
             </div>
 
-            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). Se mantiene
-                16:9, con altura acotada (clamp con svh) para caber en la pantalla. Sin GUID
-                muestra un placeholder de marca; al pegar el GUID en el ⚙️ de /webs, el vídeo
-                aparece aquí sin tocar código. */}
-            <div className="wb-load flex min-h-0 justify-center" style={{ animationDelay: "700ms" }}>
-              <div
-                className="relative aspect-[16/9] max-w-full overflow-hidden rounded-xl border border-[#2A2D34] bg-black"
-                style={{ height: "clamp(128px, 24svh, 250px)" }}
-              >
+            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). Grande y en
+                16:9. En móvil ocupa el ancho; en desktop crece con la altura de la pantalla
+                para verse en buen tamaño sin desbordar. Sin GUID muestra un placeholder de
+                marca; al pegar el GUID en el ⚙️ de /webs, el vídeo aparece aquí sin tocar código. */}
+            <div className="wb-load flex shrink-0 justify-center" style={{ animationDelay: "700ms" }}>
+              <div className="wb-vsl overflow-hidden rounded-xl border border-[#2A2D34] bg-black">
                 {videoGuid ? (
                   <iframe
                     src={bunnyEmbedUrl(videoGuid, bunnyLibraryId)}
@@ -223,7 +220,7 @@ export function WebinarLanding({
 
             <div className="wb-load" style={{ animationDelay: "760ms" }}>
               <MagneticButton onClick={() => setOpen(true)}>Reservar mi plaza gratis</MagneticButton>
-              <p className="mt-2 text-[13px] text-[#6B7280]">Plazas limitadas.</p>
+              <p className="mt-2.5 text-[12px] text-[#6B7280]">Plazas limitadas.</p>
             </div>
           </div>
 
@@ -432,7 +429,7 @@ function MagneticButton({ children, onClick }: { children: React.ReactNode; onCl
       onClick={onClick}
       onMouseMove={onMove}
       onMouseLeave={reset}
-      className="wb-cta group relative inline-flex h-[54px] items-center justify-center gap-2.5 overflow-hidden rounded-none bg-white px-7 text-[15px] font-semibold text-[#0F0F12]"
+      className="wb-cta group relative inline-flex h-[50px] items-center justify-center gap-2.5 overflow-hidden rounded-none bg-white px-6 text-[14px] font-semibold text-[#0F0F12]"
       style={{ fontFamily: "'Inter Tight', sans-serif" }}
     >
       <span aria-hidden className="wb-cta-fill" />
@@ -628,6 +625,10 @@ function WbStyles() {
     <style>{`
       .wb-root { --px: 0; --py: 0; }
       .wb-hero { --gx: calc(var(--px) * 1); --gy: calc(var(--py) * 1); }
+      /* Mini-VSL del hero: móvil = ancho completo (buen tamaño, sin desbordar);
+         desktop = crece con la altura de la pantalla, grande, sin pasar del ancho de la columna. */
+      .wb-vsl { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; }
+      @media (min-width: 768px) { .wb-vsl { width: auto; height: clamp(220px, 36svh, 420px); } }
       /* Capas de profundidad: se mueven según --px/--py * data-depth (parallax) */
       .wb-layer, .wb-orb { position: absolute; pointer-events: none; z-index: 0; will-change: transform; transition: transform 0.3s cubic-bezier(0.22,0.61,0.36,1); }
       .wb-glow-green { inset: 0; background: radial-gradient(680px 380px at 82% -4%, rgba(34,197,94,0.16), transparent 66%); transform: translate3d(calc(var(--px) * -8px), calc(var(--py) * -8px), 0); }
