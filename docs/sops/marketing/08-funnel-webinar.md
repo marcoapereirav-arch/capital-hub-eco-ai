@@ -92,7 +92,7 @@ Al tocar WhatsApp en la gracias, el sistema le pone al contacto el tag **`whatsa
   - **Popup ⚙️ de funnels** ahora soporta tipos `date` y `toggle` (`funnel-settings-manifest.ts` + `funnel-settings-modal.tsx`).
   - **Hero de la landing en una sola pantalla** (móvil y desktop), sin quitar contenido; solo se quitó "Sin tarjeta, sin compromiso." (queda "Plazas limitadas."). Alturas/espacios fluidos con `svh` y la mini-VSL con altura acotada.
   - **No inventar procesos:** tras WhatsApp solo se nutre a la persona **dentro del chat** (fuera grupo/sorteo/"hasta el 8").
-  - Board visual (estilo Miro) de este funnel en vivo en el OS: **`/sistemas/webinar`** (ver SOP producto/56).
+  - Board visual (estilo Miro) de este funnel en vivo en el OS: **`/sistemas/webinar`** (ver SOP producto/57).
   - **Auto-blindaje (bug arreglado):** el modal "Editar funnel" (`web-edit-modal.tsx`) hacía el PUT de los ajustes (que es un REEMPLAZO total, no merge) aunque el GET de los overrides aún no hubiera cargado (`settings` en `{}`), borrando `webinar_date`/número/mensaje/etc. con vacío y devolviendo la fecha y el tag al default. Fix: el guardado de ajustes se hace solo con `!settingsLoading` y el botón "Guardar cambios" está deshabilitado mientras cargan. Se eliminó `funnel-settings-modal.tsx` (código muerto con el mismo patrón).
   - Archivos: `src/features/funnel-webinar/*`, `src/app/api/optin/webinar/route.ts`, `src/app/api/funnel/webinar/whatsapp-click/route.ts`, `src/lib/email/templates/webinar-optin.tsx`, `src/features/webs/lib/funnel-settings-manifest.ts`, `src/features/webs/components/funnel-settings-modal.tsx`.
 
