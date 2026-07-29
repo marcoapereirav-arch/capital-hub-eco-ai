@@ -5,6 +5,20 @@ description: "LEY DE DISEÑO de Capital Hub. Se usa SIEMPRE, sin excepción, ant
 
 # Brandkit Capital Hub: ley de diseño
 
+## LA FUENTE ES EL KNOWLEDGE. No hay otra.
+
+**El único brandkit que existe es `docs/sops/marketing/brand/01-brandkit-oficial.md`.**
+Se ve en vivo en la página `/brandkit` del OS: "Capital Hub · Manual de identidad · 2026".
+
+Marco, 2026-07-29: *"El ÚNICO brandkit que existe es el que está en el Knowledge
+y es el ÚNICO que vas a usar. Tienes PROHIBIDO usar otra cosa que no sea esto, y
+en base a este brandkit es que uses la skill para diseñar todo."*
+
+**Antes de diseñar nada: se abre ese SOP y se lee.** Lo que hay más abajo en
+este documento es el resumen operativo para el código, no un sustituto. Si algo
+de aquí se contradice con el SOP, **manda el SOP** y este documento se corrige
+en el mismo bloque de trabajo.
+
 > Marco, 2026-07-29: *"TIENES PROHIBIDO USAR EL DISEÑO ANTIGUO. Necesito que lo
 > elimines de raíz del código y uses únicamente el único brandkit que tenemos.
 > SIEMPRE debe ser mobile first. Quiero simplicidad. Quiero que se entienda todo
@@ -51,6 +65,23 @@ misma pasada.** No se parchea alrededor.
 | Superficie verde (lo bueno) | fondo `#101710`, borde `#24462F` | `bg-accent-surface`, `border-accent-border` |
 | Ámbar **SOLO avisos** | `#E5B567` / `#17150F` / `#3A2F1E` | `text-warn`, `bg-warn-surface`, `border-warn-border` |
 | Papel hueso (paneles claros) | `#F4F1E8` sobre tinta `#141414` | `bg-paper text-paper-ink` |
+
+### Los cinturones (escala jiu-jitsu)
+
+Son el lenguaje de progresión del alumno, no decoración ni acentos de interfaz.
+
+| Cinturón | Valor | Clase |
+|---|---|---|
+| Blanco | `#F5F6F7` | `belt-white` |
+| Azul | `#4F7CC0` | `belt-blue` |
+| Púrpura | `#7B5BA6` | `belt-purple` |
+| Marrón | `#856046` | `belt-brown` |
+| Negro | `#0F0F12` | `belt-black` |
+
+Reglas del SOP: **las rayas son EXCLUSIVAS de la cinta blanca** y solo aparecen
+en landings y funnels (la barra de cinturón). Los cinturones de color van
+siempre limpios, sin rayas, y se dibujan como cinturones reconocibles en el
+perfil del alumno de la App. **Nunca se usan como color de interfaz.**
 
 **Prohibido cualquier otro color.** Nada de violeta, cian, rosa, ámbar
 decorativo ni degradados de color. Base monocroma más verde. El rojo solo como
