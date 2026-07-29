@@ -110,3 +110,6 @@ Update_task_adrian_y_marco
 
 # Material de entrega para otro ecosistema (fuente, no forma parte de este repo)
 ENTREGA-otro-ecosistema/
+
+# Artefactos efimeros de test/verificacion (screenshots, backups). Nunca a git.
+.test-artifacts/
