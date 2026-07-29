@@ -124,6 +124,18 @@ Comandos útiles tras el link:
 
 > Las menciones a `ecoai.capitalhubapp.com` de aquí para abajo son **crónica histórica**: en esas fechas ése era el dominio. Hoy el dominio del OS es `os.capitalhubapp.com`. No se reescriben para no falsear el registro.
 
+### 2026-07-29 — Publicar se atascó por 2 causas de fuera (no del código). Blindado.
+
+Un `/publicar` normal tardó de más. El código compilaba, pero el deploy no salía y producción se quedaba en la versión vieja. Dos causas independientes, las dos ya cerradas:
+
+1. **57 archivos duplicados de iCloud/Finder ("X 2.ext")** que otra sesión commiteó por error con un `git add` a ciegas (commit `7291fd5`). Uno de ellos (`src/app/(main)/knowledge/page 2.tsx`) importaba un módulo inexistente y **rompía `next build`**. **Fix:** borrados los 57 con `git rm`. **Blindaje:** añadidos `* 2.*` y `* 2` al `.gitignore` para que no se vuelvan a colar (si alguno es legítimo, `git add -f`).
+2. **Límite de tamaño de función de Vercel (250 MB).** Tras arreglar el build, el deploy fallaba en "Deploying outputs": la función `api/content-intel/corpus-chats/[id]/filters` pesa ~256 MB (bloat de tracing NFT: `next.config.ts` → `src/features/meetings/lib/paths.ts` arrastra casi todo el proyecto a cada función). **Fix (el que recomienda el propio Vercel):** env var `VERCEL_SUPPORT_LARGE_FUNCTIONS=1` en Producción + redeploy → Ready. **Pendiente (no urgente):** reducir ese bloat de tracing (cold starts lentos).
+
+**Aprendizajes (reglas a futuro):**
+- **`tsc --noEmit` NO basta antes de publicar.** No detecta lo mismo que `next build` (`page 2.tsx` pasaba `tsc` pero rompía el build). Antes de dar por bueno un publish importante: correr `npm run build` completo.
+- **El build puede pasar y el DEPLOY fallar igual** (límite de tamaño de función en "Deploying outputs"). Verificar el estado real con `vercel ls` / `vercel inspect <url> --logs`, no solo el `curl` a la web.
+- **Nunca `git add -A` / `git add .` a ciegas** en este repo: commitear por ruta específica.
+
 ### 2026-05-05 — Migración desde Vercel personal de Marco a Vercel Pro de Adrian
 
 **Origen del incidente:**

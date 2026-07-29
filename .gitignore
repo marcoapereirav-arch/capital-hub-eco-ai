@@ -57,6 +57,11 @@ Thumbs.db
 .AppleDouble
 .LSOverride
 
+# Duplicados de iCloud/Finder ("X 2.ext"): metieron 57 archivos basura y rompieron
+# el build (2026-07-29, ver SOP producto/06). Nunca commitear. Si alguno es legitimo: git add -f.
+* 2.*
+* 2
+
 # Claude Code
 .claude/skills/**/node_modules
 .claude/plugins
