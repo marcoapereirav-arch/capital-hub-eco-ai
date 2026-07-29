@@ -4,6 +4,8 @@ import { z } from "zod"
 import { render } from "@react-email/render"
 import { sendEmail } from "@/lib/email/send-email"
 import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
+import { getWebinarSettings } from "@/features/funnel-webinar/get-settings"
+import { whatsappLink } from "@/features/funnel-webinar/config"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/notify-admins"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
@@ -97,6 +99,7 @@ export async function POST(req: Request) {
 
   // Upsert contacto por email
   let contactId: string | null = null
+  let contactSlug: string | null = null
   let action: "created" | "updated" = "created"
   let recurringFromStage: string | null = null
   {
@@ -109,12 +112,13 @@ export async function POST(req: Request) {
       affiliate_slug: string | null
       email: string | null
       manychat_subscriber_id: string | null
+      slug: string | null
     }
     let existing: ExistingContact | null = null
     if (mcId) {
       const { data } = await admin
         .from("contacts")
-        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id")
+        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id, slug")
         .eq("manychat_subscriber_id", mcId)
         .maybeSingle()
       existing = (data as ExistingContact | null) ?? null
@@ -122,7 +126,7 @@ export async function POST(req: Request) {
     if (!existing) {
       const { data } = await admin
         .from("contacts")
-        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id")
+        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id, slug")
         .ilike("email", email)
         .maybeSingle()
       existing = (data as ExistingContact | null) ?? null
@@ -143,6 +147,12 @@ export async function POST(req: Request) {
       if (mcId && !existing.manychat_subscriber_id) update.manychat_subscriber_id = mcId
       // El contacto pudo crearse en el comentario sin email real: ahora lo tenemos.
       if (!existing.email) update.email = email
+      // Slug opaco para la gracias (marcar quién toca WhatsApp). Si no lo tenía, se crea.
+      contactSlug = existing.slug
+      if (!existing.slug) {
+        contactSlug = slugify(full_name) + "_" + Math.random().toString(36).slice(2, 8)
+        update.slug = contactSlug
+      }
       await admin.from("contacts").update(update).eq("id", existing.id)
     } else {
       const slug = slugify(full_name) + "_" + Math.random().toString(36).slice(2, 8)
@@ -162,6 +172,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Error guardando el lead. Inténtalo de nuevo." }, { status: 500 })
       }
       contactId = created.id
+      contactSlug = slug
     }
   }
 
@@ -186,31 +197,27 @@ export async function POST(req: Request) {
     })
   }
 
-  // Email de confirmación con el link del grupo de WhatsApp.
-  // El copy es editable y pausable desde /email-marketing (template 'optin_webinar');
-  // el override en BD es la fuente de verdad. Solo se envía si el grupo ya está puesto.
+  // Email de confirmación de la reserva + botón al WhatsApp PRIVADO de Adrián para
+  // conseguir la entrada. Coherente con la página de gracias y la estrategia del
+  // lanzamiento (2026-07-28). Se envía SIEMPRE (el número tiene default, no depende
+  // de configurar un grupo). Copy editable/pausable en /email-marketing ('optin_webinar').
   try {
-    const { data: settings } = await admin
-      .from("app_settings").select("value").eq("key", "funnel:webinar").maybeSingle()
-    const v = (settings?.value ?? {}) as Record<string, string | undefined>
-    const whatsappGroup = (v.whatsapp_group ?? "").trim()
-    const dateLabel = (v.date_label ?? "en directo").trim()
-    if (whatsappGroup) {
-      const firstName = full_name.split(" ")[0] || full_name
-      // Mismo template que se ve/edita en /email-marketing (key 'optin_webinar').
-      const html = await render(
-        WebinarOptinEmail({ firstName, whatsappUrl: whatsappGroup, dateLabel }),
-      )
-      await sendEmail({
-        template: "optin_webinar",
-        to: email,
-        toName: full_name,
-        subject: "Tu plaza en el webinar está reservada — entra al grupo",
-        html,
-        metadata: { funnel: "webinar", contact_id: contactId, action },
-        vars: { firstName, whatsappUrl: whatsappGroup, dateLabel },
-      })
-    }
+    const settings = await getWebinarSettings()
+    const waUrl = whatsappLink(settings.whatsappNumber, settings.whatsappMessage)
+    const dateLabel = settings.dateLabel
+    const firstName = full_name.split(" ")[0] || full_name
+    const html = await render(
+      WebinarOptinEmail({ firstName, whatsappUrl: waUrl, dateLabel }),
+    )
+    await sendEmail({
+      template: "optin_webinar",
+      to: email,
+      toName: full_name,
+      subject: "Tu plaza está reservada. Escríbenos por WhatsApp para tu entrada.",
+      html,
+      metadata: { funnel: "webinar", contact_id: contactId, action },
+      vars: { firstName, whatsappUrl: waUrl, dateLabel },
+    })
   } catch (e) {
     console.error("[optin/webinar] email de confirmación falló (no bloquea)", e)
   }
@@ -260,5 +267,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage })
+  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage, slug: contactSlug })
 }

@@ -143,3 +143,14 @@ Sirve para entregar un email con retraso **sin cron y sin tabla de cola propia**
 3. Espera 1 min, refresca `/email-marketing` > Envíos
 4. Debe aparecer con icono 👁 (abierto)
 5. Si no aparece: revisar `RESEND_WEBHOOK_SECRET` en Vercel + Resend dashboard
+
+## Cambios versionados
+
+### 2026-07-28 — Confirmación + recordatorios de agenda con nuestra marca (Calendly) + correo del webinar coherente
+
+- **Confirmación de agenda al lead** cuando reserva por Calendly (funnel de reserva de sesión). Antes solo mandaba avisos internos al equipo y la confirmación la dejaba Calendly. Ahora, además, el `calendly_webhook` envía al lead la confirmación con **nuestra marca** reutilizando el template branded `agenda_confirmed` (con .ics + link de la reunión). Idempotente por `email_logs` (`call_id = uri` del evento).
+- **Recordatorios propios** de esas reservas: cron nuevo `/api/cron/calendly-reminders` (Vercel, cada 15 min) que manda **24h antes** (`agenda_reminder_24h`) y **1h antes** (`agenda_reminder_1h`), con el link de la reunión. Plantilla nueva **`agenda_reminder_1h`**. Idempotencia por `email_logs` (`call_id = uri` + template), **sin tocar el esquema**.
+- **El link de la reunión** sale del propio evento de Calendly (`location.join_url`); si Adrián tiene un Zoom fijo configurado en Calendly, ese es el que va.
+- **Correo del opt-in del webinar (`optin_webinar`) alineado con el flujo nuevo:** ya no manda al grupo; confirma la reserva + botón al WhatsApp privado para conseguir la entrada. Se envía siempre. Ver SOP marketing/08 (v3).
+- **Registrados en el editor** (`/api/admin/email/templates` + preview): `agenda_reminder_1h` y `optin_webinar`, para que sean editables/previsualizables.
+- Los tres correos de agenda (`agenda_confirmed`, `agenda_reminder_24h`, `agenda_reminder_1h`) son editables y pausables desde `/email-marketing`.

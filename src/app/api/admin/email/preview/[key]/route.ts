@@ -4,6 +4,8 @@ import { createClient as createServerClient } from "@/lib/supabase/server"
 import { WelcomeTrialEmail } from "@/lib/email/templates/welcome-trial"
 import { AgendaConfirmedEmail } from "@/lib/email/templates/agenda-confirmed"
 import { AgendaReminder24hEmail } from "@/lib/email/templates/agenda-reminder-24h"
+import { AgendaReminder1hEmail } from "@/lib/email/templates/agenda-reminder-1h"
+import { WebinarOptinEmail } from "@/lib/email/templates/webinar-optin"
 import { TrialEnds48hEmail } from "@/lib/email/templates/trial-ends-48h"
 import { PaymentFailedEmail } from "@/lib/email/templates/payment-failed"
 import { InternalBookingAlert } from "@/lib/email/templates/internal-booking-alert"
@@ -64,6 +66,16 @@ const previews: Record<string, () => Promise<string>> = {
     fullName: "Israel Ramírez",
     slotStartIso: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     meetingUrl: "https://us06web.zoom.us/j/6812281370",
+  })),
+  agenda_reminder_1h: () => render(AgendaReminder1hEmail({
+    fullName: "Israel Ramírez",
+    slotStartIso: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    meetingUrl: "https://us06web.zoom.us/j/6812281370",
+  })),
+  optin_webinar: () => render(WebinarOptinEmail({
+    firstName: "Israel",
+    whatsappUrl: `https://wa.me/34611874062?text=${encodeURIComponent("Hola Adrián, quiero acceder al evento del 8 de agosto.")}`,
+    dateLabel: "8 de agosto · en directo",
   })),
   no_show: () => render(NoShowEmail({
     fullName: "Israel Ramírez",

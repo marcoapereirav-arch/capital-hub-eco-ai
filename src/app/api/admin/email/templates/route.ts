@@ -16,6 +16,8 @@ const TEMPLATES = [
   { key: "welcome_alumno_ht", label: "Welcome Alumno High Ticket", description: "Tras venta high-ticket: acceso a la App con magic link", category: "lifecycle" },
   { key: "agenda_confirmed", label: "Agenda Confirmada", description: "Confirmación reserva con .ics + link Zoom + cancel/reschedule", category: "calendar" },
   { key: "agenda_reminder_24h", label: "Recordatorio 24h", description: "24h antes de la llamada (cron)", category: "calendar" },
+  { key: "agenda_reminder_1h", label: "Recordatorio 1h", description: "1h antes de la llamada agendada por Calendly (cron)", category: "calendar" },
+  { key: "optin_webinar", label: "Webinar · confirmación de reserva", description: "Al reservar plaza en /webinar: confirmación + botón a WhatsApp privado para conseguir la entrada", category: "lifecycle" },
   { key: "no_show", label: "No Show", description: "Cliente no apareció (cron detecta y manda)", category: "calendar" },
   { key: "post_call_followup", label: "Post-Call Followup", description: "Tras marcar attended: resumen + push upsell anual", category: "calendar" },
   { key: "trial_ends_48h", label: "Trial Ends 48h", description: "48h antes de cobro recurrente (cron)", category: "lifecycle" },

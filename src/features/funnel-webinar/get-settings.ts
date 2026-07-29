@@ -9,17 +9,21 @@ import { FUNNEL_WEBINAR } from "./config"
  * Si la BD falla, devuelve los defaults → la landing NUNCA se rompe.
  */
 export type WebinarSettings = {
-  whatsappGroup: string
+  videoGuid: string
+  bunnyLibraryId: string
+  whatsappNumber: string
+  whatsappMessage: string
   dateLabel: string
-  reservarUrl: string
   instagram: string
 }
 
 export async function getWebinarSettings(): Promise<WebinarSettings> {
   const fallback: WebinarSettings = {
-    whatsappGroup: FUNNEL_WEBINAR.WHATSAPP_GROUP_URL,
+    videoGuid: FUNNEL_WEBINAR.VIDEO_GUID,
+    bunnyLibraryId: FUNNEL_WEBINAR.BUNNY_LIBRARY_ID,
+    whatsappNumber: FUNNEL_WEBINAR.WHATSAPP_NUMBER,
+    whatsappMessage: FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
     dateLabel: FUNNEL_WEBINAR.WEBINAR_DATE_LABEL,
-    reservarUrl: FUNNEL_WEBINAR.RESERVAR_URL,
     instagram: FUNNEL_WEBINAR.INSTAGRAM_HANDLE,
   }
   try {
@@ -34,9 +38,12 @@ export async function getWebinarSettings(): Promise<WebinarSettings> {
       .maybeSingle()
     const v = (data?.value ?? {}) as Record<string, string | undefined>
     return {
-      whatsappGroup: v.whatsapp_group?.trim() || fallback.whatsappGroup,
+      // video_guid vacío es válido: significa "aún sin vídeo" → placeholder.
+      videoGuid: v.video_guid?.trim() ?? fallback.videoGuid,
+      bunnyLibraryId: v.bunny_library_id?.trim() || fallback.bunnyLibraryId,
+      whatsappNumber: v.whatsapp_number?.trim() || fallback.whatsappNumber,
+      whatsappMessage: v.whatsapp_message?.trim() || fallback.whatsappMessage,
       dateLabel: v.date_label?.trim() || fallback.dateLabel,
-      reservarUrl: v.reservar_url?.trim() || fallback.reservarUrl,
       instagram: v.instagram?.trim() || fallback.instagram,
     }
   } catch {

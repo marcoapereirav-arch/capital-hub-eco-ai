@@ -568,13 +568,13 @@ export async function GET() {
       category: "crm",
       label: "Funnel Webinar → CRM + email WhatsApp + CAPI",
       description:
-        "Lead reserva plaza en /webinar → crea/actualiza contacto stage='lead', pipeline 'Webinar', tags origen + fuente (afiliado), email de confirmación con el link del grupo de WhatsApp (si está configurado), y evento Meta CAPI. La agenda posterior (Calendly) y el pago (venta) mueven el contacto a Agendado/Alumno vía sus propias automatizaciones.",
+        "Lead reserva plaza en /webinar → crea/actualiza contacto stage='lead', pipeline 'Webinar', tags origen + fuente (afiliado), email de confirmación con botón al WhatsApp privado para conseguir la entrada, y evento Meta CAPI. La agenda posterior (Calendly) y el pago (venta) mueven el contacto a Agendado/Alumno vía sus propias automatizaciones.",
       trigger: "POST /api/optin/webinar (form público)",
       actions: [
         "Upsert contacto por email (stage='lead' si es nuevo, sin degradar si ya avanzado)",
         "Asigna pipeline 'Webinar' + tag origen:webinar",
         "Atribución: affiliate_slug = utm_source (first-touch) + tag fuente:<slug>",
-        "Envía email 'optin_webinar' con el link del grupo de WhatsApp (editable en /email-marketing)",
+        "Envía email 'optin_webinar': confirmación + botón al WhatsApp privado para conseguir la entrada (editable en /email-marketing)",
         "Dispara Meta Pixel + CAPI (webinar_lead + Lead)",
         "Inserta contact_journey_event 'optin_webinar'",
       ],
@@ -600,16 +600,39 @@ export async function GET() {
         "Upsert calendly_scheduled_events (created/canceled/no_show)",
         "Matchea contacto por email → mueve stage con guarda no-retroceso",
         "invitee.created sin contacto → crea contacto stage=agendado (pipeline Test Personalidad)",
+        "invitee.created → envía al lead la confirmación de agenda con nuestra marca (template agenda_confirmed, .ics + link de la reunión)",
         "Inserta contact_journey_event (call_booked/call_cancelled/call_no_show)",
       ],
-      relatedTables: ["calendly_scheduled_events", "calendly_config", "contacts", "contact_journey_events", "pipelines"],
+      relatedTables: ["calendly_scheduled_events", "calendly_config", "contacts", "contact_journey_events", "pipelines", "email_logs"],
       status: (calendlyCount ?? 0) > 0 ? "live" : "idle",
       statusReason: (calendlyCount ?? 0) > 0
-        ? `Webhook activo (HMAC) · ${calendlyCount} reservas registradas · mueve pipeline`
+        ? `Webhook activo (HMAC) · ${calendlyCount} reservas registradas · mueve pipeline + confirmación`
         : "Webhook activo (HMAC) · sin reservas todavía",
       lastRun: lastCalendly?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastCalendly?.created_at),
       totalExecutions: calendlyCount ?? 0,
+    },
+    {
+      id: "calendly_reminders",
+      category: "calendario",
+      label: "Cron recordatorios de la agenda de Calendly (24h + 1h)",
+      description:
+        "Cada 15 min, busca las llamadas agendadas por Calendly (funnel de reserva de sesión) en las próximas 25h y envía NUESTROS recordatorios al lead con el link de la reunión: 24h antes y 1h antes. Baja los no-show. No repite un recordatorio ya enviado (lo comprueba en email_logs por el id del evento de Calendly, sin tocar el esquema).",
+      trigger: "Vercel Cron GET /api/cron/calendly-reminders (*/15 * * * *)",
+      actions: [
+        "SELECT calendly_scheduled_events activas en próximas 25h",
+        "Bucketea cada reserva en la ventana 24h y/o 1h",
+        "Idempotencia por email_logs (call_id = uri del evento + template)",
+        "Envía agenda_reminder_24h / agenda_reminder_1h con el link de la reunión",
+      ],
+      relatedTables: ["calendly_scheduled_events", "email_logs"],
+      status: (calendlyCount ?? 0) > 0 ? "live" : "idle",
+      statusReason: (calendlyCount ?? 0) > 0
+        ? `Corriendo cada 15 min · ${calendlyCount} reservas en seguimiento`
+        : "Cron registrado · sin reservas de Calendly todavía",
+      lastRun: lastCalendly?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(lastCalendly?.created_at),
+      totalExecutions: null,
     },
   ]
 

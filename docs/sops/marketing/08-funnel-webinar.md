@@ -9,6 +9,8 @@ Canal de captación por **webinar en directo**. Decidido en la reunión Marco/Ad
 
 Es una estrategia estándar de webinar (la usan cientos de negocios), no una copia de nadie.
 
+> **FLUJO VIGENTE (2026-07-28, reunión de marketing del 24-jul):** el foco es el **lanzamiento del 8 de agosto**. El funnel cambió: la landing `/webinar` lleva una **mini-VSL** en la página 1 + opt-in; la página de gracias ya **no manda a un grupo**, manda a **escribir por WhatsApp privado a Adrián** con un mensaje predefinido para conseguir la entrada (ese envío es el punto de éxito). El equipo hace el setting manual (automatización propia, fuera de este funnel). Detalle en "Cambios versionados" (v3). La descripción de abajo (opt-in → grupo → Zoom) es el flujo v1, superado; se conserva por histórico.
+
 ## El flujo end-to-end
 
 ```
@@ -75,6 +77,13 @@ Defaults en `src/features/funnel-webinar/config.ts`. Resolución server-only en 
 
 ## Cambios versionados
 
+- **2026-07-28 (v3) — Rediseño para el lanzamiento del 8 (reunión de marketing del 24-jul).** Transcript: `transcript-funnel-ch-webinar-8` (reunión "Capital Hub Marketing - July 24").
+  - **Página 1 (landing):** **mini-VSL** de presentación del evento (hueco Bunny plug-and-play, `video_guid` editable en el ⚙️ de `/webs`; sin GUID muestra placeholder de marca) + opt-in (nombre, email, teléfono). Popup al grano: "Reserva tu plaza en el evento" / "Deja tus datos para acceder al directo" / botón "Reservar mi plaza". Perspectiva de acceder, no de pedir. Sin marketing.
+  - **Página de gracias:** botón a **WhatsApp privado de Adrián** con mensaje predefinido ("Conseguir mi entrada por WhatsApp"). Fuera el botón/copy del grupo. Ese clic es el **punto de éxito** del funnel: al tocarlo se le pone al contacto el tag **"Tocó WhatsApp"** (vía `sendBeacon` → `/api/funnel/webinar/whatsapp-click?c=<slug>`) + evento en su timeline. El `slug` del contacto viaja del opt-in a la gracias (`?c=`).
+  - **Email del opt-in (`optin_webinar`):** ya NO manda al grupo. Ahora confirma la reserva + botón al **WhatsApp privado** para conseguir la entrada (coherente con la gracias). Se envía siempre (el número tiene default), editable/pausable en `/email-marketing`. Registrado en el editor de plantillas.
+  - **Ajustes editables (`/webs` ⚙️, key `funnel:webinar`):** `video_guid` (mini-VSL), `whatsapp_number`, `whatsapp_message`, `date_label`, `instagram`. Se quitaron `whatsapp_group` y `reservar_url`.
+  - **Fuera de alcance de este funnel (lo lleva el equipo):** el setting por WhatsApp (automatización de Pere), el grupo, la nutrición y el sorteo.
+  - Archivos: `src/features/funnel-webinar/*`, `src/app/(public)/webinar/*` (+ `/gracias`), `src/app/api/optin/webinar/route.ts`, `src/app/api/funnel/webinar/whatsapp-click/route.ts`.
 - **2026-07-06**: creación del funnel webinar (reunión Marco/Adrián). Pipeline `webinar`, landing+gracias, opt-in con email, Meta `webinar_lead`, registro en `/webs` y en el panel de automatizaciones.
 - **2026-07-06 (v2, feedback Marco)**: pasada de diseño y copy.
   - Hora del directo: **viernes 10 jul, 17:00** (`date_label`).

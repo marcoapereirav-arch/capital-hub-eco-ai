@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Loader2, ArrowRight, X, Gift, BadgeCheck, Send } from "lucide-react"
+import { Loader2, ArrowRight, X, Ticket, BadgeCheck, Play } from "lucide-react"
 import { track } from "@/lib/meta/pixel-client"
 import { getStoredUtms } from "@/lib/utm/utm-capture"
+import { bunnyEmbedUrl } from "../config"
 
 /**
  * Landing del Funnel Webinar (webinar semanal en directo).
@@ -35,7 +36,15 @@ const GALLERY = [
   { src: "/adrian/adrian-pequeno.jpg", alt: "Adrián de pequeño" },
 ] as const
 
-export function WebinarLanding({ dateLabel }: { dateLabel: string }) {
+export function WebinarLanding({
+  dateLabel,
+  videoGuid,
+  bunnyLibraryId,
+}: {
+  dateLabel: string
+  videoGuid?: string
+  bunnyLibraryId?: string
+}) {
   const [open, setOpen] = useState(false)
   const heroRef = useRef<HTMLElement>(null)
 
@@ -165,6 +174,39 @@ export function WebinarLanding({ dateLabel }: { dateLabel: string }) {
               ))}
             </div>
 
+            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). El hueco
+                SIEMPRE se pinta en 16:9. Sin GUID muestra un placeholder de marca; en cuanto
+                se pega el GUID en el ⚙️ de /webs, el vídeo aparece aquí sin tocar código. */}
+            <div className="wb-load mb-8 overflow-hidden rounded-xl border border-[#2A2D34] bg-black" style={{ animationDelay: "700ms" }}>
+              <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+                {videoGuid ? (
+                  <iframe
+                    src={bunnyEmbedUrl(videoGuid, bunnyLibraryId)}
+                    loading="lazy"
+                    title="Presentación del evento · Adrián Villanueva"
+                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+                    allowFullScreen
+                    className="absolute inset-0 h-full w-full border-0"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#141418] px-6 text-center">
+                    <span
+                      aria-hidden
+                      className="flex h-14 w-14 items-center justify-center rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10"
+                    >
+                      <Play className="ml-0.5 h-6 w-6 text-[#22C55E]" fill="currentColor" />
+                    </span>
+                    <p className="text-[15px] font-medium text-[#F5F6F7]" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+                      El vídeo se está preparando
+                    </p>
+                    <p className="max-w-xs text-[13px] leading-relaxed text-[#6B7280]">
+                      En un momento estará aquí. Mientras tanto, reserva tu plaza justo debajo.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="wb-load" style={{ animationDelay: "760ms" }}>
               <MagneticButton onClick={() => setOpen(true)}>Reservar mi plaza gratis</MagneticButton>
               <p className="mt-3 text-[13px] text-[#6B7280]">Plazas limitadas. Sin tarjeta, sin compromiso.</p>
@@ -190,10 +232,13 @@ export function WebinarLanding({ dateLabel }: { dateLabel: string }) {
             Bolsa de oportunidades y clientes
           </span>
           <h2
-            className="relative z-10 mb-4 text-[1.75rem] font-medium leading-[1.1] tracking-[-0.01em] text-white md:text-[2.7rem] [text-wrap:balance]"
-            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+            className="relative z-10 mb-4 font-medium leading-[1.12] tracking-[-0.01em] text-white"
+            style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: "clamp(0.95rem, 4.8vw, 2.6rem)" }}
           >
-            No te formas y te quedas solo. <span className="wb-underline">Te acompañamos.</span>
+            {/* Primera frase SIEMPRE en una sola línea (no debe partirse en «...quedas /
+                solo»): nowrap + tamaño fluido que encaja en móvil y en escritorio. */}
+            <span className="block whitespace-nowrap">No te formas y te quedas solo.</span>
+            <span className="wb-underline">Te acompañamos.</span>
           </h2>
           <p className="relative z-10 max-w-2xl text-base leading-relaxed text-[#C7CBD1] md:text-lg">
             Aprendes una profesión digital que las empresas están demandando y entras en nuestra bolsa
@@ -440,8 +485,8 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           ...(mcId ? { mc_id: mcId } : {}),
         }),
       })
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
         setError(data?.error ?? "Algo salió mal. Inténtalo otra vez.")
         setLoading(false)
         return
@@ -453,7 +498,9 @@ function OptinModal({ onClose }: { onClose: () => void }) {
         phone: phone.trim(),
         contentName: "Webinar opt-in",
       }).catch(() => {})
-      router.push("/webinar/gracias")
+      // Llevamos el slug del contacto a la gracias para poder marcar quién toca WhatsApp.
+      const slug = typeof data?.slug === "string" ? data.slug : null
+      router.push(slug ? `/webinar/gracias?c=${encodeURIComponent(slug)}` : "/webinar/gracias")
     } catch {
       setError("Sin conexión. Revisa tu internet y vuelve a intentarlo.")
       setLoading(false)
@@ -483,19 +530,20 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* Encabezado: enfocado en ENTREGAR el acceso, no en pedir datos */}
+        {/* Encabezado: reservar plaza para el EVENTO. El acceso se entrega en el
+            siguiente paso (por WhatsApp), coherente con la estrategia del lanzamiento. */}
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#22C55E]/30 bg-[#22C55E]/10">
-            <Gift className="h-5 w-5 text-[#22C55E]" />
+            <Ticket className="h-5 w-5 text-[#22C55E]" />
           </div>
           <div>
             <h3
               className="text-lg font-medium tracking-[-0.01em] text-white md:text-xl"
               style={{ fontFamily: "'Inter Tight', sans-serif" }}
             >
-              Te enviamos tu invitación al grupo
+              Reserva tu plaza en el evento
             </h3>
-            <p className="text-[13px] text-[#9CA3AF]">Rellena tus datos y te mandamos la invitación al grupo de WhatsApp.</p>
+            <p className="text-[13px] text-[#9CA3AF]">Deja tus datos para acceder al directo.</p>
           </div>
         </div>
 
@@ -519,14 +567,13 @@ function OptinModal({ onClose }: { onClose: () => void }) {
             ) : (
               <>
                 <span aria-hidden className="wb-send-shine" />
-                <Send className="relative z-10 h-4 w-4" />
-                <span className="relative z-10">Enviarme la invitación</span>
+                <span className="relative z-10">Reservar mi plaza</span>
               </>
             )}
           </button>
 
           <p className="pt-1 text-center text-xs text-[#9CA3AF]">
-            Es gratis y sin compromiso. Solo lo usamos para mandarte el acceso al directo.
+            Es gratis.
           </p>
         </form>
       </div>

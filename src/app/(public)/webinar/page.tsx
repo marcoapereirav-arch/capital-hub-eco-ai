@@ -12,5 +12,5 @@ export const metadata = {
 
 export default async function WebinarRoute() {
   const s = await getWebinarSettings()
-  return <WebinarLanding dateLabel={s.dateLabel} />
+  return <WebinarLanding dateLabel={s.dateLabel} videoGuid={s.videoGuid} bunnyLibraryId={s.bunnyLibraryId} />
 }

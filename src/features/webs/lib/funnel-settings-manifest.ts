@@ -69,22 +69,28 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
     slug: "webinar",
     fields: [
       {
-        key: "whatsapp_group",
-        label: "Grupo de WhatsApp — link de invitación",
-        hint: "Link del grupo/comunidad de WhatsApp (chat.whatsapp.com/...). Es el botón grande de la página de gracias. Vacío = «el grupo se abre en breve».",
-        default: FUNNEL_WEBINAR.WHATSAPP_GROUP_URL,
+        key: "video_guid",
+        label: "Mini-VSL de la landing (GUID de Bunny)",
+        hint: "Pega aquí el GUID de la mini-VSL del evento cuando esté subida a Bunny. Vacío: la landing muestra el hueco con un placeholder de marca y el resto del funnel sigue funcionando.",
+        default: FUNNEL_WEBINAR.VIDEO_GUID,
+      },
+      {
+        key: "whatsapp_number",
+        label: "WhatsApp de Adrián (botón de la página de gracias)",
+        hint: "Solo números con prefijo de país, sin + ni espacios. Ej: 34611874062. Es el destino del botón «Conseguir mi entrada por WhatsApp».",
+        default: FUNNEL_WEBINAR.WHATSAPP_NUMBER,
+      },
+      {
+        key: "whatsapp_message",
+        label: "Mensaje predefinido del WhatsApp",
+        hint: "El texto que el lead envía al pulsar el botón. Ej: «Hola Adrián, quiero acceder al evento del 8 de agosto».",
+        default: FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
       },
       {
         key: "date_label",
         label: "Fecha/hora del webinar",
-        hint: "Lo que se muestra en la landing. Ej: «Viernes 10 de julio · 19:00h».",
+        hint: "Lo que se muestra en la landing. Ej: «8 de agosto · 19:00h».",
         default: FUNNEL_WEBINAR.WEBINAR_DATE_LABEL,
-      },
-      {
-        key: "reservar_url",
-        label: "Funnel de agendar (Calendly)",
-        hint: "A dónde lleva el CTA del webinar para agendar la llamada. Por defecto /reservar.",
-        default: FUNNEL_WEBINAR.RESERVAR_URL,
       },
       {
         key: "instagram",

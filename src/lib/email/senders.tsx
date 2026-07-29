@@ -5,6 +5,7 @@ import { APP_URL } from "./resend-client"
 import { WelcomeTrialEmail } from "./templates/welcome-trial"
 import { AgendaConfirmedEmail } from "./templates/agenda-confirmed"
 import { AgendaReminder24hEmail } from "./templates/agenda-reminder-24h"
+import { AgendaReminder1hEmail } from "./templates/agenda-reminder-1h"
 import { AgendaReminder2hEmail } from "./templates/agenda-reminder-2h"
 import { AgendaReminder30minEmail } from "./templates/agenda-reminder-30min"
 import { TrialEnds48hEmail } from "./templates/trial-ends-48h"
@@ -120,6 +121,32 @@ export async function sendAgendaReminder24h(input: {
     to: input.email,
     toName: input.fullName,
     subject: "Manana hablamos. Preparacion rapida",
+    html,
+    callId: input.callId,
+    leadId: input.leadId,
+  })
+}
+
+export async function sendAgendaReminder1h(input: {
+  fullName: string
+  email: string
+  slotStartIso: string
+  meetingUrl: string
+  durationMinutes?: number
+  callId?: string
+  leadId?: string
+}) {
+  const html = await render(AgendaReminder1hEmail({
+    fullName: input.fullName,
+    slotStartIso: input.slotStartIso,
+    meetingUrl: input.meetingUrl,
+    durationMinutes: input.durationMinutes,
+  }))
+  return sendEmail({
+    template: "agenda_reminder_1h",
+    to: input.email,
+    toName: input.fullName,
+    subject: "En 1 hora hablamos",
     html,
     callId: input.callId,
     leadId: input.leadId,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { verifyWebhookSignature } from "@/lib/calendly"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
-import { notifyAdrianBooking } from "@/lib/email/senders"
+import { notifyAdrianBooking, sendAgendaConfirmed } from "@/lib/email/senders"
 import { pushToUsers, filterByNotificationPref } from "@/lib/notifications/notify-admins"
 
 export const dynamic = "force-dynamic"
@@ -229,6 +229,42 @@ async function logJourney(admin: Admin, contactId: string, type: string, title: 
 }
 
 /**
+ * Envía al lead la confirmación de agenda con NUESTRA marca (Capital Hub), UNA sola vez.
+ * Decisión Marco 2026-07-28: la confirmación no la deja solo Calendly; la mandamos
+ * nosotros con nuestro branding + el link de la reunión + .ics.
+ *
+ * Idempotente: si ya hay un email_logs con call_id = uri del evento y template
+ * 'agenda_confirmed' en estado 'sent', no reenvía (Calendly puede reintentar el webhook).
+ * Reutiliza el template branded existente 'agenda_confirmed' (editable en /email-marketing).
+ */
+async function sendCalendlyConfirmationOnce(
+  admin: Admin,
+  ev: { uri: string; email: string; name: string; startIso: string; endIso: string; meetingUrl: string | null },
+) {
+  try {
+    const { data: prev } = await admin
+      .from("email_logs")
+      .select("id")
+      .eq("call_id", ev.uri)
+      .eq("template", "agenda_confirmed")
+      .eq("status", "sent")
+      .limit(1)
+      .maybeSingle()
+    if (prev) return
+    await sendAgendaConfirmed({
+      fullName: ev.name,
+      email: ev.email,
+      slotStartIso: ev.startIso,
+      slotEndIso: ev.endIso,
+      meetingUrl: ev.meetingUrl,
+      callId: ev.uri,
+    })
+  } catch (e) {
+    console.error("[calendly/webhook] confirmación al lead falló (no bloquea)", e)
+  }
+}
+
+/**
  * POST /api/webhooks/calendly
  * Eventos: invitee.created, invitee.canceled, invitee_no_show.created.
  *
@@ -323,6 +359,18 @@ export async function POST(req: NextRequest) {
         scheduled.name,
         hostEmails,
       )
+
+      // Confirmación de agenda con NUESTRA marca al lead (solo al reservar).
+      if (event === "invitee.created" && inv.email) {
+        await sendCalendlyConfirmationOnce(admin, {
+          uri: scheduled.uri,
+          email: inv.email,
+          name: inv.name || inv.email,
+          startIso: scheduled.start_time,
+          endIso: scheduled.end_time,
+          meetingUrl: scheduled.location?.join_url ?? scheduled.location?.location ?? null,
+        })
+      }
     } else if (event === "invitee_no_show.created") {
       // status update + read del scheduled_event guardado para tener start_time + name (no vienen completos en este payload)
       await admin.from("calendly_scheduled_events").update({

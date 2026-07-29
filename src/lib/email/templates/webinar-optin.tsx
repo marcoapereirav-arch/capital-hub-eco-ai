@@ -10,23 +10,23 @@ interface Props {
 
 /**
  * Email de confirmación del opt-in del webinar. Se envía cuando un lead reserva su
- * plaza en /webinar. Único objetivo: que entre al grupo de WhatsApp (donde se suelta
- * el link del Zoom). Copy directo, sin em-dash, sin promesas inventadas.
- * El copy es editable desde /email-marketing (template 'optin_webinar').
+ * plaza en /webinar. Flujo vigente (2026-07-28): para conseguir la entrada, el lead
+ * escribe por WhatsApp a Adrián (mismo paso que la página de gracias). El botón abre
+ * WhatsApp con el mensaje ya escrito. Copy al grano, español neutro, sin em dash.
+ * Editable desde /email-marketing (template 'optin_webinar').
  */
 export function WebinarOptinEmail({ firstName, whatsappUrl, dateLabel }: Props) {
   return (
-    <EmailLayout preview="Tu plaza está reservada. Entra al grupo de WhatsApp para acceder al directo.">
+    <EmailLayout preview="Tu plaza está reservada. Escríbenos por WhatsApp para conseguir tu entrada.">
       <H1>Tu plaza está reservada{firstName ? `, ${firstName}` : ""}.</H1>
       <P>
-        El directo es <strong>{dateLabel}</strong>. Para acceder solo tienes que hacer una cosa:
-        entrar al grupo de WhatsApp. Ahí es donde te mandamos el <strong>link del Zoom</strong> del
-        directo y los avisos, para que no te lo pierdas.
+        El directo es <strong>{dateLabel}</strong>. Para conseguir tu entrada, escríbenos por
+        WhatsApp. Te respondemos con el acceso.
       </P>
 
-      <Button href={whatsappUrl}>Entrar al grupo de WhatsApp</Button>
+      <Button href={whatsappUrl}>Conseguir mi entrada por WhatsApp</Button>
 
-      <P dim>Si el botón no funciona, copia y pega este enlace en tu navegador: {whatsappUrl}</P>
+      <P dim>Si el botón no funciona, copia y pega este enlace: {whatsappUrl}</P>
 
       <Text style={{ fontSize: 14, color: emailColors.text, margin: "24px 0 4px" }}>Adrián Villanueva</Text>
       <Text style={{ fontSize: 12, color: emailColors.textDim, margin: 0 }}>Fundador, Capital Hub</Text>

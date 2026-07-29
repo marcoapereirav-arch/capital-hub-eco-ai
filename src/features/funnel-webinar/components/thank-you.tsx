@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { CalendarClock, CheckCircle2, Sparkles, ArrowRight } from "lucide-react"
-import { FUNNEL_WEBINAR } from "../config"
+import { CalendarClock, CheckCircle2, BadgeCheck, ArrowRight } from "lucide-react"
+import { FUNNEL_WEBINAR, whatsappLink } from "../config"
 
 /** Logo oficial de WhatsApp (glyph monocromo, hereda el color con currentColor). */
 function WhatsappIcon({ className }: { className?: string }) {
@@ -17,24 +17,41 @@ function WhatsappIcon({ className }: { className?: string }) {
  * Página de Gracias del Funnel Webinar.
  * Brandkit Capital Hub: base monocromo B&W + verde de acento (#22C55E).
  *
- * Objetivo único: entregarle su ACCESO al grupo de WhatsApp (donde se suelta el link
- * del Zoom del directo). Al entrar, un efecto de celebración (confeti) para que sienta
- * que tomó una buena decisión y lo estamos felicitando. Recordatorio con día y hora
- * para que reserve el hueco.
+ * Objetivo único (reunión 24-jul-2026): que el lead ESCRIBA a Adrián por WhatsApp para
+ * conseguir su entrada al evento. El botón abre WhatsApp con el mensaje ya escrito; el
+ * lead solo pulsa enviar. Ese envío es el punto de éxito del funnel: a partir de ahí el
+ * equipo hace el setting manual (fuera de este funnel). Confeti de celebración al entrar
+ * y recordatorio con la fecha del directo.
  *
- * El link del grupo llega por props desde el server (editable en /webs). Si aún no está
- * puesto, el botón muestra un estado de espera en vez de romper.
+ * El número y el mensaje llegan por props desde el server (editables en /webs). Siempre
+ * hay un default, así que el botón nunca se queda sin destino.
  */
 type Props = {
-  whatsappGroup?: string
+  whatsappNumber?: string
+  whatsappMessage?: string
   dateLabel?: string
+  /** Slug opaco del contacto (lo pone el opt-in). Sirve para marcar quién tocó WhatsApp. */
+  slug?: string
 }
 
-export function WebinarThankYou({ whatsappGroup, dateLabel }: Props = {}) {
-  const groupUrl = (whatsappGroup || FUNNEL_WEBINAR.WHATSAPP_GROUP_URL).trim()
+export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, slug }: Props = {}) {
+  const waUrl = whatsappLink(
+    whatsappNumber || FUNNEL_WEBINAR.WHATSAPP_NUMBER,
+    whatsappMessage || FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
+  )
   const resolvedDate = dateLabel || FUNNEL_WEBINAR.WEBINAR_DATE_LABEL
-  const hasGroup = groupUrl.length > 0
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // Al tocar el botón de WhatsApp marcamos al contacto (tag + evento en su timeline).
+  // sendBeacon se envía aunque el navegador salte a WhatsApp en el mismo instante.
+  function onWhatsappClick() {
+    if (!slug) return
+    try {
+      navigator.sendBeacon(`/api/funnel/webinar/whatsapp-click?c=${encodeURIComponent(slug)}`)
+    } catch {
+      // No bloquea nunca la apertura de WhatsApp.
+    }
+  }
 
   // Confeti de celebración (una ráfaga al montar). Colores del brandkit. Respeta reduce-motion.
   useEffect(() => {
@@ -137,7 +154,7 @@ export function WebinarThankYou({ whatsappGroup, dateLabel }: Props = {}) {
         <div className="flex flex-1 flex-col justify-center">
           {/* Sello de felicitación */}
           <div className="wbt-pop mb-6 inline-flex items-center gap-2 self-start rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10 px-3.5 py-1.5">
-            <Sparkles className="h-4 w-4 text-[#22C55E]" />
+            <BadgeCheck className="h-4 w-4 text-[#22C55E]" />
             <span className="text-[13px] font-medium text-[#4ADE80]">Plaza confirmada. Buena decisión.</span>
           </div>
 
@@ -145,29 +162,30 @@ export function WebinarThankYou({ whatsappGroup, dateLabel }: Props = {}) {
             className="wbt-rise mb-4 text-[2rem] font-medium leading-[1.1] tracking-tight text-white md:text-[2.6rem]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            Ya tienes tu acceso al grupo de WhatsApp.
+            Último paso: escríbenos por WhatsApp para conseguir tu entrada.
           </h1>
           <p className="wbt-rise mb-8 max-w-lg text-base leading-relaxed text-[#C7CBD1] md:text-lg" style={{ animationDelay: "80ms" }}>
-            Es tu sala de embarque. Ahí dentro te damos el <strong className="text-white">link del Zoom</strong> del
-            directo y todos los avisos. Entra ahora y lo dejas listo.
+            Pulsa el botón y se abre tu WhatsApp con el mensaje ya escrito. Solo tienes que
+            <strong className="text-white"> enviarlo</strong> y te damos tu acceso al directo. Te respondemos en persona.
           </p>
 
-          {/* CTA principal: entrar al grupo (grande y llamativo, siempre visible) */}
+          {/* CTA principal: escribir por WhatsApp privado con el mensaje predefinido.
+              Su envío es el punto de éxito del funnel (reunión 24-jul-2026). */}
           <a
-            href={groupUrl || "#"}
-            target={hasGroup ? "_blank" : undefined}
+            href={waUrl}
+            target="_blank"
             rel="noopener noreferrer"
-            onClick={hasGroup ? undefined : (e) => e.preventDefault()}
+            onClick={onWhatsappClick}
             className="wbt-cta group relative mb-4 flex h-16 w-full items-center justify-center gap-3 overflow-hidden rounded-none bg-[#22C55E] px-6 text-lg font-semibold text-[#08130C]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
             <span aria-hidden className="wbt-cta-shine" />
             <WhatsappIcon className="relative z-10 h-6 w-6" />
-            <span className="relative z-10">Entrar al grupo de WhatsApp</span>
+            <span className="relative z-10">Conseguir mi entrada por WhatsApp</span>
             <ArrowRight className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
           </a>
           <p className="mb-9 text-center text-[13px] text-[#6B7280]">
-            Se abre WhatsApp en una pestaña nueva. Pulsa «Unirse al grupo» y ya estás dentro.
+            Se abre WhatsApp con el mensaje listo. Solo pulsa enviar.
           </p>
 
           {/* Recordatorio de la cita */}

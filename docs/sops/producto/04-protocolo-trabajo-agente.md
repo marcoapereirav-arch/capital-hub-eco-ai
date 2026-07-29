@@ -198,7 +198,47 @@ El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **
 
 ---
 
+## REGLA #11: SIEMPRE español neutro (nunca castellano de España)
+
+Todo lo que yo escriba (chat **Y** copy de producto) va en **español neutro**. Prohibido el castellano de España.
+
+**How to apply:**
+- Usar **ustedes / tú**, NUNCA "vosotros / os / vuestro / -áis / -éis".
+- Fuera vocabulario y muletillas de España: "vale", "coño", "tío", "guay", "flipar", "curro", "majo", etc.
+- Antes de cerrar cualquier bloque (chat, copy, doc), revisar que no quede ni un "vosotros" ni jerga de España.
+
+**Why:** Marco lo pidió como regla dura el 2026-07-28. Es latinoamericano; el castellano de España no encaja con su tono ni con su avatar.
+
+---
+
+## REGLA #12: Copy SIEMPRE al grano, sin marketing
+
+Todo el copy corto y directo, en español neutro, sin adornos ni lenguaje de marketing. Aplica **por defecto** salvo que Marco diga lo contrario para un caso concreto.
+
+**How to apply:**
+- Frases cortas. Decir la cosa, no adornarla.
+- Fuera muletillas de marketing: "sin compromiso", "plazas limitadas", "no te lo pierdas", "exclusivo", exclamaciones vacías.
+- Perspectiva del usuario, no de nosotros pidiendo: "Deja tus datos para acceder al evento" (es lo necesario para entrar), NO "Déjanos tus datos" ni "te enviamos tu invitación".
+
+**Why:** Marco lo pidió como regla anclada el 2026-07-28. El copy inflado le resta credibilidad y delata plantilla.
+
+---
+
+## REGLA #13: PROHIBIDO el icono estrellita (Sparkles) en TODO el producto
+
+El icono `Sparkles` de lucide-react está prohibido en **todo el producto**, no solo en formación (donde ya estaba vetado, SOP `producto/ia-integrator`). Si un elemento necesita icono, usar uno que signifique la acción real (ej. `BadgeCheck` = confirmado, `Mail` = email, `Ticket` = entrada). Si no hace falta, ninguno.
+
+**Why:** Marco lo re-pidió el 2026-07-28 al verlo en la gracias del funnel del webinar. Es un icono genérico de "IA" que delata plantilla y no significa nada concreto.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-28: REGLAS #11, #12, #13 añadidas
+- **#11 español neutro** (nunca castellano de España): ustedes/tú, sin "vosotros" ni jerga de España. Chat y copy.
+- **#12 copy al grano, sin marketing:** frases cortas, sin muletillas, perspectiva del usuario.
+- **#13 icono estrellita (Sparkles) prohibido en TODO el producto** (antes solo en formación).
+Detonante: feedback de Marco al revisar el funnel del webinar del lanzamiento del 8.
 
 ### 2026-07-26: REGLA #10 añadida (link de localhost siempre)
 Marco: siempre que entregue o haga algo en localhost, tengo que darle el link, en un puerto libre (nunca el 3000) y con el server corriendo. Detonante: rediseñé el embudo del dashboard y solo se lo describí, sin link para que lo viera.

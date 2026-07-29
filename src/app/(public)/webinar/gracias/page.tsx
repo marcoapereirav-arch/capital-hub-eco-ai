@@ -6,10 +6,21 @@ export const revalidate = 0
 
 export const metadata = {
   title: "Tu plaza está reservada · Capital Hub",
-  description: "Entra al grupo de WhatsApp para recibir el link del directo.",
+  description: "Escríbenos por WhatsApp para conseguir tu entrada al directo.",
 }
 
-export default async function WebinarGraciasRoute() {
-  const s = await getWebinarSettings()
-  return <WebinarThankYou whatsappGroup={s.whatsappGroup} dateLabel={s.dateLabel} />
+export default async function WebinarGraciasRoute({
+  searchParams,
+}: {
+  searchParams: Promise<{ c?: string }>
+}) {
+  const [{ c }, s] = await Promise.all([searchParams, getWebinarSettings()])
+  return (
+    <WebinarThankYou
+      whatsappNumber={s.whatsappNumber}
+      whatsappMessage={s.whatsappMessage}
+      dateLabel={s.dateLabel}
+      slug={c}
+    />
+  )
 }

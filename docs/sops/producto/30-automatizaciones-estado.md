@@ -19,15 +19,16 @@ area: producto
 
 ## Tabla viva (sincronizar con `/api/admin/automations/route.ts`)
 
-### Calendario (5)
+### Calendario (6)
 
 | Estado | id | Trigger | Última ejecución conocida | Notas |
 |---|---|---|---|---|
 | 🟢 | `agenda_to_calendar` | POST `/api/calendar/book` | Cuando alguien reserva en `/agenda` | Pega evento en Google Calendar de Adrián. Mueve stage a `agendado` (guarda no-retroceso). Cancelar → `seguimiento` |
-| 🟢 | `agenda_reminder_24h` | `pg_cron` cada 30 min | Cada 30 min (jobid 1) | Email 24h antes con Zoom link |
+| 🟢 | `agenda_reminder_24h` | `pg_cron` cada 30 min | Cada 30 min (jobid 1) | Email 24h antes con Zoom link (tabla `calls`, MIFGE legacy) |
 | 🟢 | `no_show_detection` | `pg_cron` cada 30 min | Cada 30 min (jobid 3) | Marca `no_show` + email retargeting |
 | 🟢 | `gcal_health_check` | `pg_cron` cada hora | Cada hora (jobid 5) | Alerta si OAuth de Adrián caduca |
-| 🟢/🟡 | `calendly_webhook` | Webhook Calendly → POST `/api/webhooks/calendly` | Cuando alguien reserva online-coffee | **Cableado** (2026-06-25): registra en `calendly_scheduled_events` Y mueve el pipeline — agenda→`agendado` (crea contacto si no existe), cancela→`seguimiento`, no-show→`no_show`, con guarda no-retroceso. Evento: `online-coffee` de Adrián |
+| 🟢/🟡 | `calendly_webhook` | Webhook Calendly → POST `/api/webhooks/calendly` | Cuando alguien reserva online-coffee | **Cableado** (2026-06-25): registra en `calendly_scheduled_events` Y mueve el pipeline — agenda→`agendado` (crea contacto si no existe), cancela→`seguimiento`, no-show→`no_show`, con guarda no-retroceso. **2026-07-28:** además envía al lead la **confirmación de agenda con nuestra marca** (template `agenda_confirmed`, .ics + link de la reunión), idempotente por `email_logs` (call_id = uri). Evento: `online-coffee` de Adrián |
+| 🟢/🟡 | `calendly_reminders` | Vercel Cron `/api/cron/calendly-reminders` cada 15 min (`*/15 * * * *`) | Cada 15 min | **2026-07-28:** recordatorios de las reservas de Calendly: **24h antes** (`agenda_reminder_24h`) y **1h antes** (`agenda_reminder_1h`), con el link de la reunión. Idempotencia por `email_logs` (call_id = uri del evento + template), **sin tocar el esquema**. Baja los no-show del funnel de reserva de sesión |
 
 ### Ventas / Alumno (3)
 
@@ -63,6 +64,7 @@ area: producto
 
 ## Decisiones tomadas
 
+- **2026-07-28:** confirmación + recordatorios de agenda con nuestra marca sobre el Calendly del funnel de reserva de sesión. La confirmación se engancha al `calendly_webhook` (reutiliza el template branded `agenda_confirmed`); los recordatorios son un cron nuevo `calendly_reminders` (24h + 1h). Sin cambio de esquema: la idempotencia se resuelve mirando `email_logs` por `call_id = uri` del evento. Plantilla nueva `agenda_reminder_1h`. Ver SOP marketing/08 y producto/18.
 - **2026-07-23:** registradas las 2 automatizaciones del funnel del test v2 (`test_personalidad_email_acceso` y `test_personalidad_acceso_cualifica`) en el mismo bloque en que se construyeron. Ver SOP marketing/07 y PRP-007.
 
 - **2026-06-16:** Eliminadas del panel automatizaciones "fantasma" que aparecían `live` sin estarlo. Ahora `live` requiere evidencia real (cron run en 24h o evento webhook en 7d).

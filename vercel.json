@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/manychat-sync",
       "schedule": "23 */6 * * *"
+    },
+    {
+      "path": "/api/cron/calendly-reminders",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
