@@ -8,6 +8,19 @@ description: "Convierte un documento de formación (un .md del Knowledge) en una
 > Todas las páginas de formación de Capital Hub se ven igual. Este documento es el contrato.
 > Si una página de formación no sale de aquí, está mal hecha.
 
+## Hay DOS caminos, y este documento manda en los dos
+
+Desde 2026-07-29 una página de formación se puede construir de dos maneras:
+
+| Camino | Quién | Cómo |
+|---|---|---|
+| **A mano** | Yo (el agente) | Componente React montado con el kit. Es el resto de este documento. |
+| **Desde el software** | El formador, solo | Sube su PDF, su `.md` o pega texto en la App, y sale una presentación con este mismo estilo |
+
+**El estilo no se decide dos veces.** El camino del software no genera HTML ni código: genera un **documento de bloques** que un renderer pinta con **este mismo kit**. Por eso una presentación que hace un formador un martes y una guía que monto yo dos meses después salen idénticas.
+
+Consecuencia práctica: **si cambia una pieza del kit, cambia en tres sitios o en ninguno.** Ver "El contrato de bloques" abajo.
+
 ---
 
 ## Regla número CERO: esto vive en la App, no en el OS
@@ -144,6 +157,76 @@ Importar siempre de `../kit/kit`.
 
 ---
 
+## El contrato de bloques (el camino del software)
+
+Cuando la presentación la genera el formador desde la App, el material NO se convierte en código: se convierte en un **documento de bloques**, y el renderer lo pinta con las piezas del kit de arriba.
+
+Se hace así a propósito, por tres motivos:
+
+1. **El diseño no se puede desviar.** Por mucho que cambie el texto, lo pinta el kit.
+2. **Editar el texto es editar un campo**, no tocar código. Por eso existe el editor rápido de texto.
+3. **No se renderiza HTML de nadie**, así que no hay hueco por donde colar nada.
+
+### Dónde vive
+
+| Pieza | Archivo (repo de la App) |
+|---|---|
+| El contrato y el validador | `web/src/features/presentaciones/documento.ts` |
+| El mapa de iconos permitidos | `web/src/features/presentaciones/iconos.ts` |
+| El renderer (bloque → pieza del kit) | `web/src/features/presentaciones/Presentacion.tsx` |
+| El generador (material → documento) | `supabase/functions/api/handlers/presentaciones.ts` |
+| Dónde se guarda | `resources` con `type='PRESENTACION'`, el documento en `doc` |
+
+### Los bloques
+
+Cada bloque es una pieza del kit. La equivalencia es exacta:
+
+| Bloque | Pieza del kit | Para qué |
+|---|---|---|
+| `hero` | `Hero` | Portada. Una vez, la primera |
+| `seccion` | `SectionHead` | Cabecera numerada. Agrupa lo que va detrás |
+| `titular` | `Lead` | La frase que abre la sección |
+| `texto` / `apunte` | `Text` / `Muted` | Párrafo / párrafo de apoyo |
+| `cita` | `Quote` | La frase que hay que recordar |
+| `aviso` | `Warn` | Advertencia. Sustituye a los emojis del original |
+| `tarjetas` | `Cards` | Conceptos hermanos |
+| `pasos` | `Steps` | Procedimiento en orden |
+| `cronologia` | `Timeline` | Secuencia en el tiempo |
+| `reglas` | `Rules` | Lista de "esto no se salta" |
+| `etiquetas` | `Chips` | Vocabulario, términos sueltos |
+| `tabla` | `Terms` | Término y definición |
+| `comparacion` | `Split` | Antes/después, mal/bien. La derecha es la buena |
+| `codigo` | `Code` | Comando o archivo |
+| `recorrido` | `Flow` | Un camino en una línea |
+| `nodos` | `NodeLine` | Diagrama de 2 a 4 nodos |
+| `cadena` | `Chain` | Cajas con flecha |
+| `cierre` | `Closing` | Cierre. Una vez, la última |
+
+### Los iconos son lista blanca
+
+El generador solo puede elegir de la lista de `documento.ts`. Un icono inventado no llega a pantalla: el validador lo cambia por el de reserva. `Sparkles` **no está en la lista y no puede estar** (regla de arriba).
+
+### La regla de los tres sitios
+
+Añadir, quitar o cambiar la forma de un bloque obliga a tocar **los tres**, en el mismo bloque de trabajo:
+
+1. **El kit** (`kit/kit.tsx`), si la pieza visual es nueva.
+2. **El contrato** (`documento.ts`): el tipo, el normalizador y los campos de texto editables.
+3. **El renderer** (`Presentacion.tsx`) y **el prompt del generador** (`presentaciones.ts`).
+4. Y esta tabla.
+
+Si solo se toca uno, el generador produce algo que el renderer no sabe pintar, o al revés. **Se cae en silencio**, que es el peor fallo posible.
+
+### Qué NO puede tocar el editor de texto
+
+El editor rápido saca los campos de texto del documento y deja cambiarlos. **Solo escribe sobre una clave que ya existía y que ya era texto.** No puede añadir bloques, ni cambiar iconos, ni alterar la estructura. Es estructuralmente incapaz de romper el diseño, no es una cuestión de confiar en el formador.
+
+### Antes de publicar, la revisa el formador
+
+Una presentación recién generada nace como **borrador**: solo la ven quien la creó y los administradores, por RLS, nunca un alumno. El formador la mira, puede pedir arreglos por escrito las veces que haga falta (el generador rehace el documento entero con esos cambios), y solo cuando la acepta pasa a publicada.
+
+---
+
 ## El método, paso a paso
 
 ### 1. Leer el documento entero
@@ -233,6 +316,13 @@ Si alguna sale que no, la página no está terminada:
 - [ ] Se ha visto en el navegador, en escritorio **y en móvil**.
 - [ ] El `00-readme.md` de la carpeta del Knowledge está al día.
 
+### Si además se tocó el contrato de bloques
+
+- [ ] La pieza está en el **kit**, en el **contrato** (`documento.ts`) y en el **renderer** (`Presentacion.tsx`).
+- [ ] El **prompt del generador** (`presentaciones.ts`) la describe con la misma forma exacta.
+- [ ] La tabla de bloques de esta skill está al día.
+- [ ] Un documento con un bloque desconocido o un icono inventado **no revienta**: el normalizador lo descarta.
+
 ---
 
 ## Errores que ya se han cometido (no repetirlos)
@@ -252,6 +342,19 @@ Si alguna sale que no, la página no está terminada:
 **`position: sticky` que no pega.** Si una cabecera no se queda fija, mirar los ancestros: un `overflow` distinto de `visible` (aunque sea `overflow-x: hidden` en el `body`) crea un contenedor de scroll y rompe el sticky. La solución no es quitar la protección de scroll horizontal: es `overflow-x: clip`, que recorta igual sin crear contenedor.
 
 **Claves de ejemplo con formato real.** Un material de formación que explica qué es una API key suele traer un ejemplo tipo `sk_live_...`. GitHub lo detecta como clave de verdad y **bloquea el push** (protección de secretos). La solución **nunca** es desbloquearlo desde GitHub: se cambia el ejemplo por un placeholder que no pueda confundirse con una clave (`sk_live_ESTO_ES_UN_EJEMPLO_NO_UNA_KEY`). Se cambia **en el `.md` y en la página**, y enseña exactamente lo mismo.
+
+---
+
+## Cambios de esta skill
+
+### 2026-07-29 — El molde pasa a servir a los dos caminos
+Antes esta skill solo describía cómo monto yo una guía a mano. Ahora también manda
+sobre las presentaciones que genera el formador desde la App, porque las dos cosas
+se pintan con el mismo kit. Añadido: la sección "Hay DOS caminos", el contrato de
+bloques con la equivalencia bloque a pieza, la lista blanca de iconos, la regla de
+los tres sitios y qué no puede tocar el editor de texto. Detonante: Marco pidió que
+cualquier formador pueda hacer su presentación desde el software sin pasar por mí,
+y que salga siempre igual.
 
 ---
 
