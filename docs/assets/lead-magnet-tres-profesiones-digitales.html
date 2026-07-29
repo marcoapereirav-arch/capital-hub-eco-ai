@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Las 3 Profesiones Digitales — Capital Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0F0F12;
+    --panel: #18181B;
+    --border: #2A2D34;
+    --text: #F5F6F7;
+    --muted: #9CA3AF;
+    --dim: #6B7280;
+    --white: #FFFFFF;
+  }
+
+  html, body { background: var(--bg); }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page { size: A4; margin: 0; }
+
+  .page {
+    width: 210mm;
+    height: 296.5mm;
+    background: var(--bg);
+    padding: 16mm 16mm 12mm 16mm;
+    page-break-after: always;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* ---------- Shared components ---------- */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4.5mm;
+    margin-bottom: 8mm;
+  }
+  .topbar .brand {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.45em;
+    font-size: 9px;
+    color: var(--text);
+  }
+  .topbar .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+
+  .footer {
+    position: absolute;
+    left: 16mm; right: 16mm; bottom: 8mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 3.5mm;
+  }
+  .footer .f-brand {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    font-size: 7.5px;
+    color: var(--dim);
+  }
+  .footer .f-page {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: var(--dim);
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4mm;
+  }
+
+  .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--white);
+    border: 1px solid var(--white);
+    border-radius: 2px;
+    padding: 1.5mm 3mm;
+    margin-bottom: 5mm;
+  }
+
+  h1 {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 26px;
+    letter-spacing: 0.01em;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 4mm;
+  }
+  h2 {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--white);
+    margin: 6mm 0 3mm 0;
+  }
+  p { font-size: 10.5px; line-height: 1.62; color: #D1D5DB; margin-bottom: 3mm; }
+  p strong, li strong { color: var(--text); font-weight: 600; }
+  em { color: var(--muted); }
+
+  .lede { font-size: 11.5px; color: var(--text); }
+
+  .quote {
+    border-left: 3px solid var(--white);
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, transparent 70%);
+    padding: 4mm 5mm;
+    margin: 4mm 0;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4.5mm 5mm;
+  }
+
+  ul.clean { list-style: none; }
+  ul.clean li {
+    font-size: 10.5px; line-height: 1.55; color: #D1D5DB;
+    padding-left: 5mm; position: relative; margin-bottom: 2.2mm;
+  }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 0; top: 2mm;
+    width: 1.8mm; height: 1.8mm; background: var(--white); border-radius: 50%;
+  }
+
+  /* Timeline (día a día) */
+  .timeline { margin-top: 2mm; }
+  .t-row {
+    display: flex; gap: 4mm; align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+    padding: 2.6mm 0;
+  }
+  .t-row:last-child { border-bottom: none; }
+  .t-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; color: var(--white);
+    min-width: 24mm; padding-top: 0.8mm; letter-spacing: 0.03em;
+  }
+  .t-desc { font-size: 10px; line-height: 1.55; color: #D1D5DB; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0; }
+  th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); text-align: left;
+    border-bottom: 1px solid var(--white);
+    padding: 2.2mm 3mm;
+  }
+  td {
+    font-size: 9.8px; line-height: 1.45; color: #D1D5DB;
+    border-bottom: 1px solid var(--border);
+    padding: 2.6mm 3mm; vertical-align: top;
+  }
+  td.range { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--white); white-space: nowrap; }
+  td.lvl { color: var(--text); font-weight: 600; }
+  .disclaimer {
+    font-size: 8.5px; color: var(--dim); font-style: italic; margin-top: 1mm;
+  }
+
+  /* History timeline */
+  .era { display: flex; gap: 4mm; margin-bottom: 3.2mm; }
+  .era-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px; color: var(--white);
+    border: 1px solid var(--border); border-radius: 2px;
+    padding: 1.2mm 2mm; height: fit-content;
+    min-width: 22mm; text-align: center; background: var(--panel);
+    white-space: nowrap;
+  }
+  .era p { font-size: 9.8px; margin-bottom: 0; }
+
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8.5px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 1.5mm;
+  }
+
+  .spacer { flex: 1; }
+
+  /* ---------- Cover ---------- */
+  .cover { justify-content: space-between; border: none; }
+  .cover-inner { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .cover-title {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 600;
+    font-size: 54px;
+    line-height: 1.06;
+    letter-spacing: 0.01em;
+    color: var(--text);
+    margin: 8mm 0 8mm 0;
+  }
+  .cover-title .num { color: var(--white); }
+  .cover-sub {
+    font-size: 13px; line-height: 1.7; color: var(--muted); max-width: 130mm;
+  }
+  .cover-rule { height: 1px; background: var(--border); margin: 10mm 0; }
+  .cover-foot {
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .cover-brand {
+    font-family: 'Inter Tight', sans-serif; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.45em; font-size: 15px;
+  }
+  .cover-tagline {
+    font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--dim); margin-top: 3mm;
+  }
+  .cover-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; margin-top: 10mm;
+  }
+  .cover-grid .cell {
+    border: 1px solid var(--border); border-radius: 3px; padding: 4mm;
+    background: var(--panel);
+  }
+  .cover-grid .c-num { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--dim); margin-bottom: 2mm; }
+  .cover-grid .c-name { font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 13px; color: var(--text); }
+  .cover-grid .c-pilar { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--dim); margin-top: 1.5mm; }
+
+  /* Pillars */
+  .pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; margin: 3mm 0; }
+  .pillar {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 3px;
+    padding: 4mm;
+  }
+  .pillar .p-num { font-family: 'JetBrains Mono', monospace; font-size: 8px; color: var(--dim); margin-bottom: 1.5mm; }
+  .pillar .p-name { font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 12px; color: var(--white); text-transform: uppercase; letter-spacing: 0.08em; }
+  .pillar p { font-size: 9.3px; margin: 1.5mm 0 0 0; }
+
+  .map-row {
+    display: flex; align-items: center; gap: 3mm;
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 3mm 4mm; margin-bottom: 2.5mm; background: var(--panel);
+  }
+  .map-row .who { font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: 11px; color: var(--text); min-width: 42mm; }
+  .map-row .arrow { color: var(--dim); font-size: 10px; }
+  .map-row .what { font-size: 10px; color: var(--muted); }
+
+  /* Comparison table page 12 */
+  .cmp th:first-child, .cmp td:first-child { width: 30mm; }
+  .cmp td { font-size: 9.2px; padding: 2.4mm 2.5mm; }
+  .cmp td.h { color: var(--text); font-weight: 600; font-size: 9.2px; }
+  .cmp thead th { color: var(--white); font-size: 8.5px; }
+
+  /* CTA page */
+  .cta-btn {
+    display: block; background: var(--white); color: #0F0F12;
+    font-family: 'Inter Tight', sans-serif; font-weight: 600;
+    font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase;
+    text-align: center; padding: 6mm; border-radius: 3px; margin: 5mm 0 2mm 0;
+  }
+  .cta-note { text-align: center; font-size: 9px; color: var(--dim); }
+
+  .profile-tag {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--white);
+    border-radius: 3px;
+    padding: 3.5mm 4.5mm;
+    margin-top: 3mm;
+  }
+  .profile-tag p { margin: 0; font-size: 9.8px; }
+</style>
+</head>
+<body>
+
+<!-- ==================== PÁGINA 1 · PORTADA ==================== -->
+<div class="page cover">
+  <div class="topbar" style="border-bottom: 2px solid var(--border);">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">GUÍA · V1.0 · 2026</div>
+  </div>
+  <div class="cover-inner">
+    <div class="eyebrow">Formación Profesional Digital</div>
+    <div class="cover-title">LAS <span class="num">3</span><br>PROFESIONES<br>DIGITALES</div>
+    <div class="cover-sub">La guía honesta para elegir el vehículo correcto — qué son, qué hacen cada día, cuánto pagan las empresas por ellas y por qué existen.</div>
+    <div class="cover-grid">
+      <div class="cell">
+        <div class="c-num">01</div>
+        <div class="c-name">Comercial Digital</div>
+        <div class="c-pilar">Pilar · Conversión</div>
+      </div>
+      <div class="cell">
+        <div class="c-num">02</div>
+        <div class="c-name">Media Buyer</div>
+        <div class="c-pilar">Pilar · Adquisición</div>
+      </div>
+      <div class="cell">
+        <div class="c-num">03</div>
+        <div class="c-name">IA Integrator</div>
+        <div class="c-pilar">Pilar · Operación</div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-rule"></div>
+  <div class="cover-foot">
+    <div>
+      <div class="cover-brand">Capital Hub</div>
+      <div class="cover-tagline">Formación Profesional Digital</div>
+    </div>
+    <div class="meta" style="font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--dim); text-align:right;">
+      Sin humo. Sin promesas de Lamborghini.<br>Solo el mapa que a nosotros nos costó años dibujar.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PÁGINA 2 · CONTEXTO ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">00 / EL CONTEXTO</div>
+  </div>
+  <h1>La tercera vía que nadie te ha contado</h1>
+  <p class="lede">Llevas años viendo lo mismo: gurús que te dicen que montes un negocio, networkers que te dicen que despidas a tu jefe, cursos que te dejan con conocimiento pero sin destino.</p>
+  <p>Y mientras tanto, tú sigues en el mismo punto. No porque seas tonto — porque te están confundiendo sistemáticamente. Cada semana un objeto brillante nuevo. Cada mes un vehículo distinto. Y cada salto te cuesta meses y te confirma la mentira de que "lo digital no funciona para ti".</p>
+  <p>Aquí está lo que nadie te dice: <strong>no tienes que elegir entre ser empleado o ser emprendedor.</strong> Existe una tercera categoría.</p>
+  <div class="quote">Una profesión digital es el punto medio entre el empleo y el emprendimiento. Trabajas para empresas reales, ganas bien, eres libre — y desde ahí decides si algún día montas algo propio o no.</div>
+  <p>No necesitas montar nada. No necesitas audiencia, ni marca personal, ni capital. Las empresas ya tienen el tráfico, los productos y el dinero. Lo que no tienen es gente con la skill correcta. <strong>Y por eso la pagan.</strong></p>
+  <h2>Los tres pilares de cualquier empresa</h2>
+  <p>Toda empresa que factura se sostiene sobre tres pilares. Los tres. Siempre. Cuando uno cojea, la empresa pierde dinero cada día.</p>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="p-num">PILAR 01</div>
+      <div class="p-name">Adquisición</div>
+      <p>Atraer clientes potenciales de forma predecible.</p>
+    </div>
+    <div class="pillar">
+      <div class="p-num">PILAR 02</div>
+      <div class="p-name">Conversión</div>
+      <p>Convertir esa atención en ventas reales.</p>
+    </div>
+    <div class="pillar">
+      <div class="p-num">PILAR 03</div>
+      <div class="p-name">Operación</div>
+      <p>Entregar y operar sin desperdiciar tiempo ni dinero.</p>
+    </div>
+  </div>
+  <p>Las tres profesiones de esta guía existen porque cada una sostiene uno de esos pilares:</p>
+  <div class="map-row"><div class="who">Media Buyer</div><div class="arrow">—</div><div class="what">controla la <strong style="color:var(--text)">adquisición</strong></div></div>
+  <div class="map-row"><div class="who">Comercial Digital</div><div class="arrow">—</div><div class="what">controla la <strong style="color:var(--text)">conversión</strong></div></div>
+  <div class="map-row"><div class="who">IA Integrator</div><div class="arrow">—</div><div class="what">controla la <strong style="color:var(--text)">operación</strong></div></div>
+  <p style="margin-top:2mm;">Por eso las empresas las pagan. No son modas: son los tres puntos de dolor permanentes de cualquier negocio. Vamos una por una.</p>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">02 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 3 · COMERCIAL: QUÉ ES + DÍA A DÍA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">01 / COMERCIAL DIGITAL</div>
+  </div>
+  <div class="pill">Pilar · Conversión</div>
+  <h1>Comercial Digital<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Qué es y cómo es su día a día</span></h1>
+  <p>Un Comercial Digital vende por teléfono o videollamada los productos y servicios de empresas digitales: formaciones, software, servicios profesionales, programas high ticket. La empresa genera los interesados; él convierte ese interés en ventas. <strong>Sin él, el marketing es dinero quemado.</strong></p>
+  <p>No es el teleoperador que te llama a la hora de la siesta. Es un profesional consultivo: escucha, diagnostica, y solo cierra cuando el producto encaja de verdad con la persona. Las empresas se pelean por los buenos porque un buen comercial se paga solo — cada venta que cierra financia su propia comisión.</p>
+  <h2>Un martes cualquiera</h2>
+  <div class="card timeline">
+    <div class="t-row"><div class="t-time">09:30</div><div class="t-desc">Café. Revisa su agenda: 5 llamadas programadas hoy. Repasa las fichas de cada lead en el CRM.</div></div>
+    <div class="t-row"><div class="t-time">10:00 – 14:00</div><div class="t-desc">Bloque de llamadas. Cada una dura 30–45 minutos: descubrir la situación de la persona, diagnosticar si el producto le sirve, resolver dudas, cerrar o agendar seguimiento.</div></div>
+    <div class="t-row"><div class="t-time">14:00 – 16:00</div><div class="t-desc">Comida y gimnasio. Su horario lo organiza él con la empresa.</div></div>
+    <div class="t-row"><div class="t-time">16:00 – 18:00</div><div class="t-desc">Seguimientos: WhatsApps y llamadas cortas a leads que quedaron en decidir. Actualiza el CRM. Registra sus métricas: agendas, presentaciones, cierres.</div></div>
+    <div class="t-row"><div class="t-time">18:00 – 18:30</div><div class="t-desc">Revisión del día con el equipo o roleplay para pulir una objeción que se le atascó.</div></div>
+  </div>
+  <p style="margin-top:3mm;">Trabaja desde casa, desde una cafetería o desde otro país. Lo que la empresa mide no son sus horas: <strong>son sus cierres.</strong></p>
+  <div class="profile-tag">
+    <p><strong>Para quién es:</strong> perfiles sociales, dinámicos, que disfrutan hablando con personas. Buenos comunicadores naturales — o que pueden serlo con entrenamiento. Gente a la que le mueve el resultado directo: llamada, cierre, comisión.</p>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">03 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 4 · COMERCIAL: CUÁNTO SE GANA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">01 / COMERCIAL DIGITAL</div>
+  </div>
+  <div class="pill">Pilar · Conversión</div>
+  <h1>Comercial Digital<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Cuánto se gana</span></h1>
+  <p>La estructura típica es <strong>fijo pequeño + comisión por venta</strong> (normalmente entre el 5% y el 12% del valor de lo vendido). Esto significa una cosa importante: tu techo no lo pone un convenio. <strong>Lo ponen tus cierres.</strong></p>
+  <h2>Rangos orientativos del mercado español (remoto)</h2>
+  <table>
+    <thead><tr><th>Nivel</th><th>Rango mensual</th><th>Qué significa</th></tr></thead>
+    <tbody>
+      <tr><td class="lvl">Primeros meses con cliente</td><td class="range">1.500 – 2.500 €</td><td>Ya formado, con su primer cliente, cerrando sus primeras ventas.</td></tr>
+      <tr><td class="lvl">Consolidado (6–18 meses)</td><td class="range">2.500 – 4.500 €</td><td>Domina el proceso, cierra con consistencia, la empresa le da más leads.</td></tr>
+      <tr><td class="lvl">Top performers</td><td class="range">5.000 – 10.000 €+</td><td>Cierran tickets altos con porcentajes altos. Existen, pero son la élite, no la media.</td></tr>
+    </tbody>
+  </table>
+  <p class="disclaimer">Rangos de mercado, no promesa. Lo que ganes dependerá de tu ejecución, del producto que vendas y del volumen de leads de la empresa.</p>
+  <h2>Lo que hace única a esta profesión en términos de dinero</h2>
+  <ul class="clean">
+    <li><strong>Velocidad de cobro:</strong> es estadísticamente la ruta más rápida hacia el primer ingreso. Un comercial formado puede estar cobrando sus primeras comisiones a las pocas semanas de conseguir cliente.</li>
+    <li><strong>Correlación directa esfuerzo–ingreso:</strong> más llamadas bien hechas = más cierres = más comisión. No hay techo de convenio.</li>
+    <li><strong>Skill portable:</strong> vender es la única habilidad que toda empresa del planeta necesita. Si mañana cambia el mercado, el que sabe vender siempre come.</li>
+  </ul>
+  <div class="spacer"></div>
+  <div class="card">
+    <div class="kicker">La contrapartida honesta</div>
+    <p style="margin:0;">Los primeros meses hay variabilidad. Hasta que dominas el proceso, hay semanas buenas y semanas malas. El que aguanta la curva, despega. El que espera cobrar como un funcionario desde el día uno, no es para esto.</p>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">04 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 5 · COMERCIAL: EVOLUCIÓN + IMPORTANCIA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">01 / COMERCIAL DIGITAL</div>
+  </div>
+  <div class="pill">Pilar · Conversión</div>
+  <h1>Comercial Digital<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Evolución y por qué las empresas lo pagan</span></h1>
+  <h2>De dónde viene</h2>
+  <div class="era"><div class="era-tag">1980 – 2000</div><p>El comercial era puerta fría, coche de empresa y catálogo. Respetado, pero atado a un territorio físico.</p></div>
+  <div class="era"><div class="era-tag">2000 – 2015</div><p>El telemarketing masivo quema la imagen de la profesión. Llamadas guionizadas, volumen sobre calidad. El "vendedor por teléfono" se convierte en algo que nadie quiere ser.</p></div>
+  <div class="era"><div class="era-tag">2015 – 2020</div><p>Explota la venta online de servicios y formación. Las empresas descubren que los productos de más de 1.000 € no se venden con un botón de "comprar" — hace falta una conversación humana. Nace la venta consultiva remota.</p></div>
+  <div class="era"><div class="era-tag">2020 – HOY</div><p>La pandemia normaliza la videollamada y el trabajo remoto. El mercado en español madura: miles de empresas digitales facturando necesitan comerciales profesionales, y no los encuentran. La profesión se profesionaliza — CRM, métricas, procesos — y deja de ser "vender humo" para ser una carrera con estándares.</p></div>
+  <div class="card" style="margin-top:2mm;">
+    <div class="kicker">La tendencia ahora</div>
+    <p style="margin:0;">La IA está automatizando la parte baja del embudo (mensajes, cualificación básica), lo que hace <strong>más valiosa</strong> la parte que no se puede automatizar: la conversación de cierre. Una persona decidiendo si invierte 3.000 € quiere hablar con una persona.</p>
+  </div>
+  <h2>Por qué es tan importante en una empresa</h2>
+  <p>Sin conversión, todo lo demás es gasto. Una empresa puede invertir 10.000 € al mes en anuncios y generar cientos de interesados — pero si nadie los convierte en clientes, ese dinero se quema. El comercial es la última pieza del sistema: <strong>donde la facturación ocurre o no ocurre.</strong></p>
+  <div class="quote">Es de los pocos roles donde nadie discute tu sueldo: tu resultado se mide en euros cerrados. Cuando pides más, la hoja de métricas habla por ti.</div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">05 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 6 · MEDIA BUYER: QUÉ ES + DÍA A DÍA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">02 / MEDIA BUYER DIGITAL</div>
+  </div>
+  <div class="pill">Pilar · Adquisición</div>
+  <h1>Media Buyer Digital<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Qué es y cómo es su día a día</span></h1>
+  <p>Un Media Buyer gestiona el dinero que las empresas invierten en publicidad online — Meta (Instagram/Facebook), Google, TikTok, YouTube — para convertir presupuesto en clientes. Le dan un presupuesto y un objetivo, y su trabajo es que <strong>cada euro invertido vuelva multiplicado.</strong></p>
+  <p>Es el rol que controla el grifo: cuando el Media Buyer lo hace bien, la empresa tiene un flujo predecible de clientes potenciales cada día. Cuando lo hace mal, el grifo se cierra — o peor, el dinero sale y no vuelve.</p>
+  <h2>Un martes cualquiera</h2>
+  <div class="card timeline">
+    <div class="t-row"><div class="t-time">09:00</div><div class="t-desc">Abre los paneles de anuncios con su café. Primera pregunta del día: ¿qué pasó ayer con el dinero? Revisa las métricas clave: cuánto costó cada lead, cuánto retornó cada euro invertido.</div></div>
+    <div class="t-row"><div class="t-time">09:30 – 11:00</div><div class="t-desc">Decisiones sobre campañas: apaga los anuncios que pierden dinero, escala los que funcionan, ajusta presupuestos y públicos.</div></div>
+    <div class="t-row"><div class="t-time">11:00 – 13:00</div><div class="t-desc">Trabajo creativo: analiza qué anuncios están funcionando en el mercado, brifea nuevas creatividades (vídeos, imágenes, textos) o las monta él mismo. Lanza tests de variantes nuevas.</div></div>
+    <div class="t-row"><div class="t-time">13:00 – 15:00</div><div class="t-desc">Comida y descanso. Las campañas siguen corriendo solas.</div></div>
+    <div class="t-row"><div class="t-time">15:00 – 17:00</div><div class="t-desc">Reporting y comunicación: prepara el informe para el cliente o el equipo, explica qué está funcionando y qué va a probar. Deja programados los tests de mañana.</div></div>
+  </div>
+  <p style="margin-top:3mm;">Su día es un ciclo constante: <strong>medir → decidir → testear → medir.</strong> Pantalla, datos y criterio.</p>
+  <div class="profile-tag">
+    <p><strong>Para quién es:</strong> perfiles analíticos, detallistas, enfocados en métricas. Gente que prefiere la pantalla a estar todo el día hablando — aunque sabe comunicar cuando toca. Disfrutan optimizando, midiendo, ajustando. Les satisface ver un número mejorar por una decisión suya.</p>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">06 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 7 · MEDIA BUYER: CUÁNTO SE GANA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">02 / MEDIA BUYER DIGITAL</div>
+  </div>
+  <div class="pill">Pilar · Adquisición</div>
+  <h1>Media Buyer Digital<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Cuánto se gana</span></h1>
+  <p>El Media Buyer tiene dos caminos de cobro, y esa flexibilidad es parte de su atractivo.</p>
+  <h2>Camino 1 — En plantilla o dedicado a una empresa</h2>
+  <table>
+    <thead><tr><th>Nivel</th><th>Rango mensual</th><th>Qué significa</th></tr></thead>
+    <tbody>
+      <tr><td class="lvl">Junior (primeros meses)</td><td class="range">1.400 – 2.200 €</td><td>Gestiona campañas con supervisión, aprende con presupuesto real.</td></tr>
+      <tr><td class="lvl">Consolidado (1–2 años)</td><td class="range">2.500 – 4.000 €</td><td>Gestiona presupuestos serios en solitario y responde de resultados.</td></tr>
+      <tr><td class="lvl">Senior / Head of Paid</td><td class="range">4.000 – 6.000 €+</td><td>Dirige la estrategia de adquisición completa de una o varias marcas.</td></tr>
+    </tbody>
+  </table>
+  <h2>Camino 2 — Freelance con cartera de clientes</h2>
+  <p>Cobra una cuota mensual por cliente (típicamente <strong>400 € – 1.500 €</strong> según el tamaño de la cuenta, a veces con bonus por resultados). Con 3–5 clientes bien gestionados, un freelance consolidado se mueve entre <strong>3.000 € y 6.000 €</strong> al mes.</p>
+  <p class="disclaimer">Rangos de mercado, no promesa. Dependen de tu nivel, tu cartera y los presupuestos que gestiones.</p>
+  <h2>Lo que hace única a esta profesión en términos de dinero</h2>
+  <ul class="clean">
+    <li><strong>Estabilidad superior:</strong> la retención de clientes es alta. Cambiar de Media Buyer es caro y arriesgado para una empresa — cuando lo haces bien, no te quieren soltar. Menos rotación que en ventas, ingresos más predecibles.</li>
+    <li><strong>Escalabilidad sin más horas:</strong> gestionar un presupuesto de 30.000 € no exige el doble de horas que gestionar uno de 15.000 €. Tu ingreso crece con la responsabilidad, no con el reloj.</li>
+    <li><strong>Demanda estructural:</strong> cada año más empresas compiten por anunciarse online, y los buenos gestores de ese dinero escasean. Es un mercado donde el talento tiene la sartén por el mango.</li>
+  </ul>
+  <div class="spacer"></div>
+  <div class="card">
+    <div class="kicker">La contrapartida honesta</div>
+    <p style="margin:0;">La curva inicial es más lenta que en comercial. Necesitas meses de datos, tests y errores (con dinero real de por medio) antes de tener criterio. Se paga bien precisamente porque pocos aguantan esa curva.</p>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">07 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 8 · MEDIA BUYER: EVOLUCIÓN + IMPORTANCIA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">02 / MEDIA BUYER DIGITAL</div>
+  </div>
+  <div class="pill">Pilar · Adquisición</div>
+  <h1>Media Buyer Digital<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Evolución y por qué las empresas lo pagan</span></h1>
+  <h2>De dónde viene</h2>
+  <div class="era"><div class="era-tag">ANTES DE 2000</div><p>Comprar publicidad era llamar a un periódico, una radio o una tele. Solo las grandes empresas podían permitírselo, y nadie sabía con certeza qué funcionaba. La mitad del presupuesto se tiraba — pero nadie sabía qué mitad.</p></div>
+  <div class="era"><div class="era-tag">2000 – 2010</div><p>Google cambia las reglas: por primera vez puedes pagar por aparecer exactamente cuando alguien busca lo que vendes, y medir cada céntimo. Nace la publicidad medible.</p></div>
+  <div class="era"><div class="era-tag">2012 – 2019</div><p>Facebook e Instagram crean la máquina publicitaria más potente de la historia: segmentación por intereses y comportamiento a escala planetaria. Cualquier negocio con 10 € al día puede anunciarse. Explota la demanda de gente que sepa manejar la máquina.</p></div>
+  <div class="era"><div class="era-tag">2020 – HOY</div><p>La inversión mundial en publicidad digital supera a la televisión y no ha dejado de crecer. TikTok entra en el juego, la privacidad complica la medición, y el rol se sofistica: ya no basta con apretar botones, hace falta estrategia, criterio creativo y análisis.</p></div>
+  <div class="card" style="margin-top:2mm;">
+    <div class="kicker">La tendencia ahora</div>
+    <p style="margin:0;">Las plataformas automatizan la parte mecánica (pujas, públicos) y la IA genera variantes creativas en minutos. El valor se concentra donde la máquina no llega: la estrategia, el ángulo creativo y la interpretación de los datos. El Media Buyer evoluciona <strong>de operador a estratega de adquisición.</strong></p>
+  </div>
+  <h2>Por qué es tan importante en una empresa</h2>
+  <p>La adquisición predecible es la diferencia entre un negocio y una tómbola. Una empresa que depende del boca a boca o de que un vídeo "se haga viral" no controla su futuro. El Media Buyer convierte la captación de clientes en una ecuación: <strong>metes X, sale Y</strong> — y eso permite a la empresa planificar, contratar y crecer.</p>
+  <div class="quote">Maneja directamente el activo más sensible que existe: el dinero de la empresa. A quien le confías decenas de miles de euros al mes, le pagas bien. Es así de simple.</div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">08 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 9 · IA INTEGRATOR: QUÉ ES + DÍA A DÍA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">03 / IA INTEGRATOR</div>
+  </div>
+  <div class="pill">Pilar · Operación</div>
+  <h1>IA Integrator<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Qué es y cómo es su día a día</span></h1>
+  <p>Un IA Integrator implementa inteligencia artificial y automatizaciones dentro de empresas reales: sistemas que responden a los clientes, procesos que se ejecutan solos, agentes que hacen en minutos lo que antes costaba horas de trabajo manual.</p>
+  <p>No es programador, ni "experto en IA" teórico. Es un implementador: entiende cómo funciona un negocio por dentro, detecta dónde se pierde tiempo y dinero, y monta la solución que lo elimina. Las empresas no pagan por saber de IA — <strong>pagan por tenerla funcionando dentro de su operación.</strong></p>
+  <h2>Un martes cualquiera</h2>
+  <div class="card timeline">
+    <div class="t-row"><div class="t-time">09:30</div><div class="t-desc">Revisa las automatizaciones activas de sus clientes: flujos que corrieron durante la noche, conversaciones que atendió el agente de IA, errores que corregir.</div></div>
+    <div class="t-row"><div class="t-time">10:00 – 11:00</div><div class="t-desc">Llamada con un cliente nuevo: audita su operación. ¿Dónde pierde horas su equipo? ¿Qué procesos se hacen a mano que no deberían? Sale con un mapa de oportunidades.</div></div>
+    <div class="t-row"><div class="t-time">11:00 – 14:00</div><div class="t-desc">Trabajo profundo: construye. Conecta el CRM del cliente con WhatsApp, monta un agente que cualifica leads automáticamente, deja documentado el flujo.</div></div>
+    <div class="t-row"><div class="t-time">14:00 – 16:00</div><div class="t-desc">Comida y desconexión.</div></div>
+    <div class="t-row"><div class="t-time">16:00 – 17:30</div><div class="t-desc">Prueba lo construido, graba un vídeo corto mostrándole al cliente cómo funciona y cuántas horas le ahorra a la semana.</div></div>
+    <div class="t-row"><div class="t-time">17:30 – 18:00</div><div class="t-desc">Se pone al día: qué ha salido nuevo esta semana en IA y qué puede aplicar a sus clientes. En esta profesión, estar al día es parte del trabajo.</div></div>
+  </div>
+  <div class="profile-tag">
+    <p><strong>Para quién es:</strong> perfiles técnicos — que no significa saber programar, sino disfrutar montando sistemas y entendiendo cómo funcionan las cosas. Gente con visión 360 de negocio, curiosidad por la vanguardia y capacidad de traducir "me ahorras 20 horas al mes" en soluciones concretas.</p>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">09 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 10 · IA INTEGRATOR: CUÁNTO SE GANA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">03 / IA INTEGRATOR</div>
+  </div>
+  <div class="pill">Pilar · Operación</div>
+  <h1>IA Integrator<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Cuánto se gana</span></h1>
+  <p>El IA Integrator cobra de dos formas que se complementan: <strong>proyectos de implementación</strong> (montar un sistema: precio cerrado) y <strong>cuotas mensuales de mantenimiento</strong> (el sistema hay que mantenerlo, mejorarlo y ampliarlo — ingreso recurrente).</p>
+  <h2>Rangos orientativos del mercado (remoto)</h2>
+  <table>
+    <thead><tr><th>Nivel</th><th>Rango mensual</th><th>Qué significa</th></tr></thead>
+    <tbody>
+      <tr><td class="lvl">Primeros clientes</td><td class="range">1.500 – 2.500 €</td><td>Proyectos pequeños: una automatización concreta, un agente simple.</td></tr>
+      <tr><td class="lvl">Consolidado (1–2 años)</td><td class="range">3.000 – 6.000 €</td><td>Varios clientes en cuota mensual + proyectos de implementación.</td></tr>
+      <tr><td class="lvl">Techo alto</td><td class="range">6.000 – 12.000 €+</td><td>Implementaciones completas para empresas medianas, equipos propios.</td></tr>
+    </tbody>
+  </table>
+  <p class="disclaimer">Rangos de mercado, no promesa. Es la profesión más nueva de las tres: hay menos historial de referencia — y precisamente por eso los rangos altos son alcanzables antes: hay más demanda que profesionales.</p>
+  <h2>Lo que hace única a esta profesión en términos de dinero</h2>
+  <ul class="clean">
+    <li><strong>El techo más alto de las tres:</strong> porque puede absorber a las otras dos. Un IA Integrator puede montar sistemas de cualificación para equipos comerciales o automatizar el reporting de campañas. Cuanto más aprende, más servicios puede cobrar.</li>
+    <li><strong>Ingresos recurrentes por defecto:</strong> los sistemas que montas necesitan mantenimiento. Cada cliente nuevo no es una venta puntual — es una cuota mensual que se acumula sobre las anteriores.</li>
+    <li><strong>Ventaja del pionero:</strong> en las profesiones maduras compites con gente que lleva 10 años. Aquí, nadie lleva más de tres. El que entra ahora entra en la planta baja de la profesión que más va a crecer esta década.</li>
+  </ul>
+  <div class="spacer"></div>
+  <div class="card">
+    <div class="kicker">La contrapartida honesta</div>
+    <p style="margin:0;">Es la ruta con menos casos de referencia y más incertidumbre en el camino. No hay un manual de 20 años de historia — lo estás escribiendo tú. Requiere tolerancia a la ambigüedad y aprendizaje constante. Para el perfil correcto, eso no es un precio: es el atractivo.</p>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">10 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 11 · IA INTEGRATOR: EVOLUCIÓN + IMPORTANCIA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">03 / IA INTEGRATOR</div>
+  </div>
+  <div class="pill">Pilar · Operación</div>
+  <h1>IA Integrator<br><span style="color:var(--dim); font-size:17px; font-weight:500;">Evolución y por qué las empresas lo pagan</span></h1>
+  <h2>De dónde viene — la historia más corta y más violenta de las tres</h2>
+  <div class="era"><div class="era-tag">ANTES DE 2022</div><p>Esta profesión <strong>no existía</strong>. La IA era cosa de ingenieros con doctorado en empresas gigantes. Una pyme no podía ni soñar con tocarla.</p></div>
+  <div class="era"><div class="era-tag">NOV 2022</div><p>Sale ChatGPT. En dos meses, 100 millones de usuarios — la adopción tecnológica más rápida de la historia. De repente, cualquier empresa puede usar IA de nivel mundial pagando una suscripción.</p></div>
+  <div class="era"><div class="era-tag">2023 – 2024</div><p>Las empresas entienden que la IA les puede ahorrar miles de euros al mes… y descubren que no tienen ni idea de cómo implementarla. Se abre un hueco brutal: sobran herramientas, faltan implementadores. Nace el IA Integrator.</p></div>
+  <div class="era"><div class="era-tag">2025 – HOY</div><p>Llegan los agentes — IA que no solo responde, sino que ejecuta tareas completas. La pregunta de las empresas cambia de "¿debería usar IA?" a "¿cuánto me está costando no usarla?". La demanda de integradores se dispara por delante de la oferta.</p></div>
+  <div class="card" style="margin-top:2mm;">
+    <div class="kicker">La tendencia ahora</div>
+    <p style="margin:0;">Cada mes salen herramientas más potentes y más baratas. Eso no amenaza al IA Integrator — lo hace más necesario. Cuantas más opciones existen, más vale el criterio de alguien que sepa cuál aplicar, cómo conectarla y cómo mantenerla funcionando. <strong>El caos de opciones es su mercado.</strong></p>
+  </div>
+  <h2>Por qué es tan importante en una empresa</h2>
+  <p>Haz el cálculo tú mismo: un empleado administrativo cuesta a una empresa más de 20.000 € al año. Si un IA Integrator monta un sistema que hace el 60% de ese trabajo de forma automática, ¿cuánto vale ese sistema? La respuesta es: mucho menos de lo que ahorra. <strong>Por eso se paga sin discusión.</strong></p>
+  <div class="quote">Es la única de las tres profesiones cuyo argumento de venta es matemático puro: cuesta menos de lo que ahorra. Y quien domina esta skill hoy tiene la década a favor.</div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">11 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 12 · COMPARATIVA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">04 / COMPARATIVA</div>
+  </div>
+  <h1>Las tres frente a frente:<br>¿cuál va contigo?</h1>
+  <p>Las tres son reales. Las tres tienen demanda. Las tres pagan bien. <strong>La pregunta correcta no es "¿cuál es mejor?" — es "¿cuál encaja conmigo?".</strong></p>
+  <table class="cmp">
+    <thead><tr><th></th><th>Comercial Digital</th><th>Media Buyer</th><th>IA Integrator</th></tr></thead>
+    <tbody>
+      <tr><td class="h">Pilar</td><td>Conversión</td><td>Adquisición</td><td>Operación</td></tr>
+      <tr><td class="h">Día a día</td><td>Conversaciones y cierres</td><td>Datos, tests y decisiones</td><td>Sistemas y automatización</td></tr>
+      <tr><td class="h">Perfil natural</td><td>Social, comunicador, dinámico</td><td>Analítico, detallista, paciente</td><td>Técnico, curioso, visión 360</td></tr>
+      <tr><td class="h">Velocidad al primer cobro</td><td>La más rápida</td><td>Media</td><td>Media</td></tr>
+      <tr><td class="h">Estabilidad de ingresos</td><td>Variable al inicio, alta después</td><td>La más estable</td><td>Recurrente y acumulativa</td></tr>
+      <tr><td class="h">Techo a largo plazo</td><td>Alto</td><td>Alto</td><td>El más alto</td></tr>
+      <tr><td class="h">Madurez de la profesión</td><td>Consolidada</td><td>Consolidada</td><td>Naciendo — ventaja de pionero</td></tr>
+    </tbody>
+  </table>
+  <div class="card" style="margin-top:2mm;">
+    <div class="kicker">Cuidado con el error que comete el 90%</div>
+    <p style="margin:0;">Elegir la ruta "más rápida en abstracto" en lugar de la que encaja con su naturaleza. Comercial es objetivamente la vía más rápida hacia el primer cobro — pero si eres tímido y técnico, te va a remar en contra y se convertirá en la más lenta. Y al revés: si lo tuyo es hablar y te metes a mirar paneles de métricas ocho horas al día, vas a durar tres semanas. <strong>La ruta correcta es la que acelera tu naturaleza, no la que la castiga.</strong></p>
+  </div>
+  <h2>Tres preguntas para orientarte</h2>
+  <ul class="clean">
+    <li>Después de un día entero hablando con gente, ¿terminas con energía o agotado?</li>
+    <li>Cuando algo funciona, ¿tu instinto es <em>repetirlo más veces</em> o <em>entender por qué funciona y optimizarlo</em>?</li>
+    <li>Ante una herramienta nueva, ¿la usas y ya, o te pierdes durante horas viendo todo lo que puede hacer?</li>
+  </ul>
+  <p>Si respondiste "con energía" y "repetirlo": mira de cerca <strong>Comercial</strong>. Si "entender por qué" y te van los datos: <strong>Media Buyer</strong>. Si te perdiste en la tercera pregunta: <strong>IA Integrator</strong>.</p>
+  <p><strong>¿No lo tienes claro? Perfecto.</strong> Eso tiene solución, y está en la última página.</p>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">12 / 13</div></div>
+</div>
+
+<!-- ==================== PÁGINA 13 · CTA ==================== -->
+<div class="page">
+  <div class="topbar">
+    <div class="brand">Capital Hub</div>
+    <div class="meta">05 / EL SIGUIENTE PASO</div>
+  </div>
+  <h1>El siguiente paso<br><span style="color:var(--dim); font-size:17px; font-weight:500;">(y el error que no debes cometer)</span></h1>
+  <p>Ahora sabes más de las profesiones digitales que el 95% de la gente que lleva años consumiendo contenido sobre "ganar dinero online".</p>
+  <p>Pero te vamos a ser honestos: <strong>leer esta guía no cambia tu situación.</strong> Lo que la cambia es elegir un vehículo y sostenerlo el tiempo suficiente para que dé resultado.</p>
+  <p>Y ahí está la trampa en la que cae casi todo el mundo — la misma en la que caímos nosotros: <strong>elegir a ciegas.</strong> Por intuición, por lo que dijo un creador de contenido, por lo que "suena guay". Eligen mal, se estrellan contra un día a día que no va con ellos, lo dejan a los tres meses y concluyen que "lo digital no funciona". No era el vehículo. Era el encaje.</p>
+  <div class="quote">Por eso el siguiente paso no es apuntarte a nada. Es conocerte.</div>
+  <p>Hemos preparado un test de aptitud profesional — el mismo tipo de prueba que usan las grandes multinacionales para colocar a cada persona en el puesto donde rinde. Lo han hecho más de 500.000 personas. En 15 minutos te da un mapa de tus fortalezas y tus limitadores, y con él, cuál de las tres profesiones encaja contigo de verdad.</p>
+  <p><strong>Gratis. Sin tarjeta. Sin compromiso.</strong></p>
+  <div class="cta-btn">Haz el test gratis →</div>
+  <div class="cta-note">15 minutos · +500.000 personas lo han hecho · Acceso inmediato</div>
+  <div style="height:10mm"></div>
+  <p>Una última cosa.</p>
+  <p>No tienes que tomar la decisión perfecta. Solo tienes que tomar una decisión direccional correcta — la que te encamine hacia la versión de ti que quieres ser. Nosotros perdimos cuatro años saltando de vehículo en vehículo hasta entender esto. Esta guía, y ese test, existen para que tú no los pierdas.</p>
+  <p style="color:var(--text); font-weight:600;">Nos vemos dentro.</p>
+  <div style="margin-top:6mm; border-top: 1px solid var(--border); padding-top: 5mm;">
+    <div class="cover-brand" style="font-size:13px;">Capital Hub</div>
+    <div class="cover-tagline" style="margin-top:2mm;">Formación Profesional Digital</div>
+  </div>
+  <div class="footer"><div class="f-brand">Capital Hub</div><div class="f-page">13 / 13</div></div>
+</div>
+
+</body>
+</html>
