@@ -145,3 +145,39 @@ Lo que se cambió para que se entienda, no solo para que se vea:
 Pendiente de verificación con credenciales: las pantallas que exigen sesión
 (Estudio y widget) no se han podido mirar en el navegador. Las públicas (Entrar,
 404) sí, a 375 y a 1280.
+
+
+---
+
+## Pasada del 2026-07-29 (noche): quitar, no añadir
+
+Marco, con capturas. Cinco correcciones, y el patrón que hay detrás de cuatro de
+ellas: **le estaba metiendo cosas que no pidió.**
+
+1. **"Tipo de módulo" (Técnico / Mentalidad): eliminado.** *"No te lo he
+   pedido."* Un módulo se crea y ya. `content_type` sigue en la base con su
+   valor por defecto; no se enseña porque no cambia nada de lo que el formador
+   va a hacer.
+2. **Un solo botón de añadir módulo.** Había el verde arriba y otro "Añadir otro
+   módulo al final" abajo. Dos botones para lo mismo confunden. Se queda el de
+   arriba.
+3. **Bloque "Quién la ve": eliminado.** Dentro vivían "Acceso básico / Acceso
+   completo" (niveles de suscripción) y "Abierta a todo el mundo": **resto del
+   Stripe falso que ya se borró**, no existen en Capital Hub. Lo único útil
+   (publicar u ocultar) sube arriba como un interruptor único que dice su estado
+   en palabras: "La ven los alumnos" u "Oculta".
+4. **Menos rayas.** *"Hay rayas por todos lados, incluso dos pegadas."* La peor:
+   **cada módulo del árbol llevaba `border-b`**, así que con seis módulos había
+   seis rayas, y la del último quedaba pegada al `border-t` del bloque de
+   material. Regla que queda: **una línea solo cuando cambia una sección de
+   verdad**, nunca dos seguidas, y si un bloque ya se distingue por su fondo o
+   por su borde propio, no lleva raya.
+5. **"Volver" deshacía pasos en vez de salir.** Cada selección de módulo o
+   material apilaba una entrada de historial, así que `navigate(-1)` iba
+   deshaciendo la edición una a una. Arreglado en dos partes: las selecciones ya
+   no apilan historial (`setParams(..., { replace: true })`), y el botón se
+   llama **Salir** y devuelve a la pantalla desde la que se entró, que el widget
+   y el lápiz dejan dicha en `state.desde` al abrir el editor.
+
+**Regla de fondo: menos bloques, no más.** Antes de añadir una sección al
+Estudio, se comprueba que Marco la haya pedido.
