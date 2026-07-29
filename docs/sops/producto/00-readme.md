@@ -26,6 +26,7 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 55 | [Formador vs Administrador (App)](55-formador-vs-admin.md) | Un formador es ADMIN con `formacion_asignada`. Identidad desde `public.users` (no del token), candados en UI + API + RLS, previsualización de formador real |
 | 56 | [El Estudio: panel del formador](56-estudio-panel-formador.md) | Árbol + inspector en una sola pantalla. Crear formación, tipo de módulo, taller de presentaciones (PDF/.md/texto a presentación visual) y editor de solo texto |
 | 57 | [Sistema visual — hub](57-sistema-visual-hub.md) | `/sistemas`: hub con una tarjeta por sistema/workflow (fuera de `/webs`, ya no se agrupa con Webs). Board estilo Miro del **Funnel del Webinar** en `/sistemas/webinar` (fecha y tag en vivo). Cómo añadir un sistema nuevo |
+| 58 | [Purga del brandkit antiguo (App)](58-purga-brandkit-antiguo-app.md) | La App tenía DOS brandkits: `accent` se llamaba bien pero valía `#FFFFFF`. Acento a VERDE, Inter Tight única, cinturones, `Sparkles` fuera. Dónde entra el formador a editar (tarjeta en Inicio + lápiz en la tarjeta de la formación) |
 
 ## Formaciones (material de presentación)
 
