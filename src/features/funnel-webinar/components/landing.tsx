@@ -129,13 +129,13 @@ export function WebinarLanding({
             </span>
           </header>
 
-          {/* Contenido hero centrado con perspectiva 3D. Ocupa el resto y se centra;
-              gaps fluidos para que todo entre en una pantalla. */}
+          {/* Contenido hero: TODO centrado y alineado, con aire generoso entre bloques.
+              Ocupa el resto de la pantalla y se centra en vertical. Cabe en una pantalla. */}
           <div
-            className="flex min-h-0 flex-1 flex-col justify-center"
-            style={{ gap: "clamp(0.55rem, 1.9svh, 1.5rem)", paddingTop: "clamp(0.5rem, 1.4svh, 1.25rem)", paddingBottom: "clamp(0.4rem, 1svh, 1rem)" }}
+            className="flex min-h-0 flex-1 flex-col items-center justify-center text-center"
+            style={{ gap: "clamp(0.9rem, 2.7svh, 2.1rem)", paddingTop: "clamp(0.6rem, 1.6svh, 1.5rem)", paddingBottom: "clamp(0.5rem, 1.2svh, 1.1rem)" }}
           >
-            <p className="wb-load inline-flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[12px] text-[#9CA3AF] md:text-[13px]" style={{ animationDelay: "80ms" }}>
+            <p className="wb-load inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-[12px] text-[#9CA3AF] md:text-[13px]" style={{ animationDelay: "80ms" }}>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#2A2D34] bg-white/[0.03] px-2.5 py-0.5">
                 <span className="wb-dot" /> Webinar en vivo
               </span>
@@ -145,10 +145,10 @@ export function WebinarLanding({
               <span className="font-medium text-[#F5F6F7]">{dateLabel}</span>
             </p>
 
-            <div className="wb-tilt">
+            <div className="wb-tilt mx-auto max-w-[40rem]">
               <h1
                 className="font-medium tracking-[-0.022em] text-white [text-wrap:balance]"
-                style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: "clamp(1.3rem, 4.1vw, 2.35rem)", lineHeight: 1.08 }}
+                style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: "clamp(1.35rem, 4vw, 2.4rem)", lineHeight: 1.12 }}
               >
                 <span className="wb-line block" style={{ animationDelay: "150ms" }}>
                   En enero de 2022 dejé mi trabajo y gané{" "}
@@ -156,7 +156,7 @@ export function WebinarLanding({
                 </span>
                 <span
                   className="wb-line block font-normal text-[#C7CBD1]"
-                  style={{ animationDelay: "320ms", marginTop: "clamp(0.35rem, 0.9svh, 0.65rem)", fontSize: "clamp(0.9rem, 2.5vw, 1.4rem)", lineHeight: 1.25 }}
+                  style={{ animationDelay: "320ms", marginTop: "clamp(0.5rem, 1.1svh, 0.85rem)", fontSize: "clamp(0.92rem, 2.4vw, 1.35rem)", lineHeight: 1.3 }}
                 >
                   Te enseño a hacer lo mismo en menos de{" "}
                   <span className="font-medium text-white">90 días</span>.
@@ -164,11 +164,11 @@ export function WebinarLanding({
               </h1>
             </div>
 
-            {/* Descripción visual: lead + chips (conceptos intactos, más escaneable) */}
-            <p className="wb-load max-w-xl leading-relaxed text-[#C7CBD1]" style={{ animationDelay: "540ms", fontSize: "clamp(0.82rem, 1.9vw, 0.98rem)" }}>
+            {/* Descripción: lead + chips (conceptos intactos), centrados */}
+            <p className="wb-load mx-auto max-w-xl leading-relaxed text-[#C7CBD1]" style={{ animationDelay: "540ms", fontSize: "clamp(0.84rem, 1.9vw, 1rem)" }}>
               Un directo gratuito y en vivo donde te enseño el paso a paso:
             </p>
-            <div className="wb-load flex flex-wrap gap-2" style={{ animationDelay: "640ms" }}>
+            <div className="wb-load flex flex-wrap justify-center gap-2" style={{ animationDelay: "640ms" }}>
               {[
                 "Qué profesión digital encaja contigo",
                 "Empezar sin montar un negocio",
@@ -184,11 +184,11 @@ export function WebinarLanding({
               ))}
             </div>
 
-            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). Grande y en
-                16:9. En móvil ocupa el ancho; en desktop crece con la altura de la pantalla
-                para verse en buen tamaño sin desbordar. Sin GUID muestra un placeholder de
-                marca; al pegar el GUID en el ⚙️ de /webs, el vídeo aparece aquí sin tocar código. */}
-            <div className="wb-load flex shrink-0 justify-center" style={{ animationDelay: "700ms" }}>
+            {/* Mini-VSL de presentación del evento (página 1, antes del opt-in). Centrada,
+                16:9. En móvil ocupa el ancho; en desktop crece con la altura de la pantalla.
+                Sin GUID muestra un placeholder de marca; al pegar el GUID en el ⚙️ de /webs,
+                el vídeo aparece aquí sin tocar código. */}
+            <div className="wb-load flex w-full shrink-0 justify-center" style={{ animationDelay: "700ms" }}>
               <div className="wb-vsl overflow-hidden rounded-xl border border-[#2A2D34] bg-black">
                 {videoGuid ? (
                   <iframe
@@ -218,9 +218,9 @@ export function WebinarLanding({
               </div>
             </div>
 
-            <div className="wb-load" style={{ animationDelay: "760ms" }}>
+            <div className="wb-load flex flex-col items-center" style={{ animationDelay: "760ms" }}>
               <MagneticButton onClick={() => setOpen(true)}>Reservar mi plaza gratis</MagneticButton>
-              <p className="mt-2.5 text-[12px] text-[#6B7280]">Plazas limitadas.</p>
+              <p className="mt-3 text-[12px] text-[#6B7280]">Plazas limitadas.</p>
             </div>
           </div>
 
@@ -235,7 +235,7 @@ export function WebinarLanding({
       <section className="relative mx-auto max-w-3xl px-5 py-20 md:px-8 md:py-28">
         <div
           data-reveal
-          className="wb-reveal wb-job group relative overflow-hidden rounded-2xl border border-[#2A2D34] bg-gradient-to-b from-[#141418] to-[#0F0F12] p-7 md:p-12"
+          className="wb-reveal wb-job group relative overflow-hidden rounded-2xl border border-[#2A2D34] bg-gradient-to-b from-[#141418] to-[#0F0F12] p-7 text-center md:p-12"
         >
           <div aria-hidden className="wb-job-glow" />
           <span className="relative z-10 mb-5 inline-flex items-center gap-2 rounded-full border border-[#22C55E]/30 bg-[#22C55E]/10 px-3.5 py-1.5 text-[13px] font-medium text-[#4ADE80]">
@@ -251,7 +251,7 @@ export function WebinarLanding({
             <span className="block whitespace-nowrap">No te formas y te quedas solo.</span>
             <span className="wb-underline">Te acompañamos.</span>
           </h2>
-          <p className="relative z-10 max-w-2xl text-base leading-relaxed text-[#C7CBD1] md:text-lg">
+          <p className="relative z-10 mx-auto max-w-2xl text-base leading-relaxed text-[#C7CBD1] md:text-lg">
             Aprendes una profesión digital que las empresas están demandando y entras en nuestra bolsa
             de oportunidades y clientes. Cada semana nos escriben empresas buscando perfiles. En el
             directo te explico cómo funciona y qué necesitas para entrar.
@@ -288,12 +288,12 @@ export function WebinarLanding({
 
       {/* ════════ CTA FINAL ════════ */}
       <section className="mx-auto max-w-3xl px-5 pb-24 md:px-8">
-        <div data-reveal className="wb-reveal flex flex-col items-start gap-6 border-t border-[#2A2D34] pt-14">
+        <div data-reveal className="wb-reveal flex flex-col items-center gap-6 border-t border-[#2A2D34] pt-14 text-center">
           <h3
-            className="max-w-xl text-[1.6rem] font-medium leading-tight tracking-[-0.01em] text-white md:text-[2.2rem] [text-wrap:balance]"
+            className="mx-auto max-w-xl text-[1.6rem] font-medium leading-tight tracking-[-0.01em] text-white md:text-[2.2rem] [text-wrap:balance]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            Reserva tu plaza y entra al grupo. Es gratis y es en directo.
+            Reserva tu plaza. Es gratis y es en directo.
           </h3>
           <MagneticButton onClick={() => setOpen(true)}>Reservar mi plaza gratis</MagneticButton>
         </div>
@@ -312,21 +312,22 @@ export function WebinarLanding({
 function AdrianStory({ onOpen }: { onOpen: () => void }) {
   return (
     <section className="mx-auto max-w-3xl px-5 py-8 md:px-8 md:py-12">
-      <div className="mb-8 flex items-center gap-4">
+      <div className="mb-8 flex items-center justify-center gap-4">
+        <div className="h-px w-14 bg-[#2A2D34]" />
         <span className="text-[13px] text-[#6B7280]">
           <span className="font-semibold text-[#22C55E]">02</span> · Historia
         </span>
-        <div className="h-px flex-1 bg-[#2A2D34]" />
+        <div className="h-px w-14 bg-[#2A2D34]" />
       </div>
 
       <h2
         data-reveal
-        className="wb-reveal mb-2 text-2xl font-medium tracking-[-0.01em] text-white md:text-4xl"
+        className="wb-reveal mb-2 text-center text-2xl font-medium tracking-[-0.01em] text-white md:text-4xl"
         style={{ fontFamily: "'Inter Tight', sans-serif" }}
       >
         La profesión que me dio la libertad
       </h2>
-      <p data-reveal className="wb-reveal mb-8 text-[13px] text-[#6B7280]">La historia de Adrián</p>
+      <p data-reveal className="wb-reveal mb-8 text-center text-[13px] text-[#6B7280]">La historia de Adrián</p>
 
       {/* Galería (scroll horizontal, ideal en móvil) */}
       <div data-reveal className="wb-reveal -mx-5 mb-10 md:-mx-8">
@@ -358,7 +359,7 @@ function AdrianStory({ onOpen }: { onOpen: () => void }) {
       {/* Texto de la historia */}
       <div
         data-reveal
-        className="wb-reveal max-w-2xl space-y-4 text-[15px] leading-relaxed text-[#C7CBD1] md:text-base [&_strong]:font-medium [&_strong]:text-white"
+        className="wb-reveal mx-auto max-w-2xl space-y-4 text-center text-[15px] leading-relaxed text-[#C7CBD1] md:text-base [&_strong]:font-medium [&_strong]:text-white"
       >
         <p className="text-lg text-white">Me llamo Adrián. Y hace unos años estaba jodido. Pero jodido de verdad.</p>
         <p>
@@ -393,13 +394,13 @@ function AdrianStory({ onOpen }: { onOpen: () => void }) {
             "Aprender una profesión digital que las empresas están demandando.",
             "Diseñar un estilo de vida flexible, en tus propios términos.",
           ].map((t) => (
-            <li key={t} className="flex gap-3">
+            <li key={t} className="flex justify-center gap-2">
               <span className="shrink-0 font-semibold text-[#22C55E]">→</span>
               <span>{t}</span>
             </li>
           ))}
         </ul>
-        <div className="pt-4">
+        <div className="flex justify-center pt-4">
           <MagneticButton onClick={onOpen}>Reservar mi plaza gratis</MagneticButton>
         </div>
       </div>
@@ -628,7 +629,7 @@ function WbStyles() {
       /* Mini-VSL del hero: móvil = ancho completo (buen tamaño, sin desbordar);
          desktop = crece con la altura de la pantalla, grande, sin pasar del ancho de la columna. */
       .wb-vsl { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; }
-      @media (min-width: 768px) { .wb-vsl { width: auto; height: clamp(220px, 36svh, 420px); } }
+      @media (min-width: 768px) { .wb-vsl { width: auto; height: clamp(200px, 31svh, 380px); } }
       /* Capas de profundidad: se mueven según --px/--py * data-depth (parallax) */
       .wb-layer, .wb-orb { position: absolute; pointer-events: none; z-index: 0; will-change: transform; transition: transform 0.3s cubic-bezier(0.22,0.61,0.36,1); }
       .wb-glow-green { inset: 0; background: radial-gradient(680px 380px at 82% -4%, rgba(34,197,94,0.16), transparent 66%); transform: translate3d(calc(var(--px) * -8px), calc(var(--py) * -8px), 0); }
