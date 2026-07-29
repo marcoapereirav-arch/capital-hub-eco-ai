@@ -20,6 +20,37 @@ llamaban igual.
 
 ---
 
+## Segunda pasada (2026-07-29, tarde): seguía saliendo el vibe antiguo
+
+Marco, después del primer barrido: *"Todo lo que sea esquinas puntiagudas y todo
+ese vibe antiguo, fuera."*
+
+Tenía razón y el error era mío de base: **asumí que "brandkit sobrio" significaba
+esquina recta y puse `rounded-none` en media App.** El brandkit vivo
+(`src/app/brandkit/version-two.tsx` del OS, la página `/brandkit`) redondea:
+
+| Pieza | Radio |
+|---|---|
+| Tarjeta, botón, campo | 4px (`rounded-card`) |
+| Panel grande, modal, hoja | 8px (`rounded-panel`) |
+| Ficha, chip | 2-3px |
+| Avatar | círculo |
+
+Y además, valores que yo tenía mal:
+
+- Los bordes NO son `#2A2D34` sólido: son hairlines **translúcidos**
+  `rgba(245,246,247,0.1)` (y `0.2` para el borde marcado).
+- El texto sobre verde es **`#08130C`** (tinta verde), no el carbón.
+- Los grises son `#A6AAB2` y `#7C818A`.
+- La curva de movimiento es `cubic-bezier(0.16, 1, 0.3, 1)`, y el botón
+  principal al pasar por encima sube 2px y saca sombra verde.
+- La tipografía usa TODO el rango: 900 para titulares, 800 sección, 600
+  etiquetas y botones, 400 cuerpo. Yo estaba usando 500 para todo.
+
+**Lección: el estilo no se deduce, se lee del brandkit vivo.** Ese archivo es la
+fuente; el markdown son las reglas; la skill `brandkit-capital-hub` es el
+recordatorio operativo.
+
 ## La causa raíz (esto es lo que hay que recordar)
 
 `web/tailwind.config.js` definía `accent: "#FFFFFF"` con el comentario "ÚNICO
@@ -60,21 +91,32 @@ construir sobre `bg-accent`, se abre `tailwind.config.js` y se comprueba.
 
 ---
 
-## Dónde entra el formador a editar (lo que Marco no encontraba)
+## Dónde entra el formador a editar: un WIDGET APARTE
 
-Dos accesos, los dos desde donde ya está mirando. Ninguno en Ajustes.
+Marco, 2026-07-29: *"El widget es un widget aparte. No es el mismo widget de
+'Ver como'. Ese solo lo tengo yo, pero el widget de editar formación tiene que
+ser otro aparte del que ya está. Ese está únicamente para los formadores."*
 
-| Sitio | Forma | Quién lo ve |
-|---|---|---|
-| Inicio de la App | Tarjeta "Mi formación" (formador) / "Gestionar formaciones" (super admin), al mismo nivel que Panel Formativo y Marketplace | Quien puede editar algo |
-| Tarjeta de la formación, en el aula | Icono de lápiz en la esquina superior derecha de la portada | Solo quien puede editar ESA formación |
+`web/src/features/estudio/WidgetFormador.tsx`. Flotante, **abajo a la
+izquierda** (el de "Ver como" vive abajo a la derecha, así que no chocan nunca).
+Se monta en `ProtectedRoute`, junto al `Outlet`, para que viaje con todas las
+pantallas con sesión. Se esconde solo dentro de `/formador`.
 
-Los dos llevan al Estudio (`/formador`), que ya está acotado por
-`formacion_asignada` en la interfaz, en la API y en RLS (SOP 55 y 56).
+| Quién | Qué ve |
+|---|---|
+| Formador (ADMIN con `formacion_asignada`) | SOLO su formación. Con una sola, el botón entra directo |
+| Super admin | Todas, con su ruta debajo del nombre |
+| Alumno o equipo sin permiso | Nada. Ni se pinta ni se consulta |
 
-La versión intermedia (una barra ancha "Editar formación" debajo de cada
-tarjeta) **fue rechazada**: rompía la rejilla y competía con el contenido. No se
-vuelve a esa forma.
+**Formas ya rechazadas, no volver a ellas:** en Ajustes (arriba), barra ancha
+debajo de cada tarjeta, y **tarjeta en el Inicio** (*"quita lo del puto inicio,
+que no te lo he pedido"*). El Inicio quedó exactamente como estaba.
+
+## El school NO se toca
+
+Marco: *"nunca te he pedido que rediseñes el school. Deja de perder tokens y
+deja de hacer cosas que no te he pedido."* Comunidad, mensajes y aula se quedan
+como están. Su rediseño es un trabajo aparte, cuando él lo pida.
 
 ---
 
@@ -85,6 +127,21 @@ a su vez **manda leer el brandkit del Knowledge antes de diseñar**. Si un archi
 que tocas todavía trae diseño antiguo, se deja limpio en esa misma pasada. No se
 parchea alrededor.
 
+## El Estudio (pantalla de editar la formación)
+
+Lo que se cambió para que se entienda, no solo para que se vea:
+
+- **La acción principal es lo primero que se ve.** Antes, la única forma de
+  crear un módulo era un botón discreto al FINAL de la lista, después de hacer
+  scroll. Ahora "Añadir módulo" está arriba, en verde, encabezando la columna de
+  contenido. Abajo queda el secundario "Añadir otro módulo al final".
+- **El buscador solo aparece con 4 módulos o más.** Antes ocupaba la cabecera
+  aunque la formación estuviera vacía.
+- **Guía de tres pasos** (módulo, lecciones, vídeo) en el panel derecho, solo
+  mientras la formación está vacía. Después desaparece.
+- Jerarquía tipográfica real: el nombre de la formación en 900, la ruta como
+  kicker verde encima.
+
 Pendiente de verificación con credenciales: las pantallas que exigen sesión
-(Inicio, aula, Comunidad, Mensajes, Estudio) no se han podido mirar en el
-navegador todavía. Las públicas (Entrar, 404) sí, a 375 y a 1280.
+(Estudio y widget) no se han podido mirar en el navegador. Las públicas (Entrar,
+404) sí, a 375 y a 1280.

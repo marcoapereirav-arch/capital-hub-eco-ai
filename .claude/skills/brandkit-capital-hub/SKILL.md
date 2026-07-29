@@ -1,235 +1,211 @@
 ---
 name: brandkit-capital-hub
-description: "LEY DE DISEÑO de Capital Hub. Se usa SIEMPRE, sin excepción, antes de diseñar o tocar CUALQUIER cosa visual del SaaS: una pantalla, un panel, un componente, un botón, un email, una landing, un estado vacío. Define el único brandkit permitido (carbón + verde, Inter Tight), prohíbe el diseño antiguo (acento blanco, fuentes de sistema), y fija el método de UI/UX: mobile-first de verdad, simplicidad, cada botón se entiende. Se activa aunque Marco no nombre el diseño: si el trabajo se ve en pantalla, esta skill manda."
+description: "LEY DE DISEÑO de Capital Hub. Se usa SIEMPRE, sin excepción, antes de diseñar o tocar CUALQUIER cosa visual del SaaS: una pantalla, un panel, un componente, un botón, un email, una landing, un estado vacío. Contiene el ÚNICO brandkit permitido, copiado del brandkit vivo del OS: carbón + verde #22C55E, Inter Tight 400-900, esquinas suaves de 4px y 8px, bordes translúcidos, papel hueso. Prohíbe el diseño antiguo (acento blanco, esquinas rectas, fuentes de sistema, mono con mayúsculas espaciadas) aunque sea lo que hay en la mayor parte del SaaS. Se activa aunque Marco no nombre el diseño: si el trabajo se ve en pantalla, esta skill manda."
 ---
 
 # Brandkit Capital Hub: ley de diseño
 
-## LA FUENTE ES EL KNOWLEDGE. No hay otra.
+## La fuente. No hay otra.
 
-**El único brandkit que existe es `docs/sops/marketing/brand/01-brandkit-oficial.md`.**
-Se ve en vivo en la página `/brandkit` del OS: "Capital Hub · Manual de identidad · 2026".
+**El brandkit vivo es `src/app/brandkit/version-two.tsx` del repo del OS**, que se
+ve en la página `/brandkit`. Sus reglas escritas están en
+`docs/sops/marketing/brand/01-brandkit-oficial.md`.
 
-Marco, 2026-07-29: *"El ÚNICO brandkit que existe es el que está en el Knowledge
-y es el ÚNICO que vas a usar. Tienes PROHIBIDO usar otra cosa que no sea esto, y
-en base a este brandkit es que uses la skill para diseñar todo."*
+**Antes de diseñar nada: se abren esos dos y se leen.** Los valores de abajo son
+una copia de trabajo; si alguna vez discrepan, manda el brandkit vivo y esta
+skill se corrige en el mismo bloque.
 
-**Antes de diseñar nada: se abre ese SOP y se lee.** Lo que hay más abajo en
-este documento es el resumen operativo para el código, no un sustituto. Si algo
-de aquí se contradice con el SOP, **manda el SOP** y este documento se corrige
-en el mismo bloque de trabajo.
-
-> Marco, 2026-07-29: *"TIENES PROHIBIDO USAR EL DISEÑO ANTIGUO. Necesito que lo
-> elimines de raíz del código y uses únicamente el único brandkit que tenemos.
-> SIEMPRE debe ser mobile first. Quiero simplicidad. Quiero que se entienda todo
-> claramente."*
-
-**Si lo que estás haciendo se ve en una pantalla, esta skill manda.** No se
-improvisa diseño en Capital Hub.
+> Marco, 2026-07-29: *"El ÚNICO brandkit que existe es el que está en el
+> Knowledge y es el ÚNICO que vas a usar. Tienes PROHIBIDO usar otra cosa."*
+> *"Todo lo que sea esquinas puntiagudas y todo ese vibe antiguo, fuera."*
 
 ---
 
-## 1. El diseño ANTIGUO está prohibido
+## 0. La trampa: la mayoría del SaaS está con el diseño VIEJO
 
-Existía un brandkit viejo, monocromo, que sigue apareciendo en código heredado.
-**Reconócelo y mátalo en cuanto lo toques:**
+Gran parte del producto sigue construido con el brandkit antiguo. **Eso no lo
+convierte en referencia.** Se rediseñará entero más adelante, en su momento y
+cuando Marco lo pida.
 
-| Señal del diseño antiguo | Qué es lo correcto |
+Por lo tanto: **nunca se copia el estilo de una pantalla existente.** Se copia
+del brandkit. Si abres un archivo y encuentras diseño viejo, o lo dejas limpio
+en esa misma pasada o no lo tocas, pero jamás lo imitas.
+
+---
+
+## 1. Las señales del diseño ANTIGUO
+
+| Señal | Lo correcto |
 |---|---|
-| `accent: #FFFFFF` o "monochrome" | El acento es **VERDE** `#22C55E` |
-| `accent-glow`, `shadow-glow` (resplandor blanco) | No existe. Fuera. |
-| Fuentes de sistema: `-apple-system`, `SF Pro`, `Segoe UI`, `Helvetica`, `Arial` | **Inter Tight**, y solo esa |
-| `appleGray`, `#f5f5f7` | `carbon` `#0F0F12` |
-| `panel: #18181B` | `panel: #141418` |
-| Botón principal blanco sobre oscuro | Botón principal **verde**, texto carbón |
-
-Regla: **si tocas un archivo que trae diseño antiguo, lo dejas limpio en esa
-misma pasada.** No se parchea alrededor.
+| `accent: #FFFFFF`, botones blancos, "monochrome" | El acento es **VERDE** `#22C55E`, con tinta `#08130C` encima |
+| **Esquinas rectas** (`rounded-none`, sin radio) | **4px** tarjetas y botones, **8px** paneles grandes, 2-3px fichas |
+| Esquinas muy redondeadas (`rounded-2xl`, `rounded-3xl`, `rounded-full` en botones) | Lo mismo: 4px / 8px. Círculo solo en avatares |
+| Bordes `#2A2D34` sólidos por todos lados | Hairlines **translúcidos** `rgba(245,246,247,0.1)` |
+| `accent-glow`, `shadow-glow` (resplandor blanco) | No existe |
+| Fuentes de sistema (`-apple-system`, `SF Pro`, `Segoe`, `Helvetica`) | **Inter Tight**, y solo esa |
+| JetBrains Mono para etiquetas de interfaz | Inter Tight. Mono no se usa |
+| `text-[10px] uppercase tracking-wider` en etiquetas | Texto normal, 13-15px, legible |
+| `appleGray`, `#f5f5f7`, `panel: #18181B` | `carbon #0F0F12`, `panel #131318` |
+| Fondo de rejilla | Prohibido por Marco |
 
 ---
 
-## 2. La paleta. No hay más colores
+## 2. Color. No hay más
 
 | Uso | Valor | Clase |
 |---|---|---|
 | Fondo de página | `#0F0F12` | `bg-carbon` |
-| Superficie de tarjeta | `#141418` | `bg-panel` |
-| Superficie suave | `#131316` | `bg-panel-soft` |
-| Superficie de código | `#0C0C0F` | `bg-code` |
-| Hairline (bordes) | `#2A2D34` | `border-graphite` |
-| Hairline suave | `#1F2126` | `border-graphite-soft` |
+| Superficie de tarjeta | `#131318` | `bg-panel` / `bg-carbon-2` |
+| Superficie elevada | `#16161B` | `bg-panel-soft` |
+| Hairline | `rgba(245,246,247,0.1)` | `border-line` |
+| Hairline fuerte | `rgba(245,246,247,0.2)` | `border-line-strong` |
+| Grafito (bordes marcados) | `#2A2D34` | `border-graphite` |
 | Texto principal | `#F5F6F7` | `text-offwhite` |
-| Texto secundario | `#C7CBD1` → `#9CA3AF` → `#7B818C` → `#6B7280` | `text-ink-soft`, `text-muted`, `text-deepmute`, `text-faint` |
-| **Acento (verde)** | `#22C55E` | `bg-accent` / `text-accent` |
-| **Verde de iconos** | `#4ADE80` | `text-accent-soft` |
-| Superficie verde (lo bueno) | fondo `#101710`, borde `#24462F` | `bg-accent-surface`, `border-accent-border` |
-| Ámbar **SOLO avisos** | `#E5B567` / `#17150F` / `#3A2F1E` | `text-warn`, `bg-warn-surface`, `border-warn-border` |
-| Papel hueso (paneles claros) | `#F4F1E8` sobre tinta `#141414` | `bg-paper text-paper-ink` |
+| Texto secundario | `#A6AAB2` | `text-muted` |
+| Texto terciario | `#7C818A` | `text-deepmute` |
+| **Acento** | `#22C55E` | `bg-accent` / `text-accent` |
+| Verde claro (iconos, enlaces) | `#4ADE80` | `text-accent-soft` |
+| **Tinta sobre verde** | `#08130C` | `text-greenink` |
+| Superficie verde | `#101710` + borde `#24462F` | `bg-accent-surface border-accent-border` |
+| Papel hueso (el "gi") | `#F4F1E8` sobre tinta `#141414` | `bg-paper text-paper-ink` |
+| Papel, línea | `#D8D1BE` | `border-paper-line` |
+| Ámbar SOLO avisos | `#E5B567` | `text-warn` |
 
-### Los cinturones (escala jiu-jitsu)
+Cinturones (jiu-jitsu): blanco `#F5F6F7`, azul `#4F7CC0`, púrpura `#7B5BA6`,
+marrón `#856046`, negro `#0F0F12`. **Son lenguaje de progresión del alumno,
+nunca color de interfaz.** Las rayas son EXCLUSIVAS de la cinta blanca y solo
+aparecen en landings y funnels. En la App el cinturón va limpio, en su color.
 
-Son el lenguaje de progresión del alumno, no decoración ni acentos de interfaz.
-
-| Cinturón | Valor | Clase |
-|---|---|---|
-| Blanco | `#F5F6F7` | `belt-white` |
-| Azul | `#4F7CC0` | `belt-blue` |
-| Púrpura | `#7B5BA6` | `belt-purple` |
-| Marrón | `#856046` | `belt-brown` |
-| Negro | `#0F0F12` | `belt-black` |
-
-Reglas del SOP: **las rayas son EXCLUSIVAS de la cinta blanca** y solo aparecen
-en landings y funnels (la barra de cinturón). Los cinturones de color van
-siempre limpios, sin rayas, y se dibujan como cinturones reconocibles en el
-perfil del alumno de la App. **Nunca se usan como color de interfaz.**
-
-**Prohibido cualquier otro color.** Nada de violeta, cian, rosa, ámbar
-decorativo ni degradados de color. Base monocroma más verde. El rojo solo como
-texto apagado en acciones destructivas.
+**Prohibido cualquier otro color.** Nada de violeta, cian, rosa, dorado ni
+degradados de color.
 
 ---
 
-## 3. Tipografía: UNA sola
+## 3. Forma: esquinas suaves, nunca rectas
 
-- **Inter Tight**, y nada más. Ni Inter, ni JetBrains Mono como cara principal.
-- La jerarquía se hace con **grosor, tamaño y color**, nunca con otra fuente.
-- `font-mono` (JetBrains Mono) queda **solo** para código, números tabulares,
-  duraciones y claves. Nunca para texto corrido.
-- **Tracking ancho SOLO para el wordmark "CAPITAL HUB"** (`tracking-wordmark`).
-  Todo lo demás con espaciado normal. Las mayúsculas espaciadas en cuerpo de
-  texto están prohibidas: cuestan leer.
-- Etiquetas pequeñas de sección: 12-13px, mayúsculas, `tracking-[0.12em]`. Ahí sí.
+```
+tarjeta, botón, campo ....... rounded-card   (4px)
+panel grande, modal ......... rounded-panel  (8px)
+ficha, chip, etiqueta ....... rounded-pill   (3px) / rounded-chip (2px)
+avatar ...................... rounded-full
+```
+
+Sombras solo dos: `shadow-card` para elevar un panel y `shadow-green` para el
+hover del botón principal. Nada más.
 
 ---
 
-## 4. Mobile-first, siempre. No es una fase final
+## 4. Tipografía: UNA sola, con TODO el rango de peso
 
-**Se diseña la pantalla de móvil primero y después se ensancha.** No al revés,
-y no "encogiendo" el escritorio.
+- **Inter Tight**, de 400 a 900. La jerarquía se hace con **grosor**, tamaño y
+  color, nunca con otra fuente.
+- Titular grande: **900**, tamaño fluido, `tracking-tight`.
+- Titular de sección: **800**. Etiquetas y botones: **600**. Cuerpo: **400**.
+- Cuerpo a 15-16px con interlineado holgado (1.7). Nada de 10-12px para leer.
+- **Tracking ancho SOLO en el wordmark "CAPITAL HUB"** (`tracking-wordmark`,
+  0.3em). Todo lo demás normal. Las mayúsculas espaciadas en cuerpo de texto
+  están prohibidas: cuestan leer.
+- Un "kicker" de sección puede ir en 12px, 600, VERDE, con una línea fina al
+  lado. Ese es el único uso de mayúsculas pequeñas.
 
-- Zonas táctiles mínimo **44x44**. Siempre.
-- Cero scroll horizontal, en ninguna parte, nunca.
-- Nada pegado al borde: padding mínimo **20px en móvil**, 24px en escritorio.
-- Los menús y desplegables en móvil van como **hoja inferior** (portal a
-  `document.body`) con `pb-[calc(1rem+env(safe-area-inset-bottom))]`. Nunca un
-  desplegable flotante que se sale de pantalla.
-- Respetar las zonas seguras: `env(safe-area-inset-*)` arriba y abajo.
-- El layout de móvil se **rehace**, no se comprime. Si en escritorio hay dos
-  columnas, en móvil una manda y la otra entra por encima.
+---
+
+## 5. Mobile-first, siempre
+
+**Se diseña la pantalla de móvil primero y después se ensancha.**
+
+- Zonas táctiles mínimo **44x44**.
+- Cero scroll horizontal, nunca.
+- Padding mínimo **20px en móvil**, 24-48px en escritorio.
+- Menús y desplegables en móvil: **hoja inferior** con
+  `pb-[calc(1rem+env(safe-area-inset-bottom))]`, no un flotante que se sale.
+- El layout de móvil se **rehace**, no se comprime.
 - Se prueba a **375px** y a **1280px**. Las dos.
 
 ---
 
-## 5. Simplicidad: el criterio de Marco
+## 6. Simplicidad: el criterio de Marco
 
-> *"Quiero simplicidad. Que se entienda perfectamente cada botón. Ahora mismo no
-> se entiende una mierda."*
-
-Reglas duras que salen de ahí:
+> *"Necesito que sea ultra intuitiva, minimalista, que se entienda exactamente
+> dónde están las cosas, que no haya bugs y que todo esté visualmente perfecto."*
 
 1. **Si no sabes explicar en una frase para qué sirve un bloque, se quita.**
-   Un formador no tiene que descifrar nada.
-2. **Cero jerga en pantalla.** Nada de "min_tier", "display_order",
-   "is_intro_module", "content_type". Si un dato técnico no cambia lo que el
-   usuario va a hacer, no se enseña. Si lo cambia, se dice en cristiano.
-3. **Un botón dice lo que hace, con un verbo.** "Guardar cambios", "Crear
-   formación", "Borrar el módulo". Nunca "Aceptar", "OK" ni un icono solo sin
-   etiqueta accesible.
-4. **Nunca un botón visible que al pulsarlo no hace nada.** Si no se puede, no se
-   pinta. Botón apagado que no responde está prohibido.
-5. **Máximo una acción principal por pantalla**, en verde. El resto en texto o
-   con borde.
-6. **Menos bloques.** Antes de añadir una sección, mira si puede vivir dentro de
-   otra. La pantalla llena de cajas es el error a matar.
-7. **Estado vacío con salida.** Todo estado vacío lleva DENTRO el botón que lo
-   resuelve, no lejos.
+2. **Cero jerga en pantalla.** Nada de `min_tier`, `display_order`,
+   `content_type`. Si un dato técnico no cambia lo que el usuario va a hacer, no
+   se enseña.
+3. **Un botón dice lo que hace, con un verbo.** Nunca "Aceptar" ni un icono
+   suelto sin etiqueta accesible.
+4. **Nunca un botón visible que al pulsarlo no hace nada.**
+5. **Una sola acción principal por pantalla**, en verde. El resto con borde o en
+   texto.
+6. **Menos bloques.** Antes de añadir una sección, mira si cabe dentro de otra.
+7. **Estado vacío con su salida dentro**: el botón que lo resuelve va ahí mismo.
 
 ---
 
-## 6. Navegación: siempre hay salida
+## 7. Navegación: siempre hay salida
 
-> *"No tengo ningún botón para poder salir del editor. Tengo que darle atrás.
-> Dentro de la aplicación siempre tiene que haber botones para ir para atrás."*
-
-- **Toda pantalla tiene un botón de volver visible**, arriba a la izquierda, con
-  texto ("Volver"), no solo una flecha.
-- **Nunca se depende del botón atrás del navegador.**
-- Lo que se edita a menudo se alcanza desde **donde se está mirando**, no
-  saliendo a un menú. Si un formador está viendo su formación, el botón de
-  editarla está ahí mismo.
-- La ruta de vuelta lleva al sitio exacto de donde se vino, no al principio.
+- **Toda pantalla lleva un botón de volver visible**, arriba a la izquierda, con
+  texto. Nunca se depende del botón atrás del navegador.
+- Lo que se edita a menudo se alcanza **desde donde se está mirando**.
+- La vuelta lleva al sitio exacto de donde se vino.
 
 ---
 
-## 7. Movimiento
+## 8. Movimiento
 
-- Existe, pero **contenido**: un solo momento fuerte por pantalla.
-- Se anima `transform` y `opacity`. Nunca `width`, `height`, `top` ni `margin`.
+- Curva oficial: `cubic-bezier(0.16, 1, 0.3, 1)` (`ease-brand`).
+- Un solo momento fuerte por pantalla. El resto, quieto.
+- Se anima `transform`/`translate` y `opacity`. Nunca `width`, `height` ni
+  `margin`.
+- Hover del botón principal: sube 2px y saca la sombra verde.
 - Todo degrada con `prefers-reduced-motion`.
-- Las cargas usan el **efecto de marca** (`<LoadingScreen />`, anillo con el
-  monograma CH). Prohibido el spinner genérico y la pantalla en blanco.
+- Las cargas usan `<LoadingScreen />` (anillo verde + monograma CH). Prohibido
+  el spinner suelto y la pantalla en blanco.
 
 ---
 
-## 8. Iconos
+## 9. Iconos y copy
 
-- De `lucide-react`, y **cada icono significa algo real** de lo que acompaña.
-- **`Sparkles` está PROHIBIDO** en todo el producto. Es el icono genérico de
-  "IA" y delata plantilla.
-- Cero emojis en cualquier texto del producto.
-- Un icono solo (sin texto) necesita `aria-label` y zona táctil de 44px.
-
----
-
-## 9. Copy
-
-- **Español neutro.** Nunca castellano de España ("vosotros", "os", "vale").
-- **Al grano.** Frases cortas, sin muletillas de marketing.
-- **Cero guion largo** (`—`). Dos puntos, coma o punto.
-- Perspectiva del usuario: "Deja tus datos para acceder", no "Déjanos tus datos".
+- Iconos de `lucide-react`, y cada uno significa algo real.
+- **`Sparkles` está PROHIBIDO** en todo el producto.
+- Cero emojis. Cero guion largo. Español neutro, nunca de España.
 - Los errores dicen **qué pasó y qué hacer**, nunca un código.
 
 ---
 
-## 10. Checklist antes de dar por hecha una pantalla
+## 10. Checklist antes de dar una pantalla por hecha
 
-- [ ] Ni un color fuera de la tabla de la sección 2.
-- [ ] Inter Tight. Cero fuentes de sistema, cero `font-family` a pelo.
-- [ ] Cero restos del diseño antiguo en los archivos tocados.
-- [ ] Probada a 375px y a 1280px. Cero scroll horizontal.
-- [ ] Todas las zonas táctiles ≥ 44px.
+- [ ] Ni un color fuera de la sección 2.
+- [ ] Radios 4px/8px. Cero esquinas rectas y cero `rounded-2xl/3xl`.
+- [ ] Bordes hairline translúcidos.
+- [ ] Inter Tight, con peso real (900/800/600/400). Cero mono, cero fuentes de
+      sistema.
+- [ ] Probada a 375px y 1280px. Cero scroll horizontal.
+- [ ] Zonas táctiles ≥ 44px.
 - [ ] Botón de volver visible, con texto.
-- [ ] Cada botón se entiende sin explicación. Ninguno apagado que no responda.
+- [ ] Cada botón se entiende sin explicación.
 - [ ] Cero jerga técnica en pantalla.
-- [ ] Estados vacíos con su botón dentro.
 - [ ] Cero emojis, cero guion largo, cero `Sparkles`.
-- [ ] Las cargas usan el efecto de marca.
-- [ ] `tsc` y `npm run build` limpios.
+- [ ] `tsc` y `npm run build` limpios, y **mirada real en el navegador**.
 
 ---
 
 ## Errores ya cometidos (no repetirlos)
 
-**2026-07-29, el panel del formador.** Se construyó El Estudio y Marco lo
-rechazó: *"no se entiende nada, hay mucho caos, y además está el diseño antiguo"*.
-Tres fallos concretos:
-1. Se usó `bg-panel`, `text-accent` y demás tokens **sin mirar que apuntaban al
-   brandkit viejo** (acento blanco, fuentes de sistema). El token tenía el nombre
-   correcto y el valor equivocado.
-2. Se enseñó jerga en pantalla: un bloque "Quién la ve" con "Acceso completo ·
-   Módulo introductorio: no · Orden dentro de la ruta: 1". Marco preguntó
-   literalmente *"esto qué es y por qué está aquí"*.
-3. No había botón de volver, y para llegar a editar había que salir e ir a
-   Ajustes.
+**El token con el nombre correcto y el valor viejo.** `tailwind.config.js`
+definía `accent: "#FFFFFF"`. Todo lo escrito con `bg-accent` salía blanco
+creyendo usar el brandkit. **El nombre de un token no garantiza su valor:** se
+abre la config y se comprueba antes de construir.
 
-Lección: **el nombre de un token no garantiza que su valor sea el del brandkit.**
-Abrir `tailwind.config.js` y comprobarlo antes de construir.
+**Las esquinas rectas.** Se asumió que "brandkit sobrio" era esquina recta y se
+puso `rounded-none` en media App. Marco: *"todo lo que sea esquinas puntiagudas
+y ese vibe antiguo, fuera"*. El brandkit real redondea 4px y 8px. **No se
+deduce el estilo: se lee del brandkit vivo.**
 
----
+**Copiar de pantallas existentes.** La mayor parte del SaaS está con el diseño
+viejo. Copiar de ahí es reintroducirlo.
 
-## Dónde está la verdad
-
-- Knowledge: `docs/sops/marketing/brand/01-brandkit-oficial.md`.
-- En vivo: la página `/brandkit` del OS.
-- En código (App): `web/tailwind.config.js` y `web/src/index.css`.
-- Para páginas de formación, además: la skill `formacion-visual`.
+**Rediseñar lo que nadie pidió.** Se tocó el panel formativo (comunidad,
+mensajes, aula) sin encargo. Marco: *"nunca te he pedido que rediseñes el
+school, deja de perder tokens"*. **Se toca exactamente lo que se pidió.**
