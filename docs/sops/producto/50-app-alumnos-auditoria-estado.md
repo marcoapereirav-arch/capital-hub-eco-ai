@@ -118,8 +118,10 @@ frontend** (RLS posiblemente permisiva → contenido premium burlable), (2) **no
 - **SMTP / `site_url` de producción sin configurar.** `config.toml:45` `site_url=localhost:5173` +
   `additional_redirect_urls=*.vercel.app` (wildcard de redirect = vector de robo de token). Reset/confirm de
   email poco fiables o rotos en el dominio real.
-- **Gating de edición de admin solo en UI.** `handlers/admin.ts` solo hace `requireRole(['ADMIN'])`, no respeta
-  `formacion_asignada` → un formador podría editar rutas ajenas por API. El scoping vive solo en la UI.
+- ~~**Gating de edición de admin solo en UI.**~~ **CERRADO 2026-07-29**: `requireSuperAdmin` para usuarios y
+  rutas, `assertAlcance()` por `formacion_asignada` en formaciones/módulos/lecciones, y RLS con alcance real en
+  la base (que es lo que de verdad protege, porque el editor escribe directo a Supabase). Ver SOP
+  [`producto/55`](55-formador-vs-admin.md).
 - **Panel admin legacy rompe creación de contenido** (mismatch camelCase↔snake_case en `admin.ts`, pierde
   `video_url/module_id/...`). Huérfano de la UI pero alcanzable por URL.
 - **Marketplace:** falta `UNIQUE(job_offer_id, rep_id)` (aplicaciones duplicadas) y la RPC
@@ -165,6 +167,28 @@ Contra el Supabase **de la App** (proyecto propio, no el del OS):
   mismos ajustes). Misma regla en los dos lados — coincide con el brandkit ("reproductores siempre verdes").
 
 ## Cambios versionados
+
+- **2026-07-29 (v8):** Tanda de arreglos de raíz sobre la formación y los roles. Todo verificado en producción.
+  1. **Nadie podía crear ni guardar una formación, y la pantalla no lo decía.** Cuatro fallos encadenados:
+     (a) `requireRole` leía el rol de `app_metadata.role` del JWT y **ningún usuario tiene ese campo**, así que
+     TODO `/admin/*` devolvía 403 a todo el mundo (comprobado con `test-agent`, que es ADMIN en BD);
+     (b) el CRUD genérico filtraba el body solo por nombres snake_case mientras el panel manda camelCase, así
+     que en un alta se caía `route_id` (NOT NULL) y en una edición se perdían campos en silencio;
+     (c) las 7 mutaciones del editor hacían `await supabase...()` **sin mirar el error ni las filas afectadas**
+     (con RLS, Postgres devuelve 0 filas y `error = null`); (d) `routes` solo tenía policy de SELECT.
+     Arreglado: rol desde `public.users`, normalización camelCase, helper `mustWrite` + aviso visible en
+     pantalla, y policies de escritura en `routes`.
+  2. **Subir vídeo fallaba siempre.** La App llamaba al OS por `ecoai.capitalhubapp.com` (dominio legacy) y ese
+     host responde 308. El navegador **no sigue redirecciones en un preflight CORS**, así que la llamada moría
+     antes de salir. Centralizado en `lib/os.ts` contra `os.capitalhubapp.com`. Afectaba también a aceptar
+     invitación de alumno.
+  3. **Formadores tratados como super admin.** Ver SOP [`producto/55`](55-formador-vs-admin.md).
+  4. **Suscripción falsa eliminada.** El botón "Suscribirme 44€" creaba una sesión de pago real de Stripe y no
+     daba acceso. Era código muerto del port, contradecía el modelo (solo high ticket) y seguía clicable.
+     Borrado entero: páginas `/upgrade` y `/subscription/success`, handler de billing, checkout del front y
+     catálogo de precios inventado. Los niveles de acceso siguen, que es lo que provisiona el OS tras la venta.
+  **Pendiente de esta tanda:** el front fuerza `tier ?? 'T1'` (`api/subscription.ts`) — se dejó como estaba a
+  propósito para no dejar sin acceso a alumnos cuyo tier no esté puesto; decidir con Marco.
 
 - **2026-06-26 (v1):** Auditoría inicial completa de la App (build + 6 auditorías de código). Se establece la
   regla de que el estado de la App se refleja en el Knowledge del OS. Caveat de schema drift documentado: los
