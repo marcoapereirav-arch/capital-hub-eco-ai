@@ -21,6 +21,18 @@ const RESOLUCIONES = [1080, 720, 480, 360]
 /** Cuántas lecciones como mucho por vuelta, para no pasarse del tiempo. */
 const POR_VUELTA = 8
 
+/**
+ * La zona de Bunny solo sirve los vídeos a peticiones que vienen de nuestros
+ * dominios: es una lista blanca de referentes, y sin ella devuelve 403.
+ *
+ * Esto costó un rato el 2026-07-30 y por poco se queda de bug mudo: el archivado
+ * pedía el MP4 sin esta cabecera, recibía 403 en TODAS las calidades, y como un
+ * vídeo aún sin procesar también deja de responder, lo daba por "todavía
+ * procesándose" y no archivaba nunca sin quejarse una sola vez. Por eso ahora
+ * un 403 se cuenta como fallo de verdad y sale en el informe.
+ */
+const REFERENTE = "https://os.capitalhubapp.com/"
+
 type Fila = {
   id: number
   title: string | null
@@ -87,13 +99,20 @@ export async function archivarPendientes(): Promise<Resultado> {
 
   for (const { fila, destino } of pendientes.slice(0, POR_VUELTA)) {
     try {
-      const origen = await mejorMp4(cdn, fila.bunny_video_id!)
+      const { url: origen, bloqueado } = await mejorMp4(cdn, fila.bunny_video_id!)
+      if (bloqueado) {
+        // Bunny nos cierra la puerta. Callarse aquí es lo que convierte esto en
+        // un bug mudo que no archiva nunca: se cuenta como fallo.
+        throw new Error(
+          `Bunny devuelve 403 al pedir el vídeo. Revisar la lista blanca de referentes de la zona (esperado: ${REFERENTE}).`,
+        )
+      }
       if (!origen) {
         // Bunny sigue procesándolo. No es un fallo: en la vuelta siguiente estará.
         procesando += 1
         continue
       }
-      await copiarDesdeUrl(origen, destino)
+      await copiarDesdeUrl(origen, destino, { Referer: REFERENTE })
 
       // Si estaba archivado en otro sitio (le cambiaron el nombre a la lección),
       // se retira la copia vieja para no dejar dos.
@@ -119,14 +138,28 @@ export async function archivarPendientes(): Promise<Resultado> {
 
 /**
  * Bunny genera un MP4 por cada calidad que consigue sacar. Se busca la mejor que
- * exista de verdad, que es la que mejor sirve como copia de seguridad. Si no
- * existe ninguna, el vídeo aún se está procesando.
+ * exista de verdad, que es la que mejor sirve como copia de seguridad.
+ *
+ * Distingue tres situaciones, y esa distinción es lo importante:
+ *   - hay URL         -> a copiar.
+ *   - `bloqueado`     -> Bunny responde 403. Es un problema de configuración y
+ *                        hay que gritarlo, no esperar sentado.
+ *   - ni una ni otra  -> el vídeo aún se está procesando. Se reintenta luego.
  */
-async function mejorMp4(cdn: string, guid: string): Promise<string | null> {
+async function mejorMp4(
+  cdn: string,
+  guid: string,
+): Promise<{ url: string | null; bloqueado: boolean }> {
+  let bloqueado = false
   for (const alto of RESOLUCIONES) {
     const candidata = `https://${cdn}/${guid}/play_${alto}p.mp4`
-    const res = await fetch(candidata, { method: "HEAD", cache: "no-store" }).catch(() => null)
-    if (res?.ok) return candidata
+    const res = await fetch(candidata, {
+      method: "HEAD",
+      cache: "no-store",
+      headers: { Referer: REFERENTE },
+    }).catch(() => null)
+    if (res?.ok) return { url: candidata, bloqueado: false }
+    if (res?.status === 403) bloqueado = true
   }
-  return null
+  return { url: null, bloqueado }
 }

@@ -156,8 +156,12 @@ export async function subirLimpiando(
  * Se pasa el flujo de bytes directamente de una respuesta a la otra: no se
  * guarda el vídeo entero en memoria ni en disco en ningún momento.
  */
-export async function copiarDesdeUrl(origen: string, destino: string): Promise<void> {
-  const res = await fetch(origen, { cache: "no-store" })
+export async function copiarDesdeUrl(
+  origen: string,
+  destino: string,
+  cabeceras: Record<string, string> = {},
+): Promise<void> {
+  const res = await fetch(origen, { cache: "no-store", headers: cabeceras })
   await volcar(res, destino)
 }
 

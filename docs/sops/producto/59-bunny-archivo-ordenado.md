@@ -113,7 +113,43 @@ carpetas para el mismo módulo.
 - Se quitan `/ \ : * ? " < > |`, los invisibles de copiar y pegar, los puntos al
   principio y al final, y los espacios de sobra. Máximo 120 caracteres.
 
-### Trampa ya pisada (2026-07-30)
+---
+
+## Trampas ya pisadas. No repetirlas
+
+### 1. La zona de Bunny solo sirve vídeos a nuestros dominios
+
+La pull zone tiene **lista blanca de referentes**. Una petición sin cabecera
+`Referer` recibe **403 en todo**: MP4, HLS y hasta la miniatura.
+
+Esto por poco se queda como **bug mudo**. El archivado pedía el MP4 sin esa
+cabecera, recibía 403 en todas las calidades, y como un vídeo que aún se está
+procesando *también* deja de responder, el código lo daba por "todavía
+procesándose" y **no archivaba nunca sin quejarse una sola vez**.
+
+Dos reglas que salen de aquí:
+
+1. Toda petición del servidor a la zona de Bunny lleva
+   `Referer: https://os.capitalhubapp.com/`.
+2. **Un 403 nunca se confunde con "aún no está listo".** Se cuenta como fallo y
+   sale en el informe. Si dos situaciones distintas acaban en el mismo `continue`,
+   una de ellas se está tapando.
+
+### 2. El nombre de la zona es el nombre, no la URL
+
+En `BUNNY_STORAGE_ZONE` va `capital-hub-media`, **no**
+`https://storage.bunnycdn.com/capital-hub-media`. Con la URL entera, Bunny
+responde 401 en todas las regiones y parece un problema de contraseña.
+
+Cómo distinguir un fallo del otro sin volverse loco:
+
+| Síntoma | Qué es |
+|---|---|
+| 401 en **todas** las regiones | Zona o contraseña mal. Mira si la zona trae `http` dentro |
+| 403 en el CDN de vídeo | Falta el `Referer` |
+| 404 al pedir el MP4 | El vídeo aún se está procesando |
+
+### 3. Los nombres invisibles
 
 Escribir un rango de caracteres invisibles **dentro de una expresión regular**
 obliga a meter esos caracteres en el propio archivo. El archivo se guarda mal y el
@@ -188,6 +224,30 @@ solo en cuanto existan.
 
 Todo lo de `carpetasBunny.ts` es de **mejor esfuerzo y nunca lanza**: que Bunny
 esté caído no puede impedirle al formador crear su módulo.
+
+---
+
+## Estado real a 2026-07-30 (verificado en Bunny, no supuesto)
+
+Zona `capital-hub-media`, host `storage.bunnycdn.com`.
+
+```
+Formaciones/
+  IA Integrator/Modulo 1/NOMBRE DE LA LECCION.mp4   (81.7 MB)
+  Comercial Closing/
+  Clipper/
+Testimonios/
+VSLs/
+  Video Adri Post-Agenda - como aprovechar la llamada.mp4   (139.1 MB)
+```
+
+En el reproductor, cinco colecciones (IA Integrator, Comercial Closing, Clipper,
+Testimonios, VSLs) y **2 vídeos**, los dos colocados. Antes había 7 sueltos y
+ninguna carpeta.
+
+**Pendiente al publicar:** las tres variables de Bunny Storage tienen que estar
+también en Vercel, no solo en el `.env.local`. Sin ellas, en producción el reloj
+se salta el archivado sin romper nada (`hayStorage()` devuelve falso).
 
 ---
 
