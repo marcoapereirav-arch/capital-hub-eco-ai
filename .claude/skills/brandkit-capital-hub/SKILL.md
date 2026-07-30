@@ -165,6 +165,50 @@ hover del botón principal. Nada más.
 
 ---
 
+## 8 bis. Gráficos: lo visual manda, y tiene que explicarse solo
+
+**Lo visual vale más que el texto. PROHIBIDO quitar un gráfico y dejar una frase
+en su lugar** (Marco, 2026-07-30). Ver REGLA #15 del protocolo del agente.
+
+Todo gráfico lleva, sin excepción:
+
+- Los **dos ejes rotulados**, con sus extremos.
+- El **número a la vista** en cada punto o barra.
+- **Al pasar el cursor o tocar**: una etiqueta en palabras normales.
+- **Lo importante señalado DENTRO del dibujo** (la caída marcada en ámbar, no
+  contada aparte).
+- Un **título sin jerga** que diga qué estás mirando.
+
+### Dos fallos ya cometidos. No repetirlos.
+
+**1. Un gráfico con líneas NUNCA se estira.** La primera curva usaba un lienzo
+de 100x100 con `preserveAspectRatio="none"` estirado a lo ancho. Resultado:
+**faltaban tramos de línea**. Al deformar el lienzo de forma distinta en ancho y
+alto, el patrón de guiones de la animación de dibujado se calcula sobre esa
+deformación y algunos tramos caen en el hueco del guion.
+**Se mide el hueco real y se dibuja en píxeles** (`ResizeObserver`), con el
+`viewBox` igual al tamaño real. Nada de `preserveAspectRatio="none"` con trazos.
+
+**2. Si el componente se mide a sí mismo y puede devolver `null` antes de
+tiempo, se mide con REF DE FUNCIÓN.** Mientras cargan los datos el gráfico
+devuelve `null`, así que en el primer pintado el hueco no existe. Un
+`useLayoutEffect` con lista vacía se ejecuta una sola vez, mide cero y no vuelve
+a mirar: **el gráfico se queda en blanco para siempre**. La ref de función se
+dispara justo cuando el hueco aparece.
+
+**3. Una etiqueta que califica a alguien dice SU MOTIVO con el número.** Salía
+"Parado" al lado de "entró hace 1 semana" y parecía una contradicción. Eran dos
+cosas distintas (visitar no es avanzar) pero la pantalla no lo decía. Ahora pone
+"Parado: hace 1 mes que no avanza". **Si un cartel puede leerse como una
+contradicción, le falta el porqué.**
+
+**4. Los datos de ejemplo tienen que ser coherentes entre sí.** El ejemplo daba
+fechas al azar por separado y salían imposibles (última visita anterior a la
+última lección hecha). Se generan en cadena, respetando el orden real de los
+hechos.
+
+---
+
 ## 9. Iconos y copy
 
 - Iconos de `lucide-react`, y cada uno significa algo real.

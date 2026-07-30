@@ -206,6 +206,48 @@ Lo que lleva ahora, y que es el mínimo de cualquier gráfico del producto:
 - La **caída más fuerte pintada en ámbar dentro de la propia línea**, no
   explicada aparte, más un aviso debajo que dice qué lección revisar primero.
 
+### Dos bugs del gráfico, y las reglas que dejan
+
+Marco, mirando la segunda versión: *"la gráfica está rota, le faltan líneas en
+algunos lados, ¿es un bug o qué onda? Arregla esto y que NUNCA vuelva a
+suceder."* Eran dos fallos distintos:
+
+**1. Faltaban tramos de línea.** El dibujo usaba un lienzo cuadrado de 100x100
+estirado a lo ancho (`preserveAspectRatio="none"`). Al deformar el lienzo de
+forma distinta en ancho y alto, el patrón de guiones que usa la animación de
+dibujado se calcula sobre esa deformación y **algunos tramos caen dentro del
+hueco del guion y no se pintan**.
+→ **Regla: un gráfico con líneas nunca se estira. Se mide el hueco real con
+`ResizeObserver` y se dibuja en sus píxeles.**
+
+**2. El gráfico salía en blanco.** Al medir con `useLayoutEffect` y lista de
+dependencias vacía: mientras cargan los datos el componente devuelve `null`, así
+que en el primer pintado el hueco todavía no existe. El efecto se ejecuta una
+sola vez, mide cero y no vuelve a mirar nunca.
+→ **Regla: un componente que se mide a sí mismo y puede devolver `null` antes de
+tiempo se mide con REF DE FUNCIÓN**, que se dispara justo cuando el hueco
+aparece.
+
+Las dos están ancladas en la skill `brandkit-capital-hub`, que se lee antes de
+tocar cualquier cosa visual.
+
+### "Parado" tenía que decir por qué
+
+En la lista salía la etiqueta "Parado" al lado de "entró hace 1 semana" y parecía
+una contradicción. No lo era (visitar la App no es avanzar en la formación), pero
+**la pantalla no lo explicaba**. Ahora:
+
+- "Parado" significa **más de 3 semanas sin terminar una lección nueva**, y se
+  cuenta desde que entró si todavía no ha terminado ninguna: quien entró ayer
+  está empezando, no parado.
+- La fila enseña las dos cosas por separado: *"última visita hace 3 semanas ·
+  Parado: hace 1 mes que no avanza"*.
+- Los datos de ejemplo se generan **en cadena** (entró → avanzó → visitó), porque
+  al azar por separado salían imposibles.
+
+→ **Regla: si un cartel califica a alguien, dice su motivo con el número. Si se
+puede leer como una contradicción, le falta el porqué.**
+
 ### El candado que hacía falta para que esto funcione
 
 `user_progress` solo dejaba que **cada persona leyera sus propias marcas**. Es
