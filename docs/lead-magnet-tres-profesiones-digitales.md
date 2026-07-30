@@ -12,9 +12,9 @@
 
 **Título:** LAS 3 PROFESIONES DIGITALES
 
-**Subtítulo:** La guía honesta para elegir el vehículo correcto — qué son, qué hacen cada día, cuánto pagan las empresas por ellas y por qué existen.
+**Subtítulo:** La guía para elegir el vehículo correcto — qué son, qué hacen cada día, cuánto pagan las empresas por ellas y por qué existen.
 
-**Pie:** Sin humo. Sin promesas de Lamborghini. Solo el mapa que a nosotros nos costó años dibujar.
+**Pie:** El mapa que nos costó años dibujar.
 
 ---
 
@@ -286,18 +286,18 @@ Y ahí está la trampa en la que cae casi todo el mundo — la misma en la que c
 
 **Por eso el siguiente paso no es apuntarte a nada. Es conocerte.**
 
-Hemos preparado un test de aptitud profesional — el mismo tipo de prueba que usan las grandes multinacionales para colocar a cada persona en el puesto donde rinde. Lo han hecho más de 500.000 personas. En 15 minutos te da un mapa de tus fortalezas y tus limitadores, y con él, cuál de las tres profesiones encaja contigo de verdad.
+Hemos preparado un test de aptitud profesional: el test de **Equilibria**, una empresa que lleva más de 20 años operando y son expertos en diversidad de personalidad. Es el mismo tipo de prueba que usan las grandes multinacionales para colocar a cada persona en el puesto donde rinde. Lo han hecho más de 500.000 personas. En 15 minutos te da un mapa de tus fortalezas y tus limitadores, y con él, cuál de las tres profesiones encaja contigo de verdad.
 
-Gratis. Sin tarjeta. Sin compromiso.
+Es gratis.
 
 **[ HAZ EL TEST GRATIS → ]**
-*(enlace: landing del test — 15 minutos)*
+*(enlace embebido en el PDF: https://equilibria.com/pdi-home)*
 
 Una última cosa.
 
 No tienes que tomar la decisión perfecta. Solo tienes que tomar una decisión direccional correcta — la que te encamine hacia la versión de ti que quieres ser. Nosotros perdimos cuatro años saltando de vehículo en vehículo hasta entender esto. Esta guía, y ese test, existen para que tú no los pierdas.
 
-Nos vemos dentro.
+Nos vemos pronto.
 
 **CAPITAL HUB**
 *Formación Profesional Digital*
@@ -308,5 +308,5 @@ Nos vemos dentro.
 
 - **Cifras salariales:** rangos de mercado orientativos (España, remoto, 2026). Adrián debe validarlos antes de distribución masiva. Formulados siempre como observación de mercado + disclaimer, nunca como promesa (coherente con SOP de promesa limpia del avatar V3).
 - **Prueba social:** se usa "nosotros perdimos cuatro años" (historia de Adrián, real) y "500.000 personas han hecho el test" (dato del test Equilibria, ya usado en la landing optin). No se promete colocación ni cifras de alumnos.
-- **CTA:** apunta a la landing del test de aptitud (`ch-copy-test-landing-optin.md`). Falta insertar la URL real en el PDF cuando Patrick confirme el dominio de la landing.
+- **CTA:** apunta al test de aptitud de Equilibria. URL real ya embebida como enlace clicable en el botón de la página 13 del PDF: https://equilibria.com/pdi-home (confirmada por Adrián 2026-07-30). Mención de Equilibria (+20 años operando, expertos en diversidad de personalidad) añadida en la página 13.
 - **PDF:** `docs/assets/lead-magnet-tres-profesiones-digitales.pdf`, generado desde `docs/lead-magnet-tres-profesiones-digitales.html` (Brandkit monochrome V3).
