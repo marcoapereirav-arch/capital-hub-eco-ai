@@ -75,9 +75,9 @@ export function WebinarLanding({
       {/* ════════ SECCIÓN 1 · HERO + OPT-IN, TODO EN UNA SOLA PANTALLA ════════
           Diseño (Marco, 2026-07-30): en el móvil se ve TODO sin bajar y tiene que
           respirar. Tres decisiones que lo consiguen:
-            1. Columna alineada a la IZQUIERDA. Un párrafo largo centrado se lee como
-               un ladrillo; a la izquierda cada línea arranca en el mismo sitio y el ojo
-               baja solo. La referencia va centrada porque tiene un tercio de texto.
+            1. Todo CENTRADO (Marco), como en la referencia. Para que un texto centrado
+               no se lea como un ladrillo hay que darle medida corta: cada bloque tiene
+               su `max-width` en `ch`, así que ninguna línea se hace larga.
             2. Bloques agrupados por significado: mucho aire ENTRE grupos y poco DENTRO.
                (evento+fecha) (titular) (promesa+fuente) (cuenta atrás) (formulario).
             3. Un solo momento verde en el titular y un solo subrayado en la promesa.
@@ -137,7 +137,7 @@ export function WebinarLanding({
                 {/* La condición, tratada como un apunte al margen: filete verde y letra
                     fina. Deja de ser "una línea más" y se lee como la letra pequeña
                     que quita el miedo. */}
-                <span className="fk-line hero-note block" style={{ animationDelay: "330ms" }}>
+                <span className="fk-line hero-note" style={{ animationDelay: "330ms" }}>
                   <span className="hero-note-rule" aria-hidden />
                   <span className="hero-note-txt">
                     aunque <em className="hero-note-em">no tengas experiencia</em> y{" "}
@@ -465,37 +465,37 @@ function HeroFit() {
       /* Columna editorial: alineada a la izquierda en móvil. */
       .hero-atmos { height: 145svh; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
 
-      .hero-col { text-align: left; align-items: flex-start; justify-content: safe center; gap: min(4.4vw, 1.95svh); }
-      .hero-body { gap: min(4.4vw, 1.95svh); align-content: safe center; grid-template-rows: auto auto; }
+      .hero-col { text-align: center; align-items: center; justify-content: safe center; gap: min(4.2vw, 1.8svh); }
+      .hero-body { gap: min(4.4vw, 2.1svh); align-content: safe center; grid-template-rows: auto auto; }
       .hero-top > header { padding-block: min(3.4vw, 1.7svh); }
 
       /* Grupo 1: evento y fecha, pegados entre sí. */
-      .hero-when { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6em; }
+      .hero-when { display: flex; flex-direction: column; align-items: center; gap: 0.6em; }
       .hero-badge { padding: 0.42em 0.9em; font-size: min(2.85vw, 1.42svh); }
       .hero-badge-ico { width: 1.15em; height: 1.15em; }
       .hero-date { font-size: min(4.1vw, 1.9svh); letter-spacing: -0.01em; }
 
       /* Grupo 2: el titular manda. Interlineado apretado para que se lea como un bloque. */
-      .hero-h1 { font-size: min(6.2vw, 2.85svh); line-height: 1.05; letter-spacing: -0.032em; max-width: 19ch; }
-      .hero-note { display: flex; align-items: flex-start; gap: 0.7em; margin-top: 0.62em; font-size: 0.46em; max-width: 34ch; }
-      .hero-note-rule { flex: none; width: 2px; align-self: stretch; border-radius: 2px; background: linear-gradient(180deg, var(--acc), rgba(34,197,94,0)); }
-      .hero-note-txt { font-weight: 300; line-height: 1.32; letter-spacing: 0; color: #8E939C; }
+      .hero-h1 { font-size: min(6vw, 2.75svh); line-height: 1.06; letter-spacing: -0.032em; max-width: 19ch; text-wrap: balance; }
+      .hero-note { display: flex; flex-direction: column; align-items: center; gap: 0.7em; margin-top: 0.8em; font-size: 0.45em; max-width: 38ch; margin-inline: auto; }
+      .hero-note-rule { display: block; flex: none; width: 3.4em; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(34,197,94,0), rgba(34,197,94,0.85), rgba(34,197,94,0)); }
+      .hero-note-txt { font-weight: 300; line-height: 1.35; letter-spacing: 0; color: #8E939C; text-wrap: balance; }
       .hero-note-em { font-style: normal; font-weight: 600; color: #D6DAE0; }
       .hero-strong { font-weight: 800; color: #FFFFFF; }
 
       /* Grupo 3: la promesa. Medida corta y respirada para que se lea tranquila. */
-      .hero-promise { display: flex; flex-direction: column; gap: 0.7em; }
-      .hero-sub { font-size: min(3.4vw, 1.56svh); line-height: 1.46; max-width: 48ch; }
-      .hero-src { display: flex; align-items: baseline; gap: 0.7em; font-size: min(2.5vw, 1.22svh); line-height: 1.4; max-width: 54ch; }
+      .hero-promise { display: flex; flex-direction: column; align-items: center; gap: 0.85em; }
+      .hero-sub { font-size: min(3.35vw, 1.52svh); line-height: 1.5; max-width: 44ch; margin-inline: auto; text-wrap: pretty; }
+      .hero-src { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0.25em 0.7em; font-size: min(2.5vw, 1.22svh); line-height: 1.4; max-width: 46ch; margin-inline: auto; }
       .hero-src-tag { flex: none; font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.84em; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(74,222,128,0.85); }
       .hero-src-tag::after { content: ""; display: inline-block; width: 1.1em; height: 1px; margin-left: 0.5em; vertical-align: middle; background: rgba(74,222,128,0.4); }
       .hero-src-txt { color: #5C616B; }
 
       /* Grupo 4: cuenta atrás sin cajas en móvil. Solo los números, que es lo que importa. */
-      .hero-count { --fk-count-num: min(7.4vw, 3.4svh); --fk-count-lab: min(2.4vw, 1.15svh); --fk-count-pad: 0; }
-      .hero-count .fk-count { border: 0; background: none; box-shadow: none; border-radius: 0; text-align: left; padding-inline: 0; }
+      .hero-count { --fk-count-num: min(7.4vw, 3.4svh); --fk-count-lab: min(2.4vw, 1.15svh); --fk-count-pad: 0; text-align: center; }
+      .hero-count .fk-count { border: 0; background: none; box-shadow: none; border-radius: 0; text-align: center; padding-inline: 0; }
       .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: none; }
-      .hero-count .grid { gap: min(4vw, 2svh); max-width: none; grid-template-columns: repeat(4, max-content); }
+      .hero-count .grid { gap: min(5.5vw, 2.8svh); max-width: none; grid-template-columns: repeat(4, max-content); justify-content: center; margin-inline: auto; }
       .hero-count .fk-count-lab { color: #5C616B; margin-top: 0.25em; }
 
       /* Grupo 5: la acción. */
@@ -510,22 +510,22 @@ function HeroFit() {
 
       /* Escritorio: dos columnas, ya sin apretar. */
       @media (min-width: 1024px) {
-        .hero-col { gap: 1.75rem; justify-content: center; }
+        .hero-col { gap: 1.6rem; justify-content: center; align-items: center; text-align: center; }
         .hero-body { gap: 3.5rem; }
         .hero-badge { padding: 0.4rem 0.9rem; font-size: 12px; }
         .hero-date { font-size: 18px; }
-        .hero-h1 { font-size: clamp(2.35rem, 3.05vw, 3.35rem); max-width: 20ch; }
-        .hero-note { font-size: 0.39em; max-width: 44ch; margin-top: 0.8em; }
-        .hero-note-rule { width: 3px; }
+        .hero-h1 { font-size: clamp(2.15rem, 2.75vw, 3rem); max-width: 18ch; }
+        .hero-note { font-size: 0.4em; max-width: 40ch; margin-top: 1.05em; gap: 0.9em; }
+        .hero-note-rule { width: 3.6em; height: 2px; }
         .hero-atmos { height: 135vh; }
         .hero-src { font-size: 11.5px; max-width: none; }
         .hero-count { --fk-count-num: 2.7rem; --fk-count-pad: 1.05rem; }
-        .hero-sub { font-size: 16px; line-height: 1.65; max-width: 46ch; }
+        .hero-sub { font-size: 16px; line-height: 1.62; max-width: 40ch; }
         .hero-src { font-size: 11px; }
         .hero-count { --fk-count-num: 2.5rem; --fk-count-lab: 10px; --fk-count-pad: 0.85rem; }
         .hero-count .fk-count { border: 1px solid rgba(34,197,94,0.28); background: linear-gradient(180deg, rgba(34,197,94,0.10), rgba(20,20,24,0.9)); box-shadow: 0 12px 34px -22px rgba(34,197,94,0.9); border-radius: 0.75rem; text-align: center; padding-inline: 0.25rem; }
         .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: block; }
-        .hero-count .grid { gap: 0.75rem; max-width: 28rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .hero-count .grid { gap: 0.75rem; max-width: 26rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-inline: auto; }
         .hero-card { padding: 1.75rem; }
         .hero-form-title { font-size: 1.6rem; }
         .hero-form-sub { font-size: 14px; }
