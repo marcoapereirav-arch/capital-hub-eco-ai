@@ -34,7 +34,7 @@ import {
  *   - INSTAGRAM_HANDLE: usuario IG de Adrián (sin @), para el pie/soporte.
  */
 export const FUNNEL_WEBINAR = {
-  VIDEO_GUID: "",
+  VIDEO_GUID: "e7b88399-9cf9-4184-a7b4-5e8bcc9ade31",
   BUNNY_LIBRARY_ID: "686883",
   WHATSAPP_NUMBER: "34611874062",
   WHATSAPP_MESSAGE: "Hola Adrián, quiero acceder al evento.",

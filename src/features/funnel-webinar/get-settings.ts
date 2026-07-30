@@ -58,8 +58,7 @@ export async function getWebinarSettings(): Promise<WebinarSettings> {
     const emailWhatsappEnabled = (v.email_whatsapp?.trim() ?? "") !== "0"
 
     return {
-      // video_guid vacío es válido: significa "aún sin vídeo" → placeholder.
-      videoGuid: v.video_guid?.trim() ?? fallback.videoGuid,
+      videoGuid: v.video_guid?.trim() || fallback.videoGuid,
       bunnyLibraryId: v.bunny_library_id?.trim() || fallback.bunnyLibraryId,
       whatsappNumber: v.whatsapp_number?.trim() || fallback.whatsappNumber,
       whatsappMessage: v.whatsapp_message?.trim() || fallback.whatsappMessage,

@@ -73,72 +73,81 @@ export function WebinarLanding({
       <HeroFit />
 
       {/* ════════ SECCIÓN 1 · HERO + OPT-IN, TODO EN UNA SOLA PANTALLA ════════
-          Regla dura de Marco (2026-07-30): en MÓVIL tiene que verse TODO sin bajar:
-          sello, fecha, titular, subtítulo con la fuente, cuenta atrás y el formulario
-          entero con su botón. Por eso la sección mide 100svh exactos y CADA tamaño y
-          CADA hueco es fluido en `svh` (con `min()` contra `vw`): si el teléfono es más
-          bajito, todo encoge a la vez y sigue cabiendo. No se quita ni una palabra. */}
+          Diseño (Marco, 2026-07-30): en el móvil se ve TODO sin bajar y tiene que
+          respirar. Tres decisiones que lo consiguen:
+            1. Columna alineada a la IZQUIERDA. Un párrafo largo centrado se lee como
+               un ladrillo; a la izquierda cada línea arranca en el mismo sitio y el ojo
+               baja solo. La referencia va centrada porque tiene un tercio de texto.
+            2. Bloques agrupados por significado: mucho aire ENTRE grupos y poco DENTRO.
+               (evento+fecha) (titular) (promesa+fuente) (cuenta atrás) (formulario).
+            3. Un solo momento verde en el titular y un solo subrayado en la promesa.
+               Antes había cuatro y competían entre ellos.
+          Cada tamaño y cada hueco se miden contra la ALTURA (`svh`), así que en un
+          teléfono más bajito encoge todo a la vez y el formulario nunca se sale. */}
       <section ref={heroRef} className="hero relative flex h-[100svh] flex-col overflow-hidden">
         <FunnelBackdrop />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 md:px-8" style={{ minHeight: 0 }}>
-          <div className="shrink-0">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 md:px-8" style={{ minHeight: 0 }}>
+          <div className="hero-top shrink-0">
             <FunnelHeader />
           </div>
 
-          <div className="hero-body grid min-h-0 flex-1 items-center lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
+          <div className="hero-body grid min-h-0 flex-1 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
             {/* ── Promesa + cuenta atrás ── */}
-            <div className="flex min-h-0 flex-col items-center text-center lg:items-start lg:text-left">
-              {/* Sello del evento */}
-              <div
-                className="fk-load hero-badge inline-flex items-center gap-2 rounded-full border border-[#22C55E]/40 bg-[#22C55E]/12"
-                style={{ animationDelay: "60ms" }}
-              >
-                <CalendarDays className="hero-badge-ico text-[#4ADE80]" />
-                <span
-                  className="font-extrabold uppercase tracking-[0.08em] text-[#4ADE80]"
-                  style={{ fontFamily: "'Inter Tight', sans-serif" }}
+            <div className="hero-col flex min-h-0 flex-col">
+              {/* Grupo 1: qué es y cuándo */}
+              <div className="hero-when">
+                <div
+                  className="fk-load hero-badge inline-flex items-center gap-2 rounded-full border border-[#22C55E]/35 bg-[#22C55E]/10"
+                  style={{ animationDelay: "60ms" }}
                 >
-                  Clase gratuita en directo
-                </span>
+                  <CalendarDays className="hero-badge-ico text-[#4ADE80]" />
+                  <span
+                    className="font-bold uppercase tracking-[0.1em] text-[#4ADE80]"
+                    style={{ fontFamily: "'Inter Tight', sans-serif" }}
+                  >
+                    Clase gratuita en directo
+                  </span>
+                </div>
+                <p
+                  className="fk-load hero-date font-bold text-white"
+                  style={{ fontFamily: "'Inter Tight', sans-serif", animationDelay: "120ms" }}
+                >
+                  {dateLabel}
+                </p>
               </div>
 
-              {/* Fecha y hora reales, salidas del ⚙️ de /webs */}
-              <p
-                className="fk-load hero-date font-bold text-white"
-                style={{ fontFamily: "'Inter Tight', sans-serif", animationDelay: "120ms" }}
-              >
-                {dateLabel}
-              </p>
-
-              {/* Titular: contraste de peso. Lo importante en Black 900 y verde de marca. */}
+              {/* Grupo 2: el titular. Las frases clave no se parten nunca a mitad. */}
               <h1
-                className="fk-tilt hero-h1 max-w-[24ch] text-white [text-wrap:balance]"
+                className="fk-tilt hero-h1 text-white"
                 style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 300 }}
               >
                 <span className="fk-line block" style={{ animationDelay: "180ms" }}>
-                  Cómo ganar <span className="fk-key">de 2k a 4k al mes</span> en menos de{" "}
-                  <span className="font-black text-white">90 días</span> con una{" "}
-                  <span className="fk-key">profesión digital</span>
+                  Cómo ganar <span className="fk-key whitespace-nowrap">de 2k a 4k</span>{" "}
+                  <span className="fk-key">al mes</span> en menos de{" "}
+                  <span className="hero-strong whitespace-nowrap">90 días</span> con una{" "}
+                  <span className="hero-strong">profesión digital</span>
                 </span>
-                <span className="fk-line hero-h1-tail block font-light text-[#A6ABB4]" style={{ animationDelay: "330ms" }}>
-                  aunque no tengas experiencia y partas de 0.
+                <span className="fk-line hero-h1-tail block font-light text-[#7E838C]" style={{ animationDelay: "330ms" }}>
+                  aunque no tengas experiencia y <span className="whitespace-nowrap">partas de 0.</span>
                 </span>
               </h1>
 
-              {/* Subtítulo (copy dictado por Marco, íntegro) */}
-              <p className="fk-load hero-sub max-w-2xl leading-snug text-[#C7CBD1]" style={{ animationDelay: "460ms" }}>
-                Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
-                trabajo, y gana de <strong className="font-bold text-white">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
-                trabajando para empresas que están buscando tu perfil:{" "}
-                <span className="fk-mark">más de 500.000 puestos de trabajo online</span> publicados
-                al año en España.
-              </p>
-              <p className="fk-load hero-src leading-snug text-[#6B7280]" style={{ animationDelay: "520ms" }}>
-                Fuente: Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
-              </p>
+              {/* Grupo 3: la promesa y de dónde sale el dato (copy íntegro de Marco) */}
+              <div className="hero-promise">
+                <p className="fk-load hero-sub text-[#A6ABB4]" style={{ animationDelay: "460ms" }}>
+                  Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
+                  trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
+                  trabajando para empresas que están buscando tu perfil:{" "}
+                  <span className="fk-mark">más de 500.000 puestos de trabajo online</span> publicados
+                  al año en España.
+                </p>
+                <p className="fk-load hero-src text-[#5C616B]" style={{ animationDelay: "520ms" }}>
+                  Fuente: Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
+                </p>
+              </div>
 
-              {/* Cuenta atrás hasta el directo */}
+              {/* Grupo 4: cuánto queda */}
               <div className="fk-load hero-count w-full" style={{ animationDelay: "580ms" }}>
                 <Countdown
                   isoDate={webinarDate}
@@ -149,7 +158,7 @@ export function WebinarLanding({
               </div>
             </div>
 
-            {/* ── Opt-in embebido ── */}
+            {/* Grupo 5: la acción */}
             <OptinCard />
           </div>
         </div>
@@ -420,56 +429,75 @@ function AdrianStory() {
 }
 
 /* ───────────────────── Medidas de la primera pantalla ─────────────────────
-   Todo lo del hero se mide contra la ALTURA de la pantalla (`svh`), no solo contra el
-   ancho. Cada tamaño es `min(algo-vw, algo-svh)`: manda el más pequeño de los dos, así
-   que en un teléfono bajito encoge todo a la vez y el formulario nunca se queda fuera.
-   A partir de 1024px se pasa a dos columnas y a tamaños cómodos de escritorio. */
+   Todo se mide contra la ALTURA de la pantalla (`svh`), no solo contra el ancho: cada
+   valor es `min(algo-vw, algo-svh)` y manda el más pequeño, así que en un teléfono
+   bajito encoge todo a la vez y el formulario nunca se queda fuera.
+
+   El ritmo es lo que hace que respire: MUCHO aire entre grupos, POCO dentro de cada
+   grupo. Por eso los huecos internos van en `em` (atados a su propio texto) y los que
+   separan grupos van en `svh`. */
 function HeroFit() {
   return (
     <style>{`
-      .hero-body { gap: min(3.2vw, 1.6svh); align-content: center; }
+      /* Columna editorial: alineada a la izquierda en móvil. */
+      .hero-col { text-align: left; align-items: flex-start; justify-content: safe center; gap: min(4.4vw, 1.95svh); }
+      .hero-body { gap: min(4.4vw, 1.95svh); align-content: safe center; grid-template-rows: auto auto; }
+      .hero-top > header { padding-block: min(3.4vw, 1.7svh); }
 
-      .hero-badge { padding: min(0.9vw, 0.5svh) min(3vw, 1.6svh); font-size: min(2.9vw, 1.45svh); }
-      .hero-badge-ico { width: min(3.6vw, 1.8svh); height: min(3.6vw, 1.8svh); }
-      .hero-date { margin-top: min(2.2vw, 1.1svh); font-size: min(3.7vw, 1.85svh); }
-      .hero-h1 { margin-top: min(2.6vw, 1.3svh); font-size: min(5.9vw, 3.05svh); line-height: 1.06; letter-spacing: -0.028em; }
-      .hero-h1-tail { margin-top: min(1.4vw, 0.7svh); font-size: min(3.9vw, 1.95svh); line-height: 1.2; }
-      .hero-sub { margin-top: min(3vw, 1.5svh); font-size: min(3.35vw, 1.7svh); }
-      .hero-src { margin-top: min(1.6vw, 0.8svh); font-size: min(2.5vw, 1.25svh); }
-      .hero-count { margin-top: min(3.4vw, 1.7svh);
-        --fk-count-num: min(6.4vw, 3.2svh);
-        --fk-count-lab: min(2.4vw, 1.2svh);
-        --fk-count-pad: min(1.8vw, 0.9svh);
-      }
+      /* Grupo 1: evento y fecha, pegados entre sí. */
+      .hero-when { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6em; }
+      .hero-badge { padding: 0.42em 0.9em; font-size: min(2.85vw, 1.42svh); }
+      .hero-badge-ico { width: 1.15em; height: 1.15em; }
+      .hero-date { font-size: min(4.1vw, 1.9svh); letter-spacing: -0.01em; }
 
-      .hero-card { padding: min(4.4vw, 2.2svh); }
-      .hero-form-title { font-size: min(4.6vw, 2.3svh); }
-      .hero-form-sub { margin-top: min(1vw, 0.5svh); font-size: min(3vw, 1.5svh); }
-      .hero-form { margin-top: min(3vw, 1.5svh); display: flex; flex-direction: column; gap: min(2.4vw, 1.2svh); }
-      .hero-input { height: min(11.5vw, 5.4svh); font-size: min(3.9vw, 1.95svh); }
-      .hero-submit { height: min(12.5vw, 5.9svh); font-size: min(4vw, 2svh); }
-      .hero-legal { font-size: min(2.9vw, 1.45svh); }
-      .hero-err { padding-block: min(1.6vw, 0.8svh); font-size: min(3.2vw, 1.6svh); }
+      /* Grupo 2: el titular manda. Interlineado apretado para que se lea como un bloque. */
+      .hero-h1 { font-size: min(6.2vw, 2.85svh); line-height: 1.05; letter-spacing: -0.032em; max-width: 19ch; }
+      .hero-h1-tail { margin-top: 0.45em; font-size: 0.5em; line-height: 1.25; letter-spacing: -0.01em; max-width: 30ch; }
+      .hero-strong { font-weight: 800; color: #FFFFFF; }
 
-      /* Escritorio: dos columnas y tamaños cómodos, ya sin apretar. */
+      /* Grupo 3: la promesa. Medida corta y respirada para que se lea tranquila. */
+      .hero-promise { display: flex; flex-direction: column; gap: 0.7em; }
+      .hero-sub { font-size: min(3.4vw, 1.56svh); line-height: 1.46; max-width: 48ch; }
+      .hero-src { font-size: min(2.5vw, 1.22svh); line-height: 1.35; max-width: 52ch; }
+
+      /* Grupo 4: cuenta atrás sin cajas en móvil. Solo los números, que es lo que importa. */
+      .hero-count { --fk-count-num: min(7.4vw, 3.4svh); --fk-count-lab: min(2.4vw, 1.15svh); --fk-count-pad: 0; }
+      .hero-count .fk-count { border: 0; background: none; box-shadow: none; border-radius: 0; text-align: left; padding-inline: 0; }
+      .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: none; }
+      .hero-count .grid { gap: min(4vw, 2svh); max-width: none; grid-template-columns: repeat(4, max-content); }
+      .hero-count .fk-count-lab { color: #5C616B; margin-top: 0.25em; }
+
+      /* Grupo 5: la acción. */
+      .hero-card { padding: min(4.3vw, 1.85svh); }
+      .hero-form-title { font-size: min(4.6vw, 2.1svh); letter-spacing: -0.02em; }
+      .hero-form-sub { margin-top: 0.3em; font-size: min(3vw, 1.5svh); }
+      .hero-form { margin-top: min(3vw, 1.3svh); display: flex; flex-direction: column; gap: min(1.9vw, 0.85svh); }
+      .hero-input { height: min(10.9vw, 4.75svh); font-size: min(3.8vw, 1.8svh); }
+      .hero-submit { height: min(11.9vw, 5.2svh); font-size: min(3.9vw, 1.85svh); }
+      .hero-legal { font-size: min(2.85vw, 1.42svh); }
+      .hero-err { padding-block: 0.5em; font-size: min(3.2vw, 1.6svh); }
+
+      /* Escritorio: dos columnas, ya sin apretar. */
       @media (min-width: 1024px) {
-        .hero-body { gap: 3rem; }
-        .hero-badge { padding: 0.375rem 0.875rem; font-size: 13px; }
-        .hero-badge-ico { width: 1rem; height: 1rem; }
-        .hero-date { margin-top: 0.75rem; font-size: 17px; }
-        .hero-h1 { margin-top: 1.25rem; font-size: clamp(2.2rem, 3.1vw, 3.35rem); }
-        .hero-h1-tail { margin-top: 0.5rem; font-size: clamp(1.05rem, 1.4vw, 1.5rem); }
-        .hero-sub { margin-top: 1.5rem; font-size: 17px; line-height: 1.6; }
-        .hero-src { margin-top: 0.65rem; font-size: 11px; }
-        .hero-count { margin-top: 2rem; --fk-count-num: 2.5rem; --fk-count-lab: 11px; --fk-count-pad: 1rem; }
+        .hero-col { gap: 1.75rem; justify-content: center; }
+        .hero-body { gap: 3.5rem; }
+        .hero-badge { padding: 0.4rem 0.9rem; font-size: 12px; }
+        .hero-date { font-size: 18px; }
+        .hero-h1 { font-size: clamp(2.3rem, 3.2vw, 3.4rem); max-width: 15ch; }
+        .hero-h1-tail { font-size: 0.42em; max-width: 30ch; }
+        .hero-sub { font-size: 16px; line-height: 1.65; max-width: 46ch; }
+        .hero-src { font-size: 11px; }
+        .hero-count { --fk-count-num: 2.5rem; --fk-count-lab: 10px; --fk-count-pad: 0.85rem; }
+        .hero-count .fk-count { border: 1px solid rgba(34,197,94,0.28); background: linear-gradient(180deg, rgba(34,197,94,0.10), rgba(20,20,24,0.9)); box-shadow: 0 12px 34px -22px rgba(34,197,94,0.9); border-radius: 0.75rem; text-align: center; padding-inline: 0.25rem; }
+        .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: block; }
+        .hero-count .grid { gap: 0.75rem; max-width: 28rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .hero-card { padding: 1.75rem; }
         .hero-form-title { font-size: 1.6rem; }
-        .hero-form-sub { margin-top: 0.375rem; font-size: 14px; }
+        .hero-form-sub { font-size: 14px; }
         .hero-form { margin-top: 1.25rem; gap: 0.875rem; }
         .hero-input { height: 3rem; font-size: 16px; }
         .hero-submit { height: 3.375rem; font-size: 15px; }
         .hero-legal { font-size: 12px; }
-        .hero-err { padding-block: 0.5rem; font-size: 14px; }
       }
     `}</style>
   )
