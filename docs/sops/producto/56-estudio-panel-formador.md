@@ -439,3 +439,47 @@ prompt). Faltaba el cuarto:
 
 Y la de fondo: **una pieza que nunca se ha recorrido entera no está probada.**
 Que el generador conteste 200 no significa que alguien pueda verlo.
+
+---
+
+## Un PDF largo nunca llegaba a convertirse (2026-07-30)
+
+Marco subió `INTENSIVO BOOK.pdf` (401 KB), se cargó, y **no pasaba nada**: ni
+pantalla nueva, ni resultado, ni error. El botón cambiaba a "Reintentar" y ya.
+
+### El motivo
+
+Supabase corta cualquier petición que pase **150 segundos sin que circule un solo
+byte** (`IDLE_TIMEOUT`). Pedir la presentación de una sola pieza deja la conexión
+muda todo el rato que el modelo tarda en pensarse el documento. Con un texto
+corto cabe de sobra (27 s medidos). Con un libro, **no**.
+
+Reproducido con el archivo exacto: **504 a los 153 segundos.**
+
+### El arreglo
+
+Se pide la respuesta **en trozos** (`stream: true`) y se juntan en el servidor
+(`juntarTrozos`). Mientras llegan trozos los bytes no dejan de circular, así que
+el reloj de silencio no arranca nunca. El cliente no cambia: sigue recibiendo el
+documento entero de una vez.
+
+### Lo que lo hizo invisible
+
+El límite que sí estaba puesto y comprobado era el de **tamaño** (11 MB). El PDF
+pesaba 401 KB, así que pasaba de largo. **El límite real no era el peso: era el
+tiempo**, y no lo miraba nadie.
+
+Además, el aviso que llegaba era `Request idle timeout limit (150s) reached`, que
+al formador no le dice nada. Ahora dice: *"El documento es muy largo y el
+generador se quedó a medias. Prueba con menos páginas o pega solo la parte que
+quieres convertir."*
+
+### Las reglas
+
+1. **Toda llamada a un modelo desde una Edge Function va en trozos.** No es una
+   optimización: sin ellos, cualquier entrada grande muere a los 150 segundos.
+2. **Un límite de tamaño no cubre uno de tiempo.** Si una operación depende de lo
+   que tarde otro, hay que medir el tiempo con el caso más grande de verdad, no
+   con el de prueba.
+3. **Probar con un archivo real, no con un párrafo.** El texto de ejemplo pasó a
+   la primera y escondió el fallo entero.
