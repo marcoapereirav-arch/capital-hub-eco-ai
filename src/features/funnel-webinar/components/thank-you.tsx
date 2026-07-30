@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { CalendarClock, CheckCircle2, BadgeCheck, ArrowRight } from "lucide-react"
-import { FUNNEL_WEBINAR, whatsappLink, webinarDateLabel } from "../config"
+import { FUNNEL_WEBINAR, whatsappLink, webinarDateTimeLabel } from "../config"
 
 /** Logo oficial de WhatsApp (glyph monocromo, hereda el color con currentColor). */
 function WhatsappIcon({ className }: { className?: string }) {
@@ -14,8 +14,8 @@ function WhatsappIcon({ className }: { className?: string }) {
 }
 
 /**
- * Página de Gracias del Funnel Webinar.
- * Brandkit Capital Hub: base monocromo B&W + verde de acento (#22C55E).
+ * Página de Gracias de la Clase gratuita en directo (funnel `webinar`).
+ * Acento VERDE oficial del brandkit (#22C55E / #4ADE80), igual que la landing.
  *
  * Objetivo único (reunión 24-jul-2026): que el lead ESCRIBA a Adrián por WhatsApp para
  * conseguir su entrada al evento. El botón abre WhatsApp con el mensaje ya escrito; el
@@ -39,7 +39,7 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
     whatsappNumber || FUNNEL_WEBINAR.WHATSAPP_NUMBER,
     whatsappMessage || FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
   )
-  const resolvedDate = dateLabel || webinarDateLabel()
+  const resolvedDate = dateLabel || webinarDateTimeLabel()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Al tocar el botón de WhatsApp marcamos al contacto (tag + evento en su timeline).
@@ -153,13 +153,13 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
 
         <div className="flex flex-1 flex-col justify-center">
           {/* Sello de felicitación */}
-          <div className="wbt-pop mb-6 inline-flex items-center gap-2 self-start rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10 px-3.5 py-1.5">
-            <BadgeCheck className="h-4 w-4 text-[#22C55E]" />
-            <span className="text-[13px] font-medium text-[#4ADE80]">Plaza confirmada. Buena decisión.</span>
+          <div className="wbt-pop mb-6 inline-flex items-center gap-2 self-start rounded-full border border-[#22C55E]/45 bg-[#22C55E]/12 px-3.5 py-1.5">
+            <BadgeCheck className="h-4 w-4 text-[#4ADE80]" />
+            <span className="text-[13px] font-bold text-[#4ADE80]">Plaza confirmada. Buena decisión.</span>
           </div>
 
           <h1
-            className="wbt-rise mb-4 text-[2rem] font-medium leading-[1.1] tracking-tight text-white md:text-[2.6rem]"
+            className="wbt-rise mb-4 text-[2rem] font-extrabold leading-[1.06] tracking-[-0.02em] text-white md:text-[2.6rem]"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
             Último paso: escríbenos por WhatsApp para conseguir tu entrada.
@@ -191,8 +191,8 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
           {/* Recordatorio de la cita */}
           <div className="wbt-rise rounded-lg border border-[#2A2D34] bg-[#141418] p-5 md:p-6" style={{ animationDelay: "160ms" }}>
             <div className="mb-3 flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#22C55E]/30 bg-[#22C55E]/10">
-                <CalendarClock className="h-[18px] w-[18px] text-[#22C55E]" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#22C55E]/35 bg-[#22C55E]/12">
+                <CalendarClock className="h-[18px] w-[18px] text-[#4ADE80]" />
               </div>
               <div>
                 <p className="text-[12px] uppercase tracking-wide text-[#9CA3AF]">Reserva este hueco</p>
@@ -208,7 +208,7 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
                 "Ven con ganas: es tu punto de partida.",
               ].map((t) => (
                 <li key={t} className="flex gap-2.5 text-sm text-[#D1D5DB] leading-relaxed">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#22C55E]" />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#4ADE80]" />
                   <span>{t}</span>
                 </li>
               ))}

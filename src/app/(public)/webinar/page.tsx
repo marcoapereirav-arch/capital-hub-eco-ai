@@ -5,12 +5,20 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export const metadata = {
-  title: "Webinar en directo · Capital Hub",
+  title: "Clase gratuita en directo · Capital Hub",
   description:
-    "En enero de 2022 dejé mi trabajo y gané 4.000 € al mes. Te enseño a hacer lo mismo en menos de 90 días. Webinar en vivo y gratis.",
+    "Cómo ganar de 2k a 4k al mes en menos de 90 días con una profesión digital aunque no tengas experiencia y partas de 0. Clase gratuita y en directo.",
 }
 
 export default async function WebinarRoute() {
   const s = await getWebinarSettings()
-  return <WebinarLanding dateLabel={s.dateLabel} videoGuid={s.videoGuid} bunnyLibraryId={s.bunnyLibraryId} />
+  return (
+    <WebinarLanding
+      dateLabel={s.dateLabel}
+      webinarDate={s.webinarDate}
+      webinarTime={s.webinarTime}
+      videoGuid={s.videoGuid}
+      bunnyLibraryId={s.bunnyLibraryId}
+    />
+  )
 }

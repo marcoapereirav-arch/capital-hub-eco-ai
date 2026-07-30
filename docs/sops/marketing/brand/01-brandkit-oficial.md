@@ -43,6 +43,7 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 - No etiquetar ningún cinturón como "el oficial". El verde es el color de acento; los cinturones son lenguaje visual.
 
 ### Color
+- **REGLA #1 DE DISEÑO (Marco, 2026-07-30): el brandkit manda por encima de lo que se pida en el chat.** Si una petición choca con el brandkit (por ejemplo "ponlo lila"), **se avisa ANTES de tocar una sola línea** y por defecto se hace con el brandkit. Nunca se implementa primero y se pregunta después. Detonante: se rediseñó la landing de la clase en directo en morado porque así se pidió en el chat; palabras de Marco: *"¿por qué carajos lo pones morado? Tenemos un fucking brandkit... Tu regla obligatoria número 1 es siempre diseñar con el puto brandkit."* Se revirtió al verde oficial. La energía visual se consigue con **peso tipográfico, tamaño, contraste, movimiento y glows del verde de marca**, jamás inventando un color nuevo.
 - Base monocromo se mantiene: `#0F0F12` carbón, `#2A2D34` grafito, `#F5F6F7` blanco roto.
 - **Papel Hueso cálido `#F4F1E8`** (paneles claros, el "gi") + tinta `#141414`. El contraste negro contra papel es el corazón del rediseño.
 - **Acento: SOLO el verde oficial** `#22C55E` / `#4ADE80`. El "acento que cambia de color según nivel" se DESCARTÓ (mucho para un MVP).

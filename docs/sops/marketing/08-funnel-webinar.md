@@ -1,9 +1,14 @@
 ---
-title: Funnel Webinar semanal (opt-in → WhatsApp → agenda)
+title: Funnel Clase gratuita en directo (opt-in → WhatsApp → agenda)
 order: 8
 ---
 
-# Funnel Webinar semanal
+# Funnel Clase gratuita en directo
+
+> **Cómo se llama de cara al lead (2026-07-30):** en la landing, la gracias y los correos
+> se dice **"Clase gratuita en directo"**, nunca "webinar". Internamente el slug sigue
+> siendo `webinar` (ruta, pipeline, tags, ajustes) y eso NO se cambia: renombrarlo rompería
+> los contactos y los tags ya guardados.
 
 Canal de captación por **webinar en directo**. Decidido en la reunión Marco/Adrián del 6-jul-2026. Primer directo de prueba **viernes 10 jul**; después, **recurrente los miércoles**.
 
@@ -83,6 +88,21 @@ Al tocar WhatsApp en la gracias, el sistema le pone al contacto el tag **`whatsa
 - Panel: automatización `webinar_optin` en `api/admin/automations/route.ts` (SOP producto/21).
 
 ## Cambios versionados
+
+- **2026-07-30 (v5) — Rediseño de la landing (feedback Marco, referencia `live.mkthackers.com/mkt-hackers-optin-d`).**
+  - **En pantalla NUNCA se dice "webinar".** Es **"Clase gratuita en directo"** con icono de calendario, más la fecha y hora reales: *"Sábado 8 de agosto a las 10:00h"*. El slug interno (`/webinar`, pipeline `webinar`, tag `whatsapp-webinar-...`, key `funnel:webinar`) **NO se toca**: cambiarlo rompería los datos ya guardados.
+  - **Titular nuevo (dictado por Marco):** *"Cómo ganar de 2k a 4k al mes en menos de 90 días con una profesión digital aunque no tengas experiencia y partas de 0."* Con contraste de peso: lo importante en Inter Tight Black 900 y verde de marca, el resto en Light 300.
+  - **Subtítulo nuevo (dictado por Marco):** la promesa completa + el dato de mercado (*más de 500.000 puestos de trabajo online al año en España*) con la **fuente en pequeño**: "Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade". Marco lo pasó con guion largo; se sustituyó por punto medio (REGLA #7).
+  - **Opt-in EMBEBIDO** en la propia página, ya no en pop-up: en escritorio va en columna a la derecha (visible sin bajar), en móvil justo debajo del contador. Se eliminó el componente `OptinModal`. Los CTA de más abajo ya no abren nada: llevan al formulario y dejan el cursor en el primer campo.
+  - **Cuenta atrás real** hasta el directo (días / horas / min / seg). Sale de `webinar_date` + el campo nuevo `webinar_time`, interpretados en **hora de España** (`Europe/Madrid`) vía `Intl`, así que no se desvía para quien la abra desde otro país ni con el cambio de horario verano/invierno. Arranca vacía y se rellena en el navegador para no romper la hidratación.
+  - **El vídeo sale de la primera pantalla** y pasa a su propia sección ("01 · El evento"), debajo del titular. Mismo hueco de Bunny plug-and-play (`video_guid` en el ⚙️ de `/webs`); sin GUID muestra placeholder de marca.
+  - **Fuera la sección "No te formas y te quedas solo. Te acompañamos."** (bolsa de oportunidades + marquee). Motivo de Marco: levanta alarmas del cliente. El copy queda registrado arriba por si se recupera.
+  - **Fuera la foto de la madre** de la galería de Adrián (quedan 7 fotos). El texto de la historia no se tocó.
+  - **AUTO-BLINDAJE (error mío, 2026-07-30): el brandkit manda por encima de lo que se pida en el chat.** Marco pidió "cambiar el verde por el lila que teníamos al principio" y lo implementé en morado. Su corrección: *"¿por qué carajos lo pones morado? Tenemos un fucking brandkit... Tu regla obligatoria número 1 es siempre diseñar con el puto brandkit."* Revertido al **verde oficial `#22C55E` / `#4ADE80`**. Regla derivada: si una petición de color choca con el brandkit, **se avisa ANTES de tocar una línea** y por defecto se hace con el brandkit. Ver [brandkit oficial](brand/01-brandkit-oficial.md) y [producto/48](../producto/48-diseno-dinamico-wow.md) (otros neones prohibidos).
+  - **La dopamina se consigue sin inventar colores:** peso tipográfico (300 vs 900), tamaño, contador con brillo verde, botones verdes con barrido de luz, orbes y glows en verde de marca, reveals al scroll. Todo dentro del brandkit.
+  - **Campo nuevo editable en el ⚙️ de `/webs`:** `webinar_time` (hora de la clase, formato 24h). `date_label` sigue como override manual del texto y ya NO afecta al contador.
+  - Archivos: `src/features/funnel-webinar/config.ts` (+`WEBINAR_TIME`, `webinarDateTimeLabel()`, `webinarTargetMs()`), `get-settings.ts`, `components/landing.tsx` (reescrito), `components/thank-you.tsx` (fecha con día y hora), `src/app/(public)/webinar/page.tsx` (metadatos), `src/features/webs/lib/funnel-settings-manifest.ts`.
+  - **Pendiente de Marco:** el vídeo está en su Google Drive y yo no tengo acceso a esa carpeta; para que aparezca hay que subirlo a Bunny y pegar el GUID en el ⚙️ de `/webs`.
 
 - **2026-07-29 (v4) — Ajustes del funnel del 8 (feedback Marco) + tag por webinar.**
   - **Mensaje de WhatsApp SIN fecha y editable.** El default pasó a "Hola Adrián, quiero acceder al evento." (antes llevaba la fecha, que Marco no autorizó). Se edita en el ⚙️ de `/webs` (`whatsapp_message`) y se refleja al instante en el botón de la gracias Y en el correo. La fecha ya NO va en el mensaje.

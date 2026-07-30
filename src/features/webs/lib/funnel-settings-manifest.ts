@@ -72,8 +72,8 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
     fields: [
       {
         key: "video_guid",
-        label: "Mini-VSL de la landing (GUID de Bunny)",
-        hint: "Pega aquí el GUID de la mini-VSL del evento cuando esté subida a Bunny. Vacío: la landing muestra el hueco con un placeholder de marca y el resto del funnel sigue funcionando.",
+        label: "Vídeo de la landing (GUID de Bunny)",
+        hint: "Pega aquí el GUID del vídeo del evento cuando esté subido a Bunny. El vídeo va DEBAJO del titular, no en la primera pantalla. Vacío: se ve el hueco con un placeholder de marca y el resto del funnel sigue funcionando.",
         default: FUNNEL_WEBINAR.VIDEO_GUID,
       },
       {
@@ -97,15 +97,21 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
       },
       {
         key: "webinar_date",
-        label: "Fecha del webinar",
-        hint: "La fecha real del directo. De aquí sale el tag del contacto (whatsapp-webinar-DD_MM_YYYY) y la fecha que se muestra en la landing. Cámbiala por cada webinar y todo se actualiza solo.",
+        label: "Fecha de la clase en directo",
+        hint: "La fecha real del directo. De aquí sale el tag del contacto (whatsapp-webinar-DD_MM_YYYY), la fecha que se muestra en la landing y la cuenta atrás. Cámbiala por cada clase y todo se actualiza solo.",
         default: FUNNEL_WEBINAR.WEBINAR_DATE,
         type: "date",
       },
       {
+        key: "webinar_time",
+        label: "Hora de la clase (hora de España)",
+        hint: "En formato 24h, ej. «10:00». Es la hora a la que apunta la cuenta atrás de la landing. No afecta al tag.",
+        default: FUNNEL_WEBINAR.WEBINAR_TIME,
+      },
+      {
         key: "date_label",
         label: "Texto de la fecha en la landing (opcional)",
-        hint: "Vacío = se arma solo con la fecha de arriba (ej. «8 de agosto»). Rellénalo solo si quieres añadir algo, ej. «8 de agosto · 19:00h». No afecta al tag.",
+        hint: "Vacío = se arma solo con la fecha y la hora de arriba (ej. «Sábado 8 de agosto a las 10:00h»). Rellénalo solo si quieres escribirlo a mano. No afecta al tag ni a la cuenta atrás.",
         default: "",
       },
       {
