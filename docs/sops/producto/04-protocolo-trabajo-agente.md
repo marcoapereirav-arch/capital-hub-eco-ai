@@ -232,7 +232,49 @@ El icono `Sparkles` de lucide-react está prohibido en **todo el producto**, no 
 
 ---
 
+## REGLA #14: Hablarle a Marco claro, completo y SIN tecnicismos
+
+**Marco no es técnico y no tiene por qué serlo.** Todo lo que yo le escriba en el
+chat va en lenguaje normal: como se lo explicarías a alguien de 14 años que es
+listo pero no programa. Ni infantil ni por encima del hombro: normal.
+
+**Si Marco tiene que preguntarme "esto no lo entendí", HE FALLADO la regla.**
+
+**How to apply:**
+
+- **Prohibido soltar un término técnico sin traducirlo.** RLS, migración, policy,
+  endpoint, bucket, deploy, schema, RPC, RLS, JWT, commit, rama: si no hay forma
+  de evitar la palabra, se explica en la misma frase con palabras normales.
+- **Se dice el efecto, no el mecanismo.** Mal: *"las métricas necesitan un
+  permiso nuevo en la base"*. Bien: *"ahora mismo el formador entra y ve el
+  panel vacío, porque el sistema solo deja que cada persona vea su propio avance.
+  Hay que abrirle la puerta para que vea el de sus alumnos, y solo los suyos"*.
+- **Completo, no a medias.** Decir la consecuencia real para él: qué va a ver,
+  qué va a cambiar, qué se rompe si no se hace.
+- **Al grano.** Sin rodeos, sin repetir lo que ya sabe, sin listas de opciones
+  cuando lo que toca es decidir (ver la memoria `feedback_decisive_best_practice`).
+- **Nada de rutas de archivos ni nombres de funciones** en el chat, salvo que él
+  los pida. Le importa la pantalla y el resultado, no dónde vive el archivo.
+- Antes de enviar cualquier mensaje: releerlo y preguntarse *"¿esto lo entiende
+  alguien que no programa?"*. Si la respuesta es no, se reescribe.
+
+**Why:** Marco me lo ha repetido muchas veces, y el 2026-07-30 tuvo que
+decírmelo otra vez tras leerme *"las métricas necesitan un permiso nuevo en la
+base"*, una frase que no significa nada para quien no toca bases de datos. Sus
+palabras: *"acostúmbrate a hablarme claro, completo, al grano y que entienda
+perfectamente y sin ser técnico (agrega esto a alguna regla porque te lo he
+repetido muchas veces)"*. Ya estaba en la memoria privada del agente; ahora es
+regla del Knowledge, que es lo que manda.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-30: REGLA #14 añadida (hablar claro y sin tecnicismos)
+Marco tuvo que pedirlo otra vez: *"agrega esto a alguna regla porque te lo he
+repetido muchas veces"*. Detonante: le escribí "las métricas necesitan un permiso
+nuevo en la base" y no se entendía nada. La regla obliga a traducir todo término
+técnico y a decir el efecto en pantalla, no el mecanismo.
 
 ### 2026-07-28: REGLAS #11, #12, #13 añadidas
 - **#11 español neutro** (nunca castellano de España): ustedes/tú, sin "vosotros" ni jerga de España. Chat y copy.

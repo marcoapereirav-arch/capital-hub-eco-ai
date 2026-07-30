@@ -12,7 +12,7 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 01 | [Board y sistema de tareas](01-board-y-sistema-tareas.md) | GTD + PARA, board visual, stages, regla auto-sync |
 | 02 | [Arquitectura OS vs App](02-arquitectura-os-app.md) | Capital Hub OS (admin) vs Capital Hub App (cliente) — proyectos separados |
 | 03 | [Mobile-First OS](03-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints |
-| 04 | [Protocolo de trabajo del agente](04-protocolo-trabajo-agente.md) | Reglas auto-board, auto-knowledge, auto-commit, no inventar UI |
+| 04 | [Protocolo de trabajo del agente](04-protocolo-trabajo-agente.md) | Reglas auto-board, auto-knowledge, auto-commit, no inventar UI, hablar claro y sin tecnicismos |
 | 05 | [Protocolo de proyectos externos](05-proyectos-externos.md) | Verificar nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / DNS |
 | 06 | [Vercel - deploy y colaboración](06-vercel-deploy-y-colaboracion.md) | Producción en team Pro de Adrian. Workflow diario, env vars, dominios |
 | 07 | [Misión Producto Terminado — dashboard /mision](07-mision-producto-terminado.md) | Dashboard del lanzamiento al 2026-05-31. Reutiliza tasks + para_items, añade fases y bloques. 66 tareas seedeadas |
@@ -24,7 +24,7 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 52 | [Venta manual + ventas por completar](52-venta-manual-y-pendientes.md) | Mover a mano dispara notificaciones; popup ahora/más tarde al pasar a Alumno; botón "Registrar venta" en la ficha; bloque "Ventas por completar" en dashboard; columna `sale_pending` |
 | 53 | [Notificaciones al equipo (in-app + push)](53-notificaciones-push.md) | Helper central `notifyAdmins` (in-app + web-push) en lead, agenda, venta, CRM manual y sistema. SIN emojis (REGLA #8). Click lleva al lugar del evento (tabla de destinos). Preferencias por usuario en `/perfil` (tabla `notification_preferences`). Interruptor push por dispositivo. Requisitos push iOS |
 | 55 | [Formador vs Administrador (App)](55-formador-vs-admin.md) | Un formador es ADMIN con `formacion_asignada`. Identidad desde `public.users` (no del token), candados en UI + API + RLS, previsualización de formador real |
-| 56 | [El Estudio: panel del formador](56-estudio-panel-formador.md) | Árbol + inspector en una sola pantalla. Crear formación, tipo de módulo, taller de presentaciones (PDF/.md/texto a presentación visual) y editor de solo texto |
+| 56 | [El Estudio: panel del formador](56-estudio-panel-formador.md) | Árbol + inspector en una sola pantalla. Seguimiento de alumnos con gráficas, borrador/publicado por módulo y lección, las tres formaciones son fijas, taller de presentaciones y editor de solo texto |
 | 57 | [Sistema visual — hub](57-sistema-visual-hub.md) | `/sistemas`: hub con una tarjeta por sistema/workflow (fuera de `/webs`, ya no se agrupa con Webs). Board estilo Miro del **Funnel del Webinar** en `/sistemas/webinar` (fecha y tag en vivo). Cómo añadir un sistema nuevo |
 | 58 | [Purga del brandkit antiguo (App)](58-purga-brandkit-antiguo-app.md) | La App tenía DOS brandkits: `accent` se llamaba bien pero valía `#FFFFFF`. Acento a VERDE, Inter Tight única, cinturones, `Sparkles` fuera. Dónde entra el formador a editar (tarjeta en Inicio + lápiz en la tarjeta de la formación) |
 
