@@ -93,14 +93,14 @@ export function WebinarLanding({
 
       <section className="hero relative flex h-[100svh] flex-col">
 
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 md:px-8" style={{ minHeight: 0 }}>
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 sm:px-6 md:px-8" style={{ minHeight: 0 }}>
           <div className="hero-top shrink-0">
             <FunnelHeader />
           </div>
 
           <div className="hero-body grid min-h-0 flex-1 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
             {/* ── Promesa + cuenta atrás ── */}
-            <div className="hero-col flex min-h-0 flex-col">
+            <div className="hero-col flex flex-col">
               {/* Grupo 1: qué es y cuándo */}
               <div className="hero-when">
                 <div
@@ -157,7 +157,7 @@ export function WebinarLanding({
                   al año en España.
                 </p>
                 <p className="fk-load hero-src" style={{ animationDelay: "520ms" }}>
-                  Fuente: InfoJobs y Esade, 2024
+                  Fuente: Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
                 </p>
               </div>
 
@@ -448,61 +448,77 @@ function AdrianStory() {
 }
 
 /* ───────────────────── Medidas de la primera pantalla ─────────────────────
-   Todo se mide contra la ALTURA de la pantalla (`svh`), no solo contra el ancho: cada
-   valor es `min(algo-vw, algo-svh)` y manda el más pequeño, así que en un teléfono
-   bajito encoge todo a la vez y el formulario nunca se queda fuera.
 
-   El ritmo es lo que hace que respire: MUCHO aire entre grupos, POCO dentro de cada
-   grupo. Por eso los huecos internos van en `em` (atados a su propio texto) y los que
-   separan grupos van en `svh`. */
+   POR QUÉ NO SE USA LA ALTURA PARA LOS TAMAÑOS (bug de Marco, 2026-07-30):
+   antes cada letra se medía con `min(Xvw, Ysvh)`. En el móvil, al bajar, el navegador
+   esconde su barra de direcciones y esa unidad de altura se recalcula: el texto crecía
+   solo mientras hacías scroll. Ahora TODO se mide con el ANCHO (`vw`), que no cambia
+   nunca al hacer scroll, y para las pantallas bajitas se encoge por tramos con un
+   factor `--s`. Resultado: el tamaño es el mismo del principio al final.
+
+   REGLA: en un hero a pantalla completa, los tamaños se atan al ANCHO. La altura solo
+   se usa para decidir el tramo (`@media (max-height: ...)`), nunca para calcular.
+
+   Y el ancho se aprovecha: en el móvil los bloques ocupan el contenedor entero, sin
+   topes de medida que dejaban bandas muertas a los lados. Los topes en `ch` solo
+   aplican de 1024px para arriba, que es donde una línea sí se hace demasiado larga. */
 function HeroFit() {
   return (
     <style>{`
-      /* Columna editorial: alineada a la izquierda en móvil. */
-      .hero-atmos { height: 145svh; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
+      .hero { --s: 1; }
+      @media (max-height: 900px) { .hero { --s: 0.86; } }
+      @media (max-height: 820px) { .hero { --s: 0.80; } }
+      @media (max-height: 760px) { .hero { --s: 0.74; } }
+      @media (max-height: 700px) { .hero { --s: 0.68; } }
+      @media (max-height: 640px) { .hero { --s: 0.62; } }
 
-      .hero-col { text-align: center; align-items: center; justify-content: safe center; gap: min(4.2vw, 1.8svh); }
-      .hero-body { gap: min(4.4vw, 2.1svh); align-content: safe center; grid-template-rows: auto auto; }
-      .hero-top > header { padding-block: min(3.4vw, 1.7svh); }
+      .hero-top > header { padding-block: calc(4.6vw * var(--s)); }
 
-      /* Grupo 1: evento y fecha, pegados entre sí. */
+      .hero-col { text-align: center; align-items: center; gap: calc(5.4vw * var(--s)); }
+      .hero-body { gap: calc(5.4vw * var(--s)); grid-template-rows: auto auto; }
+
+      /* Grupo 1: qué es y cuándo */
       .hero-when { display: flex; flex-direction: column; align-items: center; gap: 0.6em; }
-      .hero-badge { padding: 0.42em 0.9em; font-size: min(2.85vw, 1.42svh); }
+      .hero-badge { padding: 0.42em 0.95em; font-size: calc(3.2vw * var(--s)); }
       .hero-badge-ico { width: 1.15em; height: 1.15em; }
-      .hero-date { font-size: min(4.1vw, 1.9svh); letter-spacing: -0.01em; }
+      .hero-date { font-size: calc(4.6vw * var(--s)); letter-spacing: -0.01em; }
 
-      /* Grupo 2: el titular manda. Interlineado apretado para que se lea como un bloque. */
-      .hero-h1 { font-size: min(6vw, 2.75svh); line-height: 1.06; letter-spacing: -0.032em; max-width: 19ch; text-wrap: balance; }
-      .hero-note { display: flex; flex-direction: column; align-items: center; gap: 0.7em; margin-top: 0.8em; font-size: 0.45em; max-width: 38ch; margin-inline: auto; }
+      /* Grupo 2: el titular, a todo el ancho disponible */
+      .hero-h1 { font-size: calc(7.2vw * var(--s)); line-height: 1.05; letter-spacing: -0.034em; max-width: 100%; text-wrap: balance; }
+      .hero-strong { font-weight: 800; color: #FFFFFF; }
+      .hero-note { display: flex; flex-direction: column; align-items: center; gap: 0.7em; margin-top: 0.8em; font-size: 0.42em; max-width: 100%; }
       .hero-note-rule { display: block; flex: none; width: 3.4em; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(34,197,94,0), rgba(34,197,94,0.85), rgba(34,197,94,0)); }
       .hero-note-txt { font-weight: 300; line-height: 1.35; letter-spacing: 0; color: #8E939C; text-wrap: balance; }
       .hero-note-em { font-style: normal; font-weight: 600; color: #D6DAE0; }
-      .hero-strong { font-weight: 800; color: #FFFFFF; }
 
-      /* Grupo 3: la promesa. Medida corta y respirada para que se lea tranquila. */
-      .hero-promise { display: flex; flex-direction: column; align-items: center; gap: min(3.4vw, 1.7svh); }
-      .hero-sub { font-size: min(3.35vw, 1.52svh); line-height: 1.5; max-width: 50ch; margin-inline: auto; text-wrap: pretty; }
-      .hero-src { font-size: min(2.6vw, 1.26svh); line-height: 1.3; color: #5C616B; white-space: nowrap; }
+      /* Grupo 3: la promesa y la fuente en una línea */
+      .hero-promise { display: flex; flex-direction: column; align-items: center; gap: calc(4vw * var(--s)); }
+      .hero-sub { font-size: calc(3.95vw * var(--s)); line-height: 1.48; max-width: 100%; text-wrap: pretty; }
+      .hero-src { font-size: calc(2.85vw * var(--s)); line-height: 1.35; color: #5C616B; max-width: 100%; }
 
-      /* Grupo 4: cuenta atrás sin cajas en móvil. Solo los números, que es lo que importa. */
-      .hero-count { --fk-count-num: min(7.4vw, 3.4svh); --fk-count-lab: min(2.4vw, 1.15svh); --fk-count-pad: 0; text-align: center; }
+      /* Grupo 4: cuenta atrás sin cajas en móvil */
+      .hero-count { --fk-count-num: calc(9vw * var(--s)); --fk-count-lab: calc(2.8vw * var(--s)); --fk-count-pad: 0; text-align: center; }
       .hero-count .fk-count { border: 0; background: none; box-shadow: none; border-radius: 0; text-align: center; padding-inline: 0; }
       .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: none; }
-      .hero-count .grid { gap: min(5.5vw, 2.8svh); max-width: none; grid-template-columns: repeat(4, max-content); justify-content: center; margin-inline: auto; }
+      .hero-count .grid { gap: calc(7.4vw * var(--s)); max-width: none; grid-template-columns: repeat(4, max-content); justify-content: center; margin-inline: auto; }
       .hero-count .fk-count-lab { color: #5C616B; margin-top: 0.25em; }
 
-      /* Grupo 5: la acción. */
-      .hero-card { padding: min(4.3vw, 1.85svh); }
-      .hero-form-title { font-size: min(4.6vw, 2.1svh); letter-spacing: -0.02em; }
-      .hero-form-sub { margin-top: 0.3em; font-size: min(3vw, 1.5svh); }
-      .hero-form { margin-top: min(3vw, 1.3svh); display: flex; flex-direction: column; gap: min(1.9vw, 0.85svh); }
-      .hero-input { height: min(10.9vw, 4.75svh); font-size: min(3.8vw, 1.8svh); }
-      .hero-submit { height: min(11.9vw, 5.2svh); font-size: min(3.9vw, 1.85svh); }
-      .hero-legal { font-size: min(2.85vw, 1.42svh); }
-      .hero-err { padding-block: 0.5em; font-size: min(3.2vw, 1.6svh); }
+      /* Grupo 5: el formulario. Campos grandes: se tienen que poder tocar sin apuntar. */
+      .hero-card { padding: calc(5vw * var(--s)); }
+      .hero-form-title { font-size: calc(5.2vw * var(--s)); letter-spacing: -0.02em; }
+      .hero-form-sub { margin-top: 0.3em; font-size: calc(3.4vw * var(--s)); }
+      .hero-form { margin-top: calc(4vw * var(--s)); display: flex; flex-direction: column; gap: calc(2.6vw * var(--s)); }
+      .hero-input { height: calc(13.6vw * var(--s)); min-height: 44px; font-size: calc(4.2vw * var(--s)); }
+      .hero-submit { height: calc(14.6vw * var(--s)); min-height: 48px; font-size: calc(4.3vw * var(--s)); }
+      .hero-legal { font-size: calc(3.1vw * var(--s)); }
+      .hero-err { padding-block: 0.5em; font-size: calc(3.5vw * var(--s)); }
 
-      /* Escritorio: dos columnas, ya sin apretar. */
+      /* El ambiente: alto medido en ancho por lo mismo, para que no se mueva al hacer scroll. */
+      .hero-atmos { height: 260vw; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
+
+      /* Escritorio: dos columnas y medida acotada, que aquí sí se hace larga la línea. */
       @media (min-width: 1024px) {
+        .hero-top > header { padding-block: 1.75rem; }
         .hero-col { gap: 1.6rem; justify-content: center; align-items: center; text-align: center; }
         .hero-body { gap: 3.5rem; }
         .hero-badge { padding: 0.4rem 0.9rem; font-size: 12px; }
@@ -510,12 +526,10 @@ function HeroFit() {
         .hero-h1 { font-size: clamp(2.15rem, 2.75vw, 3rem); max-width: 18ch; }
         .hero-note { font-size: 0.4em; max-width: 40ch; margin-top: 1.05em; gap: 0.9em; }
         .hero-note-rule { width: 3.6em; height: 2px; }
-        .hero-atmos { height: 135vh; }
-        .hero-src { font-size: 11.5px; }
-        .hero-count { --fk-count-num: 2.7rem; --fk-count-pad: 1.05rem; }
+        .hero-promise { gap: 0.9rem; }
         .hero-sub { font-size: 16px; line-height: 1.62; max-width: 40ch; }
-        .hero-src { font-size: 11px; }
-        .hero-count { --fk-count-num: 2.5rem; --fk-count-lab: 10px; --fk-count-pad: 0.85rem; }
+        .hero-src { font-size: 11.5px; }
+        .hero-count { --fk-count-num: 2.7rem; --fk-count-lab: 10px; --fk-count-pad: 1.05rem; }
         .hero-count .fk-count { border: 1px solid rgba(34,197,94,0.28); background: linear-gradient(180deg, rgba(34,197,94,0.10), rgba(20,20,24,0.9)); box-shadow: 0 12px 34px -22px rgba(34,197,94,0.9); border-radius: 0.75rem; text-align: center; padding-inline: 0.25rem; }
         .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: block; }
         .hero-count .grid { gap: 0.75rem; max-width: 26rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-inline: auto; }
@@ -523,9 +537,11 @@ function HeroFit() {
         .hero-form-title { font-size: 1.6rem; }
         .hero-form-sub { font-size: 14px; }
         .hero-form { margin-top: 1.25rem; gap: 0.875rem; }
-        .hero-input { height: 3rem; font-size: 16px; }
-        .hero-submit { height: 3.375rem; font-size: 15px; }
+        .hero-input { height: 3.25rem; font-size: 16px; }
+        .hero-submit { height: 3.5rem; font-size: 15px; }
         .hero-legal { font-size: 12px; }
+        .hero-err { padding-block: 0.5rem; font-size: 14px; }
+        .hero-atmos { height: 135vh; }
       }
     `}</style>
   )
