@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { CalendarClock, CheckCircle2, BadgeCheck } from "lucide-react"
-import { FUNNEL_WEBINAR, WEBINAR_TZ, whatsappLink, bunnyEmbedUrl, webinarDateTimeLabel } from "../config"
+import { FUNNEL_WEBINAR, WEBINAR_TZ, whatsappLink, webinarDateTimeLabel } from "../config"
 import {
   FunnelStyles, FunnelBackdrop, FunnelHeader, SectionLabel, Countdown, CtaButton, VideoFrame,
   useParallax, useScrollReveals,
@@ -59,7 +59,6 @@ export function WebinarThankYou({
   const fecha = webinarDate || FUNNEL_WEBINAR.WEBINAR_DATE
   const hora = webinarTime || FUNNEL_WEBINAR.WEBINAR_TIME
   const resolvedDate = dateLabel || webinarDateTimeLabel(fecha, hora)
-  const embedUrl = videoGuid ? bunnyEmbedUrl(videoGuid, bunnyLibraryId) : undefined
 
   const rootRef = useRef<HTMLElement>(null)
   useParallax(rootRef)
@@ -214,7 +213,8 @@ export function WebinarThankYou({
         {/* ── 2. EL VÍDEO (aquí es donde va, no en la landing) ── */}
         <div className="fk-load mt-9" style={{ animationDelay: "380ms" }}>
           <VideoFrame
-            embedUrl={embedUrl}
+            guid={videoGuid}
+            libraryId={bunnyLibraryId || FUNNEL_WEBINAR.BUNNY_LIBRARY_ID}
             title="Vídeo post registro · Clase en directo · Capital Hub"
             subtextoVacio="En un momento estará aquí. Mientras tanto, escríbenos por WhatsApp justo debajo."
           />

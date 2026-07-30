@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ArrowRight, Play } from "lucide-react"
+import { ArrowRight, Play, Volume2 } from "lucide-react"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 import { zonedDateTimeToMs } from "./tiempo"
 
 /**
@@ -97,6 +98,8 @@ export function FunnelStyles() {
       /* Vídeo */
       .fk-video { position: relative; width: 100%; aspect-ratio: 16 / 9; box-shadow: 0 30px 90px -50px rgba(var(--acc-rgb),0.9); }
       .fk-video-glow { position: absolute; inset: -1px; border-radius: 1rem; pointer-events: none; z-index: 1; background: radial-gradient(600px 220px at 50% 0%, rgba(var(--acc-rgb),0.20), transparent 70%); }
+      .fk-video-pulse { animation: fk-vpulse 2.6s ease-out infinite; }
+      @keyframes fk-vpulse { 0%{box-shadow:0 0 0 0 rgba(255,255,255,0.45)} 70%{box-shadow:0 0 0 18px rgba(255,255,255,0)} 100%{box-shadow:0 0 0 0 rgba(255,255,255,0)} }
 
       @media (prefers-reduced-motion: reduce) {
         .fk-load, .fk-line, .fk-reveal, .fk-orb, .fk-grain, .fk-dot, .fk-mark::after, .fk-shine, .fk-count-tick { animation: none !important; transition: none !important; }
@@ -345,30 +348,88 @@ export function CtaButton({
   )
 }
 
-/* ─────────────── Marco del vídeo (Bunny) ─────────────── */
+/* ─────────────── Vídeo (Bunny) ───────────────
+   Mismo tratamiento que ya usamos en /reservar/gracias, ahora en el kit para que lo
+   herede cualquier página:
+     1. Arranca solo, EN SILENCIO y en bucle: hace de animación, nunca se ve un frame
+        congelado ni el gris de Bunny.
+     2. Mientras bufferea, encima va el efecto de carga de marca (anillo + CH).
+     3. Un overlay invita a activar el sonido. Al tocarlo (gesto del usuario, que es lo
+        que exige el navegador para dejar sonar audio) recarga desde el INICIO con sonido.
+   Sin GUID muestra el hueco con el placeholder de marca. */
 export function VideoFrame({
-  embedUrl,
+  guid,
+  libraryId,
   title,
   textoVacio = "El vídeo se está preparando",
   subtextoVacio = "En un momento estará aquí.",
 }: {
-  embedUrl?: string
+  guid?: string
+  libraryId?: string
   title: string
   textoVacio?: string
   subtextoVacio?: string
 }) {
+  const [conSonido, setConSonido] = useState(false)
+  const [cargando, setCargando] = useState(true)
+
+  const base = guid && libraryId ? `https://iframe.mediadelivery.net/embed/${libraryId}/${guid}` : ""
+  const src = !base
+    ? ""
+    : conSonido
+      ? `${base}?autoplay=true&muted=false&playsinline=true&preload=true`
+      : `${base}?autoplay=true&muted=true&loop=true&playsinline=true&preload=true`
+
+  useEffect(() => {
+    if (!src) return
+    setCargando(true)
+    const t = window.setTimeout(() => setCargando(false), 1500)
+    return () => window.clearTimeout(t)
+  }, [src])
+
   return (
-    <div className="fk-video overflow-hidden rounded-2xl border border-[#22C55E]/25 bg-black">
+    <div className="fk-video overflow-hidden rounded-2xl border border-[#22C55E]/25 bg-[#0F0F12]">
       <div aria-hidden className="fk-video-glow" />
-      {embedUrl ? (
-        <iframe
-          src={embedUrl}
-          loading="lazy"
-          title={title}
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowFullScreen
-          className="absolute inset-0 h-full w-full border-0"
-        />
+      {src ? (
+        <>
+          <iframe
+            key={src}
+            src={src}
+            loading="lazy"
+            title={title}
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowFullScreen
+            className="absolute inset-0 h-full w-full border-0"
+          />
+
+          {/* Carga de marca: tapa el buffering, se desvanece al arrancar. */}
+          <div
+            aria-hidden
+            className={`absolute inset-0 z-20 transition-opacity duration-500 ${cargando ? "opacity-100" : "pointer-events-none opacity-0"}`}
+          >
+            <LoadingScreen fullscreen={false} className="absolute inset-0" />
+          </div>
+
+          {/* Activar el sonido: vuelve a empezar desde el principio, ya con audio. */}
+          {!conSonido && !cargando && (
+            <button
+              type="button"
+              onClick={() => setConSonido(true)}
+              aria-label="Activar el sonido y reproducir desde el inicio"
+              className="group absolute inset-0 z-10 flex flex-col items-center justify-center gap-3.5 bg-gradient-to-t from-black/70 via-black/20 to-black/40"
+            >
+              <span className="fk-video-pulse flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg shadow-black/30 transition-transform group-hover:scale-105">
+                <Volume2 className="h-7 w-7 text-[#0F0F12]" />
+              </span>
+              <span
+                className="rounded-full bg-black/65 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm md:text-base"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                Toca para activar el sonido
+              </span>
+            </button>
+          )}
+        </>
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2.5 bg-[#141418] px-5 text-center">
           <span

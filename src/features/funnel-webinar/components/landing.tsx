@@ -51,7 +51,7 @@ export function WebinarLanding({
   webinarDate: string
   webinarTime: string
 }) {
-  const heroRef = useRef<HTMLElement>(null)
+  const heroRef = useRef<HTMLDivElement>(null)
   useParallax(heroRef)
   useScrollReveals()
 
@@ -84,8 +84,14 @@ export function WebinarLanding({
                Antes había cuatro y competían entre ellos.
           Cada tamaño y cada hueco se miden contra la ALTURA (`svh`), así que en un
           teléfono más bajito encoge todo a la vez y el formulario nunca se sale. */}
-      <section ref={heroRef} className="hero relative flex h-[100svh] flex-col overflow-hidden">
+      {/* El ambiente (luces, orbes, grano) vive AQUÍ, no dentro del hero. Antes lo recortaba
+          el borde de la sección y se veía un corte seco justo debajo del formulario. Ahora
+          es una capa del documento que se apaga sola hacia abajo, sin costura. */}
+      <div ref={heroRef} aria-hidden className="hero-atmos pointer-events-none absolute inset-x-0 top-0">
         <FunnelBackdrop />
+      </div>
+
+      <section className="hero relative flex h-[100svh] flex-col">
 
         <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 md:px-8" style={{ minHeight: 0 }}>
           <div className="hero-top shrink-0">
@@ -128,8 +134,15 @@ export function WebinarLanding({
                   <span className="hero-strong whitespace-nowrap">90 días</span> con una{" "}
                   <span className="hero-strong">profesión digital</span>
                 </span>
-                <span className="fk-line hero-h1-tail block font-light text-[#7E838C]" style={{ animationDelay: "330ms" }}>
-                  aunque no tengas experiencia y <span className="whitespace-nowrap">partas de 0.</span>
+                {/* La condición, tratada como un apunte al margen: filete verde y letra
+                    fina. Deja de ser "una línea más" y se lee como la letra pequeña
+                    que quita el miedo. */}
+                <span className="fk-line hero-note block" style={{ animationDelay: "330ms" }}>
+                  <span className="hero-note-rule" aria-hidden />
+                  <span className="hero-note-txt">
+                    aunque <em className="hero-note-em">no tengas experiencia</em> y{" "}
+                    <em className="hero-note-em whitespace-nowrap">partas de 0</em>.
+                  </span>
                 </span>
               </h1>
 
@@ -142,8 +155,13 @@ export function WebinarLanding({
                   <span className="fk-mark">más de 500.000 puestos de trabajo online</span> publicados
                   al año en España.
                 </p>
-                <p className="fk-load hero-src text-[#5C616B]" style={{ animationDelay: "520ms" }}>
-                  Fuente: Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
+                {/* La fuente, tratada como el sello que respalda el dato: no es relleno,
+                    es la prueba. Etiqueta corta arriba y el informe debajo. */}
+                <p className="fk-load hero-src" style={{ animationDelay: "520ms" }}>
+                  <span className="hero-src-tag">Fuente</span>
+                  <span className="hero-src-txt">
+                    Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
+                  </span>
                 </p>
               </div>
 
@@ -348,13 +366,16 @@ function AdrianStory() {
       </h2>
       <p data-reveal className="fk-reveal mb-8 text-center text-[13px] text-[#8A8F99]">La historia de Adrián</p>
 
-      {/* Galería (scroll horizontal, ideal en móvil) */}
-      <div data-reveal className="fk-reveal -mx-5 mb-10 md:-mx-8">
-        <div className="fk-gallery flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-3 md:px-8">
-          {GALLERY.map((g) => (
+      {/* Galería: gira sola y en bucle infinito. La lista va DOS veces y la cinta se
+          desplaza justo la mitad, así que al reiniciarse cae en el mismo sitio y el salto
+          no se ve. Se para al pasar el cursor y se queda quieta con reduce-motion. */}
+      <div data-reveal className="fk-reveal -mx-5 mb-10 overflow-hidden md:-mx-8 [mask-image:linear-gradient(90deg,transparent,#000_7%,#000_93%,transparent)]">
+        <div className="gal-track flex w-max gap-3">
+          {[...GALLERY, ...GALLERY].map((g, i) => (
             <figure
-              key={g.src}
-              className="group relative aspect-[3/4] w-[210px] shrink-0 snap-start overflow-hidden rounded-xl border border-[#2A2D34] bg-[#141418] sm:w-[240px]"
+              key={`${g.src}-${i}`}
+              aria-hidden={i >= GALLERY.length}
+              className="group relative aspect-[3/4] w-[210px] shrink-0 overflow-hidden rounded-xl border border-[#2A2D34] bg-[#141418] sm:w-[240px]"
             >
               <Image
                 src={g.src}
@@ -421,8 +442,10 @@ function AdrianStory() {
       </div>
 
       <style>{`
-        .fk-gallery { scrollbar-width: none; }
-        .fk-gallery::-webkit-scrollbar { display: none; }
+        .gal-track { animation: gal-run 46s linear infinite; }
+        .gal-track:hover { animation-play-state: paused; }
+        @keyframes gal-run { from { transform: translate3d(0,0,0); } to { transform: translate3d(calc(-50% - 0.375rem), 0, 0); } }
+        @media (prefers-reduced-motion: reduce) { .gal-track { animation: none; } }
       `}</style>
     </section>
   )
@@ -440,6 +463,8 @@ function HeroFit() {
   return (
     <style>{`
       /* Columna editorial: alineada a la izquierda en móvil. */
+      .hero-atmos { height: 145svh; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
+
       .hero-col { text-align: left; align-items: flex-start; justify-content: safe center; gap: min(4.4vw, 1.95svh); }
       .hero-body { gap: min(4.4vw, 1.95svh); align-content: safe center; grid-template-rows: auto auto; }
       .hero-top > header { padding-block: min(3.4vw, 1.7svh); }
@@ -452,13 +477,19 @@ function HeroFit() {
 
       /* Grupo 2: el titular manda. Interlineado apretado para que se lea como un bloque. */
       .hero-h1 { font-size: min(6.2vw, 2.85svh); line-height: 1.05; letter-spacing: -0.032em; max-width: 19ch; }
-      .hero-h1-tail { margin-top: 0.45em; font-size: 0.5em; line-height: 1.25; letter-spacing: -0.01em; max-width: 30ch; }
+      .hero-note { display: flex; align-items: flex-start; gap: 0.7em; margin-top: 0.62em; font-size: 0.46em; max-width: 34ch; }
+      .hero-note-rule { flex: none; width: 2px; align-self: stretch; border-radius: 2px; background: linear-gradient(180deg, var(--acc), rgba(34,197,94,0)); }
+      .hero-note-txt { font-weight: 300; line-height: 1.32; letter-spacing: 0; color: #8E939C; }
+      .hero-note-em { font-style: normal; font-weight: 600; color: #D6DAE0; }
       .hero-strong { font-weight: 800; color: #FFFFFF; }
 
       /* Grupo 3: la promesa. Medida corta y respirada para que se lea tranquila. */
       .hero-promise { display: flex; flex-direction: column; gap: 0.7em; }
       .hero-sub { font-size: min(3.4vw, 1.56svh); line-height: 1.46; max-width: 48ch; }
-      .hero-src { font-size: min(2.5vw, 1.22svh); line-height: 1.35; max-width: 52ch; }
+      .hero-src { display: flex; align-items: baseline; gap: 0.7em; font-size: min(2.5vw, 1.22svh); line-height: 1.4; max-width: 54ch; }
+      .hero-src-tag { flex: none; font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.84em; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(74,222,128,0.85); }
+      .hero-src-tag::after { content: ""; display: inline-block; width: 1.1em; height: 1px; margin-left: 0.5em; vertical-align: middle; background: rgba(74,222,128,0.4); }
+      .hero-src-txt { color: #5C616B; }
 
       /* Grupo 4: cuenta atrás sin cajas en móvil. Solo los números, que es lo que importa. */
       .hero-count { --fk-count-num: min(7.4vw, 3.4svh); --fk-count-lab: min(2.4vw, 1.15svh); --fk-count-pad: 0; }
@@ -483,8 +514,12 @@ function HeroFit() {
         .hero-body { gap: 3.5rem; }
         .hero-badge { padding: 0.4rem 0.9rem; font-size: 12px; }
         .hero-date { font-size: 18px; }
-        .hero-h1 { font-size: clamp(2.3rem, 3.2vw, 3.4rem); max-width: 15ch; }
-        .hero-h1-tail { font-size: 0.42em; max-width: 30ch; }
+        .hero-h1 { font-size: clamp(2.35rem, 3.05vw, 3.35rem); max-width: 20ch; }
+        .hero-note { font-size: 0.39em; max-width: 44ch; margin-top: 0.8em; }
+        .hero-note-rule { width: 3px; }
+        .hero-atmos { height: 135vh; }
+        .hero-src { font-size: 11.5px; max-width: none; }
+        .hero-count { --fk-count-num: 2.7rem; --fk-count-pad: 1.05rem; }
         .hero-sub { font-size: 16px; line-height: 1.65; max-width: 46ch; }
         .hero-src { font-size: 11px; }
         .hero-count { --fk-count-num: 2.5rem; --fk-count-lab: 10px; --fk-count-pad: 0.85rem; }
