@@ -483,3 +483,55 @@ quieres convertir."*
    con el de prueba.
 3. **Probar con un archivo real, no con un párrafo.** El texto de ejemplo pasó a
    la primera y escondió el fallo entero.
+
+---
+
+## Auditoría del recorrido completo (2026-07-30)
+
+> Marco: *"hay demasiados fallos donde se supone que el workflow completo debe
+> funcionar. Me dijiste que lo habías probado completo y no está funcionando nada
+> una mierda."*
+
+Tenía razón. La vez anterior se probó **el generador y una pantalla suelta**, no
+el recorrido del formador. Se auditó el flujo entero con 39 revisiones cruzadas:
+**21 fallos confirmados, 11 descartados por falsos.**
+
+### Lo que estaba roto
+
+| Fallo | Por qué |
+|---|---|
+| "Pedir arreglos" contestaba *"No llegó ningún contenido"* | La validación exigía texto o PDF **antes** de mirar si era una corrección. Una corrección no manda ninguno de los dos: **el camino estaba muerto desde el primer día** |
+| La presentación se pintaba encima de la barra | Barra y contenido del kit tenían los **dos `z-10`**. A igualdad gana quien va después |
+| Publicada y no aparecía en el hub | `SECCIONES` del hub era una lista suelta con cuatro tipos. Faltaba `PRESENTACION` |
+| Y si apareciera, no abriría | `abrirRecurso` nombraba dos tipos a mano; el resto caía a `resource.url`, que una presentación no tiene |
+| Lo mismo dentro de la lección | `LessonViewer.openResource` repetía la misma condición |
+| Las 7 guías decían *"La presentación llegó vacía"* | Cualquier material abría el revisor de presentaciones |
+| El error real del generador se perdía | La respuesta gotea, así que un fallo viaja con **200 y el error en el cuerpo**. El cliente no lo miraba |
+| Un fallo dejaba un borrador **publicable** | Se guarda un borrador con "Montando la presentación..." antes de generar. Si fallaba, se quedaba así y se podía publicar |
+| "Volver a generar" no hacía nada | Abría un cajón que en esa rama de la pantalla no se pinta |
+| No se podía enlazar nada desde el Estudio | El único enlazador del producto vivía en el panel viejo, **inalcanzable** |
+| "Crear material para esta lección" no lo enlazaba | Nacía suelto |
+| No se podía retirar ni borrar una presentación | No existía el botón |
+| *"Borrador · solo lo ves tú"* | Mentira: lo ve cualquier formador |
+| "Vista alumno" enseñaba borradores | El hub no filtraba por estado |
+| Pulsar un bloque en el editor no hacía nada | La capa de bloques era `<span>` vacíos con `pointer-events: none`. Y por eso "traer el bloque a pantalla" llevaba siempre al mismo sitio |
+| El foco del cursor se descolocaba | `clientX/Y` son de pantalla; el foco es `inset: 0` de una caja que no empieza ahí |
+
+### Las tres reglas que salen de aquí
+
+1. **Un tipo nuevo no se enumera a mano en ningún sitio.** `ABRE_DENTRO` y
+   `SECCIONES` son `Record<ResourceType, ...>`: si aparece un tipo y no se
+   contempla, **no compila**. Las listas sueltas no avisan de nada, y este mismo
+   fallo apareció en tres pantallas distintas.
+2. **Nada de capas decorativas que fingen ser interactivas.** Un `<span>` vacío
+   con `pointer-events: none` que lleva un `onClick` es un botón muerto. Si algo
+   se puede pulsar, se pulsa el elemento de verdad.
+3. **Probado = recorrido con el ratón, de principio a fin.** Que el generador
+   conteste 200 no prueba nada. El recorrido es: crear, generar, revisar, pedir
+   arreglos, editar, enlazar, publicar, y **entrar como alumno a abrirlo**.
+
+### Comprobado así, esta vez
+
+Formador: engancha material existente a una lección · publica · retira · borra.
+Alumno: lo ve en el hub, lo abre (4306 px pintados), lo abre desde la lección.
+Cero errores de consola en todo el recorrido.
