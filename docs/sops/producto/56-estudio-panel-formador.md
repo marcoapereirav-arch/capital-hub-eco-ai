@@ -181,10 +181,30 @@ Ahora tiene tres bloques:
 1. **Cifras**: alumnos, avance medio, lecciones completadas y cuántos terminaron.
 2. **Cómo va cada alumno**: una barra por alumno, ordenados por avance, con
    cuándo fue la última vez que tocó la formación.
-3. **Dónde se quedan**: la curva de cuántos alumnos completan cada lección, en
-   orden. Donde cae en picado, ahí se atascan. Debajo, la lectura en una frase
-   (la caída más fuerte y la lección menos vista): un gráfico que hay que
-   interpretar solo no sirve.
+3. **Cuántos alumnos terminan cada lección**: la curva, en orden. Donde cae en
+   picado, ahí se atascan.
+
+### El gráfico tiene que explicarse solo
+
+Primera versión: puntos y una línea con degradado, sin números, sin ejes y sin
+nada al pasar el cursor. Marco: *"en este gráfico no me sale nada. Si paso el
+cursor por encima, no me dice nada. Lo que veo son puntos y una línea ahí
+degradada."*
+
+Y yo propuse **quitar el gráfico y dejar una frase**. Respuesta de Marco:
+*"valoro cien mil veces más lo visual que el texto, limítate de siempre estar
+poniendo texto y sustitúyelo por cosas visuales"*. La solución no era quitarlo,
+era hacerlo claro. De ahí sale la **REGLA #15** del protocolo del agente.
+
+Lo que lleva ahora, y que es el mínimo de cualquier gráfico del producto:
+
+- Los **dos ejes rotulados**: a la izquierda cuántos alumnos (total, mitad, 0),
+  abajo el número de lección y el rótulo "Lecciones, en orden".
+- El **número encima de cada punto**, sin tener que interactuar.
+- Al **pasar el cursor o tocar**: qué lección es, de qué módulo, cuántos la
+  terminaron y **cuántos se quedan ahí**.
+- La **caída más fuerte pintada en ámbar dentro de la propia línea**, no
+  explicada aparte, más un aviso debajo que dice qué lección revisar primero.
 
 ### El candado que hacía falta para que esto funcione
 
@@ -215,6 +235,51 @@ pintaran nunca. Se comprobó buscándolos dentro de `dist/`, y ahí estaban.
 La solución es un plugin de `vite.config.ts` que sustituye el módulo por uno
 vacío al construir para producción. **Regla: cualquier dato de ejemplo se
 verifica buscándolo dentro de `dist/` después del build.** Si aparece, viaja.
+
+### La ventana de alumnos (no una lista larga)
+
+> Marco, 2026-07-30: *"esto se puede hacer interminable: imagínate que tenemos
+> mil alumnos y voy a estar haciendo scroll durante dos días. Necesito un botón
+> en donde yo clique y se pueda abrir un pop de todos los alumnos, en donde yo
+> pueda buscarlos, saber cuántas lecciones han visto, la última vez que se ha
+> logueado, ver la información de cada uno y tener un filtrado."*
+
+En la pantalla principal queda **un botón que ya dice algo**: una barra de tres
+tramos con cuántos terminaron, cuántos van a medias y cuántos ni han empezado.
+Si con eso te vale, no abres nada.
+
+Dentro: buscador por nombre o correo, filtros (Todos · Terminaron · En curso ·
+Sin empezar · **Parados**, que son los que llevan más de 3 semanas sin aparecer)
+y orden por avance, actividad o nombre. Cada alumno abre su ficha: anillo de
+avance, última conexión, última lección hecha, cuándo entró, por dónde va, y su
+recorrido lección a lección con los tildes verdes.
+
+**La última conexión no existía.** `user_streaks.last_activity_date` está en el
+esquema desde el principio pero **nadie la escribe**: es tabla muerta del port
+viejo. La hora del último inicio de sesión vive en la zona de acceso, que no se
+puede leer desde el navegador. Se añadió `users.last_seen_at`, que escribe la
+propia App al abrirse, **como mucho una vez por hora** por persona.
+
+### El agujero que había que cerrar para esto
+
+Para enseñar la ficha de un alumno hay que poder leer su fila. Al mirarlo se vio
+que el permiso decía `es mi fila O soy ADMIN`, y **un formador es ADMIN**: es
+decir, cualquier formador podía sacar desde la consola del navegador la lista
+entera de usuarios de Capital Hub con sus correos.
+
+Cómo quedó, y comprobado simulando a cada uno:
+
+| Quién | Usuarios que alcanza |
+|---|---|
+| Alumno | 1 (él mismo) |
+| Formador de IA Integrator | 2 (él y el alumno que compró su ruta) |
+| Super admin | 12 (todos) |
+
+Además se quitaron del alcance del navegador las columnas `password` (hashes del
+backend viejo), `reset_token`, `reset_token_expiry` y `stripe_customer_id`.
+**Ojo con el detalle de Postgres:** el permiso sobre la tabla entera manda sobre
+el de columna, así que hay que quitarlo del todo y volver a conceder solo las
+columnas buenas, una por una.
 
 ## Borrador y publicado, por módulo y por lección
 
@@ -260,6 +325,17 @@ porque la columna derecha desaparece.**
 ---
 
 ## Cambios versionados
+
+### 2026-07-30 (2) — Ventana de alumnos, gráfico claro y cierre de usuarios
+La lista larga de alumnos sale de la pantalla principal y pasa a una ventana con
+buscador, filtros y ficha por alumno (*"con mil alumnos voy a estar haciendo
+scroll durante dos días"*). El gráfico se rehace para que se explique solo
+(números, ejes, etiqueta al pasar el cursor, caída marcada dentro). Se añade
+`users.last_seen_at` porque la última conexión no se guardaba en ningún sitio, y
+se cierra la tabla de usuarios: un formador ya solo alcanza a los alumnos de su
+ruta, y las columnas de contraseña y tokens salen del alcance del navegador.
+Migración `20260730160000_alumnos_del_formador_y_cierre_de_usuarios.sql`.
+Nace de aquí la REGLA #15 (siempre visual, y que el gráfico se explique solo).
 
 ### 2026-07-30 — Seguimiento de alumnos, borrador/publicado y limpieza
 Panel de métricas con la curva de abandono, interruptor borrador/publicado por

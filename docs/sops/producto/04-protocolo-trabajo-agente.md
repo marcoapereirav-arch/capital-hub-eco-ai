@@ -268,7 +268,52 @@ regla del Knowledge, que es lo que manda.
 
 ---
 
+## REGLA #15: SIEMPRE visual. Nunca cambiar un gráfico por texto
+
+**Marco valora lo visual cien mil veces más que el texto.** Ante la duda entre
+contar algo con palabras o enseñarlo con un gráfico, **siempre el gráfico**.
+
+**Prohibido "simplificar" quitando un elemento visual y dejando una frase en su
+lugar.** Eso es empeorar el producto, no simplificarlo.
+
+**How to apply:**
+
+- Un dato que se puede ver, se dibuja: barras, curvas, anillos, mapas de calor,
+  medidores. El texto acompaña, nunca sustituye.
+- **Y lo visual tiene que EXPLICARSE SOLO.** Un gráfico que hay que adivinar es
+  peor que no ponerlo. Obligatorio en cada gráfico:
+  - Los **números a la vista** en los propios puntos o barras.
+  - **Los dos ejes rotulados**, con sus unidades y sus extremos.
+  - **Al pasar el cursor**, una etiqueta que diga qué es ese punto en palabras
+    normales ("Lección 4: la terminaron 6 de 12 alumnos").
+  - **Lo importante señalado dentro del dibujo** (la caída más fuerte marcada,
+    no explicada aparte).
+  - Un título que diga qué estás mirando, sin jerga.
+- Nada de puntos y líneas sueltas sin contexto: si Marco tiene que preguntar
+  "qué significa esto", el gráfico está mal hecho.
+- En móvil el gráfico se rehace, no se encoge: si a 375px no se leen los
+  números, se cambia la forma (barras en vertical, lista con barras, lo que sea
+  legible).
+
+**Why:** Marco, 2026-07-30, dos veces en el mismo día. Primero: *"valoro cien
+mil veces más lo visual que el texto, limítate de siempre estar poniendo texto y
+sustitúyelo por cosas visuales"*. Y sobre la curva de abandono que le entregué:
+*"en este gráfico no me sale nada. Si paso el cursor por encima, no me dice
+nada. Lo que veo son puntos y una línea ahí degradada"*. Yo había propuesto
+quitar el gráfico y dejar una frase: la respuesta correcta era **dejarlo y
+hacerlo claro**.
+
+Va de la mano de la REGLA #14: hablar claro también es dibujar claro.
+
+---
+
 ## Cambios versionados
+
+### 2026-07-30: REGLA #15 añadida (siempre visual, y que se explique solo)
+Marco: *"valoro cien mil veces más lo visual que el texto... ánclalo en una regla
+para no estar repitiéndotelo"*. Detonante: entregué una curva de abandono sin
+números, sin ejes y sin etiqueta al pasar el cursor, y encima propuse
+sustituirla por texto. Lo visual se queda; lo que se arregla es su claridad.
 
 ### 2026-07-30: REGLA #14 añadida (hablar claro y sin tecnicismos)
 Marco tuvo que pedirlo otra vez: *"agrega esto a alguna regla porque te lo he
