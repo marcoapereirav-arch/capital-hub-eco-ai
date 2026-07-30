@@ -155,8 +155,12 @@ explica y **ni un solo control de escritura**. Ver SOP [`producto/55`](55-formad
 | Ruta | Formación |
 |---|---|
 | IA Integrator | IA Integrator - Modulo introduccion |
-| Media Buyer Digital | Técnico en Marketing Digital |
 | Comercial Closing | Comercial Closing - Setter to Closer |
+| **Clipper** | Clipper |
+
+> **2026-07-30:** Media Buyer Digital salió y entró **Clipper** (enseñar a
+> editar). Nadie la había comprado, así que se borró entera. Detalle y migración
+> en [SOP 60](60-clipper-sustituye-media-buyer.md).
 
 Una ruta, una formación. Consecuencias aplicadas:
 

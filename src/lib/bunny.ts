@@ -113,6 +113,85 @@ export async function deleteBunnyVideo(guid: string): Promise<void> {
   })
 }
 
+/* ─────────────────── Colecciones: el orden dentro de Stream ───────────────────
+ *
+ * Stream solo admite UN nivel de carpetas, que ellos llaman colecciones. No
+ * tienen padre (comprobado en su API: el objeto no trae ningún campo de
+ * jerarquía), así que el árbol completo vive en Bunny Storage (`bunny-storage.ts`)
+ * y aquí se hace lo mejor que Stream permite: una colección por formación, y el
+ * nombre del vídeo lleva dentro el módulo y su número de orden. Al ordenar por
+ * nombre, las lecciones salen agrupadas por módulo, igual que en una carpeta.
+ */
+
+type ColeccionBunny = { guid: string; name: string; videoCount: number }
+
+export async function listarColecciones(): Promise<ColeccionBunny[]> {
+  const { apiKey, libraryId } = getConfig()
+  const res = await fetch(
+    `${STREAM_API}/library/${libraryId}/collections?page=1&itemsPerPage=100&orderBy=date`,
+    { headers: { AccessKey: apiKey, Accept: "application/json" }, cache: "no-store" },
+  )
+  if (!res.ok) throw new Error(`Bunny listarColecciones ${res.status}`)
+  const data = (await res.json()) as { items?: ColeccionBunny[] }
+  return data.items ?? []
+}
+
+/**
+ * Devuelve el id de la colección con ese nombre, creándola si no existe.
+ * Es idempotente a propósito: se llama en cada subida y no debe duplicar nada.
+ */
+export async function asegurarColeccion(nombre: string): Promise<string> {
+  const existentes = await listarColecciones()
+  const ya = existentes.find((c) => c.name.trim().toLowerCase() === nombre.trim().toLowerCase())
+  if (ya) return ya.guid
+
+  const { apiKey, libraryId } = getConfig()
+  const res = await fetch(`${STREAM_API}/library/${libraryId}/collections`, {
+    method: "POST",
+    headers: { AccessKey: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ name: nombre }),
+  })
+  if (!res.ok) throw new Error(`Bunny crearColeccion ${res.status}: ${await res.text().catch(() => "")}`)
+  const data = (await res.json()) as ColeccionBunny
+  return data.guid
+}
+
+/** Renombra o recoloca un vídeo ya subido. */
+export async function actualizarVideo(
+  guid: string,
+  cambios: { title?: string; collectionId?: string },
+): Promise<void> {
+  const { apiKey, libraryId } = getConfig()
+  const res = await fetch(`${STREAM_API}/library/${libraryId}/videos/${guid}`, {
+    method: "POST",
+    headers: { AccessKey: apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify(cambios),
+  })
+  if (!res.ok) throw new Error(`Bunny actualizarVideo ${res.status}: ${await res.text().catch(() => "")}`)
+}
+
+/**
+ * Crea la entrada del vídeo YA dentro de su colección y con su nombre completo.
+ * Es lo que usa la subida del Estudio: así el vídeo nace ordenado en vez de
+ * caer al montón y tener que recolocarlo después.
+ */
+export async function crearVideoEnColeccion(
+  title: string,
+  collectionId: string,
+): Promise<{ guid: string; libraryId: string }> {
+  const { apiKey, libraryId } = getConfig()
+  const res = await fetch(`${STREAM_API}/library/${libraryId}/videos`, {
+    method: "POST",
+    headers: { AccessKey: apiKey, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ title, collectionId }),
+  })
+  if (!res.ok) {
+    throw new Error(`Bunny crearVideoEnColeccion ${res.status}: ${await res.text().catch(() => "")}`)
+  }
+  const data = (await res.json()) as BunnyVideo
+  return { guid: data.guid, libraryId }
+}
+
 /**
  * URL HLS playlist para el reproductor.
  * hls.js reproduce esto en cualquier navegador (Safari nativo, resto via JS).

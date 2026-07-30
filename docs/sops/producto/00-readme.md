@@ -27,6 +27,8 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 56 | [El Estudio: panel del formador](56-estudio-panel-formador.md) | Árbol + inspector en una sola pantalla. Seguimiento de alumnos con gráficas, borrador/publicado por módulo y lección, las tres formaciones son fijas, taller de presentaciones y editor de solo texto |
 | 57 | [Sistema visual — hub](57-sistema-visual-hub.md) | `/sistemas`: hub con una tarjeta por sistema/workflow (fuera de `/webs`, ya no se agrupa con Webs). Board estilo Miro del **Funnel del Webinar** en `/sistemas/webinar` (fecha y tag en vivo). Cómo añadir un sistema nuevo |
 | 58 | [Purga del brandkit antiguo (App)](58-purga-brandkit-antiguo-app.md) | La App tenía DOS brandkits: `accent` se llamaba bien pero valía `#FFFFFF`. Acento a VERDE, Inter Tight única, cinturones, `Sparkles` fuera. Dónde entra el formador a editar (tarjeta en Inicio + lápiz en la tarjeta de la formación) |
+| 59 | [Archivo ordenado de vídeos en Bunny](59-bunny-archivo-ordenado.md) | El árbol `Testimonios / VSLs / Formaciones / [formación] / [módulo] / [lección].mp4`. Stream NO anida carpetas (comprobado en su API): el árbol vive en Bunny **Storage**. Reloj cada 10 min que archiva solo. Las carpetas siguen al nombre si lo renombran |
+| 60 | [Clipper sustituye a Media Buyer](60-clipper-sustituye-media-buyer.md) | Las tres formaciones pasan a ser IA Integrator, Comercial Closing y **Clipper**. Migración con freno: se detiene sola si alguien tuviera Media Buyer comprado. Los cinco sitios donde el nombre estaba escrito a mano |
 
 ## Formaciones (material de presentación)
 

@@ -29,6 +29,7 @@ area: producto
 | 🟢 | `gcal_health_check` | `pg_cron` cada hora | Cada hora (jobid 5) | Alerta si OAuth de Adrián caduca |
 | 🟢/🟡 | `calendly_webhook` | Webhook Calendly → POST `/api/webhooks/calendly` | Cuando alguien reserva online-coffee | **Cableado** (2026-06-25): registra en `calendly_scheduled_events` Y mueve el pipeline — agenda→`agendado` (crea contacto si no existe), cancela→`seguimiento`, no-show→`no_show`, con guarda no-retroceso. **2026-07-28:** además envía al lead la **confirmación de agenda con nuestra marca** (template `agenda_confirmed`, .ics + link de la reunión), idempotente por `email_logs` (call_id = uri). Evento: `online-coffee` de Adrián |
 | 🟢/🟡 | `calendly_reminders` | Vercel Cron `/api/cron/calendly-reminders` cada 15 min (`*/15 * * * *`) | Cada 15 min | **2026-07-28:** recordatorios de las reservas de Calendly: **24h antes** (`agenda_reminder_24h`) y **1h antes** (`agenda_reminder_1h`), con el link de la reunión. Idempotencia por `email_logs` (call_id = uri del evento + template), **sin tocar el esquema**. Baja los no-show del funnel de reserva de sesión |
+| 🟡 | `bunny_archivar` | Vercel Cron `/api/cron/bunny-archivar` cada 10 min (`*/10 * * * *`) | Cada 10 min | **2026-07-30:** guarda cada vídeo de lección en su carpeta de Bunny Storage (`Formaciones / [formación] / [módulo] / [lección].mp4`) y monta el árbol base solo. Va por reloj y no al subir porque Bunny tarda en procesar y hasta que no termina no hay archivo que copiar. Si renombran lección o módulo, el vídeo se muda y la copia vieja se retira. `live` en cuanto existan `BUNNY_STORAGE_ZONE` y `BUNNY_STORAGE_PASSWORD`. Ver SOP producto/59 |
 
 ### Ventas / Alumno (3)
 
@@ -64,6 +65,7 @@ area: producto
 
 ## Decisiones tomadas
 
+- **2026-07-30:** archivo ordenado de vídeos en Bunny. Cron nuevo `bunny_archivar` cada 10 min. Bunny Stream **no anida carpetas** (comprobado en su API: la colección no tiene campo de padre), así que el árbol vive en Bunny **Storage** y Stream se queda con una colección por formación. El reloj monta el árbol base solo, sin que nadie pulse nada, en cuanto encuentra las claves puestas. Ver SOP producto/59.
 - **2026-07-28:** confirmación + recordatorios de agenda con nuestra marca sobre el Calendly del funnel de reserva de sesión. La confirmación se engancha al `calendly_webhook` (reutiliza el template branded `agenda_confirmed`); los recordatorios son un cron nuevo `calendly_reminders` (24h + 1h). Sin cambio de esquema: la idempotencia se resuelve mirando `email_logs` por `call_id = uri` del evento. Plantilla nueva `agenda_reminder_1h`. Ver SOP marketing/08 y producto/18.
 - **2026-07-23:** registradas las 2 automatizaciones del funnel del test v2 (`test_personalidad_email_acceso` y `test_personalidad_acceso_cualifica`) en el mismo bloque en que se construyeron. Ver SOP marketing/07 y PRP-007.
 

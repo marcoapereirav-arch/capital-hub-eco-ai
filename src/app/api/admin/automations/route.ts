@@ -89,6 +89,17 @@ export async function GET() {
     admin.from("meta_events_log").select("created_at, status").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ])
 
+  // Cuántos vídeos de lección hay y cuántos ya están guardados en su carpeta de
+  // Bunny. Es lo que da el estado real del archivado ordenado.
+  const [{ count: videosTotales }, { count: videosArchivados }] = await Promise.all([
+    admin.from("lessons").select("id", { count: "exact", head: true }).not("bunny_video_id", "is", null),
+    admin
+      .from("lessons")
+      .select("id", { count: "exact", head: true })
+      .not("bunny_video_id", "is", null)
+      .not("bunny_storage_path", "is", null),
+  ])
+
   const hoursSince = (iso: string | null | undefined) => {
     if (!iso) return null
     return Math.round((now.getTime() - new Date(iso).getTime()) / (1000 * 60 * 60))
@@ -633,6 +644,34 @@ export async function GET() {
       lastRun: lastCalendly?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastCalendly?.created_at),
       totalExecutions: null,
+    },
+    {
+      id: "bunny_archivar",
+      category: "alumno",
+      label: "Archivado ordenado de los vídeos en Bunny",
+      description:
+        "Cada 10 min guarda cada vídeo de lección en su carpeta dentro de Bunny Storage: Formaciones / [formación] / [módulo] / [lección].mp4. El formador sube y se olvida; el orden lo pone esto solo. Va por reloj y no al subir porque Bunny tarda en procesar el vídeo y hasta que no termina no hay archivo que copiar. Si al formador le cambia el nombre a la lección o al módulo, el archivo se muda y la copia vieja se retira, para que nunca haya dos.",
+      trigger: "Vercel Cron GET /api/cron/bunny-archivar (*/10 * * * *)",
+      actions: [
+        "SELECT lessons con vídeo cuya ruta guardada no coincide con la que les toca",
+        "Busca el mejor MP4 que Bunny ya haya generado (1080 → 360)",
+        "Copia Bunny a Bunny, sin pasar el vídeo por memoria",
+        "Retira la copia anterior si la lección cambió de nombre",
+        "Guarda la ruta final en lessons.bunny_storage_path",
+      ],
+      relatedTables: ["lessons", "modules", "formations", "routes"],
+      status: (videosTotales ?? 0) === 0
+        ? "idle"
+        : (videosArchivados ?? 0) > 0
+          ? "live"
+          : "pending",
+      statusReason: (videosTotales ?? 0) === 0
+        ? "Cron registrado · todavía no hay vídeos de lección"
+        : `${videosArchivados ?? 0} de ${videosTotales} vídeos ya guardados en su carpeta` +
+          ((videosArchivados ?? 0) === 0 ? " · falta configurar Bunny Storage en el entorno" : ""),
+      lastRun: null,
+      lastRunHoursAgo: null,
+      totalExecutions: videosArchivados ?? 0,
     },
   ]
 

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
-import { createBunnyVideo } from "@/lib/bunny"
+import { asegurarColeccion, createBunnyVideo, crearVideoEnColeccion } from "@/lib/bunny"
+import { asegurarCarpeta, hayStorage } from "@/lib/bunny-storage"
+import {
+  archivoLeccion,
+  carpetaModulo,
+  coleccionDeFormacion,
+  nombreEnStream,
+} from "@/lib/bunny-rutas"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -45,11 +52,51 @@ function withCors(req: NextRequest, res: NextResponse): NextResponse {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => ({}))) as { title?: string }
-    const title = (body.title ?? "Capital Hub lesson").slice(0, 200)
+    const body = (await req.json().catch(() => ({}))) as {
+      title?: string
+      formacion?: string
+      modulo?: string
+      leccion?: string
+      posicion?: number
+      archivo?: string
+    }
 
-    // 1. Crea entry de vídeo en Bunny library (devuelve guid)
-    const { guid: videoId, libraryId } = await createBunnyVideo(title)
+    /* El vídeo nace ordenado, no se ordena después.
+     *
+     * Si la App manda el contexto (formación, módulo, lección), el vídeo se crea
+     * YA dentro de la colección de su formación y con el módulo y el número de
+     * orden dentro del nombre. Además se prepara su carpeta en el archivo, para
+     * que exista aunque el vídeo tarde en procesarse.
+     *
+     * Sin contexto se comporta igual que siempre: hay llamadas antiguas y no se
+     * les puede romper la subida. */
+    const conContexto = Boolean(body.formacion && body.modulo && body.leccion)
+
+    const title = conContexto
+      ? nombreEnStream(body.modulo!, body.leccion!, body.posicion)
+      : (body.title ?? "Capital Hub lesson").slice(0, 200)
+
+    let rutaArchivo: string | null = null
+
+    if (conContexto) {
+      rutaArchivo = archivoLeccion(body.formacion!, body.modulo!, body.leccion!, body.archivo)
+      if (hayStorage()) {
+        // Que la carpeta no se pueda preparar no puede impedir la subida: el
+        // barrido de `archivar` la creará igual al guardar el vídeo.
+        await asegurarCarpeta(
+          carpetaModulo(body.formacion!, body.modulo!),
+          `Aqui van los videos de las lecciones de "${body.modulo}".`,
+        ).catch((e) => console.error("[bunny-create-video] carpeta", e))
+      }
+    }
+
+    // 1. Crea entry de vídeo en Bunny library (devuelve guid), ya colocada
+    const { guid: videoId, libraryId } = conContexto
+      ? await crearVideoEnColeccion(
+          title,
+          await asegurarColeccion(coleccionDeFormacion(body.formacion!)),
+        )
+      : await createBunnyVideo(title)
 
     // 2. Calcula signature TUS (Bunny requiere SHA256 de libraryId + apiKey + expirationTime + videoId)
     const apiKey = process.env.BUNNY_STREAM_API_KEY!
@@ -69,6 +116,9 @@ export async function POST(req: NextRequest) {
       tusEndpoint: "https://video.bunnycdn.com/tusupload",
       hlsUrl: `https://${cdnHostname}/${videoId}/playlist.m3u8`,
       thumbnailUrl: `https://${cdnHostname}/${videoId}/thumbnail.jpg`,
+      // Dónde va a quedar guardado en el archivo ordenado. La App lo enseña para
+      // que el formador vea en qué carpeta cayó su vídeo.
+      rutaArchivo,
     }))
   } catch (e) {
     console.error("[bunny-create-video] failed", e)
