@@ -1,7 +1,7 @@
 ---
 name: primer
 scope: template
-description: "Cargar contexto completo del proyecto al inicio de una conversacion. Lee BUSINESS_LOGIC.md, estructura de features, estado de la BD, y configuracion actual. Activar cuando el agente no tiene contexto del proyecto o el usuario dice: que tenemos, donde estamos, dame contexto, resumeme el proyecto."
+description: "Cargar contexto completo del proyecto al inicio de una conversacion. Lee las reglas duras, BUSINESS_LOGIC.md, estructura de features y estado de la BD, y AVISA de que chats tienes abiertos (ramas en marcha) y de si dev esta al dia. Activar cuando el agente no tiene contexto del proyecto o el usuario dice: que tenemos, donde estamos, dame contexto, resumeme el proyecto."
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
@@ -97,7 +97,9 @@ suficiente.
 Responde 1 o 2.
 ```
 
-Espera la respuesta. Luego ejecuta el flujo correspondiente (modo 1 lee solo los pasos 0, 1, 2, 3, 4 abajo; modo 2 lee todo + extras).
+Espera la respuesta. Luego ejecuta el flujo correspondiente (modo 1 lee solo los pasos 0, 1, **1-bis**, 2, 3, 4 abajo; modo 2 lee todo + extras).
+
+⚡ **El paso 1-bis (qué chats tienes abiertos) se hace SIEMPRE**, en los dos modos. Es lo que evita pisar el trabajo de otro chat.
 
 Si el dueño responde algo distinto a 1/2, vuelve a mostrar el mensaje.
 
@@ -136,6 +138,51 @@ git log --oneline -20
 
 Te da la lista de cambios recientes del proyecto para saber qué se ha estado haciendo.
 
+### 1-bis. QUÉ HAY EN MARCHA · los chats abiertos (SIEMPRE, en los dos modos)
+
+> **UN CHAT = UNA RAMA = UNA CARPETA.** El dueño trabaja en varios chats a la vez y cada
+> uno vive en su propia carpeta. Al abrir un chat nuevo tiene que saber qué tiene en
+> marcha, y tú también: para no pisar nada.
+> Ver la regla de fabrica `EL WORKFLOW` en `AGENTS.md`.
+
+```bash
+git worktree list                            # los chats abiertos, con su carpeta
+git branch --show-current                    # en cuál estás tú
+git log --oneline dev..main                  # ¿dev está al día? (debe dar 0)
+git status --short                           # ¿algo sin guardar aquí?
+```
+
+**Repórtaselo en 2-3 líneas, al principio del resumen.** Por ejemplo:
+
+```
+Tienes 2 chats abiertos:
+  · order-bump   · hace 2 días  · "order bump del funnel"
+  · emails-drip  · hace 5 horas · "secuencia de bienvenida"
+dev al día · nada sin guardar.
+```
+
+**Si `dev` está atrás de `main`, avísalo como problema**, no como dato: significa que
+alguien publicó saltándose `dev`, y la próxima rama nacería de una foto vieja.
+
+### 1-ter. ABRIR EL SITIO DE TRABAJO DE ESTE CHAT
+
+**En cuanto el dueño diga qué quiere hacer** (no antes: `/primer` solo lee), este chat
+necesita **su rama y su carpeta**. Es **UN comando**:
+
+```bash
+npm run chat:nuevo <nombre-corto-de-lo-que-se-va-a-hacer>
+```
+
+Pone `dev` al día, crea la rama desde `dev`, crea la carpeta y la deja lista
+(`node_modules` clonado en ~10 s, claves enlazadas). Después **se trabaja SIEMPRE dentro
+de esa carpeta**.
+
+**SIEMPRE, sin excepción**, aunque el cambio sea un texto o un color. La excepción
+"trivial → sobre `dev`" está **derogada**: abría el hueco de dos chats compartiendo `dev`.
+
+**Si este chat ya está dentro de la carpeta de un chat** (`git worktree list` lo dice),
+no se crea nada: ya tiene su sitio.
+
 Extrae de toda esta lectura:
 - **Nombre del proyecto**
 - **Stack técnico**
@@ -143,6 +190,7 @@ Extrae de toda esta lectura:
 - **Reglas duras del proyecto** (AGENTS.md)
 - **Contexto adicional** que el dueño haya documentado a mano (en cualquier `.md` extra)
 - **Cambios recientes** (de `git log`)
+- **Qué hay en marcha** (ramas abiertas + estado de `dev`)
 
 ### 2. Mapear Estado de BD (via Supabase MCP)
 
@@ -169,6 +217,11 @@ NVISION® v4.0 (Next.js 16 + Supabase)
 
 ## Proposito
 [Que problema resuelve en 1-2 lineas]
+
+## Que tienes en marcha
+Chats con trabajo abierto:
+  · [rama]  ·  [hace cuanto]  ·  [ultimo commit]
+[dev al dia / dev ATRASADA N cambios (avisar como problema)] · [nada sin guardar / N archivos sin guardar]
 
 ## Estado Actual
 

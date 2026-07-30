@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 3100",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:skills": "node scripts/check-skills.mjs",
+    "check:flujo": "node scripts/check-flujo.mjs",
+    "chat:nuevo": "node scripts/chat-nuevo.mjs",
+    "chat:cerrar": "node scripts/chat-cerrar.mjs",
+    "predev": "node scripts/check-skills.mjs",
+    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

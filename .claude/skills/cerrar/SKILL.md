@@ -1,7 +1,7 @@
 ---
 name: cerrar
 scope: template
-description: "Dejar el trabajo cerrado antes de cerrar el chat. Comprueba que no queda nada sin guardar ni sin publicar, limpia las ramas que ya se unieron, guarda lo aprendido en el Knowledge, actualiza STATE.md, y termina diciendo si el chat se puede cerrar o no. Activar cuando el dueño dice: cierra, cerramos, ya termine, cierra el chat, damos por terminado, /cerrar, o cuando el dueño se despide al final de una sesion de trabajo."
+description: "Dejar el trabajo cerrado antes de cerrar el chat. Comprueba que no queda nada sin guardar ni sin publicar, cierra la carpeta y la rama de ESTE chat sin tocar las de los otros chats abiertos, comprueba que dev esta al dia, guarda lo aprendido en el Knowledge, actualiza STATE.md, y termina diciendo si el chat se puede cerrar o no. Activar cuando el dueño dice: cierra, cerramos, ya termine, cierra el chat, damos por terminado, /cerrar, o cuando el dueño se despide al final de una sesion de trabajo."
 allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 ---
 
@@ -50,27 +50,58 @@ Tienes N cambios guardados pero sin publicar:
 
 **No publicar por iniciativa propia.** Es la REGLA #2.
 
-### 3 · ¿Quedan ramas viejas?
+### 3 · El sitio de trabajo de ESTE chat
+
+> **UN CHAT = UNA RAMA = UNA CARPETA** (regla de fabrica `EL WORKFLOW` en `AGENTS.md`).
+> Cerrar un chat cierra **su** carpeta y **su** rama. Las de los otros chats **no se tocan**.
+
+**3a · Cerrarlo. Es UN comando:**
 
 ```bash
-git branch --merged main | grep -v main
+npm run chat:cerrar
 ```
 
-**Las que ya se unieron a main no aportan nada.** Listarlas y ofrecer borrarlas:
+Comprueba, en este orden, y **se niega sin borrar nada** si algo falla:
+1. Que no queda **nada sin guardar** en esa carpeta.
+2. Que no queda **nada sin publicar** (nada en la rama que no este ya en `dev`).
 
-```
-Estas ramas ya estan dentro de main, se pueden borrar:
-  - <rama>
-¿Las borro?
-```
+Solo si las dos pasan, borra la carpeta y la rama.
 
-**Solo se borra con su OK**, y solo las que ya estan unidas. **Nunca** borrar una rama con trabajo sin unir.
+**Si se niega:** enseñarle al dueño lo que falta y preguntarle. **No forzar nunca.**
+
+**3b · ¿Que otros chats hay abiertos?**
 
 ```bash
-git branch --no-merged main | grep -v main
+git worktree list
 ```
 
-**Las que NO se unieron llevan trabajo dentro.** Avisar de que existen y de que hay dentro. **No borrarlas jamas.**
+Se listan para que el dueño sepa que tiene en marcha, y **no se tocan**:
+
+```
+Tienes N chats abiertos:
+  - <nombre>  ·  <su rama>  ·  <ultimo commit>  ·  <hace cuanto>
+Los dejo como estan.
+```
+
+**3c · ¿Quedan carpetas de chats mal cerrados?**
+
+```bash
+npm run chat:cerrar -- --limpiar
+```
+
+Recoge **solo** las carpetas cuyo trabajo ya esta en `dev`. Ofrecerlo, no hacerlo a la
+brava.
+
+**3d · ¿`dev` esta al dia?**
+
+```bash
+git log --oneline dev..main
+```
+
+**Si devuelve algo, es un bug del flujo:** alguien publico saltandose `dev`. Avisar y
+ponerla al dia (`git checkout dev && git merge main --ff-only`). Si `dev` se queda atras,
+**la siguiente rama nace de una foto vieja** — es lo que paso entre el 2026-07-25 y el
+2026-07-30.
 
 ### 4 · Guardar lo aprendido
 
@@ -125,7 +156,7 @@ Dime que hago con cada cosa.
 ## Reglas duras
 
 1. **Nunca decir "cerrado" si queda algo sin publicar.** Es justo el fallo que esta skill existe para evitar.
-2. **Nunca borrar una rama con trabajo sin unir.**
+2. **Nunca borrar una carpeta ni una rama con trabajo sin unir.** El comando ya se niega; no forzarlo.
 3. **Nunca publicar por iniciativa propia** dentro del cierre. Se ofrece; decide el dueño.
 4. **Nunca inventar aprendizajes** para que el paso 4 parezca productivo.
 5. **Se cierra siempre**, aunque el trabajo haya durado diez minutos.

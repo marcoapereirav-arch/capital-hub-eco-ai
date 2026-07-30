@@ -1,7 +1,7 @@
 ---
 name: publicar
 scope: template
-description: "Publicar el trabajo en la web del dueño y COMPROBAR que llego. Guarda lo que falte, une la rama a main, sube a GitHub, espera al despliegue y verifica que la web esta sirviendo el codigo nuevo. Activar cuando el dueño dice: publicalo, subelo, ponlo live, sacalo a produccion, mandalo a la web, ya esta listo subelo, /publicar. NUNCA se activa sola: publicar necesita una orden explicita del dueño (REGLA #2 de AGENTS.md)."
+description: "Publicar el trabajo en la web del dueño y COMPROBAR que llego. Guarda lo que falte, lleva la rama de ESTE chat por el recorrido rama -> dev -> main, sube las dos ramas, espera al despliegue y verifica que la web esta sirviendo el codigo nuevo. Activar cuando el dueño dice: publicalo, subelo, ponlo live, sacalo a produccion, mandalo a la web, ya esta listo subelo, /publicar. NUNCA se activa sola: publicar necesita una orden explicita del dueño (REGLA #2 de AGENTS.md)."
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -35,9 +35,13 @@ Sin ese paso, el dueño cierra el chat convencido de que su cambio esta en la we
 git status --short
 git branch --show-current
 git log --oneline -1
+git worktree list                     # los chats abiertos, cada uno con su carpeta
+git log --oneline dev..main           # dev esta al dia?
 ```
 
-**Reporta al dueño, en una linea:** en que rama esta, cuantos archivos hay sin guardar.
+**Reporta al dueño, en una linea:** en que carpeta y rama esta, cuantos archivos hay sin guardar, **y que otros chats hay abiertos** (cada uno en su carpeta: no se tocan).
+
+Si `dev` esta atras de `main`, **ponla al dia antes de nada** (`git checkout dev && git merge main --ff-only`). Publicar sobre una `dev` atrasada arrastra la foto vieja.
 
 ### 2 · Guardar lo que falte
 
@@ -54,27 +58,64 @@ git commit -m "<titulo corto: que cambia>
 
 **Nunca incluyas** `.env`, `.env.local`, `.mcp.json`, `*.pem`, `*.key` ni nada con claves.
 
-### 3 · Unir la rama a main
+### 3 · El recorrido · rama → `dev` → `main`
 
-Si esta en una rama de trabajo:
+> **EL WORKFLOW (regla de fabrica `EL WORKFLOW` en `AGENTS.md`):**
+> `dev` → rama → `dev` → `main` → la web.
+> **PROHIBIDO** llevar la rama directo a `main`. Siempre pasa por `dev`.
+
+**3a · La rama vuelve a `dev`:**
+
+```bash
+git checkout dev
+git pull --ff-only          # traer lo que haya subido alguien mas
+git merge <rama>            # la rama de ESTE chat, ninguna otra
+```
+
+**Si sale un conflicto aqui:** para, resuelvelo **en `dev`**, y avisa al dueño de que lo hubo y como se resolvio. Ese es justo el motivo de que `dev` exista: el choque ocurre aqui y **la web no se entera**.
+
+**3b · Comprobar en `dev` antes de tocar la web:**
+
+```bash
+npm run typecheck
+npm run build               # dispara los vigilantes (prebuild)
+```
+
+Si falla, **se para aqui**. `main` no recibe nada roto.
+
+**3c · `dev` pasa a `main`:**
 
 ```bash
 git checkout main
-git pull --ff-only          # traer lo que haya subido alguien mas
-git merge <rama>
+git pull --ff-only
+git merge dev --ff-only     # main solo avanza, nunca diverge
 ```
 
-**Si sale un conflicto:** para, resuelvelo, y avisa al dueño de que lo hubo y como se resolvio.
-
-Si ya estaba en `main`, salta este paso.
+Si el dueño trabajaba sobre `dev` sin rama (cambio trivial), se salta el 3a.
 
 ### 4 · Subir
 
 ```bash
-git push
+git push origin main
+git push origin dev         # dev queda al dia · si no, la siguiente rama nace vieja
 ```
 
 **Aqui va a saltar el aviso de confirmacion** (el freno de `.claude/settings.json`). Es lo esperado: el dueño confirma y sigue.
+
+**Las dos ramas se suben.** Si solo se sube `main`, `dev` se queda atras y la siguiente rama nace de una foto vieja. Fue exactamente lo que paso entre el 2026-07-25 y el 2026-07-30: `dev` un mes sin recibir nada.
+
+### 4-bis · Cerrar el sitio de trabajo de este chat
+
+Ya esta todo dentro de `dev` y de `main`. **UN comando** borra su rama Y su carpeta:
+
+```bash
+npm run chat:cerrar
+```
+
+Comprueba antes que no queda nada sin guardar ni sin publicar. **Si falta algo, se niega
+y no borra nada.**
+
+**Solo el de este chat.** Los otros chats abiertos, con sus carpetas y sus ramas, **no se tocan**.
 
 ### 5 · Esperar al despliegue
 
@@ -119,10 +160,13 @@ Motivo: <el error, en una linea>
 ## Reglas duras
 
 1. **Sin orden del dueño, no se publica.** Ni "de paso", ni "ya que estaba".
-2. **Nunca `--force`.** Reescribe la historia y puede borrar trabajo de otra persona.
-3. **Nunca incluir secretos** en un commit.
-4. **Un fallo al compilar NO rompe la web.** La web se queda como estaba. Decirselo al dueño para que no se asuste.
-5. **"Publicado" solo se dice despues de comprobarlo.** Un push que salio bien no es una web que sirve el cambio.
+2. **Siempre por `dev`.** Nunca de la rama directo a `main`.
+3. **Se suben las DOS ramas** (`main` y `dev`). Si `dev` se queda atras, la siguiente rama nace vieja.
+4. **Solo la rama de ESTE chat.** Los otros chats abiertos tienen las suyas y no se tocan.
+5. **Nunca `--force`.** Reescribe la historia y puede borrar trabajo de otro chat.
+6. **Nunca incluir secretos** en un commit.
+7. **Un fallo al compilar NO rompe la web.** La web se queda como estaba. Decirselo al dueño para que no se asuste.
+8. **"Publicado" solo se dice despues de comprobarlo.** Un push que salio bien no es una web que sirve el cambio.
 
 ---
 
@@ -130,8 +174,13 @@ Motivo: <el error, en una linea>
 
 | Error | Que hacer |
 |---|---|
-| Decir "publicado" justo despues del push, sin esperar | Esperar el despliegue y comprobar con `curl`. Siempre. |
+| **Unir la rama directo a `main`, saltandose `dev`** | Siempre `rama → dev → main`. Es EL workflow |
+| **Subir solo `main` y dejar `dev` atras** | `git push origin main` **y** `git push origin dev`. Paso 4 |
+| **Tocar la rama de otro chat** | Solo la de este chat. Ver que ramas hay abiertas antes de mover nada |
+| Decir "publicado" justo despues del push, sin esperar | Esperar el despliegue y comprobar con `curl`. Siempre |
 | `git add .` metiendo archivos de otro trabajo | Mirar `git status` y añadir solo lo de este trabajo |
 | Publicar sin que lo pidieran | Solo con orden explicita |
 | Subir con `--force` y borrar trabajo ajeno | Nunca `--force` |
 | Dar por hecho que el dominio responde | Comprobarlo, y comprobar que trae lo NUEVO |
+
+**Caso real (2026-07-25 → 2026-07-30):** la regla "toda rama nace de `dev`" se escribio en `AGENTS.md` pero **este skill no nombraba `dev` ni una vez**. Durante un mes cada publicacion fue rama → `main`, y `dev` no recibio nada. Una regla sin la maquina que la ejecuta no se cumple sola.
