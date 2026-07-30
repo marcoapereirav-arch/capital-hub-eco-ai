@@ -354,3 +354,25 @@ Aplicación universal de la regla "no inventar UI de servicios externos". Estaba
 ### 2026-06-12 — REGLAS #5 y #6 añadidas
 - REGLA #5: generalización de #4. Prohibido inventar info de cualquier tipo (no solo UI). Aplica a APIs externas, métricas, ejemplos, números, promesas de automatización.
 - REGLA #6: el OS de tareas/proyectos debe estar SIEMPRE actualizado en live. Bug visible: yo añadía en BD y Marco no lo veía. Solución: orden por display_order + auto-refresh.
+
+---
+
+## REGLA #16 — Comprobar con el comando que corre al publicar
+
+`tsc --noEmit` **no** es lo que corre al desplegar. La App usa `tsc -b`, que
+avisa de cosas que el otro se traga: un import que se quedó sin usar tumbó el
+despliegue entero el 2026-07-30, y durante media hora se dio por publicado algo
+que nunca llegó a construirse.
+
+**Antes de decir que algo está publicado:**
+
+1. Correr **`npm run build`**, el comando de verdad. No `tsc --noEmit`.
+2. Mirar el estado del despliegue (`vercel ls`). Un push no es un despliegue, y
+   un despliegue en **Error** deja la web sirviendo lo viejo sin avisar a nadie.
+3. Comprobar en el sitio publicado que está **lo nuevo**, buscando algo que solo
+   exista después del cambio. Que la web responda 200 no significa nada.
+
+**Y el error de bulto que lo hizo largo:** buscar en el paquete publicado una
+cadena que también aparece en un comentario, o en otro archivo legítimo, y
+concluir en falso. La cadena que se busque tiene que existir **solo** en el
+código nuevo.
