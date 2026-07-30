@@ -288,7 +288,7 @@ Y ahí está la trampa en la que cae casi todo el mundo — la misma en la que c
 
 Hemos preparado un test de aptitud profesional: el test de **Equilibria**, una empresa que lleva más de 20 años operando y son expertos en diversidad de personalidad. Es el mismo tipo de prueba que usan las grandes multinacionales para colocar a cada persona en el puesto donde rinde. Lo han hecho más de 500.000 personas. En 15 minutos te da un mapa de tus fortalezas y tus limitadores, y con él, cuál de las tres profesiones encaja contigo de verdad.
 
-Gratis. Sin tarjeta. Sin compromiso.
+Es gratis.
 
 **[ HAZ EL TEST GRATIS → ]**
 *(enlace embebido en el PDF: https://equilibria.com/pdi-home)*
@@ -297,7 +297,7 @@ Una última cosa.
 
 No tienes que tomar la decisión perfecta. Solo tienes que tomar una decisión direccional correcta — la que te encamine hacia la versión de ti que quieres ser. Nosotros perdimos cuatro años saltando de vehículo en vehículo hasta entender esto. Esta guía, y ese test, existen para que tú no los pierdas.
 
-Nos vemos dentro.
+Nos vemos pronto.
 
 **CAPITAL HUB**
 *Formación Profesional Digital*
