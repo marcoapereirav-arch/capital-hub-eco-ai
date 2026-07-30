@@ -72,8 +72,8 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
     fields: [
       {
         key: "video_guid",
-        label: "Vídeo de la landing (GUID de Bunny)",
-        hint: "Pega aquí el GUID del vídeo del evento cuando esté subido a Bunny. El vídeo va DEBAJO del titular, no en la primera pantalla. Vacío: se ve el hueco con un placeholder de marca y el resto del funnel sigue funcionando.",
+        label: "Vídeo de la página de gracias (GUID de Bunny)",
+        hint: "Pega aquí el GUID del vídeo post registro cuando esté subido a Bunny. Se ve en la página de GRACIAS, después de que la persona deja sus datos. En la landing no hay vídeo. Vacío: se ve el hueco con un placeholder de marca y el resto del funnel sigue funcionando.",
         default: FUNNEL_WEBINAR.VIDEO_GUID,
       },
       {

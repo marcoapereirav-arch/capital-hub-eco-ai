@@ -13,12 +13,11 @@ export const metadata = {
 export default async function WebinarRoute() {
   const s = await getWebinarSettings()
   return (
+    /* Sin vídeo: el vídeo es de la página de gracias (post-registro). */
     <WebinarLanding
       dateLabel={s.dateLabel}
       webinarDate={s.webinarDate}
       webinarTime={s.webinarTime}
-      videoGuid={s.videoGuid}
-      bunnyLibraryId={s.bunnyLibraryId}
     />
   )
 }

@@ -1,3 +1,7 @@
+import {
+  MESES_ES, DIAS_ES, parseISODate, parseTime, weekdayIndex, zonedDateTimeToMs,
+} from "@/features/public-pages/kit/tiempo"
+
 /**
  * Configuración del Funnel de la Clase gratuita en directo.
  *
@@ -13,7 +17,8 @@
  *   chat. El resto (grupo, sorteo, etc.) NO es parte de este funnel y NO se documenta.
  *
  * Valores centralizados (editables sin deploy desde el ⚙️ de /webs, key 'funnel:webinar'):
- *   - VIDEO_GUID: GUID del vídeo en Bunny. Vacío = placeholder de marca.
+ *   - VIDEO_GUID: GUID en Bunny del vídeo de la página de GRACIAS (post-registro).
+ *       Vacío = placeholder de marca. En la landing NO va ningún vídeo.
  *   - WHATSAPP_NUMBER: número de Adrián (solo dígitos con prefijo, sin + ni espacios).
  *   - WHATSAPP_MESSAGE: mensaje predefinido que el lead envía al pulsar el botón. SIN fecha
  *       (la fecha vive en WEBINAR_DATE, no se escribe a mano en el mensaje). Editable: al
@@ -65,27 +70,14 @@ export function whatsappLink(
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
 }
 
-// ── Fecha del webinar → tag + etiqueta legible ──────────────────────────────
-// Parseo manual de la fecha ISO (sin `new Date`) para que NO haya saltos de día
-// por zona horaria y el resultado sea 100% determinista.
-
-const MESES_ES = [
-  "enero", "febrero", "marzo", "abril", "mayo", "junio",
-  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
-]
-
-function parseISODate(iso: string): { y: number; m: number; d: number } | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec((iso ?? "").trim())
-  if (!match) return null
-  const y = Number(match[1]); const m = Number(match[2]); const d = Number(match[3])
-  if (m < 1 || m > 12 || d < 1 || d > 31) return null
-  return { y, m, d }
-}
+// ── Fecha de la clase → tag + etiqueta legible + cuenta atrás ───────────────
+// La aritmética vive en el kit común de páginas públicas (features/public-pages/kit),
+// para que landing y gracias usen exactamente la misma. Aquí solo se aplica al funnel.
 
 /**
  * Nombre del tag que se pone al lead cuando toca WhatsApp: `whatsapp-webinar-DD_MM_YYYY`
- * con la fecha del webinar al que accedió. Ej: `whatsapp-webinar-08_08_2026`. Al cambiar
- * WEBINAR_DATE (siguiente webinar), el tag cambia solo. Si la fecha viene corrupta, usa el
+ * con la fecha de la clase a la que accedió. Ej: `whatsapp-webinar-08_08_2026`. Al cambiar
+ * WEBINAR_DATE (siguiente clase), el tag cambia solo. Si la fecha viene corrupta, usa el
  * default para no romper nunca el tag.
  */
 export function webinarTagName(isoDate: string = FUNNEL_WEBINAR.WEBINAR_DATE): string {
@@ -95,34 +87,11 @@ export function webinarTagName(isoDate: string = FUNNEL_WEBINAR.WEBINAR_DATE): s
   return `whatsapp-webinar-${dd}_${mm}_${p.y}`
 }
 
-/** Etiqueta legible de la fecha para la landing/gracias/correo. Ej: "8 de agosto". */
+/** Etiqueta corta de la fecha. Ej: "8 de agosto". */
 export function webinarDateLabel(isoDate: string = FUNNEL_WEBINAR.WEBINAR_DATE): string {
   const p = parseISODate(isoDate)
   if (!p) return ""
   return `${p.d} de ${MESES_ES[p.m - 1] ?? ""}`.trim()
-}
-
-const DIAS_ES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
-
-/**
- * Día de la semana (0 = domingo) por el algoritmo de Sakamoto. Aritmética pura, sin
- * `new Date`: así el día que se imprime en el servidor y el que ve el navegador son
- * SIEMPRE el mismo, viva quien viva en la zona horaria que sea.
- */
-function weekdayIndex(y: number, m: number, d: number): number {
-  const t = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
-  const yy = m < 3 ? y - 1 : y
-  return (yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) + t[m - 1] + d) % 7
-}
-
-/** Normaliza 'HH:MM' a { h, min }. Si viene corrupta, devuelve null. */
-function parseTime(time: string): { h: number; min: number } | null {
-  const match = /^(\d{1,2}):(\d{2})/.exec((time ?? "").trim())
-  if (!match) return null
-  const h = Number(match[1])
-  const min = Number(match[2])
-  if (h < 0 || h > 23 || min < 0 || min > 59) return null
-  return { h, min }
 }
 
 /**
@@ -143,40 +112,10 @@ export function webinarDateTimeLabel(
   return `${fecha} a las ${String(t.h).padStart(2, "0")}:${String(t.min).padStart(2, "0")}h`
 }
 
-/**
- * Momento exacto del directo en milisegundos UTC, interpretando fecha y hora en la zona
- * horaria de España. Es lo que come la cuenta atrás.
- *
- * Por qué no vale `new Date("2026-08-08T10:00")`: eso usa la hora del NAVEGADOR, así que a
- * alguien en México le saldrían 7 horas de más. Aquí se pregunta a `Intl` cuánto se desvía
- * esa zona ese día concreto (verano/invierno incluidos) y se corrige.
- */
+/** Momento exacto de la clase en milisegundos UTC, leyendo fecha y hora en España. */
 export function webinarTargetMs(
   isoDate: string = FUNNEL_WEBINAR.WEBINAR_DATE,
   time: string = FUNNEL_WEBINAR.WEBINAR_TIME,
-  timeZone: string = WEBINAR_TZ,
 ): number | null {
-  const p = parseISODate(isoDate)
-  const t = parseTime(time)
-  if (!p || !t) return null
-  const naive = Date.UTC(p.y, p.m - 1, p.d, t.h, t.min, 0)
-  try {
-    const dtf = new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      hour12: false,
-      year: "numeric", month: "2-digit", day: "2-digit",
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
-    })
-    const parts = Object.fromEntries(
-      dtf.formatToParts(new Date(naive)).map((x) => [x.type, x.value]),
-    ) as Record<string, string>
-    const asUTC = Date.UTC(
-      Number(parts.year), Number(parts.month) - 1, Number(parts.day),
-      Number(parts.hour) % 24, Number(parts.minute), Number(parts.second),
-    )
-    return naive - (asUTC - naive)
-  } catch {
-    // Si el navegador no conoce la zona, se queda con la lectura directa antes que romper.
-    return naive
-  }
+  return zonedDateTimeToMs(isoDate, time, WEBINAR_TZ)
 }

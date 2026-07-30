@@ -33,6 +33,19 @@ El WOW NUNCA rompe el branding. Todo el movimiento y los efectos viven dentro de
 1. Primero: que TODAS las automatizaciones del funnel estén hechas y verificadas (CRM, stage no-backward, tagging, atribución).
 2. Después: pasada de **diseño dinámico/WOW** sobre el funnel, alineada al brandkit.
 
+## El estilo de TODAS las páginas públicas sale de un kit (Marco, 2026-07-30)
+
+Marco, al ver la landing de la clase en directo: *"a partir de ahora, todas las páginas que vayamos diseñando tienen que tener este estilo en el cual tenemos aquí"*.
+
+Para que eso se cumpla solo y no dependa de que alguien se acuerde, el estilo **no se copia** de una página a otra: vive en un kit común y las páginas lo consumen.
+
+- **Dónde:** `src/features/public-pages/kit/`
+  - `funnel-kit.tsx`: estilos compartidos, fondo con capas y parallax, cabecera de marca, etiqueta de sección numerada, **cuenta atrás**, botón principal magnético, marco de vídeo, reveals al scroll.
+  - `tiempo.ts`: fecha, día de la semana y cuenta atrás sin desviarse por zona horaria ni por el cambio verano/invierno.
+- **Quién lo usa hoy:** landing `/webinar` y su página de gracias.
+- **Regla:** cualquier página pública nueva (landing, gracias, checkout, agenda) **se monta desde el kit**. Si hace falta un elemento nuevo, se añade AL KIT y desde ahí se usa. Prohibido volver a pegar CSS suelto por página: es lo que hizo que cada funnel se viera distinto.
+- **El acento del kit es el verde oficial** y está en un solo sitio (`ACENTO` en `funnel-kit.tsx`). Cambiarlo sin pasar por el brandkit es romper la ley de diseño.
+
 ## Cambios versionados
 
 ### 2026-06-22 — Creación

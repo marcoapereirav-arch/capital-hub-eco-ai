@@ -6,7 +6,7 @@ export const revalidate = 0
 
 export const metadata = {
   title: "Tu plaza está reservada · Capital Hub",
-  description: "Escríbenos por WhatsApp para conseguir tu entrada al directo.",
+  description: "Mira el vídeo y escríbenos por WhatsApp para conseguir tu entrada al directo.",
 }
 
 export default async function WebinarGraciasRoute({
@@ -20,6 +20,10 @@ export default async function WebinarGraciasRoute({
       whatsappNumber={s.whatsappNumber}
       whatsappMessage={s.whatsappMessage}
       dateLabel={s.dateLabel}
+      webinarDate={s.webinarDate}
+      webinarTime={s.webinarTime}
+      videoGuid={s.videoGuid}
+      bunnyLibraryId={s.bunnyLibraryId}
       slug={c}
     />
   )

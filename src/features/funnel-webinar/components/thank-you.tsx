@@ -1,8 +1,12 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { CalendarClock, CheckCircle2, BadgeCheck, ArrowRight } from "lucide-react"
-import { FUNNEL_WEBINAR, whatsappLink, webinarDateTimeLabel } from "../config"
+import { CalendarClock, CheckCircle2, BadgeCheck } from "lucide-react"
+import { FUNNEL_WEBINAR, WEBINAR_TZ, whatsappLink, bunnyEmbedUrl, webinarDateTimeLabel } from "../config"
+import {
+  FunnelStyles, FunnelBackdrop, FunnelHeader, SectionLabel, Countdown, CtaButton, VideoFrame,
+  useParallax, useScrollReveals,
+} from "@/features/public-pages/kit/funnel-kit"
 
 /** Logo oficial de WhatsApp (glyph monocromo, hereda el color con currentColor). */
 function WhatsappIcon({ className }: { className?: string }) {
@@ -14,32 +18,53 @@ function WhatsappIcon({ className }: { className?: string }) {
 }
 
 /**
- * Página de Gracias de la Clase gratuita en directo (funnel `webinar`).
- * Acento VERDE oficial del brandkit (#22C55E / #4ADE80), igual que la landing.
+ * Página de GRACIAS (post-registro) de la Clase gratuita en directo.
  *
- * Objetivo único (reunión 24-jul-2026): que el lead ESCRIBA a Adrián por WhatsApp para
- * conseguir su entrada al evento. El botón abre WhatsApp con el mensaje ya escrito; el
- * lead solo pulsa enviar. Ese envío es el punto de éxito del funnel: a partir de ahí el
- * equipo hace el setting manual (fuera de este funnel). Confeti de celebración al entrar
- * y recordatorio con la fecha del directo.
+ * Misma vibra que la landing: sale del mismo kit (`features/public-pages/kit`), mismo
+ * fondo con capas, misma tipografía por grosor, mismo verde oficial del brandkit y la
+ * misma cuenta atrás. El único verde que NO es acento nuestro es el del botón de
+ * WhatsApp: ahí el verde ES WhatsApp.
  *
- * El número y el mensaje llegan por props desde el server (editables en /webs). Siempre
+ * Orden de la página (Marco, 2026-07-30):
+ *   1. Plaza confirmada + fecha del directo.
+ *   2. EL VÍDEO. Aquí es donde va, no en la landing. GUID editable en el ⚙️ de /webs.
+ *   3. Botón a WhatsApp privado de Adrián con el mensaje ya escrito. Ese envío es el
+ *      punto de éxito del funnel (reunión 24-jul-2026): al tocarlo se le pone el tag
+ *      `whatsapp-webinar-DD_MM_YYYY` y un evento en su timeline.
+ *   4. Cuenta atrás + recordatorio para que reserve el hueco.
+ *
+ * Número, mensaje y GUID llegan por props desde el server (editables en /webs). Siempre
  * hay un default, así que el botón nunca se queda sin destino.
  */
 type Props = {
   whatsappNumber?: string
   whatsappMessage?: string
   dateLabel?: string
+  webinarDate?: string
+  webinarTime?: string
+  videoGuid?: string
+  bunnyLibraryId?: string
   /** Slug opaco del contacto (lo pone el opt-in). Sirve para marcar quién tocó WhatsApp. */
   slug?: string
 }
 
-export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, slug }: Props = {}) {
+export function WebinarThankYou({
+  whatsappNumber, whatsappMessage, dateLabel,
+  webinarDate, webinarTime, videoGuid, bunnyLibraryId, slug,
+}: Props = {}) {
   const waUrl = whatsappLink(
     whatsappNumber || FUNNEL_WEBINAR.WHATSAPP_NUMBER,
     whatsappMessage || FUNNEL_WEBINAR.WHATSAPP_MESSAGE,
   )
-  const resolvedDate = dateLabel || webinarDateTimeLabel()
+  const fecha = webinarDate || FUNNEL_WEBINAR.WEBINAR_DATE
+  const hora = webinarTime || FUNNEL_WEBINAR.WEBINAR_TIME
+  const resolvedDate = dateLabel || webinarDateTimeLabel(fecha, hora)
+  const embedUrl = videoGuid ? bunnyEmbedUrl(videoGuid, bunnyLibraryId) : undefined
+
+  const rootRef = useRef<HTMLElement>(null)
+  useParallax(rootRef)
+  useScrollReveals()
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Al tocar el botón de WhatsApp marcamos al contacto (tag + evento en su timeline).
@@ -70,11 +95,10 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
     resize()
     window.addEventListener("resize", resize)
 
-    const W = () => window.innerWidth
     const colors = ["#22C55E", "#4ADE80", "#F5F6F7", "#9CA3AF", "#FFFFFF"]
     type P = { x: number; y: number; vx: number; vy: number; r: number; c: string; rot: number; vr: number; life: number }
     const parts: P[] = []
-    const cx = W() / 2
+    const cx = window.innerWidth / 2
     // Dos focos (esquinas del centro) para una ráfaga tipo "cañón"
     for (let i = 0; i < 140; i++) {
       const fromLeft = i % 2 === 0
@@ -129,110 +153,154 @@ export function WebinarThankYou({ whatsappNumber, whatsappMessage, dateLabel, sl
 
   return (
     <main
-      className="relative min-h-[100dvh] overflow-hidden text-[#F5F6F7]"
+      ref={rootRef}
+      className="fk-root relative min-h-[100svh] overflow-hidden text-[#F5F6F7]"
       style={{ backgroundColor: "#0F0F12", fontFamily: "'Inter', sans-serif" }}
     >
-      {/* Atmósfera */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{ background: "radial-gradient(760px 420px at 50% -8%, rgba(34,197,94,0.16), transparent 66%)" }}
-      />
+      <FunnelStyles />
+      <FunnelBackdrop />
       {/* Confeti */}
       <canvas ref={canvasRef} aria-hidden className="pointer-events-none fixed inset-0 z-20" />
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-xl flex-col px-5 py-10 md:px-8 md:py-16">
-        <div className="mb-10 md:mb-14">
-          <span
-            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#F5F6F7]"
-            style={{ fontFamily: "'Inter Tight', sans-serif" }}
-          >
-            Capital Hub
-          </span>
-        </div>
+      <div className="relative z-10 mx-auto w-full max-w-3xl px-5 pb-20 md:px-8">
+        <FunnelHeader />
 
-        <div className="flex flex-1 flex-col justify-center">
-          {/* Sello de felicitación */}
-          <div className="wbt-pop mb-6 inline-flex items-center gap-2 self-start rounded-full border border-[#22C55E]/45 bg-[#22C55E]/12 px-3.5 py-1.5">
+        {/* ── 1. Confirmación ── */}
+        <div className="flex flex-col items-center pt-4 text-center md:pt-8">
+          <div
+            className="fk-load inline-flex items-center gap-2 rounded-full border border-[#22C55E]/40 bg-[#22C55E]/12 px-3.5 py-1.5"
+            style={{ animationDelay: "60ms" }}
+          >
             <BadgeCheck className="h-4 w-4 text-[#4ADE80]" />
-            <span className="text-[13px] font-bold text-[#4ADE80]">Plaza confirmada. Buena decisión.</span>
+            <span
+              className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-[#4ADE80] md:text-[13px]"
+              style={{ fontFamily: "'Inter Tight', sans-serif" }}
+            >
+              Plaza confirmada
+            </span>
           </div>
 
-          <h1
-            className="wbt-rise mb-4 text-[2rem] font-extrabold leading-[1.06] tracking-[-0.02em] text-white md:text-[2.6rem]"
-            style={{ fontFamily: "'Inter Tight', sans-serif" }}
+          <p
+            className="fk-load mt-3 text-[15px] font-bold text-white md:text-[17px]"
+            style={{ fontFamily: "'Inter Tight', sans-serif", animationDelay: "120ms" }}
           >
-            Último paso: escríbenos por WhatsApp para conseguir tu entrada.
-          </h1>
-          <p className="wbt-rise mb-8 max-w-lg text-base leading-relaxed text-[#C7CBD1] md:text-lg" style={{ animationDelay: "80ms" }}>
-            Pulsa el botón y se abre tu WhatsApp con el mensaje ya escrito. Solo tienes que
-            <strong className="text-white"> enviarlo</strong> y te damos tu acceso al directo. Te respondemos en persona.
+            {resolvedDate}
           </p>
 
-          {/* CTA principal: escribir por WhatsApp privado con el mensaje predefinido.
-              Su envío es el punto de éxito del funnel (reunión 24-jul-2026). */}
+          <h1
+            className="fk-tilt mt-5 max-w-[20ch] text-white [text-wrap:balance]"
+            style={{
+              fontFamily: "'Inter Tight', sans-serif",
+              fontSize: "clamp(1.75rem, 5.4vw, 3.1rem)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.028em",
+              fontWeight: 300,
+            }}
+          >
+            <span className="fk-line block" style={{ animationDelay: "180ms" }}>
+              Mira este <span className="fk-key">vídeo</span> antes de la clase.
+            </span>
+          </h1>
+
+          <p
+            className="fk-load mt-5 max-w-xl text-[15px] leading-relaxed text-[#C7CBD1] md:text-[17px]"
+            style={{ animationDelay: "300ms" }}
+          >
+            Dura poco y te cuenta cómo aprovechar el directo. Cuando lo termines, escríbenos por
+            WhatsApp con el botón de abajo y te damos tu entrada.
+          </p>
+        </div>
+
+        {/* ── 2. EL VÍDEO (aquí es donde va, no en la landing) ── */}
+        <div className="fk-load mt-9" style={{ animationDelay: "380ms" }}>
+          <VideoFrame
+            embedUrl={embedUrl}
+            title="Vídeo post registro · Clase en directo · Capital Hub"
+            subtextoVacio="En un momento estará aquí. Mientras tanto, escríbenos por WhatsApp justo debajo."
+          />
+        </div>
+
+        {/* ── 3. WhatsApp: el punto de éxito del funnel ── */}
+        <div className="mt-9 flex flex-col items-center">
           <a
             href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={onWhatsappClick}
-            className="wbt-cta group relative mb-4 flex h-16 w-full items-center justify-center gap-3 overflow-hidden rounded-none bg-[#22C55E] px-6 text-lg font-semibold text-[#08130C]"
+            className="wa-cta group relative flex h-16 w-full max-w-lg items-center justify-center gap-3 overflow-hidden rounded-xl px-6 text-base font-extrabold text-[#08130C] md:text-lg"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
-            <span aria-hidden className="wbt-cta-shine" />
+            <span aria-hidden className="fk-shine" />
             <WhatsappIcon className="relative z-10 h-6 w-6" />
             <span className="relative z-10">Conseguir mi entrada por WhatsApp</span>
-            <ArrowRight className="relative z-10 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
           </a>
-          <p className="mb-9 text-center text-[13px] text-[#6B7280]">
+          <p className="mt-3 text-center text-[13px] text-[#8A8F99]">
             Se abre WhatsApp con el mensaje listo. Solo pulsa enviar.
           </p>
-
-          {/* Recordatorio de la cita */}
-          <div className="wbt-rise rounded-lg border border-[#2A2D34] bg-[#141418] p-5 md:p-6" style={{ animationDelay: "160ms" }}>
-            <div className="mb-3 flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#22C55E]/35 bg-[#22C55E]/12">
-                <CalendarClock className="h-[18px] w-[18px] text-[#4ADE80]" />
-              </div>
-              <div>
-                <p className="text-[12px] uppercase tracking-wide text-[#9CA3AF]">Reserva este hueco</p>
-                <p className="text-base font-semibold text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
-                  {resolvedDate}
-                </p>
-              </div>
-            </div>
-            <ul className="space-y-2.5 pt-1">
-              {[
-                "Guárdalo en tu agenda ahora, para que no se te pase.",
-                "Reserva ese rato sin distracciones. Móvil en silencio.",
-                "Ven con ganas: es tu punto de partida.",
-              ].map((t) => (
-                <li key={t} className="flex gap-2.5 text-sm text-[#D1D5DB] leading-relaxed">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#4ADE80]" />
-                  <span>{t}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        <footer className="pt-10 text-[13px] text-[#6B7280]">
-          Capital Hub · Adrián Villanueva
+        {/* ── 4. Cuenta atrás + recordatorio ── */}
+        <section className="mt-16">
+          <SectionLabel n="01" title="Tu cita" />
+
+          <div data-reveal className="fk-reveal flex flex-col items-center">
+            <Countdown
+              isoDate={fecha}
+              time={hora}
+              timeZone={WEBINAR_TZ}
+              label="Empieza en"
+              labelEmpezado="La clase ya empezó"
+              align="center"
+            />
+          </div>
+
+          <div data-reveal className="fk-reveal fk-card mt-8 rounded-2xl p-5 md:p-6">
+            <span aria-hidden className="fk-card-glow" />
+            <div className="relative z-10">
+              <div className="mb-4 flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#22C55E]/35 bg-[#22C55E]/12">
+                  <CalendarClock className="h-[18px] w-[18px] text-[#4ADE80]" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#8A8F99]">Reserva este hueco</p>
+                  <p className="text-base font-extrabold text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+                    {resolvedDate}
+                  </p>
+                </div>
+              </div>
+              <ul className="space-y-2.5">
+                {[
+                  "Guárdalo en tu agenda ahora, para que no se te pase.",
+                  "Reserva ese rato sin distracciones. Móvil en silencio.",
+                  "Ven con ganas: es tu punto de partida.",
+                ].map((t) => (
+                  <li key={t} className="flex gap-2.5 text-sm leading-relaxed text-[#D1D5DB]">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#4ADE80]" />
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div data-reveal className="fk-reveal mt-8 flex justify-center">
+            <CtaButton href={waUrl} target="_blank" rel="noopener noreferrer" onClick={onWhatsappClick}>
+              Escribir por WhatsApp
+            </CtaButton>
+          </div>
+        </section>
+
+        <footer className="mt-16 flex items-center justify-between border-t border-[#1C1D22] pt-7 text-[13px] text-[#6B7280]">
+          <span>Capital Hub</span>
+          <span>Adrián Villanueva</span>
         </footer>
       </div>
 
+      {/* El botón grande usa el verde de WhatsApp, no nuestro acento de marca. */}
       <style>{`
-        .wbt-pop { opacity: 0; transform: scale(0.9); animation: wbt-pop 0.5s cubic-bezier(0.22,0.61,0.36,1) 0.1s forwards; }
-        @keyframes wbt-pop { to { opacity: 1; transform: scale(1); } }
-        .wbt-rise { opacity: 0; transform: translateY(16px); animation: wbt-rise 0.7s cubic-bezier(0.22,0.61,0.36,1) 0.15s forwards; }
-        @keyframes wbt-rise { to { opacity: 1; transform: translateY(0); } }
-        .wbt-cta { box-shadow: 0 10px 40px -12px rgba(34,197,94,0.6); transition: transform 0.25s ease, box-shadow 0.25s ease; }
-        .wbt-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 50px -10px rgba(34,197,94,0.75); }
-        .wbt-cta-shine { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%); transform: translateX(-120%); animation: wbt-shine 2.6s ease-in-out 0.6s infinite; }
-        @keyframes wbt-shine { 0% { transform: translateX(-120%); } 45%,100% { transform: translateX(120%); } }
-        @media (prefers-reduced-motion: reduce) {
-          .wbt-pop, .wbt-rise, .wbt-cta-shine { animation: none !important; opacity: 1 !important; transform: none !important; }
-        }
+        .wa-cta { background: #25D366; box-shadow: 0 16px 44px -18px rgba(37,211,102,0.95); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+        .wa-cta:hover { transform: translateY(-2px); box-shadow: 0 22px 56px -16px rgba(37,211,102,1); }
+        @media (prefers-reduced-motion: reduce) { .wa-cta:hover { transform: none; } }
       `}</style>
     </main>
   )
