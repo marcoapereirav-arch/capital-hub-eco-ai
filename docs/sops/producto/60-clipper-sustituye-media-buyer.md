@@ -81,12 +81,49 @@ nada por hecho.
 
 ---
 
-## Después de aplicar la migración, comprobar
+## Aplicado el 2026-07-30. Esto es lo que había y lo que quedó
 
-- [ ] `/admin/formaciones` enseña tres: IA Integrator, Comercial Closing, Clipper.
-- [ ] La carpeta `Formaciones/Clipper` existe en Bunny (la crea el reloj del SOP 59).
-- [ ] Juan Pablo entra y NO ve ninguna formación asignada, pero su cuenta funciona.
-- [ ] Ningún alumno perdió acceso (la migración se habría detenido sola).
+Antes de borrar, comprobado en la base:
+
+| | Media Buyer Digital |
+|---|---|
+| Invitaciones con ese producto | **0** (ni aceptadas ni pendientes) |
+| Formaciones / módulos / lecciones | 1 / 2 / 1 |
+| Vídeos | 1 |
+| Formador asignado | JP |
+
+Después:
+
+- Tres rutas: IA Integrator (1), Comercial Closing (3), **Clipper (4)**.
+- JP con `formacion_asignada = null`. Su cuenta y su acceso, intactos.
+- `lessons.bunny_storage_path` creada.
+
+### La trampa de la comunidad
+
+`communities` **no se enlaza por `route_id`** (las tres que existían lo tenían
+**nulo**), sino por `product_key`. Borrar la ruta por tanto **no** se lleva la
+comunidad: habría quedado "Comunidad Media Buyer Digital" huérfana en la lista.
+
+Se reaprovecha esa fila para Clipper (`slug` y `product_key` a `clipper`) en vez
+de crear una cuarta. **Antes de borrar algo, comprobar si lo que cuelga de ello
+lo hace de verdad por clave foránea o solo de nombre.**
+
+### Sobrantes en Bunny Stream (decisión de Marco pendiente)
+
+La biblioteca tenía 7 vídeos y ninguna carpeta. Solo **uno** pertenecía a una
+lección real: colocado en la colección IA Integrator como
+`Modulo 1 · 01 · NOMBRE DE LA LECCION`. Los otros seis siguen sueltos:
+
+| Vídeo | Qué es |
+|---|---|
+| `NOMBRE DE LA LECCION` | Vacío (nunca se subió archivo) |
+| `Lección nueva` | Vacío |
+| `Capital Hub lesson` | Vacío |
+| `VERIF_BUNNY_TEST_borrar` | Vacío, de una prueba |
+| `Como configurar Meta Business Manager` | Real. Era de Media Buyer, ya borrada |
+| `Video Adri Post-Agenda — como aprovechar la llamada` | Real. Va a `VSLs/` |
+
+**No se borró ninguno.** Borrar material es decisión de Marco, no del agente.
 
 ---
 
