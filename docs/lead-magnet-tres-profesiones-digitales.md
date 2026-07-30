@@ -12,7 +12,7 @@
 
 **Título:** LAS 3 PROFESIONES DIGITALES
 
-**Subtítulo:** La guía honesta para elegir el vehículo correcto — qué son, qué hacen cada día, cuánto pagan las empresas por ellas y por qué existen.
+**Subtítulo:** La guía para elegir el vehículo correcto — qué son, qué hacen cada día, cuánto pagan las empresas por ellas y por qué existen.
 
 **Pie:** El mapa que nos costó años dibujar.
 
