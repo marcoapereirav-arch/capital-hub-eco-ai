@@ -14,7 +14,7 @@
 
 **Subtítulo:** La guía honesta para elegir el vehículo correcto — qué son, qué hacen cada día, cuánto pagan las empresas por ellas y por qué existen.
 
-**Pie:** Sin humo. Sin promesas de Lamborghini. Solo el mapa que a nosotros nos costó años dibujar.
+**Pie:** El mapa que nos costó años dibujar.
 
 ---
 
