@@ -196,13 +196,26 @@ devuelve `null`, así que en el primer pintado el hueco no existe. Un
 a mirar: **el gráfico se queda en blanco para siempre**. La ref de función se
 dispara justo cuando el hueco aparece.
 
-**3. Una etiqueta que califica a alguien dice SU MOTIVO con el número.** Salía
+**3. Las dependencias de un efecto son DATOS SUELTOS, nunca el objeto que
+devuelve un hook.** Un hook que devuelve `{ ... }` da un objeto nuevo en cada
+pintado. Un efecto que dependa de él se dispara siempre, y si dentro guarda
+estado, provoca otro pintado: bucle. Aquí el bucle borraba la selección del
+gráfico al instante y **pasar el cursor por encima dejó de enseñar nada**.
+Se depende de un booleano o un número, y lo último se lee de una `ref`.
+
+**4. Al arreglar algo, se vuelve a probar LO DE AL LADO.** Este bucle lo
+introduje arreglando la línea rota, y lo encontró Marco, no yo. Después de
+tocar un componente se comprueban también las cosas que ya funcionaban en él
+(en un gráfico: que se dibuje, que el cursor enseñe la etiqueta, y que siga bien
+a 375px).
+
+**5. Una etiqueta que califica a alguien dice SU MOTIVO con el número.** Salía
 "Parado" al lado de "entró hace 1 semana" y parecía una contradicción. Eran dos
 cosas distintas (visitar no es avanzar) pero la pantalla no lo decía. Ahora pone
 "Parado: hace 1 mes que no avanza". **Si un cartel puede leerse como una
 contradicción, le falta el porqué.**
 
-**4. Los datos de ejemplo tienen que ser coherentes entre sí.** El ejemplo daba
+**6. Los datos de ejemplo tienen que ser coherentes entre sí.** El ejemplo daba
 fechas al azar por separado y salían imposibles (última visita anterior a la
 última lección hecha). Se generan en cadena, respetando el orden real de los
 hechos.
