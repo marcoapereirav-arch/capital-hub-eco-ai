@@ -103,14 +103,22 @@ export async function getBunnyVideoStatus(guid: string): Promise<BunnyVideo> {
 }
 
 /**
- * Borra un vídeo de Bunny (usado en cleanup cuando se borra una lección).
+ * Borra un vídeo de Bunny (al quitarlo de una lección o al borrar la lección).
+ *
+ * Antes esta función se tragaba el resultado sin mirarlo: si Bunny decía que no,
+ * nadie se enteraba y el vídeo se quedaba ahí para siempre. Eso es exactamente
+ * lo que vio Marco el 2026-07-30 ("sigue todavía aquí"). Ahora falla en alto.
+ * Un 404 sí vale: significa que ya no estaba, que es lo que queríamos.
  */
 export async function deleteBunnyVideo(guid: string): Promise<void> {
   const { apiKey, libraryId } = getConfig()
-  await fetch(`${STREAM_API}/library/${libraryId}/videos/${guid}`, {
+  const res = await fetch(`${STREAM_API}/library/${libraryId}/videos/${guid}`, {
     method: "DELETE",
-    headers: { "AccessKey": apiKey },
+    headers: { AccessKey: apiKey },
   })
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`Bunny deleteVideo ${res.status}: ${await res.text().catch(() => "")}`)
+  }
 }
 
 /* ─────────────────── Colecciones: el orden dentro de Stream ───────────────────

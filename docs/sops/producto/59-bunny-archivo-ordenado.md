@@ -257,3 +257,51 @@ se salta el archivado sin romper nada (`hayStorage()` devuelve falso).
 Se comprueba que Stream no anida y se añade Storage para el árbol. Reloj de
 archivado cada 10 min, registrado en `/automatizaciones`. Media Buyer Digital
 sale y entra Clipper (ver [SOP 60](60-clipper-sustituye-media-buyer.md)).
+
+---
+
+## Quitar un vídeo lo quita de Bunny (2026-07-30, segunda pasada)
+
+> Marco: *"si quito el vídeo y borro aquí la lección, lo que debería pasar es que
+> se debería quitar de Bunny. Por lo que veo, sigue todavía ahí."*
+
+Tenía razón y era un agujero que crece solo: cada vídeo reemplazado y cada
+lección borrada dejaba su archivo en Bunny **para siempre**, ocupando y
+ensuciando justo el orden que se acababa de montar.
+
+`POST /api/admin/bunny/borrar` lo cierra. Se dispara en tres sitios:
+
+| Acción del formador | Qué se lleva |
+|---|---|
+| **Quitar el vídeo** | Ese vídeo, del reproductor y del archivo |
+| **Cambiar el vídeo** | El de ahora, y la lección queda lista para otro |
+| Borrar la lección | Su vídeo |
+| Borrar el módulo | Los vídeos de todas sus lecciones **y su carpeta** |
+
+### Tres reglas que salen de aquí
+
+1. **Se manda el `id`, nunca la ruta.** El servidor mira en la base a qué
+   formación pertenece y comprueba el permiso. Si el navegador pudiera mandar
+   una ruta, cualquiera con la consola abierta podría borrar otra cosa.
+2. **Se llama ANTES de borrar la fila.** Después ya no se sabe qué vídeo era ni
+   dónde vivía, y queda huérfano.
+3. **Si Bunny falla, la fila NO se borra** y se dice por qué. Antes al revés
+   habría sido: fila fuera, archivo dentro, y nadie enterándose.
+
+### Un botón que no dice lo que hace es un bug
+
+Había un solo botón, **"Cambiar vídeo"**, que por dentro borraba. Marco:
+*"no es cambiar el vídeo... si aquí cambiar vídeo quiere decir también eliminar,
+dale, claridad"*. Ahora son **dos botones con su verbo** ("Cambiar el vídeo" y
+"Quitar el vídeo") y cada confirmación dice exactamente qué desaparece y de
+dónde.
+
+### Comprobado, no supuesto
+
+Con un vídeo de usar y tirar, sin tocar el material de Marco:
+sin sesión **401**; con sesión de administrador **200**; el vídeo desaparece del
+reproductor (404) y del archivo (404).
+
+Se descubrió de paso que `deleteBunnyVideo` **se tragaba el resultado sin
+mirarlo**: si Bunny decía que no, nadie se enteraba. Ahora falla en alto (un 404
+sí vale: significa que ya no estaba).
