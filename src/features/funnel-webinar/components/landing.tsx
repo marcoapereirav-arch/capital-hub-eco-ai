@@ -146,27 +146,19 @@ export function WebinarLanding({
                 </span>
               </h1>
 
-              {/* Grupo 3: la promesa y la PRUEBA.
-                  El dato ya no vive dentro del párrafo (allí eran 5 líneas de texto
-                  seguidas y la fuente se comía 3 más). Ahora el número es una pieza
-                  visual: se ve de un vistazo, el párrafo baja a 3 líneas y la fuente
-                  cabe en una sola, debajo del propio dato, que es donde pega. */}
+              {/* Grupo 3: la promesa, íntegra como la escribió Marco, y la fuente
+                  debajo en UNA sola línea (antes se comía tres). */}
               <div className="hero-promise">
                 <p className="fk-load hero-sub text-[#A6ABB4]" style={{ animationDelay: "460ms" }}>
                   Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
                   trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
-                  trabajando para empresas que están buscando tu perfil.
+                  trabajando para empresas que están buscando tu perfil:{" "}
+                  <span className="fk-mark">más de 500.000 puestos de trabajo online</span> publicados
+                  al año en España.
                 </p>
-
-                <div className="fk-load hero-stat" style={{ animationDelay: "540ms" }}>
-                  <p className="hero-stat-num">
-                    <span className="hero-stat-plus">+</span>500.000
-                  </p>
-                  <p className="hero-stat-txt">
-                    puestos de trabajo online publicados al año en España
-                  </p>
-                  <p className="hero-stat-src">Fuente: InfoJobs y Esade, 2024</p>
-                </div>
+                <p className="fk-load hero-src" style={{ animationDelay: "520ms" }}>
+                  Fuente: InfoJobs y Esade, 2024
+                </p>
               </div>
 
               {/* Grupo 4: cuánto queda */}
@@ -490,13 +482,7 @@ function HeroFit() {
       /* Grupo 3: la promesa. Medida corta y respirada para que se lea tranquila. */
       .hero-promise { display: flex; flex-direction: column; align-items: center; gap: min(3.4vw, 1.7svh); }
       .hero-sub { font-size: min(3.35vw, 1.52svh); line-height: 1.5; max-width: 50ch; margin-inline: auto; text-wrap: pretty; }
-      /* El dato, como pieza visual: el número manda, la frase lo explica y la fuente
-         lo firma en UNA sola línea. Antes esto eran 5 líneas de texto corrido. */
-      .hero-stat { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.15em 0.75em; text-align: left; padding: 0.75em 1em; border-radius: 0.9rem; border: 1px solid rgba(34,197,94,0.22); background: linear-gradient(180deg, rgba(34,197,94,0.09), rgba(20,20,24,0.5)); max-width: min(34ch, 100%); width: max-content; margin-inline: auto; }
-      .hero-stat-num { grid-row: span 2; font-family: 'Inter Tight', sans-serif; font-weight: 900; font-size: min(7.6vw, 3.5svh); line-height: 0.95; letter-spacing: -0.04em; color: var(--acc-2); white-space: nowrap; }
-      .hero-stat-plus { font-size: 0.55em; vertical-align: 0.35em; margin-right: 0.04em; }
-      .hero-stat-txt { font-size: min(2.95vw, 1.38svh); line-height: 1.3; color: #C7CBD1; max-width: 24ch; }
-      .hero-stat-src { grid-column: 2; font-size: min(2.35vw, 1.12svh); line-height: 1.2; color: #5C616B; white-space: nowrap; }
+      .hero-src { font-size: min(2.6vw, 1.26svh); line-height: 1.3; color: #5C616B; white-space: nowrap; }
 
       /* Grupo 4: cuenta atrás sin cajas en móvil. Solo los números, que es lo que importa. */
       .hero-count { --fk-count-num: min(7.4vw, 3.4svh); --fk-count-lab: min(2.4vw, 1.15svh); --fk-count-pad: 0; text-align: center; }
@@ -525,11 +511,7 @@ function HeroFit() {
         .hero-note { font-size: 0.4em; max-width: 40ch; margin-top: 1.05em; gap: 0.9em; }
         .hero-note-rule { width: 3.6em; height: 2px; }
         .hero-atmos { height: 135vh; }
-        .hero-stat { padding: 0.9em 1.3em; gap: 0.2em 1em; max-width: none; width: max-content; }
-        .hero-stat-num { font-size: 2.5rem; }
-        .hero-stat-txt { max-width: 26ch; }
-        .hero-stat-txt { font-size: 13.5px; }
-        .hero-stat-src { font-size: 11px; }
+        .hero-src { font-size: 11.5px; }
         .hero-count { --fk-count-num: 2.7rem; --fk-count-pad: 1.05rem; }
         .hero-sub { font-size: 16px; line-height: 1.62; max-width: 40ch; }
         .hero-src { font-size: 11px; }

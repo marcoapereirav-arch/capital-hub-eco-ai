@@ -377,7 +377,7 @@ export function VideoFrame({
   const src = !base
     ? ""
     : conSonido
-      ? `${base}?autoplay=true&muted=false&playsinline=true&preload=true`
+      ? `${base}?autoplay=true&muted=false&loop=false&playsinline=true&preload=true`
       : `${base}?autoplay=true&muted=true&loop=true&playsinline=true&preload=true`
 
   useEffect(() => {
@@ -410,19 +410,26 @@ export function VideoFrame({
             <LoadingScreen fullscreen={false} className="absolute inset-0" />
           </div>
 
-          {/* Activar el sonido: vuelve a empezar desde el principio, ya con audio. */}
+          {/* Activar el sonido: vuelve a empezar desde el principio, ya con audio.
+              IMPORTANTE: la invitación NO tapa el reproductor. El velo oscuro no recibe
+              clics (`pointer-events-none`) y solo el botón del centro es pulsable, así
+              que los controles de Bunny (pausa, barra, pantalla completa) están siempre
+              a mano. Antes el overlay cubría todo y no se podía parar el vídeo. */}
+          {!conSonido && !cargando && (
+            <div aria-hidden className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-black/55 via-black/10 to-black/35" />
+          )}
           {!conSonido && !cargando && (
             <button
               type="button"
               onClick={() => setConSonido(true)}
               aria-label="Activar el sonido y reproducir desde el inicio"
-              className="group absolute inset-0 z-10 flex flex-col items-center justify-center gap-3.5 bg-gradient-to-t from-black/70 via-black/20 to-black/40"
+              className="group absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3"
             >
               <span className="fk-video-pulse flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg shadow-black/30 transition-transform group-hover:scale-105">
                 <Volume2 className="h-7 w-7 text-[#0F0F12]" />
               </span>
               <span
-                className="rounded-full bg-black/65 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm md:text-base"
+                className="whitespace-nowrap rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm md:text-base"
                 style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 Toca para activar el sonido

@@ -205,8 +205,8 @@ export function WebinarThankYou({
             className="fk-load mt-5 max-w-xl text-[15px] leading-relaxed text-[#C7CBD1] md:text-[17px]"
             style={{ animationDelay: "300ms" }}
           >
-            Dura poco y te cuenta cómo aprovechar el directo. Cuando lo termines, escríbenos por
-            WhatsApp con el botón de abajo y te damos tu entrada.
+            Dura poco y te cuento cómo aprovechar el directo. Cuando lo termines, escríbeme por
+            WhatsApp con el botón de abajo y te doy tu entrada.
           </p>
         </div>
 
