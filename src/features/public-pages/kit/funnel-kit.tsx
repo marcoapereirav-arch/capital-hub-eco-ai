@@ -64,7 +64,10 @@ export function FunnelStyles() {
       .fk-mark::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: linear-gradient(90deg, transparent, var(--acc), transparent); transform: scaleX(0); transform-origin: left; animation: fk-underline 0.9s cubic-bezier(0.22,0.61,0.36,1) 1.1s forwards; }
       @keyframes fk-underline { to { transform: scaleX(1); } }
 
-      /* Cuenta atrás */
+      /* Cuenta atrás. El tamaño lo gobierna la página con --fk-count-num / --fk-count-lab,
+         para poder encogerla cuando toda la primera pantalla debe caber en un móvil. */
+      .fk-count-num { font-size: var(--fk-count-num, clamp(1.5rem, 6.2vw, 2.5rem)); }
+      .fk-count-lab { font-size: var(--fk-count-lab, 10px); }
       .fk-count { border: 1px solid rgba(var(--acc-rgb),0.28); background: linear-gradient(180deg, rgba(var(--acc-rgb),0.10), rgba(20,20,24,0.9)); box-shadow: 0 12px 34px -22px rgba(var(--acc-rgb),0.9); }
       .fk-count-glow { position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 0%, rgba(var(--acc-rgb),0.24), transparent 70%); }
       .fk-count-tick { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--acc-2), transparent); animation: fk-tick 1s steps(1,end) infinite; }
@@ -239,26 +242,25 @@ export function Countdown({
 
   return (
     <div className={align === "center" ? "flex flex-col items-center" : undefined}>
-      <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.12em] text-[#8A8F99]">
+      <p className="fk-count-lab mb-2 font-bold uppercase tracking-[0.12em] text-[#8A8F99]">
         {empezado ? labelEmpezado : label}
       </p>
       <div className="grid w-full max-w-md grid-cols-4 gap-2.5 md:gap-3">
         {units.map((u, i) => (
-          <div key={u.label} className="fk-count relative overflow-hidden rounded-xl px-1 py-3 text-center md:py-4">
+          <div key={u.label} className="fk-count relative overflow-hidden rounded-xl px-1 text-center" style={{ paddingBlock: "var(--fk-count-pad, 0.75rem)" }}>
             <span aria-hidden className="fk-count-glow" />
             <span
-              className="relative z-10 block tabular-nums text-white"
+              className="fk-count-num relative z-10 block tabular-nums text-white"
               style={{
                 fontFamily: "'Inter Tight', sans-serif",
                 fontWeight: 900,
-                fontSize: "clamp(1.5rem, 6.2vw, 2.5rem)",
                 lineHeight: 1,
                 letterSpacing: "-0.03em",
               }}
             >
               {u.value === null ? "--" : String(u.value).padStart(2, "0")}
             </span>
-            <span className="relative z-10 mt-1.5 block text-[10px] font-bold uppercase tracking-[0.1em] text-[#4ADE80] md:text-[11px]">
+            <span className="fk-count-lab relative z-10 mt-1 block font-bold uppercase tracking-[0.1em] text-[#4ADE80]">
               {u.label}
             </span>
             {i === 3 && !empezado && <span aria-hidden className="fk-count-tick" />}

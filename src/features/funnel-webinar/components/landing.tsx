@@ -70,27 +70,33 @@ export function WebinarLanding({
       style={{ backgroundColor: "#0F0F12", fontFamily: "'Inter', sans-serif" }}
     >
       <FunnelStyles />
+      <HeroFit />
 
-      {/* ════════ SECCIÓN 1 · HERO + OPT-IN EMBEBIDO ════════
-          En escritorio va a dos columnas para que el formulario se vea sin bajar; en
-          móvil se apila: promesa, cuenta atrás y formulario. */}
-      <section ref={heroRef} className="relative min-h-[100svh] overflow-hidden pb-16 md:pb-24">
+      {/* ════════ SECCIÓN 1 · HERO + OPT-IN, TODO EN UNA SOLA PANTALLA ════════
+          Regla dura de Marco (2026-07-30): en MÓVIL tiene que verse TODO sin bajar:
+          sello, fecha, titular, subtítulo con la fuente, cuenta atrás y el formulario
+          entero con su botón. Por eso la sección mide 100svh exactos y CADA tamaño y
+          CADA hueco es fluido en `svh` (con `min()` contra `vw`): si el teléfono es más
+          bajito, todo encoge a la vez y sigue cabiendo. No se quita ni una palabra. */}
+      <section ref={heroRef} className="hero relative flex h-[100svh] flex-col overflow-hidden">
         <FunnelBackdrop />
 
-        <div className="relative z-10 mx-auto w-full max-w-6xl px-5 md:px-8">
-          <FunnelHeader />
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 md:px-8" style={{ minHeight: 0 }}>
+          <div className="shrink-0">
+            <FunnelHeader />
+          </div>
 
-          <div className="grid items-start gap-10 pt-4 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14 lg:pt-8">
-            {/* ── Columna izquierda: promesa + cuenta atrás ── */}
-            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <div className="hero-body grid min-h-0 flex-1 items-center lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
+            {/* ── Promesa + cuenta atrás ── */}
+            <div className="flex min-h-0 flex-col items-center text-center lg:items-start lg:text-left">
               {/* Sello del evento */}
               <div
-                className="fk-load inline-flex items-center gap-2 rounded-full border border-[#22C55E]/40 bg-[#22C55E]/12 px-3.5 py-1.5"
+                className="fk-load hero-badge inline-flex items-center gap-2 rounded-full border border-[#22C55E]/40 bg-[#22C55E]/12"
                 style={{ animationDelay: "60ms" }}
               >
-                <CalendarDays className="h-4 w-4 text-[#4ADE80]" />
+                <CalendarDays className="hero-badge-ico text-[#4ADE80]" />
                 <span
-                  className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-[#4ADE80] md:text-[13px]"
+                  className="font-extrabold uppercase tracking-[0.08em] text-[#4ADE80]"
                   style={{ fontFamily: "'Inter Tight', sans-serif" }}
                 >
                   Clase gratuita en directo
@@ -99,7 +105,7 @@ export function WebinarLanding({
 
               {/* Fecha y hora reales, salidas del ⚙️ de /webs */}
               <p
-                className="fk-load mt-3 text-[15px] font-bold text-white md:text-[17px]"
+                className="fk-load hero-date font-bold text-white"
                 style={{ fontFamily: "'Inter Tight', sans-serif", animationDelay: "120ms" }}
               >
                 {dateLabel}
@@ -107,50 +113,33 @@ export function WebinarLanding({
 
               {/* Titular: contraste de peso. Lo importante en Black 900 y verde de marca. */}
               <h1
-                className="fk-tilt mt-5 max-w-[22ch] text-white [text-wrap:balance]"
-                style={{
-                  fontFamily: "'Inter Tight', sans-serif",
-                  fontSize: "clamp(1.75rem, 5.4vw, 3.35rem)",
-                  lineHeight: 1.05,
-                  letterSpacing: "-0.028em",
-                  fontWeight: 300,
-                }}
+                className="fk-tilt hero-h1 max-w-[24ch] text-white [text-wrap:balance]"
+                style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 300 }}
               >
                 <span className="fk-line block" style={{ animationDelay: "180ms" }}>
                   Cómo ganar <span className="fk-key">de 2k a 4k al mes</span> en menos de{" "}
                   <span className="font-black text-white">90 días</span> con una{" "}
                   <span className="fk-key">profesión digital</span>
                 </span>
-                <span
-                  className="fk-line block font-light text-[#A6ABB4]"
-                  style={{
-                    animationDelay: "330ms",
-                    marginTop: "0.45rem",
-                    fontSize: "clamp(1rem, 2.4vw, 1.5rem)",
-                    lineHeight: 1.25,
-                  }}
-                >
+                <span className="fk-line hero-h1-tail block font-light text-[#A6ABB4]" style={{ animationDelay: "330ms" }}>
                   aunque no tengas experiencia y partas de 0.
                 </span>
               </h1>
 
-              {/* Subtítulo (copy dictado por Marco) */}
-              <p
-                className="fk-load mt-6 max-w-2xl text-[15px] leading-relaxed text-[#C7CBD1] md:text-[17px]"
-                style={{ animationDelay: "460ms" }}
-              >
+              {/* Subtítulo (copy dictado por Marco, íntegro) */}
+              <p className="fk-load hero-sub max-w-2xl leading-snug text-[#C7CBD1]" style={{ animationDelay: "460ms" }}>
                 Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
                 trabajo, y gana de <strong className="font-bold text-white">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
                 trabajando para empresas que están buscando tu perfil:{" "}
                 <span className="fk-mark">más de 500.000 puestos de trabajo online</span> publicados
                 al año en España.
               </p>
-              <p className="fk-load mt-2.5 text-[11px] leading-snug text-[#6B7280]" style={{ animationDelay: "520ms" }}>
+              <p className="fk-load hero-src leading-snug text-[#6B7280]" style={{ animationDelay: "520ms" }}>
                 Fuente: Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
               </p>
 
               {/* Cuenta atrás hasta el directo */}
-              <div className="fk-load mt-9 w-full" style={{ animationDelay: "580ms" }}>
+              <div className="fk-load hero-count w-full" style={{ animationDelay: "580ms" }}>
                 <Countdown
                   isoDate={webinarDate}
                   time={webinarTime}
@@ -160,7 +149,7 @@ export function WebinarLanding({
               </div>
             </div>
 
-            {/* ── Columna derecha: opt-in embebido ── */}
+            {/* ── Opt-in embebido ── */}
             <OptinCard />
           </div>
         </div>
@@ -260,28 +249,28 @@ function OptinCard() {
   return (
     <div
       id="reservar"
-      className="fk-load fk-card w-full scroll-mt-24 rounded-2xl p-6 md:p-7 lg:sticky lg:top-8"
+      className="fk-load fk-card hero-card w-full scroll-mt-24 rounded-2xl lg:sticky lg:top-8"
       style={{ animationDelay: "300ms" }}
     >
       <span aria-hidden className="fk-card-glow" />
       <div className="relative z-10">
         <h2
-          className="text-[1.35rem] font-extrabold leading-tight tracking-[-0.02em] text-white md:text-[1.6rem]"
+          className="hero-form-title font-extrabold leading-tight tracking-[-0.02em] text-white"
           style={{ fontFamily: "'Inter Tight', sans-serif" }}
         >
           Reserva tu plaza
         </h2>
-        <p className="mt-1.5 text-[13px] text-[#A6ABB4] md:text-sm">
-          Deja tus datos para acceder al directo.
-        </p>
+        <p className="hero-form-sub text-[#A6ABB4]">Deja tus datos para acceder al directo.</p>
 
-        <form onSubmit={onSubmit} className="mt-5 space-y-3.5">
-          <Field id="fullName" label="Tu nombre" value={fullName} onChange={setFullName} placeholder="Tu nombre" autoComplete="name" disabled={loading} />
-          <Field id="email" label="Tu mejor email" type="email" value={email} onChange={setEmail} placeholder="tu@email.com" autoComplete="email" disabled={loading} />
-          <Field id="phone" label="Tu teléfono" type="tel" value={phone} onChange={setPhone} placeholder="+34 600 00 00 00" autoComplete="tel" disabled={loading} />
+        {/* Sin etiquetas encima: el propio campo dice lo que es. Así el formulario entero
+            cabe en la primera pantalla del móvil sin quitar ni un campo. */}
+        <form onSubmit={onSubmit} className="hero-form">
+          <Field id="fullName" label="Tu nombre" value={fullName} onChange={setFullName} autoComplete="name" disabled={loading} />
+          <Field id="email" label="Tu mejor email" type="email" value={email} onChange={setEmail} autoComplete="email" disabled={loading} />
+          <Field id="phone" label="Tu teléfono" type="tel" value={phone} onChange={setPhone} autoComplete="tel" disabled={loading} />
 
           {error && (
-            <div className="rounded-md border-l-2 border-[#4ADE80] bg-[#22C55E]/10 py-2 pl-3 text-sm text-[#F5F6F7]">
+            <div className="hero-err rounded-md border-l-2 border-[#4ADE80] bg-[#22C55E]/10 pl-3 text-[#F5F6F7]">
               {error}
             </div>
           )}
@@ -289,7 +278,7 @@ function OptinCard() {
           <button
             type="submit"
             disabled={loading}
-            className="fk-cta group relative inline-flex h-[54px] w-full items-center justify-center gap-2 overflow-hidden rounded-xl text-[15px] font-extrabold transition-opacity disabled:opacity-60"
+            className="fk-cta hero-submit group relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl font-extrabold transition-opacity disabled:opacity-60"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
             {loading ? (
@@ -303,7 +292,7 @@ function OptinCard() {
             )}
           </button>
 
-          <p className="pt-0.5 text-center text-xs text-[#8A8F99]">Es gratis. Plazas limitadas.</p>
+          <p className="hero-legal text-center text-[#8A8F99]">Es gratis. Plazas limitadas.</p>
         </form>
       </div>
     </div>
@@ -311,29 +300,25 @@ function OptinCard() {
 }
 
 function Field({
-  id, label, value, onChange, placeholder, type = "text", autoComplete, disabled,
+  id, label, value, onChange, type = "text", autoComplete, disabled,
 }: {
   id: string; label: string; value: string; onChange: (v: string) => void
-  placeholder: string; type?: string; autoComplete?: string; disabled?: boolean
+  type?: string; autoComplete?: string; disabled?: boolean
 }) {
   return (
-    <div>
-      <label htmlFor={id} className="mb-1.5 block text-[13px] font-semibold text-[#A6ABB4]">
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        inputMode={type === "tel" ? "tel" : undefined}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        disabled={disabled}
-        required
-        className="h-12 w-full rounded-xl border border-[#3F3F46] bg-[#18181B] px-4 text-base text-[#F5F6F7] transition-colors placeholder:text-[#6B7280] focus:border-[#4ADE80] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/35"
-      />
-    </div>
+    <input
+      id={id}
+      type={type}
+      inputMode={type === "tel" ? "tel" : undefined}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={label}
+      aria-label={label}
+      autoComplete={autoComplete}
+      disabled={disabled}
+      required
+      className="hero-input w-full rounded-xl border border-[#3F3F46] bg-[#18181B] px-4 text-[#F5F6F7] transition-colors placeholder:text-[#8A8F99] focus:border-[#4ADE80] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/35"
+    />
   )
 }
 
@@ -431,5 +416,61 @@ function AdrianStory() {
         .fk-gallery::-webkit-scrollbar { display: none; }
       `}</style>
     </section>
+  )
+}
+
+/* ───────────────────── Medidas de la primera pantalla ─────────────────────
+   Todo lo del hero se mide contra la ALTURA de la pantalla (`svh`), no solo contra el
+   ancho. Cada tamaño es `min(algo-vw, algo-svh)`: manda el más pequeño de los dos, así
+   que en un teléfono bajito encoge todo a la vez y el formulario nunca se queda fuera.
+   A partir de 1024px se pasa a dos columnas y a tamaños cómodos de escritorio. */
+function HeroFit() {
+  return (
+    <style>{`
+      .hero-body { gap: min(3.2vw, 1.6svh); align-content: center; }
+
+      .hero-badge { padding: min(0.9vw, 0.5svh) min(3vw, 1.6svh); font-size: min(2.9vw, 1.45svh); }
+      .hero-badge-ico { width: min(3.6vw, 1.8svh); height: min(3.6vw, 1.8svh); }
+      .hero-date { margin-top: min(2.2vw, 1.1svh); font-size: min(3.7vw, 1.85svh); }
+      .hero-h1 { margin-top: min(2.6vw, 1.3svh); font-size: min(5.9vw, 3.05svh); line-height: 1.06; letter-spacing: -0.028em; }
+      .hero-h1-tail { margin-top: min(1.4vw, 0.7svh); font-size: min(3.9vw, 1.95svh); line-height: 1.2; }
+      .hero-sub { margin-top: min(3vw, 1.5svh); font-size: min(3.35vw, 1.7svh); }
+      .hero-src { margin-top: min(1.6vw, 0.8svh); font-size: min(2.5vw, 1.25svh); }
+      .hero-count { margin-top: min(3.4vw, 1.7svh);
+        --fk-count-num: min(6.4vw, 3.2svh);
+        --fk-count-lab: min(2.4vw, 1.2svh);
+        --fk-count-pad: min(1.8vw, 0.9svh);
+      }
+
+      .hero-card { padding: min(4.4vw, 2.2svh); }
+      .hero-form-title { font-size: min(4.6vw, 2.3svh); }
+      .hero-form-sub { margin-top: min(1vw, 0.5svh); font-size: min(3vw, 1.5svh); }
+      .hero-form { margin-top: min(3vw, 1.5svh); display: flex; flex-direction: column; gap: min(2.4vw, 1.2svh); }
+      .hero-input { height: min(11.5vw, 5.4svh); font-size: min(3.9vw, 1.95svh); }
+      .hero-submit { height: min(12.5vw, 5.9svh); font-size: min(4vw, 2svh); }
+      .hero-legal { font-size: min(2.9vw, 1.45svh); }
+      .hero-err { padding-block: min(1.6vw, 0.8svh); font-size: min(3.2vw, 1.6svh); }
+
+      /* Escritorio: dos columnas y tamaños cómodos, ya sin apretar. */
+      @media (min-width: 1024px) {
+        .hero-body { gap: 3rem; }
+        .hero-badge { padding: 0.375rem 0.875rem; font-size: 13px; }
+        .hero-badge-ico { width: 1rem; height: 1rem; }
+        .hero-date { margin-top: 0.75rem; font-size: 17px; }
+        .hero-h1 { margin-top: 1.25rem; font-size: clamp(2.2rem, 3.1vw, 3.35rem); }
+        .hero-h1-tail { margin-top: 0.5rem; font-size: clamp(1.05rem, 1.4vw, 1.5rem); }
+        .hero-sub { margin-top: 1.5rem; font-size: 17px; line-height: 1.6; }
+        .hero-src { margin-top: 0.65rem; font-size: 11px; }
+        .hero-count { margin-top: 2rem; --fk-count-num: 2.5rem; --fk-count-lab: 11px; --fk-count-pad: 1rem; }
+        .hero-card { padding: 1.75rem; }
+        .hero-form-title { font-size: 1.6rem; }
+        .hero-form-sub { margin-top: 0.375rem; font-size: 14px; }
+        .hero-form { margin-top: 1.25rem; gap: 0.875rem; }
+        .hero-input { height: 3rem; font-size: 16px; }
+        .hero-submit { height: 3.375rem; font-size: 15px; }
+        .hero-legal { font-size: 12px; }
+        .hero-err { padding-block: 0.5rem; font-size: 14px; }
+      }
+    `}</style>
   )
 }
