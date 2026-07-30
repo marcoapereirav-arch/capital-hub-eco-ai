@@ -91,6 +91,13 @@ export async function subir(
   cuerpo: BodyInit,
   opciones: { longitud?: number } = {},
 ): Promise<void> {
+  /* `duplex: "half"` SOLO cuando el cuerpo llega por partes.
+     Hace falta para copiar un vídeo de 2 GB sin metérselo en memoria a la
+     función, pero puesto siempre CUELGA la petición cuando el cuerpo ya está
+     entero en memoria (un PDF, por ejemplo): se queda esperando un flujo que
+     nunca va a llegar. Comprobado el 2026-07-30 archivando un documento. */
+  const porPartes = typeof (cuerpo as ReadableStream)?.getReader === "function"
+
   const res = await pedir(url(ruta), {
     method: "PUT",
     body: cuerpo,
@@ -98,9 +105,7 @@ export async function subir(
       "Content-Type": "application/octet-stream",
       ...(opciones.longitud ? { "Content-Length": String(opciones.longitud) } : {}),
     },
-    // Necesario en Node para mandar el cuerpo por partes en vez de entero en
-    // memoria: un vídeo de 2 GB no cabe en la memoria de la función.
-    duplex: "half",
+    ...(porPartes ? { duplex: "half" } : {}),
   } as RequestInit)
   if (!res.ok) throw new Error(`Bunny Storage subir ${res.status}: ${await textoDe(res)}`)
 }
