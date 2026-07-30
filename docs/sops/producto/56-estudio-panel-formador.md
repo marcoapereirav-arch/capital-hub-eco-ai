@@ -398,3 +398,44 @@ El Estudio publicado. Diseño elegido por panel de jueces, construido sobre los
 arreglos de raíz del mismo día (SOP 55 y SOP 50 v8). Verificado: TypeScript
 limpio, build de producción limpio, y las prohibiciones duras comprobadas a
 grep sobre el código nuevo.
+
+---
+
+## El visor no sabía abrir una presentación (2026-07-30)
+
+Marco pidió verificar que el sistema que convierte un documento en algo visual
+funciona. Comprobado de punta a punta, y había **un fallo mudo**.
+
+### Lo que sí funcionaba
+
+| Pieza | Resultado |
+|---|---|
+| Generador (`/presentaciones/generar`) | **200 en 27 s**, 23 bloques, `anthropic/claude-opus-5` |
+| Contrato (`documento.ts`) vs visor (`Presentacion.tsx`) | **19 tipos cada uno, idénticos** |
+| Las 7 guías hechas a mano | Las 7 se abren bien |
+
+### Lo que estaba roto
+
+`ResourceViewer` conocía `GUIDE`, `TEXT`, `LINK` y `FILE`, pero **no
+`PRESENTACION`**. Una presentación buena caía al último caso, el del enlace, y el
+alumno leía: *"Este recurso no tiene enlace disponible."*
+
+**Nadie lo había visto porque no había ni una sola presentación guardada**: solo
+las 7 guías hechas a mano. El camino automático nunca se había recorrido entero.
+
+Arreglado: `ResourceViewer` pinta `PresentacionVista` con el mismo visor que usa
+el formador al revisarla, así que el alumno ve exactamente lo que él aprobó.
+`Resource` gana el campo `doc`, validado con `normalizarPresentacion`; si el
+documento viniera corrupto se queda a null y se dice con palabras en vez de caer.
+
+### La regla que faltaba
+
+El SOP ya avisaba de la **regla de los tres sitios** (kit, contrato, renderer +
+prompt). Faltaba el cuarto:
+
+> **Un tipo nuevo de recurso obliga a tocar también `ResourceViewer`.** Es el
+> único sitio donde el alumno lo abre. Añadirlo sin tocarlo no da ningún error:
+> cae al caso final y le enseña un mensaje equivocado.
+
+Y la de fondo: **una pieza que nunca se ha recorrido entera no está probada.**
+Que el generador conteste 200 no significa que alguien pueda verlo.
