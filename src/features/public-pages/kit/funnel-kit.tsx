@@ -103,6 +103,7 @@ export function FunnelStyles() {
 
       @media (prefers-reduced-motion: reduce) {
         .fk-load, .fk-line, .fk-reveal, .fk-orb, .fk-grain, .fk-dot, .fk-mark::after, .fk-shine, .fk-count-tick { animation: none !important; transition: none !important; }
+        .fk-mark::after { transform: scaleX(1) !important; }
         .fk-load, .fk-line, .fk-reveal { opacity: 1 !important; transform: none !important; }
         .fk-layer, .fk-orb, .fk-tilt { transform: none !important; }
       }
@@ -297,6 +298,7 @@ export function CtaButton({
     const el = ref.current
     if (!el) return
     if (window.matchMedia("(pointer: coarse)").matches) return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
     const r = el.getBoundingClientRect()
     const x = e.clientX - (r.left + r.width / 2)
     const y = e.clientY - (r.top + r.height / 2)

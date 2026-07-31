@@ -50,7 +50,7 @@ export function CookieConsent() {
   if (!visible) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[100] p-3 md:p-4">
+    <div data-cookie-banner className="fixed inset-x-0 bottom-0 z-[100] p-3 md:p-4">
       <div className="mx-auto max-w-3xl border border-[#2A2D34] bg-[#0F0F12]/95 backdrop-blur-md rounded-md shadow-2xl p-4 md:p-5">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
           <div className="flex-shrink-0 hidden md:block">

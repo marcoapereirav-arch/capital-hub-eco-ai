@@ -70,6 +70,28 @@ export function WebinarLanding({
     return () => io.disconnect()
   }, [])
 
+  // El aviso de cookies vive pegado abajo y por encima de todo. Si no se hace nada, en la
+  // PRIMERA visita (o sea, todo el tráfico de anuncios) el aviso taparía la barra de
+  // reservar, o la barra taparía los botones de aceptar. Se mide el aviso y la barra se
+  // coloca justo encima; cuando el aviso desaparece, la barra baja sola.
+  useEffect(() => {
+    const raiz = document.documentElement
+    const medir = () => {
+      const aviso = document.querySelector<HTMLElement>("[data-cookie-banner]")
+      const alto = aviso ? Math.round(aviso.getBoundingClientRect().height) : 0
+      raiz.style.setProperty("--cta-fijo-abajo", alto ? `${alto}px` : "0px")
+    }
+    medir()
+    const obs = new MutationObserver(medir)
+    obs.observe(document.body, { childList: true, subtree: true })
+    window.addEventListener("resize", medir)
+    return () => {
+      obs.disconnect()
+      window.removeEventListener("resize", medir)
+      raiz.style.removeProperty("--cta-fijo-abajo")
+    }
+  }, [])
+
   // Lleva al lead al formulario embebido y le deja el cursor puesto en el primer campo.
   const goToForm = useCallback(() => {
     const el = document.getElementById("reservar")
@@ -143,7 +165,7 @@ export function WebinarLanding({
 
               {/* 2 · El titular */}
               <h1
-                className="fk-tilt hero-h1 text-white"
+                className="hero-h1 text-white"
                 style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 300 }}
               >
                 <span className="fk-line block" style={{ animationDelay: "180ms" }}>
@@ -244,7 +266,7 @@ export function WebinarLanding({
       </div>
 
       <style>{`
-        .cta-fijo { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+        .cta-fijo { position: fixed; left: 0; right: 0; bottom: var(--cta-fijo-abajo, 0px); z-index: 90;
           padding: 0.75rem 1.25rem calc(env(safe-area-inset-bottom) + 0.75rem);
           background: linear-gradient(180deg, rgba(15,15,18,0) 0%, rgba(15,15,18,0.92) 38%, #0F0F12 100%);
           backdrop-filter: blur(10px);
@@ -253,7 +275,7 @@ export function WebinarLanding({
         .cta-fijo-on { transform: translateY(0); opacity: 1; pointer-events: auto; }
         .cta-fijo-btn { height: 3.25rem; font-size: 15px; }
         @media (min-width: 1024px) {
-          .cta-fijo { left: auto; right: 1.5rem; bottom: 1.5rem; width: auto; padding: 0; background: none; backdrop-filter: none; }
+          .cta-fijo { left: auto; right: 1.5rem; bottom: calc(var(--cta-fijo-abajo, 0px) + 1.5rem); width: auto; padding: 0; background: none; backdrop-filter: none; }
           .cta-fijo-btn { width: auto; padding-inline: 1.75rem; }
         }
         @media (prefers-reduced-motion: reduce) { .cta-fijo { transition: opacity 0.2s ease; } }
@@ -333,7 +355,7 @@ function OptinCard() {
   return (
     <div
       id="reservar"
-      className="fk-load fk-card hero-card w-full scroll-mt-24 rounded-2xl lg:sticky lg:top-8"
+      className="fk-load fk-card hero-card w-full scroll-mt-24 rounded-2xl"
       style={{ animationDelay: "300ms" }}
     >
       <span aria-hidden className="fk-card-glow" />
@@ -354,7 +376,7 @@ function OptinCard() {
           <Field id="phone" label="Tu teléfono" type="tel" value={phone} onChange={setPhone} autoComplete="tel" disabled={loading} />
 
           {error && (
-            <div className="hero-err rounded-md border-l-2 border-[#4ADE80] bg-[#22C55E]/10 pl-3 text-[#F5F6F7]">
+            <div role="alert" aria-live="assertive" className="hero-err rounded-md border-l-2 border-[#4ADE80] bg-[#22C55E]/10 pl-3 text-[#F5F6F7]">
               {error}
             </div>
           )}
@@ -376,7 +398,7 @@ function OptinCard() {
             )}
           </button>
 
-          <p className="hero-legal text-center text-[#8A8F99]">Es gratis. Plazas limitadas.</p>
+          <p className="hero-legal text-center text-[#8A8F99]">Es gratis y es en directo.</p>
         </form>
       </div>
     </div>
