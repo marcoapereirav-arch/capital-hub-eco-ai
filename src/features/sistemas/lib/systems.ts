@@ -1,4 +1,4 @@
-import { Radio, type LucideIcon } from "lucide-react"
+import { Radio, Crosshair, type LucideIcon } from "lucide-react"
 
 /**
  * Registro de "sistemas visuales" del OS.
@@ -31,6 +31,15 @@ export const STATUS_META: Record<SistemaStatus, { label: string }> = {
 }
 
 export const SISTEMAS: SistemaCard[] = [
+  {
+    slug: "medicion-ads",
+    title: "Medición de Facebook Ads",
+    tagline: "Qué mide cada funnel, por dónde viaja el dato y hacia qué optimiza cada campaña.",
+    meta: "Publicidad · píxel y API de conversiones",
+    status: "activo",
+    icon: Crosshair,
+    accent: "#22C55E",
+  },
   {
     slug: "webinar",
     title: "Funnel del Webinar",

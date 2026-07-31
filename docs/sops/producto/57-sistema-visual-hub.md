@@ -30,7 +30,24 @@ su **propia ruta `/sistemas`**, esa relación desaparece de raíz.
 |---|---|
 | `/sistemas` | Hub: portada con una tarjeta por sistema. |
 | `/sistemas/<slug>` | Board visual de ese sistema. |
+| `/sistemas/medicion-ads` | **Board de la medición de Facebook Ads** (2026-07-31). |
 | `/sistemas/webinar` | **Board del Funnel del Webinar** (estilo Miro, detallado). |
+
+### Board de la medición de Facebook Ads
+
+Explica el sistema de medición entero de un vistazo, en seis bloques: el recorrido de una
+persona desde el anuncio hasta el WhatsApp con el evento de cada paso, por qué cada acción
+manda dos etiquetas (la de Meta y la nuestra) y qué motor alimenta cada una, los dos
+caminos por los que viaja el dato (navegador y servidor) y por qué uno se salva siempre,
+qué mide cada funnel ahora mismo, los dos interruptores que lo controlan, y lo único que
+falta.
+
+**Los datos son reales, no un dibujo.** El board recibe por props el mismo cálculo que
+alimenta la pantalla de Eventos de Ads (`src/lib/meta/funnels-status.ts`). Un solo sitio
+lo decide y dos vistas lo enseñan, así que **no se pueden contradecir** ni quedarse viejas.
+
+Componente: `src/features/sistemas/components/medicion-ads-workflow.tsx`.
+Detalle del sistema: SOP [`marketing/09`](../marketing/09-eventos-meta-catalogo.md).
 
 - Registro de sistemas: `src/features/sistemas/lib/systems.ts` (`SISTEMAS`, `getSistema`).
 - Hub: `src/features/sistemas/components/sistemas-hub.tsx`.

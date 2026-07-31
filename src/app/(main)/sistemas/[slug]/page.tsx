@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation"
 import { getSistema } from "@/features/sistemas/lib/systems"
 import { WebinarWorkflow } from "@/features/sistemas/components/webinar-workflow"
+import { MedicionAdsWorkflow } from "@/features/sistemas/components/medicion-ads-workflow"
 import { getWebinarSettings } from "@/features/funnel-webinar/get-settings"
 import { webinarTagName } from "@/features/funnel-webinar/config"
+import { getFunnelsStatus } from "@/lib/meta/funnels-status"
 
 export const dynamic = "force-dynamic"
 
@@ -18,6 +20,19 @@ export default async function SistemaDetalleRoute({
   const { slug } = await params
   const sistema = getSistema(slug)
   if (!sistema) notFound()
+
+  if (slug === "medicion-ads") {
+    // Datos REALES: el mismo cálculo que alimenta la pantalla de Eventos de Ads. Lo que se
+    // ve en el board es lo que está pasando, no un dibujo fijo que se queda viejo.
+    const { funnels, capiMode } = await getFunnelsStatus()
+    return (
+      <MedicionAdsWorkflow
+        funnels={funnels}
+        capiMode={capiMode}
+        marketingTokenListo={Boolean(process.env.META_MARKETING_API_TOKEN)}
+      />
+    )
+  }
 
   if (slug === "webinar") {
     // La fecha y el tag salen de los ajustes REALES del funnel → lo que se ve coincide
