@@ -134,7 +134,7 @@ export function WebinarLanding({
       </div>
 
       <section className="hero relative flex min-h-[100svh] flex-col">
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-6 md:px-8">
+        <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col px-5 sm:px-6 md:px-8">
           <div className="hero-top shrink-0">
             <FunnelHeader />
           </div>
@@ -144,7 +144,7 @@ export function WebinarLanding({
 
               El texto se lee POR BLOQUES: marca · evento+fecha · promesa · descripción ·
               dato+fuente · cuenta atrás. Aire entre bloques, piezas pegadas dentro. */}
-          <div className="hero-body mb-auto grid w-full lg:my-auto lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
+          <div className="hero-body mb-auto grid w-full lg:my-auto lg:grid-cols-[1fr_24rem] lg:items-start lg:gap-14 xl:grid-cols-[1fr_25rem] xl:gap-16">
             <div className="hero-col">
             {/* 1 · CUÁNDO */}
             <div className="hero-when">
@@ -626,11 +626,34 @@ function HeroFit() {
       /* Solo en escritorio se puede afinar por altura: ahí la ventana NO cambia de alto
          al hacer scroll (no hay barra de navegador que se esconda), así que no existe el
          bug de reescalado. En móvil sigue terminantemente prohibido. */
-      /* DOS COLUMNAS: el texto ocupa su columna entera y el formulario va al lado. */
+      /* DOS COLUMNAS (escritorio). El texto a la izquierda, el formulario a la derecha
+         con ancho FIJO: así las dos columnas se leen como un solo bloque ordenado y no
+         como dos manchas flotando en una página enorme.
+
+         Los dos textos que marcan el ancho (la fuente y la descripción) se acotan a la
+         columna, no a la pantalla, para que sigan cayendo en 1 y 3 líneas. */
       @media (min-width: 1024px) {
-        .hero-col { max-width: 100%; --sep: 2rem; --paso: 1.15rem; }
+        /* Tamaños grandes a propósito: en escritorio hay altura de sobra y, si el
+           contenido se queda pequeño, la página se llena de huecos muertos. */
+        .hero-col { max-width: 100%; --sep: 2.4rem; --paso: 1.45rem; }
         .hero-when { margin-top: 0; }
-        .hero-card { margin-top: 0; margin-inline: auto; }
+        /* La tarjeta arranca a la MISMA altura que el sello del evento, no a media
+           página: es lo que hacía que las dos columnas se vieran desalineadas. */
+        .hero-card { margin-top: 0; width: 100%; max-width: none; padding: 1.75rem; }
+        /* El texto no llena la columna entera: medida corta y centrada dentro de ella,
+           para que el bloque se lea como un rectángulo limpio y no como líneas sueltas. */
+        .hero-col > * { max-width: 31rem; margin-inline: auto; }
+        .hero-h1 { font-size: clamp(40px, 3.5vw, 54px); max-width: 100%; }
+        .hero-note { font-size: 15.5px; }
+        .hero-sub { font-size: 15px; }
+        .hero-fact { font-size: 18px; }
+        .hero-src { font-size: 11px; }
+        .hero-count { --fk-count-num: 38px; --fk-count-pad: 0.95rem; }
+        .hero-count .grid { max-width: 22rem; gap: 0.7rem; }
+        .hero-form-title { font-size: 1.45rem; }
+        .hero-form { margin-top: 1.15rem; gap: 0.7rem; }
+        .hero-input { height: 3.25rem; }
+        .hero-submit { height: 3.5rem; margin-top: 0.5rem; }
         .hero-atmos { height: 135vh; max-height: none; }
       }
 
