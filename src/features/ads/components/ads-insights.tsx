@@ -66,25 +66,39 @@ export function AdsInsights() {
     return () => { cancelled = true }
   }, [preset])
 
+  // Los mensajes de error van en lenguaje normal y dicen QUÉ HAY QUE HACER. Antes ponía
+  // "Token Meta sin permiso ads_read", que no le dice nada a quien no es técnico.
   if (!response?.configured && response) {
     return (
       <ErrorBanner
-        title="Meta Ads no configurado"
-        message="En construcción — pendiente conectar Marketing API."
+        title="Falta la cuenta publicitaria"
+        message="No está guardado el número de la cuenta de anuncios ni la llave para leerla. Sin eso no se pueden traer las campañas."
       />
     )
   }
 
   if (response?.error) {
-    // Errores típicos de Meta cuando el token no tiene permiso correcto
-    const isPermissionError = /permission|ads_read|access_token|capability/i.test(response.error)
+    const sinPermiso = /permission|ads_read|access_token|capability/i.test(response.error)
     return (
       <ErrorBanner
-        title={isPermissionError ? "Token Meta sin permiso ads_read" : "Meta API no disponible"}
+        title={sinPermiso ? "La llave de Meta no puede leer las campañas" : "Meta no responde"}
         message={
-          isPermissionError
-            ? "El token actual (CAPI) no tiene acceso a Marketing API. Se necesita un token específico con scope ads_read para ver Insights de Ads."
-            : "No se pudo conectar con Meta. Reintentando en próximos minutos."
+          sinPermiso
+            ? [
+                "La llave que tenemos sirve para MANDAR conversiones, pero no para LEER lo que gastan tus campañas. Son dos permisos distintos y solo tenemos el primero.",
+                "",
+                "Para arreglarlo, el dueño de la cuenta de anuncios tiene que dar permiso de lectura y generar una llave nueva. Estos son los datos exactos:",
+                "",
+                "  Cuenta de anuncios:  2550903125083729",
+                "  Aplicación:          1304166178499280",
+                "  Usuario del sistema: 122108163171278108",
+                "  Permiso que falta:   ads_read",
+                "",
+                "Cuando llegue la llave nueva, se guarda como META_MARKETING_API_TOKEN y esta pantalla se llena sola. No hay que programar nada más.",
+                "",
+                "Mientras tanto la medición de los funnels funciona igual: lo único que no se ve aquí es el gasto.",
+              ].join("\n")
+            : "No se pudo conectar con Meta ahora mismo. Vuelve a intentarlo en unos minutos."
         }
       />
     )
@@ -208,14 +222,36 @@ function Mini({ label, value }: { label: string; value: string }) {
   )
 }
 
+/**
+ * Aviso con brandkit real: ámbar de marca para advertencias, Inter Tight y texto legible.
+ * `whitespace-pre-line` para que el mensaje pueda traer los datos exactos en su renglón.
+ */
 function ErrorBanner({ title, message, hint }: { title: string; message: string; hint?: string }) {
   return (
-    <div className="rounded-md border border-orange-500/30 bg-orange-500/[0.05] p-3 flex gap-3">
-      <AlertCircle className="h-4 w-4 text-orange-400 shrink-0 mt-0.5" />
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-orange-300">{title}</div>
-        <div className="text-xs text-muted-foreground mt-1">{message}</div>
-        {hint && <div className="text-[10px] text-muted-foreground/70 mt-1">{hint}</div>}
+    <div
+      className="flex gap-3 rounded-lg border p-5"
+      style={{
+        borderColor: "rgba(229,181,103,0.35)",
+        background: "rgba(229,181,103,0.06)",
+        fontFamily: "'Inter Tight', sans-serif",
+      }}
+    >
+      <AlertCircle className="mt-0.5 h-[18px] w-[18px] shrink-0" style={{ color: "#E5B567" }} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[17px]" style={{ fontWeight: 800, color: "#E5B567" }}>
+          {title}
+        </p>
+        <p
+          className="mt-2 whitespace-pre-line text-[15px] leading-relaxed"
+          style={{ color: "#A6AAB2" }}
+        >
+          {message}
+        </p>
+        {hint && (
+          <p className="mt-2 text-[13px]" style={{ color: "#7C818A" }}>
+            {hint}
+          </p>
+        )}
       </div>
     </div>
   )

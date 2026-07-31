@@ -10,6 +10,7 @@ type WebRow = {
   description: string | null
   status: Web["status"]
   hostname: Web["hostname"] | null
+  tracking_enabled: boolean | null
   created_at: string
   updated_at: string
 }
@@ -33,6 +34,8 @@ function rowToWeb(r: WebRow): Web {
     description: r.description ?? "",
     status: r.status,
     hostname: r.hostname ?? "ch",
+    // Apagado por defecto: un funnel nuevo no manda nada a Meta hasta que se enciende.
+    trackingEnabled: r.tracking_enabled === true,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }

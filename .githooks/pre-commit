@@ -18,6 +18,20 @@
 
 rama=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
+# UNIR NO ES GUARDAR. El recorrido de publicar es rama -> `dev` -> `main`, y esas dos
+# uniones ocurren estando EN `dev` y EN `main`. Cuando la union sale limpia, git no llama
+# a este gancho; pero si hay un choque, la union se cierra con un `commit` y el freno la
+# tumbaba: dejaba el trabajo a medio unir y hacia imposible publicar. Justo lo que paso
+# al publicar la seccion de Ads el 2026-07-31.
+#
+# Un `commit` con una union a medias (MERGE_HEAD) o un `cherry-pick`/`revert` en curso no
+# es trabajo nuevo: es el recorrido. Se deja pasar.
+for en_curso in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+  if [ -f "$(git rev-parse --git-path $en_curso)" ]; then
+    exit 0
+  fi
+done
+
 if [ "$rama" = "dev" ] || [ "$rama" = "main" ] || [ "$rama" = "master" ]; then
   cat >&2 <<AVISO
 

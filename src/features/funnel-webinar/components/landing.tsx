@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowRight, CalendarDays } from "lucide-react"
 import { track } from "@/lib/meta/pixel-client"
+import { useViewContent } from "@/lib/meta/use-view-content"
 import { getStoredUtms } from "@/lib/utm/utm-capture"
 import { WEBINAR_TZ } from "../config"
 import {
@@ -54,6 +55,11 @@ export function WebinarLanding({
   const heroRef = useRef<HTMLDivElement>(null)
   useParallax(heroRef)
   useScrollReveals()
+
+  // Vio la landing de la clase. No es lo mismo que "cargó una página" (eso ya lo dice
+  // PageView solo): esto marca a quien vio LA OFERTA, y es con lo que se construyen las
+  // audiencias buenas. Ver SOP marketing/09.
+  useViewContent("Clase en directo · landing")
 
   // Barra fija de abajo: aparece en cuanto el formulario deja de verse (o sea, al bajar
   // a la historia) y se esconde sola cuando el formulario vuelve a estar en pantalla,

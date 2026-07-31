@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { z } from "zod"
+import { invalidateFunnelTrackingCache } from "@/lib/meta/funnel-tracking"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -11,6 +12,8 @@ const patchSchema = z.object({
   description: z.string().max(500).nullable().optional(),
   status: z.enum(["draft", "published", "archived"]).optional(),
   hostname: z.enum(["ch", "os"]).optional(),
+  // Interruptor de medición Meta. Aparte de status a propósito: ver SOP marketing/09.
+  trackingEnabled: z.boolean().optional(),
   slug: z
     .string()
     .min(1)
@@ -42,6 +45,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   if (parsed.data.status !== undefined) update.status = parsed.data.status
   if (parsed.data.slug !== undefined) update.slug = parsed.data.slug
   if (parsed.data.hostname !== undefined) update.hostname = parsed.data.hostname
+  if (parsed.data.trackingEnabled !== undefined) update.tracking_enabled = parsed.data.trackingEnabled
 
   const { data, error } = await admin
     .from("webs")
@@ -49,6 +53,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     .eq("id", id)
     .select("*")
     .single()
+
+  // El servidor cachea los interruptores 30s. Si acaban de tocar uno, se tira el cache
+  // para que el cambio valga desde el siguiente evento y no dentro de medio minuto.
+  if (!error && parsed.data.trackingEnabled !== undefined) invalidateFunnelTrackingCache()
 
   if (error) {
     if (error.code === "23505") {

@@ -425,10 +425,90 @@ cadena que también aparece en un comentario, o en otro archivo legítimo, y
 concluir en falso. La cadena que se busque tiene que existir **solo** en el
 código nuevo.
 
+---
+
+## REGLA #19 — Todo lo que le mando a Marco tiene que ABRIRSE de un clic
+
+Si le nombro un documento, una página o cualquier cosa que él pueda querer ver,
+**tiene que poder llegar ahí con un clic.** Nombrar un archivo y que no pase nada
+al pulsarlo es una entrega rota.
+
+**How to apply:**
+
+- **Documento del Knowledge:** el link va a la **página del OS** donde se lee
+  (`http://localhost:31XX/knowledge/<slug>` en local, `https://os.capitalhubapp.com/knowledge/<slug>`
+  publicado). Nunca al `.md` suelto: en su pantalla eso no abre nada.
+- **Pantalla del producto:** link completo con `http://`, no el nombre de la ruta.
+- **Si de verdad no hay nada que abrir** (un archivo interno, una tabla), entonces
+  se da la **ruta en un bloque de código en su propia línea**, para que la copie de
+  un toque. Nunca suelta dentro de una frase.
+- Antes de enviar: releer el mensaje y preguntarse *"¿cada cosa que he nombrado
+  aquí se abre?"*. Si algo no se abre, o se arregla el link o se quita.
+
+**Why:** Marco, 2026-07-31. Le entregué un SOP nuevo nombrando el archivo `.md` y
+al pulsarlo no pasaba nada: *"aquí estoy intentando dar al MD y no me clica y no
+me hace nada, o al menos que lo pueda copiar rápido"*. Un enlace que no abre le
+obliga a ir a buscarlo a mano, que es justo lo que yo tenía que ahorrarle.
+
+Va de la mano de la REGLA #10 (siempre entregar el link de localhost).
 
 ---
 
-## REGLA #17: no se guarda en `dev` ni en `main`. Hay un freno que lo impide
+## REGLA #20 — Las llaves ya las tengo. Se buscan, no se piden
+
+**PROHIBIDO decirle a Marco "necesito tu login", "no puedo verificar esto porque hace
+falta acceso" o cualquier variante.** Casi siempre ya tengo lo que hace falta y no lo he
+buscado. Pedirlo es hacerle trabajar a él por pereza mía.
+
+**Antes de decir que no puedo entrar a algo, se agota ESTA lista, en este orden:**
+
+| Dónde | Qué hay |
+|---|---|
+| `.env.local` del repo | Todas las claves de servicios: Supabase, Resend, OpenRouter, Meta, Bunny, Calendly. **Y `TEST_AGENT_PASSWORD`** |
+| `.mcp.json` | El token de administración de Supabase (`sbp_...`), que ejecuta SQL contra la base real |
+| `docs/sops/sistemas/02-test-agent.md` | La cuenta con la que entro al OS y a la App: `test-agent@capitalhubapp.com`, rol `super_admin` |
+| `npx vercel env ls production` | Lo que hay puesto en producción |
+
+**Para ver una pantalla del OS con mis ojos:** entro con el test-agent en Playwright. No
+hay excusa para entregar una pantalla sin haberla mirado.
+
+**Solo se le pide algo a Marco cuando, después de mirar los cuatro sitios, de verdad no
+está.** Y entonces se le dice exactamente qué falta, dónde ponerlo y para qué, nunca "pásame
+la contraseña" (ver la regla de credenciales solo en `.env.local`).
+
+**Why:** Marco, 2026-07-31: *"me lo tienes siempre, no entiendo por qué me lo sigues
+preguntando y esto ya ha pasado varias veces"*. Detonante: entregué la sección de Ads
+diciendo "no pude comprobar cómo se ve por dentro porque necesita tu login", teniendo la
+contraseña del test-agent en el `.env.local` y el SOP que la documenta desde junio. Al
+buscarla, entré en dos minutos y encontré un fallo de la pantalla que él habría
+malinterpretado.
+
+---
+
+## REGLA #21 — Un problema sin solución no se reporta
+
+**Nunca se le entrega a Marco un problema pelado.** Todo problema va con su salida
+concreta: qué se hace, quién lo hace y cuál es el siguiente paso exacto.
+
+**Prohibido:** *"falta el permiso X"*, *"está bloqueado por Y"*, *"no se puede hasta que Z"*.
+**Obligatorio:** *"falta esto, se arregla así, lo hace tal persona en tal sitio, y mientras
+tanto seguimos con esto otro"*.
+
+Y antes de reportarlo: **¿lo puedo resolver yo?** Si la respuesta es sí, se resuelve y se
+cuenta ya resuelto. Reportar algo que yo mismo podía arreglar es pasarle mi trabajo a él.
+
+**Why:** Marco, 2026-07-31: *"deja de estar diciéndome los problemas sin la solución, dame
+siempre las soluciones o soluciónalo tú mismo... ¿cómo carajo soluciono esto? ¿cuál es el
+otro permiso? ¿cómo muevo la energía hacia adelante?"*. Detonante: le dije que la llave de
+Meta no podía leer campañas y lo dejé ahí, sin decirle qué permiso era exactamente ni los
+pasos para conseguirlo.
+
+---
+
+## REGLA #22 — No se guarda en `dev` ni en `main`. Hay un freno que lo impide
+
+> Nació con el número 17, pero ese ya era el del copy del dueño. Renumerada al
+> unir las dos ramas el 2026-07-31: dos reglas con el mismo número no valen.
 
 **Prohibido hacer `commit` estando en `dev`, `main` o `master`.** Todo trabajo va
 en la rama de su chat, abierta con `npm run chat:nuevo <nombre>`.

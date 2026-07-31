@@ -76,11 +76,17 @@ export type CapiEventName =
   | "test_personalidad_cualificado"
   // Funnel Webinar (ver SOP marketing/08-funnel-webinar)
   | "webinar_lead"
-  // Eventos estándar de Meta (mejor optimización de campañas)
-  | "InitiateCheckout"
-  | "Purchase"
+  // Funnel Reserva de Sesión / agenda Calendly (ver SOP marketing/09)
+  | "agenda_reserva"
+  // Eventos estándar de Meta (mejor optimización de campañas).
+  // Los 5 en uso están fijados en el SOP marketing/09-eventos-meta-catalogo.
+  | "ViewContent"
   | "Lead"
   | "Schedule"
+  | "Contact"
+  // Reservados para cuando se cobre desde el OS (hoy sin disparar)
+  | "InitiateCheckout"
+  | "Purchase"
   | "StartTrial"
   | "Subscribe"
 

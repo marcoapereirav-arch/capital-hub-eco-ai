@@ -5,6 +5,12 @@ order: 5
 
 # Tracking Meta — Pixel browser + CAPI server + Ads metrics
 
+> ⚠️ **Este documento es de mayo de 2026 y habla del funnel MIFGE, que ya no se usa.**
+> Para el estado VIVO del sistema de medición (qué eventos se disparan, dónde, la
+> sección de Ads con sus tres pestañas y el interruptor por funnel), ir a
+> [`09-eventos-meta-catalogo.md`](09-eventos-meta-catalogo.md). Este 05 se conserva por
+> el histórico y por la parte de Ads Insights API, que sigue siendo válida.
+
 ## Credenciales necesarias (pendientes de pasarse)
 
 | Variable env | Qué es | Estado |

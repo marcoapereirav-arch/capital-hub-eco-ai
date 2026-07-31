@@ -20,6 +20,24 @@ declare global {
   }
 }
 
+/**
+ * Los eventos ESTÁNDAR de Meta que usamos. Fijados en el SOP
+ * `marketing/09-eventos-meta-catalogo`. Si no está aquí, es un evento nuestro.
+ *
+ * Regla: una acción del usuario dispara UN solo evento estándar. Disparar `Lead` y
+ * `CompleteRegistration` en el mismo envío duplica las conversiones y parte en dos el
+ * aprendizaje del algoritmo.
+ */
+export const META_STANDARD_EVENTS = new Set([
+  "ViewContent",
+  "Lead",
+  "Schedule",
+  "Contact",
+  // Reservados para cuando se cobre desde el OS
+  "InitiateCheckout",
+  "Purchase",
+])
+
 export function generateEventId(): string {
   // crypto.randomUUID() existe en navegadores modernos
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID()
@@ -74,11 +92,15 @@ export async function track(input: TrackInput & { standardEvent?: string }): Pro
   if (utms.utm_content) baseCustom.utm_content = utms.utm_content
   if (utms.utm_term) baseCustom.utm_term = utms.utm_term
 
-  // Browser-side fbq (custom + opcional estándar con MISMO eventID)
+  // Browser-side fbq (custom + opcional estándar con MISMO eventID).
+  // Un evento estándar va por fbq("track"), uno nuestro por fbq("trackCustom"). Si se
+  // manda un estándar como custom, Meta lo trata como un nombre inventado y NO optimiza
+  // con él, que es justo lo contrario de lo que buscamos.
   if (typeof window !== "undefined" && typeof window.fbq === "function") {
     try {
-      window.fbq("trackCustom", input.event, baseCustom, { eventID: eventId })
-      if (input.standardEvent) {
+      const method = META_STANDARD_EVENTS.has(input.event) ? "track" : "trackCustom"
+      window.fbq(method, input.event, baseCustom, { eventID: eventId })
+      if (input.standardEvent && input.standardEvent !== input.event) {
         window.fbq("track", input.standardEvent, baseCustom, { eventID: eventId })
       }
     } catch (e) {
@@ -86,33 +108,58 @@ export async function track(input: TrackInput & { standardEvent?: string }): Pro
     }
   }
 
-  // Server-side CAPI con el mismo eventId para dedup
-  try {
-    const res = await fetch("/api/meta/capi/track", {
+  // Server-side CAPI con el MISMO eventId para dedup.
+  // Se manda el custom y, si lo hay, TAMBIÉN el estándar. Antes el estándar solo salía
+  // por el píxel del navegador: si el lead rechazaba cookies, Meta no recibía ningún
+  // `Lead` ni `Schedule`, que son justo los eventos hacia los que optimizan las
+  // campañas. Meta deduplica por (event_name, event_id), así que compartir el eventId
+  // entre custom y estándar es correcto: son nombres distintos.
+  const payload = {
+    event_id: eventId,
+    url: typeof window !== "undefined" ? window.location.href : undefined,
+    user_data: { email: input.email, phone: input.phone, fbp, fbc },
+    custom_data: {
+      value: input.value,
+      currency: input.currency,
+      contentName: input.contentName,
+      contentIds: input.contentIds,
+      utm_source: utms.utm_source,
+      utm_medium: utms.utm_medium,
+      utm_campaign: utms.utm_campaign,
+      utm_content: utms.utm_content,
+      utm_term: utms.utm_term,
+      ...(input.custom ?? {}),
+    },
+  }
+
+  const post = (eventName: string) =>
+    fetch("/api/meta/capi/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event_id: eventId,
-        event_name: input.event,
-        url: typeof window !== "undefined" ? window.location.href : undefined,
-        user_data: { email: input.email, phone: input.phone, fbp, fbc },
-        custom_data: {
-          value: input.value,
-          currency: input.currency,
-          contentName: input.contentName,
-          contentIds: input.contentIds,
-          utm_source: utms.utm_source,
-          utm_medium: utms.utm_medium,
-          utm_campaign: utms.utm_campaign,
-          utm_content: utms.utm_content,
-          utm_term: utms.utm_term,
-          ...(input.custom ?? {}),
-        },
-      }),
+      body: JSON.stringify({ ...payload, event_name: eventName }),
+      keepalive: true,
     })
-    return { ok: res.ok, eventId }
+
+  try {
+    const names = input.standardEvent ? [input.event, input.standardEvent] : [input.event]
+    const results = await Promise.all(names.map((n) => post(n).catch(() => null)))
+    // ok solo si TODOS llegaron. Si el estándar falla, la campaña se queda sin su
+    // señal de optimización, así que no vale darlo por bueno.
+    return { ok: results.every((r) => r?.ok === true), eventId }
   } catch (e) {
     console.error("[meta/pixel] server CAPI fetch error", e)
     return { ok: false, eventId }
   }
+}
+
+/**
+ * Dispara SOLO un evento estándar de Meta, sin custom que lo acompañe.
+ * Para señales de página como `ViewContent`, donde no aporta nada tener un
+ * gemelo custom. Sale por píxel y por servidor con el mismo event_id.
+ */
+export async function trackStandard(
+  standardEvent: "ViewContent" | "Lead" | "Schedule" | "Contact",
+  input: Omit<TrackInput, "event"> = {},
+): Promise<{ ok: boolean; eventId: string }> {
+  return track({ ...input, event: standardEvent, standardEvent: undefined })
 }

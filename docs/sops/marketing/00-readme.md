@@ -17,3 +17,4 @@ Captación, contenido, ads, funnel hasta checkout, lead magnets.
 | 06 | [Lead Magnets](06-lead-magnets.md) | Captura desde IG comments → entrega → CRM stage Lead → tracking E2E |
 | 07 | [Funnel Test de Personalidad](07-funnel-test-personalidad.md) | Canal principal de leads: landing opt-in (Equilibria) → gracias → seguimiento manual IG/WhatsApp |
 | 08 | [Funnel Clase gratuita en directo](08-funnel-webinar.md) | Clase en directo (de cara al lead nunca "webinar"): landing con contador + opt-in embebido → WhatsApp de Adrián → agenda → alumno. Copy, pipeline `webinar`, Meta `webinar_lead`, email, fecha/hora editables en /webs |
+| 09 | [Catálogo de eventos de Meta](09-eventos-meta-catalogo.md) | Los 17 eventos estándar de Meta. Cuáles usamos (`PageView`, `ViewContent`, `Lead`, `Schedule`, `Contact`), cuáles no y por qué. Mapa por funnel, píxel + API, interruptor de medición por funnel |

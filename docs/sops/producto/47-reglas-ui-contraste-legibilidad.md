@@ -115,7 +115,58 @@ Los emails son parte del producto: aplican el brandkit igual que la app. Reglas:
 - **Emails/URLs sin link azul**: Gmail auto-enlaza en azul el texto que parece email/URL. Para mostrar un email, usar el helper `emailChip()` (lo envuelve en `<a mailto>` con color de marca → Gmail no lo recolorea). Nunca dejar un email/URL como texto plano en el cuerpo.
 - **Verificar render real** antes de cerrar: renderizar el HTML (no solo leer el código) — `npx tsx` + screenshot, o enviar a un inbox propio y mirarlo.
 
+## Márgenes de página: candado automático, ya no se vigila a mano
+
+**Regla:** toda pantalla del OS que pinte `<ShellHeader>` tiene que pintar también
+`<PageContainer>`. Sin él, el contenido no tiene ancho máximo ni márgenes y se pega a los
+bordes de la aplicación en pantallas anchas.
+
+**Por qué hay un candado y no solo una regla escrita:** este bug se arregló a mano varias
+veces (mayo, junio y julio de 2026) y volvió cada vez. Marco, 31-jul-2026: *"eso ya lo
+hemos arreglado varias veces en diferentes ocasiones, veo que se está repitiendo, ya estoy
+un poco cansado de repetir esto, ¿cómo puedes hacer para que esto nunca ocurra?"*.
+
+Escribir la regla no bastaba por una razón concreta: **14 de las 22 pantallas del OS ya la
+incumplían**, así que el mal ejemplo era la mayoría, y cualquiera que copiase de una
+pantalla existente reintroducía el bug.
+
+**El candado:** `scripts/check-layout.mjs`, enganchado a `predev` y a `prebuild`. Si una
+pantalla nueva no lleva `PageContainer`, **ni arranca en local ni se despliega**. Se corre
+suelto con `npm run check:layout`.
+
+**La deuda vieja está en una lista visible** dentro del script (`DEUDA_CONOCIDA`), no
+escondida: son las 12 pantallas reales que ya estaban rotas antes del candado. Se van
+quitando de ahí según se toque cada una. **Prohibido añadir nada nuevo a esa lista.**
+
+## Los tokens del OS NO son el brandkit (trampa activa)
+
+Comprobado el 31-jul-2026 en `globals.css`:
+
+| Token | Lo que vale de verdad | Lo que dice el brandkit |
+|---|---|---|
+| `--accent` (oscuro) | `#2A2D34`, gris grafito | verde `#22C55E` |
+| `--font-heading` | `-apple-system`, `SF Pro Display` | Inter Tight, y solo esa |
+
+O sea: escribir `bg-accent` en el OS pinta **gris**, no verde, y `font-heading` renderiza
+**la fuente del sistema** en un Mac, no Inter Tight (que sí está cargada, pero solo entra
+como respaldo fuera de Apple). Es la misma trampa que ya pasó en la App con
+`accent: #FFFFFF`.
+
+**Mientras esos tokens no se cambien:** una pantalla nueva que quiera el brandkit de
+verdad pone los valores explícitos (`#22C55E`, `#4ADE80`, `#0F0F12`, `#131318`, hairline
+`rgba(245,246,247,0.1)`) y declara `fontFamily: "'Inter Tight', sans-serif"`.
+
+**No se tocan los tokens globales sin encargo:** cambiarlos repinta el OS entero de golpe.
+Es un trabajo aparte, y lo decide Marco.
+
 ## Cambios versionados
+
+- **2026-07-31** (v5): candado automático de márgenes (`scripts/check-layout.mjs` en
+  `predev` + `prebuild`) tras repetirse el bug por cuarta vez. Documentada la deuda de 12
+  pantallas y la prohibición de ampliarla. Documentada la trampa de los tokens del OS
+  (`accent` gris y `font-heading` de sistema), que es la razón de fondo de que el OS se vea
+  antiguo aunque el brandkit diga otra cosa. Disparador: Marco, sobre la sección de Ads
+  pegada al borde.
 
 - **2026-06-20** (v1): creado. Bug raíz: Adrián no veía lo que escribía en los campos de login/forgot-password (autofill blanco-sobre-blanco). Fix global `color-scheme: dark` en `html` + override `:-webkit-autofill`. Regla absoluta "nunca mismo color que el fondo" elevada a Knowledge.
 - **2026-06-26** (v2): añadida Causa raíz #3 — overlays `fixed` atrapados por ancestros con `backdrop-filter`/`transform`. Bug recurrente de la campana (drawer "se expandía toda jodida arriba a la derecha") cerrado de raíz: drawer → `<Sheet>` de Radix (portal a `body`). Regla: overlays SIEMPRE portalean a body.

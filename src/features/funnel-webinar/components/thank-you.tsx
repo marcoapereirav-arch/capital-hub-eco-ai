@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { CalendarClock, CheckCircle2, BadgeCheck } from "lucide-react"
 import { FUNNEL_WEBINAR, WEBINAR_TZ, whatsappLink, webinarDateTimeLabel } from "../config"
+import { track } from "@/lib/meta/pixel-client"
 import {
   FunnelStyles, FunnelBackdrop, FunnelHeader, SectionLabel, Countdown, CtaButton, VideoFrame,
   useParallax, useScrollReveals,
@@ -66,9 +67,25 @@ export function WebinarThankYou({
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // Al tocar el botón de WhatsApp marcamos al contacto (tag + evento en su timeline).
-  // sendBeacon se envía aunque el navegador salte a WhatsApp en el mismo instante.
+  // Al tocar el botón de WhatsApp pasan dos cosas, y las dos importan:
+  //
+  //  1. DENTRO: se marca al contacto (tag + evento en su historial), que es lo que ya
+  //     hacía. Así el mismo contacto va acumulando lo que hizo: se apuntó, tocó
+  //     WhatsApp, agendó. Todo en su ficha.
+  //  2. FUERA: se manda `Contact` a Meta. Es el evento oficial para "esta persona
+  //     inició contacto con el negocio". No vemos la conversación, pero sí el momento
+  //     exacto en que decidió escribir, que es intención altísima y Meta puede
+  //     optimizar hacia ella. Ver SOP marketing/09.
+  //
+  // Ni uno ni otro bloquean la apertura de WhatsApp: sendBeacon y fetch con keepalive
+  // se envían aunque el navegador salte al chat en el mismo instante.
   function onWhatsappClick() {
+    track({
+      event: "Contact",
+      contentName: "WhatsApp · gracias del webinar",
+      custom: { funnel: "webinar", ...(slug ? { contact_slug: slug } : {}) },
+    }).catch(() => {})
+
     if (!slug) return
     try {
       navigator.sendBeacon(`/api/funnel/webinar/whatsapp-click?c=${encodeURIComponent(slug)}`)
