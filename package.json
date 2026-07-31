@@ -12,7 +12,7 @@
     "check:flujo": "node scripts/check-flujo.mjs",
     "chat:nuevo": "node scripts/chat-nuevo.mjs",
     "chat:cerrar": "node scripts/chat-cerrar.mjs",
-    "predev": "node scripts/check-skills.mjs",
+    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs",
     "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs"
   },
   "dependencies": {
