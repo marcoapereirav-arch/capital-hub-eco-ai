@@ -100,6 +100,12 @@ Al tocar WhatsApp en la gracias, el sistema le pone al contacto el tag **`whatsa
     - Un bloque con el número enorme en verde (**+500.000**) y al lado, en dos líneas pequeñas, *puestos de trabajo online publicados al año en España*.
     - La **fuente firma dentro del propio bloque, en UNA sola línea**: *"Fuente: InfoJobs y Esade, 2024"*. Se acortó a propósito: el nombre largo del informe no cabía en una línea en móvil y es lo que generaba el destrozo. La atribución (quién y cuándo) se mantiene íntegra.
     - Con esto el párrafo de la promesa baja de 5 líneas a 3 y la primera pantalla pasa de ~13 líneas de texto a 8, con el dato como ancla visual. Va en la línea de la REGLA #15 de [producto/04](../producto/04-protocolo-trabajo-agente.md): lo que se puede ver, se dibuja.
+  - **2026-07-31 · El ritmo del hero se define POR BLOQUES, no con un hueco igual para todo.** Marco lo lee así y así se maqueta:
+    `marca` · `evento + fecha` · `promesa (titular + condición)` · `descripción` · `dato + fuente` · `cuenta atrás` · `reservar`
+    - Dos medidas y solo dos: **`--sep`** (separación fuerte) y **`--paso`** (paso normal). Están en `.hero-col`; cambiando esos dos valores se reajusta el ritmo entero sin tocar nada más.
+    - **El bloque del evento va PEGADO a la marca** (7px en móvil): son la misma idea, "quién y cuándo". El bloque arranca justo debajo de la marca y el aire sobrante se va abajo, no arriba (`mb-auto`, no `my-auto`).
+    - **Antes de la promesa va `--sep`** (29px en móvil, 30px en escritorio): separa "cuándo es" de "qué te llevas", que son dos cosas distintas.
+    - **El dato salió del bloque de la descripción**: son bloques separados. La fuente sí va pegada al dato, porque lo firma.
   - **2026-07-31 · TRES REGLAS DE MAQUETA INNEGOCIABLES (Marco).** No son preferencias, son requisitos. Cualquier cambio futuro en el hero tiene que seguir cumpliéndolas y **se comprueban midiendo en el navegador, no a ojo**:
     1. *"aunque no tengas experiencia y partas de 0."* → **SIEMPRE 1 línea**.
     2. La descripción (*"Aprende una profesión digital desde cero..."*) → **SIEMPRE 3 líneas**.

@@ -146,7 +146,7 @@ export function WebinarLanding({
 
               CINCO BLOQUES, no nueve. Mucho aire ENTRE bloques y poco DENTRO: así el ojo
               agrupa solo y deja de parecer un muro. */}
-          <div className="hero-col my-auto">
+          <div className="hero-col mb-auto">
             {/* 1 · CUÁNDO */}
             <div className="hero-when">
               <div
@@ -189,15 +189,16 @@ export function WebinarLanding({
               </p>
             </div>
 
-            {/* 3 · LA PRUEBA. El párrafo es secundario y se nota: gris y pequeño. El dato
-                   es el segundo foco, en blanco con la cifra en verde. La fuente lo firma
-                   en una línea, sin caja: la caja pesaba más que el dato. */}
-            <div className="hero-prueba">
-              <p className="fk-load hero-sub" style={{ animationDelay: "460ms" }}>
-                Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
-                trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
-                trabajando para empresas que están buscando tu perfil.
-              </p>
+            {/* 3 · LA DESCRIPCIÓN. Secundaria y se nota: gris y pequeña. */}
+            <p className="fk-load hero-sub" style={{ animationDelay: "460ms" }}>
+              Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
+              trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
+              trabajando para empresas que están buscando tu perfil.
+            </p>
+
+            {/* 4 · EL DATO, bloque propio. Es el segundo foco: blanco, con la cifra en
+                   verde. La fuente va PEGADA a él porque es quien lo firma. */}
+            <div className="hero-dato">
               <p className="fk-load hero-fact" style={{ animationDelay: "520ms" }}>
                 <span className="fk-mark">más de 500.000 puestos de trabajo online</span>{" "}
                 publicados al año en España.
@@ -208,7 +209,7 @@ export function WebinarLanding({
               </p>
             </div>
 
-            {/* 4 · CUÁNTO QUEDA */}
+            {/* 5 · CUÁNTO QUEDA */}
             <div className="fk-load hero-count" style={{ animationDelay: "620ms" }}>
               <Countdown
                 isoDate={webinarDate}
@@ -218,7 +219,7 @@ export function WebinarLanding({
               />
             </div>
 
-            {/* 5 · LA ACCIÓN */}
+            {/* 6 · LA ACCIÓN */}
             <OptinCard />
           </div>
         </div>
@@ -538,12 +539,27 @@ function AdrianStory() {
 function HeroFit() {
   return (
     <style>{`
-      .hero-top > header { padding-block: clamp(0.6rem, 2.2vw, 1.5rem); }
+      /* La marca respira arriba pero se despega poco por abajo: el bloque del evento
+         tiene que quedar CERCA de ella (Marco). */
+      .hero-top > header { padding-top: clamp(0.6rem, 2.2vw, 1.5rem); padding-bottom: clamp(0.15rem, 0.6vw, 0.4rem); }
 
-      /* Una sola columna centrada, con medida corta para que centrado se lea bien. */
+      /* Una sola columna centrada. Los huecos NO son todos iguales: se reparten por
+         bloques, que es como lo lee Marco.
+           marca ─(pegado)─ evento+fecha ─(SEPARACIÓN)─ promesa ─ descripción ─ dato ─
+           cuenta atrás ─ reservar
+         El hueco grande antes de la promesa es a propósito: separa "cuándo es" de "qué
+         te llevas", que son dos cosas distintas. */
       .hero-col { width: 100%; max-width: 33rem; margin-inline: auto; text-align: center;
         display: flex; flex-direction: column; align-items: center;
-        gap: clamp(0.8rem, 3.5vw, 2rem); }
+        --sep: clamp(1.6rem, 7.4vw, 2.8rem);   /* separación fuerte entre bloques distintos */
+        --paso: clamp(0.8rem, 3.4vw, 1.6rem);   /* paso normal de bloque a bloque */
+      }
+      .hero-when { margin-top: clamp(0.45rem, 1.9vw, 0.9rem); }
+      .hero-promesa { margin-top: var(--sep); }
+      .hero-sub { margin-top: var(--paso); }
+      .hero-dato { margin-top: var(--paso); display: flex; flex-direction: column; align-items: center; gap: 0.5em; }
+      .hero-count { margin-top: var(--paso); }
+      .hero-card { margin-top: var(--paso); }
 
       /* 1 · Cuándo */
       .hero-when { display: flex; flex-direction: column; align-items: center; gap: 0.55em; }
@@ -560,7 +576,6 @@ function HeroFit() {
 
       /* 3 · La prueba. Párrafo claramente secundario, dato como segundo foco, fuente
              firmando en una línea. Sin caja: la caja pesaba más que el propio dato. */
-      .hero-prueba { display: flex; flex-direction: column; align-items: center; gap: 0.7em; }
       .hero-sub { font-size: clamp(8px, 2.93vw, 15px); line-height: 1.5; color: #8E939C; max-width: none; text-wrap: pretty; }
       .hero-fact { font-family: 'Inter Tight', sans-serif; font-size: clamp(14.5px, 3.9vw, 18px); font-weight: 600; line-height: 1.35; letter-spacing: -0.015em; color: #FFFFFF; max-width: 34ch; text-wrap: balance; }
       .hero-src { font-size: clamp(7px, 2.2vw, 11.5px); line-height: 1.4; color: #6B7079; max-width: none; white-space: nowrap; }
@@ -589,7 +604,7 @@ function HeroFit() {
       .hero-atmos { height: 250vw; max-height: 1500px; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
 
       @media (min-width: 768px) {
-        .hero-col { max-width: 34rem; gap: 1.4rem; }
+        .hero-col { max-width: 34rem; --sep: 1.9rem; --paso: 1.05rem; }
         .hero-h1 { font-size: 38px; max-width: 17ch; }
         .hero-note { font-size: 15px; max-width: none; }
         .hero-sub { font-size: 14.5px; max-width: none; }
@@ -609,7 +624,7 @@ function HeroFit() {
          al hacer scroll (no hay barra de navegador que se esconda), así que no existe el
          bug de reescalado. En móvil sigue terminantemente prohibido. */
       @media (min-width: 1024px) and (min-height: 1180px) {
-        .hero-col { max-width: 36rem; gap: 1.9rem; }
+        .hero-col { max-width: 36rem; --sep: 2.6rem; --paso: 1.5rem; }
         .hero-h1 { font-size: 44px; }
         .hero-sub { font-size: 15px; }
         .hero-fact { font-size: 18px; }
