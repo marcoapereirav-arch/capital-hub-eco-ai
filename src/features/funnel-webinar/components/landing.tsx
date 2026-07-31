@@ -134,36 +134,44 @@ export function WebinarLanding({
       </div>
 
       <section className="hero relative flex min-h-[100svh] flex-col">
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-6 md:px-8">
-          <div className="hero-top shrink-0">
+        <div className="relative z-10 mx-auto flex w-full flex-1 flex-col px-5 sm:px-6">
+          <div className="hero-top mx-auto w-full max-w-6xl shrink-0">
             <FunnelHeader />
           </div>
 
-          <div className="hero-body my-auto grid w-full lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
-            <div className="hero-col flex flex-col">
-              {/* 1 · Qué es y cuándo */}
-              <div className="hero-when">
-                <div
-                  className="fk-load hero-badge inline-flex items-center gap-2 rounded-full border border-[#22C55E]/35 bg-[#22C55E]/10"
-                  style={{ animationDelay: "60ms" }}
-                >
-                  <CalendarDays className="hero-badge-ico text-[#4ADE80]" />
-                  <span
-                    className="font-bold uppercase tracking-[0.1em] text-[#4ADE80]"
-                    style={{ fontFamily: "'Inter Tight', sans-serif" }}
-                  >
-                    Clase gratuita en directo
-                  </span>
-                </div>
-                <p
-                  className="fk-load hero-date font-bold text-white"
-                  style={{ fontFamily: "'Inter Tight', sans-serif", animationDelay: "120ms" }}
-                >
-                  {dateLabel}
-                </p>
-              </div>
+          {/* UNA SOLA COLUMNA, en móvil y en escritorio. Antes en escritorio eran dos
+              columnas centradas cada una por su lado: se leían como dos manchas sueltas
+              con la página vacía alrededor. Una sola columna da un eje de lectura y la
+              misma página en todos los tamaños.
 
-              {/* 2 · El titular */}
+              CINCO BLOQUES, no nueve. Mucho aire ENTRE bloques y poco DENTRO: así el ojo
+              agrupa solo y deja de parecer un muro. */}
+          <div className="hero-col my-auto">
+            {/* 1 · CUÁNDO */}
+            <div className="hero-when">
+              <div
+                className="fk-load hero-badge inline-flex items-center gap-2 rounded-full border border-[#22C55E]/35 bg-[#22C55E]/10"
+                style={{ animationDelay: "60ms" }}
+              >
+                <CalendarDays className="hero-badge-ico text-[#4ADE80]" />
+                <span
+                  className="font-bold uppercase tracking-[0.1em] text-[#4ADE80]"
+                  style={{ fontFamily: "'Inter Tight', sans-serif" }}
+                >
+                  Clase gratuita en directo
+                </span>
+              </div>
+              <p
+                className="fk-load hero-date font-bold text-white"
+                style={{ fontFamily: "'Inter Tight', sans-serif", animationDelay: "120ms" }}
+              >
+                {dateLabel}
+              </p>
+            </div>
+
+            {/* 2 · LA PROMESA. El titular manda; la condición va pegada debajo, en gris,
+                   como respiración del titular. Sin filetes a los lados: eran ruido. */}
+            <div className="hero-promesa">
               <h1
                 className="hero-h1 text-white"
                 style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 300 }}
@@ -175,55 +183,42 @@ export function WebinarLanding({
                   <span className="hero-strong">profesión digital</span>
                 </span>
               </h1>
-
-              {/* 3 · La condición. Ya no es letra pequeña perdida: va en su propia franja,
-                     entre dos filetes, y con las dos ideas que quitan el miedo en blanco. */}
-              <p className="fk-load hero-note" style={{ animationDelay: "330ms" }}>
-                <span className="hero-note-rule" aria-hidden />
-                <span className="hero-note-txt">
-                  aunque <em className="hero-note-em">no tengas experiencia</em> y{" "}
-                  <em className="hero-note-em whitespace-nowrap">partas de 0</em>.
-                </span>
-                <span className="hero-note-rule" aria-hidden />
+              <p className="fk-line hero-note" style={{ animationDelay: "330ms" }}>
+                aunque <em className="hero-note-em">no tengas experiencia</em> y{" "}
+                <em className="hero-note-em whitespace-nowrap">partas de 0</em>.
               </p>
+            </div>
 
-              {/* 4 · La promesa */}
+            {/* 3 · LA PRUEBA. El párrafo es secundario y se nota: gris y pequeño. El dato
+                   es el segundo foco, en blanco con la cifra en verde. La fuente lo firma
+                   en una línea, sin caja: la caja pesaba más que el dato. */}
+            <div className="hero-prueba">
               <p className="fk-load hero-sub" style={{ animationDelay: "460ms" }}>
                 Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
                 trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
                 trabajando para empresas que están buscando tu perfil.
               </p>
-
-              {/* 5 · El dato, como frase APARTE (Marco). Mismo tamaño de lectura, otro
-                     tratamiento: Inter Tight, en blanco, con la cifra en verde y el
-                     marcador debajo. Y la fuente pegada a él, como el sello que lo firma:
-                     etiqueta verde + filete + el informe entero, legible, no en gris
-                     diminuto. El dato y quién lo dice van juntos o no valen nada. */}
-              <div className="fk-load hero-fact" style={{ animationDelay: "540ms" }}>
-                <p className="hero-fact-txt" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
-                  <span className="fk-mark">más de 500.000 puestos de trabajo online</span>{" "}
-                  publicados al año en España.
-                </p>
-                <p className="hero-fact-src">
-                  <span className="hero-fact-tag">Fuente</span>
-                  <span className="hero-fact-name">
-                    Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
-                  </span>
-                </p>
-              </div>
-
-              {/* 6 · Cuánto queda, en casillas */}
-              <div className="fk-load hero-count w-full" style={{ animationDelay: "600ms" }}>
-                <Countdown
-                  isoDate={webinarDate}
-                  time={webinarTime}
-                  timeZone={WEBINAR_TZ}
-                  labelEmpezado="La clase ya empezó"
-                />
-              </div>
+              <p className="fk-load hero-fact" style={{ animationDelay: "520ms" }}>
+                <span className="fk-mark">más de 500.000 puestos de trabajo online</span>{" "}
+                publicados al año en España.
+              </p>
+              <p className="fk-load hero-src" style={{ animationDelay: "560ms" }}>
+                <span className="hero-src-tag">Fuente</span>
+                Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
+              </p>
             </div>
 
-            {/* 7 · La acción */}
+            {/* 4 · CUÁNTO QUEDA */}
+            <div className="fk-load hero-count" style={{ animationDelay: "620ms" }}>
+              <Countdown
+                isoDate={webinarDate}
+                time={webinarTime}
+                timeZone={WEBINAR_TZ}
+                labelEmpezado="La clase ya empezó"
+              />
+            </div>
+
+            {/* 5 · LA ACCIÓN */}
             <OptinCard />
           </div>
         </div>
@@ -532,81 +527,94 @@ function AdrianStory() {
 
 /* ───────────────────── Medidas de la primera pantalla ─────────────────────
 
-   NADA DEPENDE DE LA ALTURA. Ni una `@media (max-height)`, ni una unidad de altura
-   dentro de un tamaño de letra. Todo se mide con el ANCHO (`vw`), acotado con `clamp`
-   para que en tableta no se desmadre. Motivo: en el móvil, al hacer scroll, el navegador
-   esconde su barra y la altura de la pantalla CAMBIA; cualquier medida atada a la altura
-   hace que la página entera se reescale a mitad de scroll. Ese era el bug.
+   UNA COLUMNA, CINCO BLOQUES. El ritmo es lo que quita el ruido: el hueco ENTRE bloques
+   es grande y constante; dentro de cada bloque las piezas van pegadas. Así el ojo agrupa
+   solo (cuándo · promesa · prueba · cuánto queda · reservar) en vez de leer una lista de
+   nueve cosas sueltas.
 
-   Consecuencia asumida: en un teléfono muy bajito (iPhone SE) la primera pantalla se
-   pasa un poco y hay que rodar el dedo. Es mejor eso que un texto ilegible o que la
-   página cambie de tamaño sola. En los teléfonos de hoy (390 a 430 de ancho) entra todo. */
+   NADA DEPENDE DE LA ALTURA. Ni una `@media (max-height)`, ni `svh`/`vh` dentro de un
+   tamaño. En el móvil la altura cambia al esconderse la barra del navegador y eso
+   reescalaba la página a mitad de scroll. Todo se mide con el ANCHO. */
 function HeroFit() {
   return (
     <style>{`
-      .hero-top > header { padding-block: clamp(0.6rem, 2.2vw, 1.75rem); }
+      .hero-top > header { padding-block: clamp(0.6rem, 2.2vw, 1.5rem); }
 
-      .hero-col { text-align: center; align-items: center; }
-      .hero-body { display: grid; }
+      /* Una sola columna centrada, con medida corta para que centrado se lea bien. */
+      .hero-col { width: 100%; max-width: 33rem; margin-inline: auto; text-align: center;
+        display: flex; flex-direction: column; align-items: center;
+        gap: clamp(0.8rem, 3.5vw, 2rem); }
 
-      /* 1 · Evento y fecha */
+      /* 1 · Cuándo */
       .hero-when { display: flex; flex-direction: column; align-items: center; gap: 0.55em; }
       .hero-badge { padding: 0.45em 0.95em; font-size: clamp(10.5px, 3vw, 12px); }
       .hero-badge-ico { width: 1.2em; height: 1.2em; }
       .hero-date { font-size: clamp(15px, 4.3vw, 18px); letter-spacing: -0.01em; }
 
-      /* 2 · Titular */
-      .hero-h1 { margin-top: clamp(0.55rem, 2.5vw, 1.5rem); font-size: clamp(23px, 6.2vw, 48px); line-height: 1.06; letter-spacing: -0.034em; max-width: 21ch; text-wrap: balance; }
+      /* 2 · La promesa. El titular manda y la condición respira justo debajo. */
+      .hero-promesa { display: flex; flex-direction: column; align-items: center; gap: 0.55em; }
+      .hero-h1 { font-size: clamp(25px, 6.5vw, 44px); line-height: 1.06; letter-spacing: -0.035em; max-width: 19ch; text-wrap: pretty; }
       .hero-strong { font-weight: 800; color: #FFFFFF; }
+      .hero-note { font-size: clamp(13px, 3.5vw, 16px); font-weight: 400; line-height: 1.4; color: #868C95; max-width: 30ch; text-wrap: balance; }
+      .hero-note-em { font-style: normal; font-weight: 700; color: #E4E7EB; }
 
-      /* 3 · La condición, en su propia franja entre filetes */
-      .hero-note { display: flex; align-items: center; justify-content: center; gap: 0.8em; margin-top: clamp(0.5rem, 2vw, 1.1rem); max-width: 36ch; }
-      .hero-note-rule { display: block; flex: 1 1 auto; min-width: 0.9rem; max-width: 2.6rem; height: 1px; background: linear-gradient(90deg, rgba(34,197,94,0), rgba(34,197,94,0.75), rgba(34,197,94,0)); }
-      .hero-note-txt { flex: 0 1 auto; font-size: clamp(13px, 3.6vw, 15px); font-weight: 400; line-height: 1.35; color: #9BA1AA; text-wrap: balance; }
-      .hero-note-em { font-style: normal; font-weight: 700; color: #FFFFFF; }
+      /* 3 · La prueba. Párrafo claramente secundario, dato como segundo foco, fuente
+             firmando en una línea. Sin caja: la caja pesaba más que el propio dato. */
+      .hero-prueba { display: flex; flex-direction: column; align-items: center; gap: 0.7em; }
+      .hero-sub { font-size: clamp(12.5px, 3.3vw, 15px); line-height: 1.5; color: #8E939C; max-width: 46ch; text-wrap: pretty; }
+      .hero-fact { font-family: 'Inter Tight', sans-serif; font-size: clamp(14.5px, 3.9vw, 18px); font-weight: 600; line-height: 1.35; letter-spacing: -0.015em; color: #FFFFFF; max-width: 34ch; text-wrap: balance; }
+      .hero-src { font-size: clamp(10px, 2.7vw, 11.5px); line-height: 1.4; color: #6B7079; max-width: 46ch; }
+      .hero-src-tag { font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.92em; letter-spacing: 0.14em; text-transform: uppercase; color: #4ADE80; margin-right: 0.55em; }
 
-      /* 4 · La promesa */
-      .hero-sub { margin-top: clamp(0.55rem, 2.2vw, 1.5rem); font-size: clamp(12.5px, 3.4vw, 16px); line-height: 1.44; color: #A6ABB4; max-width: 48ch; text-wrap: pretty; }
-
-      /* 5 · El dato, aparte, con su sello de fuente pegado */
-      .hero-fact { margin-top: clamp(0.55rem, 2.2vw, 1.4rem); display: flex; flex-direction: column; align-items: center; gap: 0.6em; max-width: 42ch; }
-      .hero-fact-txt { font-size: clamp(14px, 3.8vw, 18px); font-weight: 600; line-height: 1.32; letter-spacing: -0.015em; color: #FFFFFF; text-wrap: balance; }
-      .hero-fact-src { display: block; padding: 0.45em 0.8em; border: 1px solid rgba(34,197,94,0.22); border-radius: 0.6rem; background: rgba(34,197,94,0.05); text-align: center; }
-      .hero-fact-tag { font-family: 'Inter Tight', sans-serif; font-size: clamp(9px, 2.4vw, 10px); font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #4ADE80; margin-right: 0.5em; }
-      .hero-fact-tag::after { content: ""; display: inline-block; width: 0.9em; height: 1px; margin-left: 0.5em; vertical-align: middle; background: rgba(74,222,128,0.45); }
-      .hero-fact-name { font-size: clamp(10.5px, 2.8vw, 12px); line-height: 1.4; color: #8E939C; }
-
-      /* 6 · Cuenta atrás EN CASILLAS, también en el móvil (Marco) */
-      .hero-count { margin-top: clamp(0.6rem, 2.4vw, 1.9rem); text-align: center;
-        --fk-count-num: clamp(21px, 5.9vw, 42px);
-        --fk-count-lab: clamp(8.5px, 2.3vw, 10px);
-        --fk-count-pad: clamp(0.4rem, 1.8vw, 1rem);
+      /* 4 · Cuenta atrás, en casillas */
+      .hero-count { width: 100%;
+        --fk-count-num: clamp(21px, 5.5vw, 34px);
+        --fk-count-lab: clamp(8.5px, 2.2vw, 10px);
+        --fk-count-pad: clamp(0.4rem, 1.7vw, 0.8rem);
       }
-      .hero-count .grid { gap: clamp(0.45rem, 2vw, 0.75rem); max-width: 24rem; margin-inline: auto; }
+      .hero-count .grid { gap: clamp(0.45rem, 2vw, 0.7rem); max-width: 22rem; margin-inline: auto; }
 
-      /* 7 · El formulario. El botón NO se pega al borde de la tarjeta: la tarjeta tiene
-             su padding y encima el botón lleva su propio aire por arriba. */
-      .hero-card { margin-top: clamp(0.8rem, 3vw, 0); padding: clamp(0.95rem, 4vw, 1.75rem); }
-      .hero-form-title { font-size: clamp(16.5px, 4.5vw, 1.6rem); letter-spacing: -0.02em; }
-      .hero-form-sub { margin-top: 0.3em; font-size: clamp(12px, 3.3vw, 14px); }
-      .hero-form { margin-top: clamp(0.65rem, 2.7vw, 1.25rem); display: flex; flex-direction: column; gap: clamp(0.45rem, 1.9vw, 0.875rem); }
-      .hero-input { height: clamp(45px, 11.6vw, 3.25rem); font-size: clamp(15px, 3.9vw, 16px); }
-      .hero-submit { margin-top: clamp(0.35rem, 1.5vw, 0.6rem); height: clamp(48px, 12.6vw, 3.5rem); font-size: clamp(15px, 4vw, 15px); }
+      /* 5 · La acción. El botón no se pega al borde: la tarjeta tiene su padding y el
+             botón además su propio aire por arriba. */
+      .hero-card { width: 100%; max-width: 30rem; padding: clamp(0.95rem, 4vw, 1.6rem); }
+      .hero-form-title { font-size: clamp(17px, 4.6vw, 1.5rem); letter-spacing: -0.02em; }
+      .hero-form-sub { margin-top: 0.3em; font-size: clamp(12px, 3.3vw, 13.5px); }
+      .hero-form { margin-top: clamp(0.7rem, 3vw, 1.15rem); display: flex; flex-direction: column; gap: clamp(0.45rem, 1.9vw, 0.7rem); }
+      .hero-input { height: clamp(45px, 11.5vw, 3.1rem); font-size: clamp(15px, 3.9vw, 16px); }
+      .hero-submit { margin-top: clamp(0.4rem, 1.7vw, 0.55rem); height: clamp(50px, 13vw, 3.35rem); font-size: 15px; }
       .hero-legal { font-size: clamp(11px, 3vw, 12px); }
       .hero-err { padding-block: 0.5em; font-size: clamp(12.5px, 3.4vw, 14px); }
 
-      /* El ambiente: alto medido en ancho, por lo mismo. */
+      /* El ambiente: alto medido en ancho, por lo mismo que todo lo demás. */
       .hero-atmos { height: 250vw; max-height: 1500px; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
 
-      /* Escritorio: dos columnas y medida acotada. */
-      @media (min-width: 1024px) {
-        .hero-col { align-items: center; text-align: center; }
-        .hero-body { gap: 3.5rem; }
-        .hero-h1 { max-width: 18ch; }
-        .hero-note { max-width: 38ch; }
-        .hero-sub { max-width: 42ch; }
-        .hero-fact { max-width: 40ch; }
+      @media (min-width: 768px) {
+        .hero-col { max-width: 34rem; gap: 1.4rem; }
+        .hero-h1 { font-size: 38px; max-width: 17ch; }
+        .hero-note { font-size: 15px; max-width: 34ch; }
+        .hero-sub { font-size: 14.5px; max-width: 50ch; }
+        .hero-fact { font-size: 17px; max-width: 40ch; }
+        .hero-src { font-size: 11px; max-width: 52ch; }
+        .hero-count { --fk-count-num: 30px; --fk-count-pad: 0.7rem; }
+        .hero-count .grid { max-width: 21rem; gap: 0.6rem; }
+        .hero-card { padding: 1.4rem; }
+        .hero-form-title { font-size: 1.35rem; }
+        .hero-form { margin-top: 1rem; gap: 0.6rem; }
+        .hero-input { height: 3rem; }
+        .hero-submit { height: 3.25rem; }
         .hero-atmos { height: 135vh; max-height: none; }
+      }
+
+      /* Solo en escritorio se puede afinar por altura: ahí la ventana NO cambia de alto
+         al hacer scroll (no hay barra de navegador que se esconda), así que no existe el
+         bug de reescalado. En móvil sigue terminantemente prohibido. */
+      @media (min-width: 1024px) and (min-height: 1180px) {
+        .hero-col { max-width: 36rem; gap: 1.9rem; }
+        .hero-h1 { font-size: 44px; }
+        .hero-sub { font-size: 15px; }
+        .hero-fact { font-size: 18px; }
+        .hero-count { --fk-count-num: 34px; --fk-count-pad: 0.8rem; }
+        .hero-card { padding: 1.6rem; }
       }
     `}</style>
   )
