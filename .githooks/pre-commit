@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# EL FRENO: no se guarda en `dev` ni en `main`. Nunca. En ninguna carpeta.
+#
+# Por que aqui y no en un aviso al arrancar:
+#
+# La guardia de `check-flujo` solo salta al encender el servidor o al construir,
+# y ademas deja pasar el caso peor: estar en la CARPETA PRINCIPAL con `dev`
+# puesta. Eso es exactamente lo que hacia un chat el 2026-07-31 mientras otro
+# trabajaba, y por eso `dev` se quedaba vieja, `main` recibia cambios saltandose
+# el recorrido, y hubo que reparar el flujo tres veces en una tarde.
+#
+# Guardar es el momento en que se hace el daño. Este es el unico sitio donde el
+# freno llega a tiempo.
+#
+# Si esto te ha frenado, no has perdido nada: tu trabajo sigue donde esta.
+# Abre tu carpeta con `npm run chat:nuevo <nombre>` y sigue desde ahi.
+
+rama=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+if [ "$rama" = "dev" ] || [ "$rama" = "main" ] || [ "$rama" = "master" ]; then
+  cat >&2 <<AVISO
+
+  ✗ No se puede guardar en \`$rama\`.
+
+    \`dev\` y \`main\` son de paso: guardan lo que ya esta publicado, no trabajo
+    a medias. Si dos chats guardan ahi, se pisan y se pierde trabajo.
+
+    Arreglo, un comando:
+
+      npm run chat:nuevo <nombre-corto-de-lo-que-haces>
+
+    Abre TU carpeta con TU rama. Lo que tengas hecho no se pierde: sigue
+    en \`$rama\` sin guardar, y se lo llevas a tu rama nueva.
+
+    EL WORKFLOW: dev -> rama -> dev -> main -> la web.
+    Fuente: la regla de fabrica \`EL WORKFLOW\` en AGENTS.md.
+
+AVISO
+  exit 1
+fi
+
+exit 0
