@@ -357,6 +357,29 @@ Aplicación universal de la regla "no inventar UI de servicios externos". Estaba
 
 ---
 
+## REGLA #18 — Se toca SOLO lo que se pidió. Lo demás se propone, no se hace
+
+Cuando Marco pide un ajuste, se cambia **ese** ajuste y nada más. Si de paso creo que otra
+cosa quedaría mejor, **se propone en una frase y se espera**. No se cambia y se informa después.
+
+Y **"un poco" quiere decir un poco.** Si el encargo trae un límite ("no exageres", "solo un
+poco"), ese límite es parte del encargo: pasarse es incumplirlo igual que quedarse corto.
+
+**Why:** 2026-07-31, tres veces el mismo fallo en un día. (1) Pidió cambiar el verde por lila y
+lo hice sin avisar de que chocaba con el brandkit. (2) Quité "Plazas limitadas" por una regla de
+estilo, sin permiso. (3) Pasé el hero de dos columnas a una sin que nadie lo pidiera: *"¿quién
+carajos te dijo a ti que tienes que pasarlo a una sola columna?"*. Y en el mismo turno, pidiendo
+acercar "un poco" dos bloques, los dejé pegados.
+
+**How to apply:**
+- Antes de cada cambio: ¿está esto en lo que me pidió? Si no, no se toca.
+- Un rediseño de layout (columnas, orden de secciones, estructura) **siempre** necesita petición
+  explícita. No es un detalle de ajuste.
+- Si el encargo trae una medida difusa ("un poco", "algo más"), moverse en pasos pequeños y
+  enseñar el resultado, no dar el salto máximo.
+
+---
+
 ## REGLA #17 — El copy del dueño NO se toca. Nunca. Ni para cumplir otra regla
 
 **Todo texto que Marco haya dictado, aprobado o simplemente mantenido en una página es SUYO.**

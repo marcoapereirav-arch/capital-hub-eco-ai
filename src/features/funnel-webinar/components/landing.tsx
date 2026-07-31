@@ -134,19 +134,18 @@ export function WebinarLanding({
       </div>
 
       <section className="hero relative flex min-h-[100svh] flex-col">
-        <div className="relative z-10 mx-auto flex w-full flex-1 flex-col px-5 sm:px-6">
-          <div className="hero-top mx-auto w-full max-w-6xl shrink-0">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-6 md:px-8">
+          <div className="hero-top shrink-0">
             <FunnelHeader />
           </div>
 
-          {/* UNA SOLA COLUMNA, en móvil y en escritorio. Antes en escritorio eran dos
-              columnas centradas cada una por su lado: se leían como dos manchas sueltas
-              con la página vacía alrededor. Una sola columna da un eje de lectura y la
-              misma página en todos los tamaños.
+          {/* En MÓVIL todo se apila en una columna. En ESCRITORIO, DOS COLUMNAS: el texto
+              a la izquierda y el formulario a la derecha, como estaba.
 
-              CINCO BLOQUES, no nueve. Mucho aire ENTRE bloques y poco DENTRO: así el ojo
-              agrupa solo y deja de parecer un muro. */}
-          <div className="hero-col mb-auto">
+              El texto se lee POR BLOQUES: marca · evento+fecha · promesa · descripción ·
+              dato+fuente · cuenta atrás. Aire entre bloques, piezas pegadas dentro. */}
+          <div className="hero-body mb-auto grid w-full lg:my-auto lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
+            <div className="hero-col">
             {/* 1 · CUÁNDO */}
             <div className="hero-when">
               <div
@@ -219,7 +218,9 @@ export function WebinarLanding({
               />
             </div>
 
-            {/* 6 · LA ACCIÓN */}
+            </div>
+
+            {/* 6 · LA ACCIÓN. En escritorio es la columna de la derecha. */}
             <OptinCard />
           </div>
         </div>
@@ -554,7 +555,8 @@ function HeroFit() {
         --sep: clamp(1.6rem, 7.4vw, 2.8rem);   /* separación fuerte entre bloques distintos */
         --paso: clamp(0.8rem, 3.4vw, 1.6rem);   /* paso normal de bloque a bloque */
       }
-      .hero-when { margin-top: clamp(0.45rem, 1.9vw, 0.9rem); }
+      /* El evento se acerca a la marca, pero SIN pegarse: son dos bloques, no uno. */
+      .hero-when { margin-top: clamp(0.85rem, 3.6vw, 1.5rem); }
       .hero-promesa { margin-top: var(--sep); }
       .hero-sub { margin-top: var(--paso); }
       .hero-dato { margin-top: var(--paso); display: flex; flex-direction: column; align-items: center; gap: 0.5em; }
@@ -605,6 +607,7 @@ function HeroFit() {
 
       @media (min-width: 768px) {
         .hero-col { max-width: 34rem; --sep: 1.9rem; --paso: 1.05rem; }
+        .hero-when { margin-top: 1.1rem; }
         .hero-h1 { font-size: 38px; max-width: 17ch; }
         .hero-note { font-size: 15px; max-width: none; }
         .hero-sub { font-size: 14.5px; max-width: none; }
@@ -623,8 +626,16 @@ function HeroFit() {
       /* Solo en escritorio se puede afinar por altura: ahí la ventana NO cambia de alto
          al hacer scroll (no hay barra de navegador que se esconda), así que no existe el
          bug de reescalado. En móvil sigue terminantemente prohibido. */
+      /* DOS COLUMNAS: el texto ocupa su columna entera y el formulario va al lado. */
+      @media (min-width: 1024px) {
+        .hero-col { max-width: 100%; --sep: 2rem; --paso: 1.15rem; }
+        .hero-when { margin-top: 0; }
+        .hero-card { margin-top: 0; margin-inline: auto; }
+        .hero-atmos { height: 135vh; max-height: none; }
+      }
+
       @media (min-width: 1024px) and (min-height: 1180px) {
-        .hero-col { max-width: 36rem; --sep: 2.6rem; --paso: 1.5rem; }
+        .hero-col { --sep: 2.6rem; --paso: 1.5rem; }
         .hero-h1 { font-size: 44px; }
         .hero-sub { font-size: 15px; }
         .hero-fact { font-size: 18px; }
