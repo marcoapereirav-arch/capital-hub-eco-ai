@@ -19,11 +19,13 @@ import { cn } from "@/lib/utils"
 type EventRow = {
   name: string
   when: string
-  kind: "estandar" | "nuestro"
+  /** `automatico` es PageView: lo dispara el píxel solo, sin pasar por nuestro servidor. */
+  kind: "estandar" | "nuestro" | "automatico"
   lastAt: string | null
   sent: number
   failed: number
   neverSeen: boolean
+  automatico: boolean
 }
 
 type FunnelRow = {
@@ -218,19 +220,29 @@ export function AdsEventsHealth() {
                       {e.when}
                     </p>
                     <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
-                      {e.name} · {e.kind === "estandar" ? "evento de Meta" : "evento nuestro"}
+                      {e.name} ·{" "}
+                      {e.kind === "automatico"
+                        ? "automático del píxel"
+                        : e.kind === "estandar"
+                          ? "evento de Meta"
+                          : "evento nuestro"}
                     </p>
                   </div>
 
                   <div className="text-right">
                     <p
                       className="text-[14px]"
-                      style={{ fontWeight: 600, color: e.neverSeen ? "#7C818A" : "#A6AAB2" }}
+                      style={{
+                        fontWeight: 600,
+                        color: e.automatico ? VERDE_CLARO : e.neverSeen ? "#7C818A" : "#A6AAB2",
+                      }}
                     >
-                      {e.neverSeen ? "sin estrenar" : hace(e.lastAt)}
+                      {e.automatico ? "activo" : e.neverSeen ? "sin estrenar" : hace(e.lastAt)}
                     </p>
                     <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
-                      {e.neverSeen ? (
+                      {e.automatico ? (
+                        "va con el píxel, en todas las páginas"
+                      ) : e.neverSeen ? (
                         "nadie lo ha hecho aún"
                       ) : (
                         <>

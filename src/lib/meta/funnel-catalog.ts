@@ -8,13 +8,19 @@
  * Los eventos están fijados en el SOP marketing/09-eventos-meta-catalogo.
  */
 
+/**
+ * `automatico` es PageView: lo dispara el píxel solo al cargar cualquier página, y NO pasa
+ * por nuestro servidor, así que nunca aparece en el registro de envíos. Eso no significa
+ * que no funcione: significa que no lo mandamos nosotros. Se marca aparte para que en
+ * pantalla no salga como "sin estrenar", que sería mentira.
+ */
 export type FunnelEventSpec = {
   /** Nombre exacto que se manda a Meta. */
   name: string
   /** Qué acción del usuario lo dispara, en lenguaje normal. */
   when: string
-  /** Estándar de Meta (optimiza campañas) o nuestro (audiencias finas). */
-  kind: "estandar" | "nuestro"
+  /** Estándar de Meta (optimiza campañas), nuestro (audiencias finas) o automático del píxel. */
+  kind: "estandar" | "nuestro" | "automatico"
 }
 
 export type FunnelSpec = {
@@ -34,6 +40,7 @@ export const FUNNEL_CATALOG: readonly FunnelSpec[] = [
     path: "/webinar",
     optimizeFor: "Lead",
     events: [
+      { name: "PageView", when: "Entró a cualquier página del funnel", kind: "automatico" },
       { name: "ViewContent", when: "Vio la landing de la clase", kind: "estandar" },
       { name: "Lead", when: "Dejó sus datos", kind: "estandar" },
       { name: "webinar_lead", when: "Dejó sus datos", kind: "nuestro" },
@@ -46,6 +53,7 @@ export const FUNNEL_CATALOG: readonly FunnelSpec[] = [
     path: "/reservar",
     optimizeFor: "Schedule",
     events: [
+      { name: "PageView", when: "Entró a cualquier página del funnel", kind: "automatico" },
       { name: "ViewContent", when: "Vio la página de reserva", kind: "estandar" },
       { name: "Schedule", when: "Reservó la llamada", kind: "estandar" },
       { name: "agenda_reserva", when: "Reservó la llamada", kind: "nuestro" },
@@ -57,6 +65,7 @@ export const FUNNEL_CATALOG: readonly FunnelSpec[] = [
     path: "/test-personalidad",
     optimizeFor: "Lead",
     events: [
+      { name: "PageView", when: "Entró a cualquier página del funnel", kind: "automatico" },
       { name: "Lead", when: "Dejó sus datos", kind: "estandar" },
       { name: "test_personalidad_lead", when: "Dejó sus datos", kind: "nuestro" },
       { name: "test_personalidad_cualificado", when: "Abrió el test desde el email", kind: "nuestro" },

@@ -14,12 +14,18 @@ import { funnelFromUrl } from "./funnel-tracking"
 export type EstadoEvento = {
   name: string
   when: string
-  kind: "estandar" | "nuestro"
+  kind: "estandar" | "nuestro" | "automatico"
   lastAt: string | null
   lastStatus: string | null
   sent: number
   failed: number
   neverSeen: boolean
+  /**
+   * PageView lo dispara el píxel solo en el navegador y NUNCA pasa por nuestro servidor,
+   * así que jamás aparece en el registro de envíos. Está activo siempre que el píxel
+   * cargue. Sin esta marca saldría como "sin estrenar", que sería falso.
+   */
+  automatico: boolean
 }
 
 export type EstadoFunnel = {
@@ -95,6 +101,7 @@ export async function getFunnelsStatus(): Promise<{
     const web = websBySlug.get(spec.slug)
     const events: EstadoEvento[] = spec.events.map((e) => {
       const hit = seen.get(key(spec.slug, e.name))
+      const automatico = e.kind === "automatico"
       return {
         name: e.name,
         when: e.when,
@@ -103,7 +110,9 @@ export async function getFunnelsStatus(): Promise<{
         lastStatus: hit?.lastStatus ?? null,
         sent: hit?.sent ?? 0,
         failed: hit?.failed ?? 0,
-        neverSeen: !hit,
+        // Un evento automático nunca está "sin estrenar": va con el píxel.
+        neverSeen: automatico ? false : !hit,
+        automatico,
       }
     })
 
