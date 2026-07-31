@@ -17,6 +17,8 @@ const Crear = z
     fuente: z.enum(["bunny", "loom"]),
     bunny_video_id: z.string().trim().min(1).optional(),
     loom_url: Loom.optional(),
+    duracion_seg: z.number().int().min(0).optional(),
+    miniatura: z.string().url().optional(),
   })
   .refine((v) => (v.fuente === "loom" ? Boolean(v.loom_url) : true), {
     message: "Falta el link de Loom.",
@@ -69,11 +71,16 @@ export async function POST(req: NextRequest) {
       fuente: parsed.data.fuente,
       bunny_video_id: parsed.data.fuente === "bunny" ? parsed.data.bunny_video_id ?? null : null,
       loom_url: parsed.data.fuente === "loom" ? parsed.data.loom_url ?? null : null,
+      // Loom da duracion y portada al pegar el link; Bunny las pone al procesar.
+      duracion_seg: parsed.data.duracion_seg ?? null,
+      miniatura: parsed.data.miniatura ?? null,
       status: "draft",
       display_order: (ultimo?.display_order ?? -1) + 1,
       created_by: quien?.userId ?? null,
     })
-    .select("id, folder_id, titulo, descripcion, fuente, bunny_video_id, loom_url, duracion_seg, status, display_order")
+    .select(
+      "id, folder_id, titulo, descripcion, fuente, bunny_video_id, loom_url, duracion_seg, miniatura, status, display_order",
+    )
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -91,14 +98,24 @@ export async function PATCH(req: NextRequest) {
 
   const { id, ...cambios } = parsed.data
   const supabase = await createClient()
-  const { error } = await supabase.from("tutorials").update(cambios).eq("id", id)
+
+  // El `.select()` distingue "guardado" de "el candado me lo filtro": sin el,
+  // una escritura bloqueada por RLS devuelve 0 filas sin error y esto respondia
+  // que habia ido bien. Fallo mudo.
+  const { data, error } = await supabase.from("tutorials").update(cambios).eq("id", id).select("id").maybeSingle()
 
   if (error) {
     // La base impide publicar una ficha sin video. Traducido a algo que se lea.
     if (error.message.includes("tutorials_publicado_con_video")) {
       return NextResponse.json({ error: "Ese tutorial todavía no tiene vídeo, así que no se puede publicar." }, { status: 400 })
     }
+    if (error.message.includes("titulo_no_vacio")) {
+      return NextResponse.json({ error: "Ponle un título al tutorial." }, { status: 400 })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+  if (!data) {
+    return NextResponse.json({ error: "No se pudo guardar: ese vídeo ya no existe o no tienes permiso." }, { status: 403 })
   }
   return NextResponse.json({ ok: true })
 }
@@ -117,8 +134,11 @@ export async function DELETE(req: NextRequest) {
     .eq("id", id)
     .maybeSingle()
 
-  const { error } = await supabase.from("tutorials").delete().eq("id", id)
+  const { data: borrada, error } = await supabase.from("tutorials").delete().eq("id", id).select("id").maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!borrada) {
+    return NextResponse.json({ error: "No se pudo borrar: ese vídeo ya no existe o no tienes permiso." }, { status: 403 })
+  }
 
   /* Quitar un video lo quita de Bunny de verdad (mismo criterio que el Estudio,
    * SOP 59): si solo se borrara la ficha, el archivo seguiria ocupando y

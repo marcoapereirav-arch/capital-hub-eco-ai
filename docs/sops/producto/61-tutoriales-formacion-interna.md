@@ -47,6 +47,33 @@ El candado copia el patrón ya probado de `knowledges` (SOP [`producto/54`](54-k
   `profiles`, así que quedan fuera **sin tener que enumerarlos**.
 - **Escribir:** `public.is_admin()`, el helper que ya existía.
 
+## Carpetas dentro de carpetas (tipo Google Drive)
+
+Marco, 2026-07-31: *"quiero que la parte de los tutoriales sea como si fuese un
+Google Drive... dentro de carpetas podemos crear carpetas, y dentro de carpetas
+lecciones, y así sucesivamente"*.
+
+- `tutorial_folders.parent_id` apunta a la carpeta madre. Raíz = `parent_id null`.
+  **Sin límite de niveles.**
+- La raíz enseña las carpetas **como tarjetas**, que dicen cuántas carpetas y
+  vídeos hay dentro **contando todo lo que cuelga más abajo**.
+- Migas de pan para volver, y el sitio donde estás va en la dirección
+  (`/tutoriales?carpeta=<id>`), así el botón de atrás del navegador funciona y
+  se puede pasar el enlace de una carpeta concreta.
+- Cada carpeta y cada vídeo tienen menú de **renombrar, mover y borrar**. Sin
+  mover, esto no sería un Drive.
+- **Un vídeo siempre vive dentro de una carpeta**, nunca suelto en la raíz.
+
+### Los candados del árbol
+
+| Candado | Qué evita |
+|---|---|
+| Disparador `tutorial_folders_sin_bucles` | Meter una carpeta dentro de sí misma o de una de sus hijas. Eso crea un anillo: esas carpetas desaparecen de la raíz, no hay forma de llegar a ellas y no se pueden recuperar desde la pantalla |
+| Dos índices únicos parciales | Dos carpetas con el mismo nombre en el mismo sitio. Hacen falta **dos** porque en Postgres dos NULL son distintos, así que un único índice dejaría pasar duplicados justo en la raíz |
+| `nombre_no_vacio` / `titulo_no_vacio` | Tarjetas en blanco creadas desde fuera de la pantalla |
+| Disparador `tutorial_orden_al_mover` | Que al mover algo aterrice empatado con una hermana. Postgres devuelve los empates en orden arbitrario, **y ese orden cambia al editar cualquier otra fila**: las tarjetas se recolocarían solas |
+| Función `tutorial_subarbol` | Que borrar una carpeta deje vídeos huérfanos en Bunny pagándose para siempre |
+
 ## Las dos formas de meter un vídeo
 
 Marco eligió las dos, y conviven en la misma ficha:
@@ -55,6 +82,17 @@ Marco eligió las dos, y conviven en la misma ficha:
 |---|---|---|
 | **Subir el archivo** | Bunny, colección **`Tutoriales OS`** (se crea sola) | Lo que deba durar |
 | **Pegar link de Loom** | Se queda en Loom. Solo se guarda el link | Algo rápido |
+
+**Al pegar un Loom, la ficha se rellena sola.** Se le pregunta a Loom por el
+vídeo con su oEmbed oficial (`https://www.loom.com/v1/oembed?url=...`) y se traen
+título, duración y portada. Comprobado el 2026-07-31 con un vídeo real de Marco:
+devuelve los tres. Si Loom no contesta **no se bloquea nada**: se guarda igual y
+el título se escribe a mano. Un adorno no puede impedir guardar.
+
+**Confirmado también que `loom.com/embed/<id>` se deja incrustar** (responde 200
+y no pone `X-Frame-Options`). El intento anterior había fallado porque se probó
+con un identificador inventado: Loom redirige a su portada, y **esa** sí prohíbe
+el incrustado. No era el mismo caso.
 
 **Contrapartida de Loom, dicha en voz alta:** el vídeo sigue siendo de Loom. Si
 se borra allí o se pone en privado, la ficha se queda sin vídeo. Por eso lo
@@ -88,10 +126,44 @@ Con el usuario de pruebas (SOP [`sistemas/02`](../sistemas/02-test-agent.md)) y 
   le da error de permiso. **Como alumno:** cero. **Sin sesión:** cero.
 - La subida crea la colección `Tutoriales OS` en Bunny (verificado y limpiado).
 
-**Lo único sin confirmar:** que un Loom **real** se incruste. La prueba se hizo
-con un identificador inventado y Loom respondió `X-Frame-Options: deny` al
-redirigir a su portada, que es lo esperado con un enlace que no existe. Falta
-repetirlo con un link de verdad de Marco.
+### Segunda pasada, con el árbol y el Loom real (2026-07-31)
+
+Crear carpeta con el panel de marca, entrar, crear subcarpeta, **tercer nivel**,
+migas de pan, añadir el **Loom real de Marco** (reconocido, título y duración
+rellenados solos), publicar, reproducir (**Loom acepta el incrustado**), mover
+una carpeta a otra con los destinos inválidos marcados como "No se puede",
+borrar exigiendo escribir el nombre, y a 390px sin desbordar. Todo en verde.
+
+## Aprendizaje: un revisor puede equivocarse con mucha seguridad
+
+La revisión de riesgos previa dio como hallazgo **crítico** que `is_admin()`
+buscaba un rol `'admin'` que ya no existe, y que por tanto todas las escrituras
+morían en silencio. Sonaba coherente y venía con la migración que lo probaba.
+
+**Era falso.** El revisor leyó `supabase/migrations/` en vez de la base viva.
+`select pg_get_functiondef('public.is_admin()'::regprocedure)` devuelve una
+versión que **sí** incluye `super_admin` y **sí** comprueba `active`, y una
+prueba con la sesión de un super admin devuelve `true`. Además las escrituras ya
+funcionaban en las pruebas de la primera pasada.
+
+**Regla derivada:** un hallazgo sobre el estado de la base se comprueba **contra
+la base**, nunca contra los archivos del repo. Las migraciones cuentan la
+historia, no el presente. Los otros tres hallazgos graves de esa misma revisión
+sí eran ciertos y están arreglados.
+
+### Lo que la revisión sí acertó, y quedó arreglado
+
+1. **Fallo mudo en las escrituras.** `update`/`delete` sin `.select()` devuelven
+   0 filas con `error: null` cuando la RLS filtra, y la API respondía éxito. En
+   pantalla salía guardado y al recargar no había cambiado nada. Los cuatro
+   endpoints de escritura llevan ya `.select().maybeSingle()` y responden 403.
+2. **Borrar una carpeta no limpiaba Bunny.** Con el anidamiento, un borrado en la
+   raíz se llevaba subárboles enteros y dejaba los archivos pagándose para
+   siempre. Ahora se pide el subárbol antes de borrar y se limpian sus vídeos.
+3. **Un toque borraba una formación entera.** El `confirm` del navegador es un
+   toque en el móvil. Ahora, si dentro hay algo, hay que **escribir el nombre**.
+
+**Sigue pendiente:** no hay papelera. Un borrado confirmado es definitivo.
 
 ---
 

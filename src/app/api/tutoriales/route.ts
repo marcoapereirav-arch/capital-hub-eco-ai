@@ -8,8 +8,15 @@ export const dynamic = "force-dynamic"
 /**
  * GET /api/tutoriales
  *
- * Las carpetas con sus tutoriales dentro. La base ya filtra por RLS:
- * el equipo ve lo publicado, quien administra ve tambien los borradores.
+ * El arbol entero de una vez: todas las carpetas (con su padre) y todos los
+ * videos. La pantalla navega en el cliente, asi que entrar en una carpeta es
+ * instantaneo y las migas de pan no piden nada al servidor.
+ *
+ * Se trae todo a proposito: aqui hablamos de decenas de carpetas, no de miles.
+ * Si algun dia crece de verdad, se cambia a pedir solo el nivel visible.
+ *
+ * La base ya filtra por RLS: el equipo ve lo publicado, quien administra ve
+ * tambien los borradores.
  */
 export async function GET() {
   const rechazo = await exigirEquipo()
@@ -19,31 +26,31 @@ export async function GET() {
   const supabase = await createClient()
 
   const [carpetas, tutoriales] = await Promise.all([
-    supabase.from("tutorial_folders").select("id, nombre, descripcion, display_order").order("display_order"),
+    supabase
+      .from("tutorial_folders")
+      .select("id, nombre, descripcion, parent_id, display_order")
+      .order("display_order"),
     supabase
       .from("tutorials")
-      .select("id, folder_id, titulo, descripcion, fuente, bunny_video_id, loom_url, duracion_seg, status, display_order")
+      .select(
+        "id, folder_id, titulo, descripcion, fuente, bunny_video_id, loom_url, duracion_seg, miniatura, status, display_order",
+      )
       .order("display_order"),
   ])
 
+  /* Un fallo al leer NO es "no hay nada".
+   *
+   * Si esto devolviera lista vacia ante un error, la pantalla diria "todavia no
+   * hay tutoriales" y Marco pensaria que se le borro todo. Se responde error. */
   if (carpetas.error) return NextResponse.json({ error: carpetas.error.message }, { status: 500 })
   if (tutoriales.error) return NextResponse.json({ error: tutoriales.error.message }, { status: 500 })
-
-  const porCarpeta = new Map<string, Tutorial[]>()
-  for (const t of (tutoriales.data ?? []) as Tutorial[]) {
-    const lista = porCarpeta.get(t.folder_id) ?? []
-    lista.push(t)
-    porCarpeta.set(t.folder_id, lista)
-  }
 
   return NextResponse.json({
     esAdmin: quien?.esAdmin ?? false,
     // El reproductor los necesita para armar la direccion del video de Bunny.
     libraryId: process.env.BUNNY_LIBRARY_ID ?? "",
     cdnHostname: process.env.BUNNY_CDN_HOSTNAME ?? "",
-    carpetas: ((carpetas.data ?? []) as Carpeta[]).map((c) => ({
-      ...c,
-      tutoriales: porCarpeta.get(c.id) ?? [],
-    })),
+    carpetas: (carpetas.data ?? []) as Carpeta[],
+    videos: (tutoriales.data ?? []) as Tutorial[],
   })
 }

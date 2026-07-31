@@ -1,9 +1,9 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import * as tus from "tus-js-client"
-import { Upload, Link2, X, AlertCircle } from "lucide-react"
-import { esLoomValido } from "../types"
+import { Upload, Link2, X, AlertCircle, Check } from "lucide-react"
+import { duracionLegible, esLoomValido, type DatosLoom } from "../types"
 
 type Props = {
   carpetaId: string
@@ -30,7 +30,37 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
   const [progreso, setProgreso] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [loomDatos, setLoomDatos] = useState<DatosLoom | null>(null)
+  const [consultandoLoom, setConsultandoLoom] = useState(false)
   const inputArchivo = useRef<HTMLInputElement>(null)
+
+  /* Al pegar un Loom valido, se le pregunta a Loom por el video y se rellena
+   * solo: titulo, duracion y portada. Marco pega y ya esta.
+   *
+   * Si Loom no contesta no pasa nada: se guarda igual y el titulo se escribe a
+   * mano. Un adorno no puede impedir guardar. */
+  useEffect(() => {
+    if (modo !== "loom" || !esLoomValido(loomUrl)) {
+      setLoomDatos(null)
+      return
+    }
+    let vigente = true
+    setConsultandoLoom(true)
+    const t = window.setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/tutoriales/loom?url=${encodeURIComponent(loomUrl.trim())}`).then((x) => x.json())
+        if (!vigente) return
+        setLoomDatos(r.datos ?? null)
+        if (r.datos?.titulo) setTitulo((actual) => actual.trim() || r.datos.titulo)
+      } finally {
+        if (vigente) setConsultandoLoom(false)
+      }
+    }, 500)
+    return () => {
+      vigente = false
+      window.clearTimeout(t)
+    }
+  }, [modo, loomUrl])
 
   const tituloEfectivo = titulo.trim() || archivo?.name.replace(/\.[^.]+$/, "") || ""
   const puedeGuardar =
@@ -44,7 +74,12 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
 
     try {
       if (modo === "loom") {
-        await crearFicha({ fuente: "loom", loom_url: loomUrl.trim() })
+        await crearFicha({
+          fuente: "loom",
+          loom_url: loomUrl.trim(),
+          ...(loomDatos?.duracion_seg ? { duracion_seg: loomDatos.duracion_seg } : {}),
+          ...(loomDatos?.miniatura ? { miniatura: loomDatos.miniatura } : {}),
+        })
         onListo()
         return
       }
@@ -75,7 +110,7 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
     }
   }
 
-  async function crearFicha(extra: Record<string, string>) {
+  async function crearFicha(extra: Record<string, string | number>) {
     const res = await fetch("/api/tutoriales/videos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -171,6 +206,31 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
                 <p className="mt-1.5 text-xs text-amber-400">
                   Ese link no parece de Loom. Copia el de compartir, el que empieza por loom.com/share.
                 </p>
+              ) : null}
+
+              {consultandoLoom ? (
+                <p className="mt-2 text-xs text-white/45">Leyendo el vídeo en Loom…</p>
+              ) : null}
+
+              {/* Se enseña lo que Loom devolvio: asi Marco ve que reconocio el
+                  video antes de guardar, en vez de darle a Añadir a ciegas. */}
+              {loomDatos?.titulo ? (
+                <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-[#22C55E]/30 bg-[#22C55E]/[0.06] p-2.5">
+                  {loomDatos.miniatura ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={loomDatos.miniatura} alt="" className="h-12 w-20 shrink-0 rounded object-cover" />
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-1.5 text-xs font-medium text-[#4ADE80]">
+                      <Check className="h-3.5 w-3.5" />
+                      Vídeo encontrado
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-white">{loomDatos.titulo}</p>
+                    {duracionLegible(loomDatos.duracion_seg) ? (
+                      <p className="text-xs text-white/45">{duracionLegible(loomDatos.duracion_seg)}</p>
+                    ) : null}
+                  </div>
+                </div>
               ) : null}
             </div>
           )}

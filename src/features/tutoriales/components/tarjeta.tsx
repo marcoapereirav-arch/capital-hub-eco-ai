@@ -1,6 +1,7 @@
 "use client"
 
-import { Play, Trash2, Eye, EyeOff, Clock, Video } from "lucide-react"
+import { Play, Eye, EyeOff, Clock, Video } from "lucide-react"
+import { MenuAcciones } from "./menu-acciones"
 import { comoSeReproduce, duracionLegible, type Tutorial } from "../types"
 
 type Props = {
@@ -10,6 +11,8 @@ type Props = {
   esAdmin: boolean
   onAbrir: () => void
   onPublicar: (publicar: boolean) => void
+  onRenombrar: () => void
+  onMover: () => void
   onBorrar: () => void
 }
 
@@ -19,7 +22,9 @@ type Props = {
  * Visual por delante del texto (REGLA #15): miniatura grande, duracion a la
  * vista y el titulo debajo. Nada de una lista de enlaces.
  */
-export function Tarjeta({ tutorial, libraryId, cdnHostname, esAdmin, onAbrir, onPublicar, onBorrar }: Props) {
+export function Tarjeta({
+  tutorial, libraryId, cdnHostname, esAdmin, onAbrir, onPublicar, onRenombrar, onMover, onBorrar,
+}: Props) {
   const fuente = comoSeReproduce(tutorial, libraryId, cdnHostname)
   const duracion = duracionLegible(tutorial.duracion_seg)
   const sinVideo = !fuente
@@ -94,14 +99,14 @@ export function Tarjeta({ tutorial, libraryId, cdnHostname, esAdmin, onAbrir, on
             {borrador ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
             {borrador ? "Publicar" : "Ocultar"}
           </button>
-          <button
-            type="button"
-            onClick={onBorrar}
-            className="ml-auto flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-white/50 transition hover:bg-red-500/10 hover:text-red-400"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Borrar
-          </button>
+          <div className="ml-auto">
+            <MenuAcciones
+              etiqueta={tutorial.titulo}
+              onRenombrar={onRenombrar}
+              onMover={onMover}
+              onBorrar={onBorrar}
+            />
+          </div>
         </div>
       ) : null}
     </div>
