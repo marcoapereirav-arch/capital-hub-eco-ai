@@ -33,6 +33,7 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
     "/crm",
     "/contactos",
     "/webs",
+    "/tutoriales",
   ],
   formador: [
     "/dashboard",
@@ -40,6 +41,7 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
     "/operaciones",
     "/crm",
     "/contactos",
+    "/tutoriales",
   ],
   closer: [
     "/dashboard",
@@ -47,6 +49,7 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
     "/operaciones",
     "/crm",
     "/contactos",
+    "/tutoriales",
   ],
   setter: [
     "/dashboard",
@@ -54,6 +57,7 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
     "/operaciones",
     "/crm",
     "/contactos",
+    "/tutoriales",
   ],
 }
 

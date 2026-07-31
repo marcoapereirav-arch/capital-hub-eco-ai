@@ -29,6 +29,7 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 58 | [Purga del brandkit antiguo (App)](58-purga-brandkit-antiguo-app.md) | La App tenía DOS brandkits: `accent` se llamaba bien pero valía `#FFFFFF`. Acento a VERDE, Inter Tight única, cinturones, `Sparkles` fuera. Dónde entra el formador a editar (tarjeta en Inicio + lápiz en la tarjeta de la formación) |
 | 59 | [Archivo ordenado de vídeos en Bunny](59-bunny-archivo-ordenado.md) | El árbol `Testimonios / VSLs / Formaciones / [formación] / [módulo] / [lección].mp4`. Stream NO anida carpetas (comprobado en su API): el árbol vive en Bunny **Storage**. Reloj cada 10 min que archiva solo. Las carpetas siguen al nombre si lo renombran |
 | 60 | [Clipper sustituye a Media Buyer](60-clipper-sustituye-media-buyer.md) | Las tres formaciones pasan a ser IA Integrator, Comercial Closing y **Clipper**. Migración con freno: se detiene sola si alguien tuviera Media Buyer comprado. Los cinco sitios donde el nombre estaba escrito a mano |
+| 61 | [Tutoriales (formación interna)](61-tutoriales-formacion-interna.md) | `/tutoriales` en el OS: vídeos en carpetas para **todo el equipo interno**. Dos formas de meter vídeo (archivo a Bunny en `Tutoriales OS`, o link de Loom). Candado copiado de `knowledges`: alumno cero. **Pendiente de seguridad** de la puerta de subida de la App, y por qué no se cerró todavía |
 
 ## Formaciones (material de presentación)
 
