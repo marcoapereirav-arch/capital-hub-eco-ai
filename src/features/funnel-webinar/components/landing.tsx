@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowRight, CalendarDays } from "lucide-react"
@@ -55,6 +55,21 @@ export function WebinarLanding({
   useParallax(heroRef)
   useScrollReveals()
 
+  // Barra fija de abajo: aparece en cuanto el formulario deja de verse (o sea, al bajar
+  // a la historia) y se esconde sola cuando el formulario vuelve a estar en pantalla,
+  // para no tapar lo que el lead está rellenando.
+  const [ctaFijo, setCtaFijo] = useState(false)
+  useEffect(() => {
+    const form = document.getElementById("reservar")
+    if (!form) return
+    const io = new IntersectionObserver(
+      ([e]) => setCtaFijo(!e.isIntersecting),
+      { threshold: 0.12 },
+    )
+    io.observe(form)
+    return () => io.disconnect()
+  }, [])
+
   // Lleva al lead al formulario embebido y le deja el cursor puesto en el primer campo.
   const goToForm = useCallback(() => {
     const el = document.getElementById("reservar")
@@ -73,17 +88,22 @@ export function WebinarLanding({
       <HeroFit />
 
       {/* ════════ SECCIÓN 1 · HERO + OPT-IN, TODO EN UNA SOLA PANTALLA ════════
-          Diseño (Marco, 2026-07-30): en el móvil se ve TODO sin bajar y tiene que
-          respirar. Tres decisiones que lo consiguen:
-            1. Todo CENTRADO (Marco), como en la referencia. Para que un texto centrado
-               no se lea como un ladrillo hay que darle medida corta: cada bloque tiene
-               su `max-width` en `ch`, así que ninguna línea se hace larga.
-            2. Bloques agrupados por significado: mucho aire ENTRE grupos y poco DENTRO.
-               (evento+fecha) (titular) (promesa+fuente) (cuenta atrás) (formulario).
-            3. Un solo momento verde en el titular y un solo subrayado en la promesa.
-               Antes había cuatro y competían entre ellos.
-          Cada tamaño y cada hueco se miden contra la ALTURA (`svh`), así que en un
-          teléfono más bajito encoge todo a la vez y el formulario nunca se sale. */}
+
+          CONCEPTO: la ficha del evento. La primera pantalla se lee como una entrada con
+          fecha: sello del evento, cuándo es, la promesa, el dato con su sello de fuente,
+          el marcador de la cuenta atrás en casillas, y la reserva. De ahí salen las
+          decisiones: casillas en el contador, sellos con filete para el dato y la fuente,
+          y jerarquía por grosor de Inter Tight (300 a 900), no por fuentes distintas.
+
+          EL BUG DEL SCROLL, RESUELTO DE RAÍZ (Marco, 2026-07-31): antes había reglas
+          `@media (max-height: ...)` que encogían todo. En el móvil, al bajar, el navegador
+          esconde la barra de direcciones, la pantalla pasa a medir MÁS alto, la regla
+          saltaba y la página entera cambiaba de tamaño a mitad de scroll. Ya no queda ni
+          una regla que dependa de la altura: TODO se mide con el ANCHO, que no cambia
+          nunca. Lo que se ve al entrar es lo que se ve al final.
+
+          REGLA: en una página a pantalla completa, prohibido `@media (max-height)` y
+          prohibido usar unidades de altura para calcular tamaños de letra. */}
       {/* El ambiente (luces, orbes, grano) vive AQUÍ, no dentro del hero. Antes lo recortaba
           el borde de la sección y se veía un corte seco justo debajo del formulario. Ahora
           es una capa del documento que se apaga sola hacia abajo, sin costura. */}
@@ -91,17 +111,15 @@ export function WebinarLanding({
         <FunnelBackdrop />
       </div>
 
-      <section className="hero relative flex h-[100svh] flex-col">
-
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 sm:px-6 md:px-8" style={{ minHeight: 0 }}>
+      <section className="hero relative flex min-h-[100svh] flex-col">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-5 sm:px-6 md:px-8">
           <div className="hero-top shrink-0">
             <FunnelHeader />
           </div>
 
-          <div className="hero-body grid min-h-0 flex-1 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
-            {/* ── Promesa + cuenta atrás ── */}
+          <div className="hero-body my-auto grid w-full lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
             <div className="hero-col flex flex-col">
-              {/* Grupo 1: qué es y cuándo */}
+              {/* 1 · Qué es y cuándo */}
               <div className="hero-when">
                 <div
                   className="fk-load hero-badge inline-flex items-center gap-2 rounded-full border border-[#22C55E]/35 bg-[#22C55E]/10"
@@ -123,7 +141,7 @@ export function WebinarLanding({
                 </p>
               </div>
 
-              {/* Grupo 2: el titular. Las frases clave no se parten nunca a mitad. */}
+              {/* 2 · El titular */}
               <h1
                 className="fk-tilt hero-h1 text-white"
                 style={{ fontFamily: "'Inter Tight', sans-serif", fontWeight: 300 }}
@@ -134,35 +152,46 @@ export function WebinarLanding({
                   <span className="hero-strong whitespace-nowrap">90 días</span> con una{" "}
                   <span className="hero-strong">profesión digital</span>
                 </span>
-                {/* La condición, tratada como un apunte al margen: filete verde y letra
-                    fina. Deja de ser "una línea más" y se lee como la letra pequeña
-                    que quita el miedo. */}
-                <span className="fk-line hero-note" style={{ animationDelay: "330ms" }}>
-                  <span className="hero-note-rule" aria-hidden />
-                  <span className="hero-note-txt">
-                    aunque <em className="hero-note-em">no tengas experiencia</em> y{" "}
-                    <em className="hero-note-em whitespace-nowrap">partas de 0</em>.
-                  </span>
-                </span>
               </h1>
 
-              {/* Grupo 3: la promesa, íntegra como la escribió Marco, y la fuente
-                  debajo en UNA sola línea (antes se comía tres). */}
-              <div className="hero-promise">
-                <p className="fk-load hero-sub text-[#A6ABB4]" style={{ animationDelay: "460ms" }}>
-                  Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
-                  trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
-                  trabajando para empresas que están buscando tu perfil:{" "}
-                  <span className="fk-mark">más de 500.000 puestos de trabajo online</span> publicados
-                  al año en España.
+              {/* 3 · La condición. Ya no es letra pequeña perdida: va en su propia franja,
+                     entre dos filetes, y con las dos ideas que quitan el miedo en blanco. */}
+              <p className="fk-load hero-note" style={{ animationDelay: "330ms" }}>
+                <span className="hero-note-rule" aria-hidden />
+                <span className="hero-note-txt">
+                  aunque <em className="hero-note-em">no tengas experiencia</em> y{" "}
+                  <em className="hero-note-em whitespace-nowrap">partas de 0</em>.
+                </span>
+                <span className="hero-note-rule" aria-hidden />
+              </p>
+
+              {/* 4 · La promesa */}
+              <p className="fk-load hero-sub" style={{ animationDelay: "460ms" }}>
+                Aprende una profesión digital desde cero, sin experiencia previa y sin dejar tu
+                trabajo, y gana de <strong className="hero-strong">2.000&nbsp;€ a 4.000&nbsp;€ al mes</strong>{" "}
+                trabajando para empresas que están buscando tu perfil.
+              </p>
+
+              {/* 5 · El dato, como frase APARTE (Marco). Mismo tamaño de lectura, otro
+                     tratamiento: Inter Tight, en blanco, con la cifra en verde y el
+                     marcador debajo. Y la fuente pegada a él, como el sello que lo firma:
+                     etiqueta verde + filete + el informe entero, legible, no en gris
+                     diminuto. El dato y quién lo dice van juntos o no valen nada. */}
+              <div className="fk-load hero-fact" style={{ animationDelay: "540ms" }}>
+                <p className="hero-fact-txt" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+                  <span className="fk-mark">más de 500.000 puestos de trabajo online</span>{" "}
+                  publicados al año en España.
                 </p>
-                <p className="fk-load hero-src" style={{ animationDelay: "520ms" }}>
-                  Fuente: Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
+                <p className="hero-fact-src">
+                  <span className="hero-fact-tag">Fuente</span>
+                  <span className="hero-fact-name">
+                    Informe Estado del Mercado Laboral en España 2024 · InfoJobs y Esade
+                  </span>
                 </p>
               </div>
 
-              {/* Grupo 4: cuánto queda */}
-              <div className="fk-load hero-count w-full" style={{ animationDelay: "580ms" }}>
+              {/* 6 · Cuánto queda, en casillas */}
+              <div className="fk-load hero-count w-full" style={{ animationDelay: "600ms" }}>
                 <Countdown
                   isoDate={webinarDate}
                   time={webinarTime}
@@ -172,7 +201,7 @@ export function WebinarLanding({
               </div>
             </div>
 
-            {/* Grupo 5: la acción */}
+            {/* 7 · La acción */}
             <OptinCard />
           </div>
         </div>
@@ -182,7 +211,7 @@ export function WebinarLanding({
       <AdrianStory />
 
       {/* ════════ CTA FINAL ════════ */}
-      <section className="mx-auto max-w-3xl px-5 pb-24 md:px-8">
+      <section className="mx-auto max-w-3xl px-5 pb-32 md:px-8 lg:pb-24">
         <div data-reveal className="fk-reveal flex flex-col items-center gap-6 border-t border-[#2A2D34] pt-14 text-center">
           <h3
             className="mx-auto max-w-xl text-[1.7rem] font-extrabold leading-[1.08] tracking-[-0.02em] text-white md:text-[2.4rem] [text-wrap:balance]"
@@ -197,6 +226,38 @@ export function WebinarLanding({
           <span>Adrián Villanueva</span>
         </footer>
       </section>
+
+      {/* Barra fija: en cuanto el formulario se pierde de vista, el botón de reservar
+          queda siempre a mano. Al tocarlo sube al formulario y deja el cursor puesto.
+          Respeta la franja de gestos del teléfono (safe-area). */}
+      <div className={`cta-fijo ${ctaFijo ? "cta-fijo-on" : ""}`}>
+        <button
+          type="button"
+          onClick={goToForm}
+          className="fk-cta cta-fijo-btn group relative flex w-full items-center justify-center gap-2.5 overflow-hidden rounded-xl font-extrabold"
+          style={{ fontFamily: "'Inter Tight', sans-serif" }}
+        >
+          <span aria-hidden className="fk-shine" />
+          <span className="relative z-10">Reservar mi plaza gratis</span>
+          <ArrowRight className="relative z-10 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+        </button>
+      </div>
+
+      <style>{`
+        .cta-fijo { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+          padding: 0.75rem 1.25rem calc(env(safe-area-inset-bottom) + 0.75rem);
+          background: linear-gradient(180deg, rgba(15,15,18,0) 0%, rgba(15,15,18,0.92) 38%, #0F0F12 100%);
+          backdrop-filter: blur(10px);
+          transform: translateY(115%); opacity: 0; pointer-events: none;
+          transition: transform 0.36s cubic-bezier(0.22,0.61,0.36,1), opacity 0.28s ease; }
+        .cta-fijo-on { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .cta-fijo-btn { height: 3.25rem; font-size: 15px; }
+        @media (min-width: 1024px) {
+          .cta-fijo { left: auto; right: 1.5rem; bottom: 1.5rem; width: auto; padding: 0; background: none; backdrop-filter: none; }
+          .cta-fijo-btn { width: auto; padding-inline: 1.75rem; }
+        }
+        @media (prefers-reduced-motion: reduce) { .cta-fijo { transition: opacity 0.2s ease; } }
+      `}</style>
     </main>
   )
 }
@@ -449,99 +510,81 @@ function AdrianStory() {
 
 /* ───────────────────── Medidas de la primera pantalla ─────────────────────
 
-   POR QUÉ NO SE USA LA ALTURA PARA LOS TAMAÑOS (bug de Marco, 2026-07-30):
-   antes cada letra se medía con `min(Xvw, Ysvh)`. En el móvil, al bajar, el navegador
-   esconde su barra de direcciones y esa unidad de altura se recalcula: el texto crecía
-   solo mientras hacías scroll. Ahora TODO se mide con el ANCHO (`vw`), que no cambia
-   nunca al hacer scroll, y para las pantallas bajitas se encoge por tramos con un
-   factor `--s`. Resultado: el tamaño es el mismo del principio al final.
+   NADA DEPENDE DE LA ALTURA. Ni una `@media (max-height)`, ni una unidad de altura
+   dentro de un tamaño de letra. Todo se mide con el ANCHO (`vw`), acotado con `clamp`
+   para que en tableta no se desmadre. Motivo: en el móvil, al hacer scroll, el navegador
+   esconde su barra y la altura de la pantalla CAMBIA; cualquier medida atada a la altura
+   hace que la página entera se reescale a mitad de scroll. Ese era el bug.
 
-   REGLA: en un hero a pantalla completa, los tamaños se atan al ANCHO. La altura solo
-   se usa para decidir el tramo (`@media (max-height: ...)`), nunca para calcular.
-
-   Y el ancho se aprovecha: en el móvil los bloques ocupan el contenedor entero, sin
-   topes de medida que dejaban bandas muertas a los lados. Los topes en `ch` solo
-   aplican de 1024px para arriba, que es donde una línea sí se hace demasiado larga. */
+   Consecuencia asumida: en un teléfono muy bajito (iPhone SE) la primera pantalla se
+   pasa un poco y hay que rodar el dedo. Es mejor eso que un texto ilegible o que la
+   página cambie de tamaño sola. En los teléfonos de hoy (390 a 430 de ancho) entra todo. */
 function HeroFit() {
   return (
     <style>{`
-      .hero { --s: 1; }
-      @media (max-height: 900px) { .hero { --s: 0.86; } }
-      @media (max-height: 820px) { .hero { --s: 0.80; } }
-      @media (max-height: 760px) { .hero { --s: 0.74; } }
-      @media (max-height: 700px) { .hero { --s: 0.68; } }
-      @media (max-height: 640px) { .hero { --s: 0.62; } }
+      .hero-top > header { padding-block: clamp(0.6rem, 2.2vw, 1.75rem); }
 
-      .hero-top > header { padding-block: calc(4.6vw * var(--s)); }
+      .hero-col { text-align: center; align-items: center; }
+      .hero-body { display: grid; }
 
-      .hero-col { text-align: center; align-items: center; gap: calc(5.4vw * var(--s)); }
-      .hero-body { gap: calc(5.4vw * var(--s)); grid-template-rows: auto auto; }
+      /* 1 · Evento y fecha */
+      .hero-when { display: flex; flex-direction: column; align-items: center; gap: 0.55em; }
+      .hero-badge { padding: 0.45em 0.95em; font-size: clamp(10.5px, 3vw, 12px); }
+      .hero-badge-ico { width: 1.2em; height: 1.2em; }
+      .hero-date { font-size: clamp(15px, 4.3vw, 18px); letter-spacing: -0.01em; }
 
-      /* Grupo 1: qué es y cuándo */
-      .hero-when { display: flex; flex-direction: column; align-items: center; gap: 0.6em; }
-      .hero-badge { padding: 0.42em 0.95em; font-size: calc(3.2vw * var(--s)); }
-      .hero-badge-ico { width: 1.15em; height: 1.15em; }
-      .hero-date { font-size: calc(4.6vw * var(--s)); letter-spacing: -0.01em; }
-
-      /* Grupo 2: el titular, a todo el ancho disponible */
-      .hero-h1 { font-size: calc(7.2vw * var(--s)); line-height: 1.05; letter-spacing: -0.034em; max-width: 100%; text-wrap: balance; }
+      /* 2 · Titular */
+      .hero-h1 { margin-top: clamp(0.55rem, 2.5vw, 1.5rem); font-size: clamp(23px, 6.2vw, 48px); line-height: 1.06; letter-spacing: -0.034em; max-width: 21ch; text-wrap: balance; }
       .hero-strong { font-weight: 800; color: #FFFFFF; }
-      .hero-note { display: flex; flex-direction: column; align-items: center; gap: 0.7em; margin-top: 0.8em; font-size: 0.42em; max-width: 100%; }
-      .hero-note-rule { display: block; flex: none; width: 3.4em; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(34,197,94,0), rgba(34,197,94,0.85), rgba(34,197,94,0)); }
-      .hero-note-txt { font-weight: 300; line-height: 1.35; letter-spacing: 0; color: #8E939C; text-wrap: balance; }
-      .hero-note-em { font-style: normal; font-weight: 600; color: #D6DAE0; }
 
-      /* Grupo 3: la promesa y la fuente en una línea */
-      .hero-promise { display: flex; flex-direction: column; align-items: center; gap: calc(4vw * var(--s)); }
-      .hero-sub { font-size: calc(3.95vw * var(--s)); line-height: 1.48; max-width: 100%; text-wrap: pretty; }
-      .hero-src { font-size: calc(2.85vw * var(--s)); line-height: 1.35; color: #5C616B; max-width: 100%; }
+      /* 3 · La condición, en su propia franja entre filetes */
+      .hero-note { display: flex; align-items: center; justify-content: center; gap: 0.8em; margin-top: clamp(0.5rem, 2vw, 1.1rem); max-width: 36ch; }
+      .hero-note-rule { display: block; flex: 1 1 auto; min-width: 0.9rem; max-width: 2.6rem; height: 1px; background: linear-gradient(90deg, rgba(34,197,94,0), rgba(34,197,94,0.75), rgba(34,197,94,0)); }
+      .hero-note-txt { flex: 0 1 auto; font-size: clamp(13px, 3.6vw, 15px); font-weight: 400; line-height: 1.35; color: #9BA1AA; text-wrap: balance; }
+      .hero-note-em { font-style: normal; font-weight: 700; color: #FFFFFF; }
 
-      /* Grupo 4: cuenta atrás sin cajas en móvil */
-      .hero-count { --fk-count-num: calc(9vw * var(--s)); --fk-count-lab: calc(2.8vw * var(--s)); --fk-count-pad: 0; text-align: center; }
-      .hero-count .fk-count { border: 0; background: none; box-shadow: none; border-radius: 0; text-align: center; padding-inline: 0; }
-      .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: none; }
-      .hero-count .grid { gap: calc(7.4vw * var(--s)); max-width: none; grid-template-columns: repeat(4, max-content); justify-content: center; margin-inline: auto; }
-      .hero-count .fk-count-lab { color: #5C616B; margin-top: 0.25em; }
+      /* 4 · La promesa */
+      .hero-sub { margin-top: clamp(0.55rem, 2.2vw, 1.5rem); font-size: clamp(12.5px, 3.4vw, 16px); line-height: 1.44; color: #A6ABB4; max-width: 48ch; text-wrap: pretty; }
 
-      /* Grupo 5: el formulario. Campos grandes: se tienen que poder tocar sin apuntar. */
-      .hero-card { padding: calc(5vw * var(--s)); }
-      .hero-form-title { font-size: calc(5.2vw * var(--s)); letter-spacing: -0.02em; }
-      .hero-form-sub { margin-top: 0.3em; font-size: calc(3.4vw * var(--s)); }
-      .hero-form { margin-top: calc(4vw * var(--s)); display: flex; flex-direction: column; gap: calc(2.6vw * var(--s)); }
-      .hero-input { height: calc(13.6vw * var(--s)); min-height: 44px; font-size: calc(4.2vw * var(--s)); }
-      .hero-submit { height: calc(14.6vw * var(--s)); min-height: 48px; font-size: calc(4.3vw * var(--s)); }
-      .hero-legal { font-size: calc(3.1vw * var(--s)); }
-      .hero-err { padding-block: 0.5em; font-size: calc(3.5vw * var(--s)); }
+      /* 5 · El dato, aparte, con su sello de fuente pegado */
+      .hero-fact { margin-top: clamp(0.55rem, 2.2vw, 1.4rem); display: flex; flex-direction: column; align-items: center; gap: 0.6em; max-width: 42ch; }
+      .hero-fact-txt { font-size: clamp(14px, 3.8vw, 18px); font-weight: 600; line-height: 1.32; letter-spacing: -0.015em; color: #FFFFFF; text-wrap: balance; }
+      .hero-fact-src { display: block; padding: 0.45em 0.8em; border: 1px solid rgba(34,197,94,0.22); border-radius: 0.6rem; background: rgba(34,197,94,0.05); text-align: center; }
+      .hero-fact-tag { font-family: 'Inter Tight', sans-serif; font-size: clamp(9px, 2.4vw, 10px); font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #4ADE80; margin-right: 0.5em; }
+      .hero-fact-tag::after { content: ""; display: inline-block; width: 0.9em; height: 1px; margin-left: 0.5em; vertical-align: middle; background: rgba(74,222,128,0.45); }
+      .hero-fact-name { font-size: clamp(10.5px, 2.8vw, 12px); line-height: 1.4; color: #8E939C; }
 
-      /* El ambiente: alto medido en ancho por lo mismo, para que no se mueva al hacer scroll. */
-      .hero-atmos { height: 260vw; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
+      /* 6 · Cuenta atrás EN CASILLAS, también en el móvil (Marco) */
+      .hero-count { margin-top: clamp(0.6rem, 2.4vw, 1.9rem); text-align: center;
+        --fk-count-num: clamp(21px, 5.9vw, 42px);
+        --fk-count-lab: clamp(8.5px, 2.3vw, 10px);
+        --fk-count-pad: clamp(0.4rem, 1.8vw, 1rem);
+      }
+      .hero-count .grid { gap: clamp(0.45rem, 2vw, 0.75rem); max-width: 24rem; margin-inline: auto; }
 
-      /* Escritorio: dos columnas y medida acotada, que aquí sí se hace larga la línea. */
+      /* 7 · El formulario. El botón NO se pega al borde de la tarjeta: la tarjeta tiene
+             su padding y encima el botón lleva su propio aire por arriba. */
+      .hero-card { margin-top: clamp(0.8rem, 3vw, 0); padding: clamp(0.95rem, 4vw, 1.75rem); }
+      .hero-form-title { font-size: clamp(16.5px, 4.5vw, 1.6rem); letter-spacing: -0.02em; }
+      .hero-form-sub { margin-top: 0.3em; font-size: clamp(12px, 3.3vw, 14px); }
+      .hero-form { margin-top: clamp(0.65rem, 2.7vw, 1.25rem); display: flex; flex-direction: column; gap: clamp(0.45rem, 1.9vw, 0.875rem); }
+      .hero-input { height: clamp(45px, 11.6vw, 3.25rem); font-size: clamp(15px, 3.9vw, 16px); }
+      .hero-submit { margin-top: clamp(0.35rem, 1.5vw, 0.6rem); height: clamp(48px, 12.6vw, 3.5rem); font-size: clamp(15px, 4vw, 15px); }
+      .hero-legal { font-size: clamp(11px, 3vw, 12px); }
+      .hero-err { padding-block: 0.5em; font-size: clamp(12.5px, 3.4vw, 14px); }
+
+      /* El ambiente: alto medido en ancho, por lo mismo. */
+      .hero-atmos { height: 250vw; max-height: 1500px; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
+
+      /* Escritorio: dos columnas y medida acotada. */
       @media (min-width: 1024px) {
-        .hero-top > header { padding-block: 1.75rem; }
-        .hero-col { gap: 1.6rem; justify-content: center; align-items: center; text-align: center; }
+        .hero-col { align-items: center; text-align: center; }
         .hero-body { gap: 3.5rem; }
-        .hero-badge { padding: 0.4rem 0.9rem; font-size: 12px; }
-        .hero-date { font-size: 18px; }
-        .hero-h1 { font-size: clamp(2.15rem, 2.75vw, 3rem); max-width: 18ch; }
-        .hero-note { font-size: 0.4em; max-width: 40ch; margin-top: 1.05em; gap: 0.9em; }
-        .hero-note-rule { width: 3.6em; height: 2px; }
-        .hero-promise { gap: 0.9rem; }
-        .hero-sub { font-size: 16px; line-height: 1.62; max-width: 40ch; }
-        .hero-src { font-size: 11.5px; }
-        .hero-count { --fk-count-num: 2.7rem; --fk-count-lab: 10px; --fk-count-pad: 1.05rem; }
-        .hero-count .fk-count { border: 1px solid rgba(34,197,94,0.28); background: linear-gradient(180deg, rgba(34,197,94,0.10), rgba(20,20,24,0.9)); box-shadow: 0 12px 34px -22px rgba(34,197,94,0.9); border-radius: 0.75rem; text-align: center; padding-inline: 0.25rem; }
-        .hero-count .fk-count-glow, .hero-count .fk-count-tick { display: block; }
-        .hero-count .grid { gap: 0.75rem; max-width: 26rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-inline: auto; }
-        .hero-card { padding: 1.75rem; }
-        .hero-form-title { font-size: 1.6rem; }
-        .hero-form-sub { font-size: 14px; }
-        .hero-form { margin-top: 1.25rem; gap: 0.875rem; }
-        .hero-input { height: 3.25rem; font-size: 16px; }
-        .hero-submit { height: 3.5rem; font-size: 15px; }
-        .hero-legal { font-size: 12px; }
-        .hero-err { padding-block: 0.5rem; font-size: 14px; }
-        .hero-atmos { height: 135vh; }
+        .hero-h1 { max-width: 18ch; }
+        .hero-note { max-width: 38ch; }
+        .hero-sub { max-width: 42ch; }
+        .hero-fact { max-width: 40ch; }
+        .hero-atmos { height: 135vh; max-height: none; }
       }
     `}</style>
   )
