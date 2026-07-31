@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { sendCapiEvent, type CapiEventName } from "@/lib/meta/capi-client"
+import { funnelFromUrl, isFunnelTrackingEnabled, logSkippedEvent } from "@/lib/meta/funnel-tracking"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -16,6 +17,14 @@ const ALLOWED_EVENTS: CapiEventName[] = [
   "test_personalidad_lead",
   "test_personalidad_cualificado",
   "webinar_lead",
+  "agenda_reserva",
+  // Eventos ESTÁNDAR de Meta. Antes no estaban aquí, así que el estándar solo salía
+  // por el píxel del navegador: si el lead rechazaba cookies, Meta no recibía ningún
+  // `Lead`. Ahora salen también por servidor. Ver SOP marketing/09.
+  "ViewContent",
+  "Lead",
+  "Schedule",
+  "Contact",
 ]
 
 const TrackSchema = z.object({
@@ -71,6 +80,24 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-real-ip") ??
     undefined
   const userAgent = req.headers.get("user-agent") ?? undefined
+
+  // Interruptor de medición del funnel. Publicado NO significa que deba medir: el
+  // acceso al OS está publicado y no manda nada. Si está apagado, se registra el
+  // descarte con su motivo (nunca en silencio) y se devuelve OK: el funnel no está
+  // roto, está apagado a propósito.
+  const funnel = funnelFromUrl(data.url)
+  const gate = await isFunnelTrackingEnabled(funnel)
+  if (!gate.enabled) {
+    await logSkippedEvent({
+      eventId: data.event_id,
+      eventName: data.event_name,
+      url: data.url,
+      email: data.user_data.email ?? null,
+      funnel,
+      reason: gate.reason ?? "medición apagada",
+    })
+    return NextResponse.json({ ok: true, skipped: true, reason: gate.reason }, { status: 200 })
+  }
 
   const result = await sendCapiEvent({
     eventId: data.event_id,

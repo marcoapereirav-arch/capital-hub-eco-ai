@@ -1,46 +1,50 @@
 "use client"
 
 import { useState } from "react"
-import { Activity, BarChart3, GitBranch, Settings as SettingsIcon, Users } from "lucide-react"
+import { Activity, BarChart3, Settings as SettingsIcon } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
 import { AdsInsights } from "./ads-insights"
-import { AdsAffiliatesPanel } from "./ads-affiliates-panel"
+import { AdsEventsHealth } from "./ads-events-health"
 
-type AdsTab = "tracker" | "dashboard" | "atribucion" | "afiliados" | "config"
+/**
+ * Sección de Ads: TRES pestañas, no cinco (Marco, 2026-07-31).
+ *
+ * Antes había Tracker, Dashboard, Atribución, Afiliados y Configuración. Se entraba y lo
+ * primero era una tabla técnica de eventos, no si estabas ganando o perdiendo dinero.
+ * Atribución además estaba vacía (era un cartel de "próximamente"), así que ocupaba una
+ * pestaña sin dar nada.
+ *
+ *   Campañas  qué gastas y qué produce
+ *   Eventos   si la medición funciona, funnel por funnel
+ *   Ajustes   píxel, token, cuenta y el interruptor prueba/real
+ *
+ * Afiliados se movió a su propia sección (`/afiliados`): son fuentes de tráfico de
+ * personas, no configuración de anuncios.
+ */
+
+type AdsTab = "campanas" | "eventos" | "ajustes"
 
 const TABS: { id: AdsTab; label: string; icon: typeof Activity; description: string }[] = [
   {
-    id: "tracker",
-    label: "Tracker",
-    icon: Activity,
-    description: "Audit trail de los eventos CAPI enviados a Meta — debug + envío manual",
-  },
-  {
-    id: "dashboard",
-    label: "Dashboard",
+    id: "campanas",
+    label: "Campañas",
     icon: BarChart3,
-    description: "Métricas live de Meta Ads (spend, ROAS, CTR, top creatives)",
+    description: "Lo que gastas y lo que produce, en vivo desde Meta",
   },
   {
-    id: "atribucion",
-    label: "Atribución",
-    icon: GitBranch,
-    description: "Funnel breakdown + cost per stage cruzando Meta + datos propios",
+    id: "eventos",
+    label: "Eventos",
+    icon: Activity,
+    description: "Si la medición funciona: un funnel por fila, con lo que dispara y cuándo llegó",
   },
   {
-    id: "afiliados",
-    label: "Afiliados",
-    icon: Users,
-    description: "Fuentes de tráfico (Paolo, JP…) con su link único y sus stats (leads, agendados, alumnos, revenue)",
-  },
-  {
-    id: "config",
-    label: "Configuración",
+    id: "ajustes",
+    label: "Ajustes",
     icon: SettingsIcon,
-    description: "Pixel ID, CAPI token, Ad Account, test event, eventos configurados",
+    description: "Píxel, token, cuenta publicitaria y el interruptor de prueba o real",
   },
 ]
 
@@ -52,14 +56,14 @@ interface Props {
 }
 
 export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEventCode }: Props) {
-  const [tab, setTab] = useState<AdsTab>("tracker")
+  // Se abre en Eventos: lo primero que hay que saber es si esto está midiendo.
+  const [tab, setTab] = useState<AdsTab>("eventos")
   const active = TABS.find((t) => t.id === tab)!
 
   return (
     <>
       <ShellHeader title="Ads" />
       <div className="flex flex-col gap-5 p-4 pb-mobile-nav md:gap-6 md:p-6">
-        {/* Tabs */}
         <div className="-mx-4 flex items-center gap-2 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
           {TABS.map((t) => {
             const Icon = t.icon
@@ -83,15 +87,30 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
           })}
         </div>
 
-        {/* Header */}
         <div>
           <h2 className="font-heading text-base font-semibold text-foreground">{active.label}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
         </div>
 
-        {/* Contenido */}
-        {tab === "tracker" && <AdsTrackerPanel />}
-        {tab === "config" && (
+        {tab === "campanas" && <AdsInsights />}
+
+        {tab === "eventos" && (
+          <div className="flex flex-col gap-8">
+            <AdsEventsHealth />
+            <div>
+              <h3 className="font-heading text-sm font-semibold text-foreground">
+                Todos los envíos, uno a uno
+              </h3>
+              <p className="mt-1 mb-4 text-sm text-muted-foreground">
+                El detalle de cada evento que salió hacia Meta, con su respuesta. Para cuando algo
+                falla y hay que ver por qué.
+              </p>
+              <AdsTrackerPanel />
+            </div>
+          </div>
+        )}
+
+        {tab === "ajustes" && (
           <AdsConfigPanel
             pixelIdMasked={pixelIdMasked}
             capiTokenMasked={capiTokenMasked}
@@ -99,24 +118,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
             hasTestEventCode={hasTestEventCode}
           />
         )}
-        {tab === "dashboard" && <AdsInsights />}
-        {tab === "afiliados" && <AdsAffiliatesPanel />}
-        {tab === "atribucion" && (
-          <ComingSoon
-            title="Atribución del funnel"
-            desc="Próximamente: visitas → leads → trials → bumps → llamadas → WON Mes/Año, conversion % entre cada paso, cost per stage (CPL, CPA, CAC), atribución por creative al WON Año (970€)."
-          />
-        )}
       </div>
     </>
-  )
-}
-
-function ComingSoon({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-sm border border-dashed border-border bg-card px-6 py-16 text-center">
-      <p className="font-heading text-sm text-foreground">{title}</p>
-      <p className="mt-2 max-w-md text-sm text-muted-foreground">{desc}</p>
-    </div>
   )
 }

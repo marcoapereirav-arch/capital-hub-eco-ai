@@ -57,6 +57,29 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   const [slug, setSlug] = useState(web.slug)
   const [steps, setSteps] = useState<StepLocal[]>(web.steps)
   const [showEdit, setShowEdit] = useState(false)
+  const [tracking, setTracking] = useState(web.trackingEnabled)
+  const [savingTracking, setSavingTracking] = useState(false)
+
+  // Enciende o apaga la medición de ESTE funnel. Es independiente de Draft/Published:
+  // un funnel puede estar publicado y no medir (el acceso al OS, por ejemplo).
+  // Optimista: se pinta al instante y se revierte si el guardado falla.
+  async function toggleTracking() {
+    const next = !tracking
+    setTracking(next)
+    setSavingTracking(true)
+    try {
+      const res = await fetch(`/api/admin/webs/${web.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackingEnabled: next }),
+      })
+      if (!res.ok) setTracking(!next)
+    } catch {
+      setTracking(!next)
+    } finally {
+      setSavingTracking(false)
+    }
+  }
 
   const effectiveBaseUrl = baseUrlForHostname(hostname, publicBaseUrl)
   const Icon = TYPE_ICONS[web.type]
@@ -124,6 +147,40 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
           </div>
         </div>
       </header>
+
+      {/* Medición Meta — interruptor propio, aparte de Draft/Published.
+          Publicado no obliga a medir: el acceso al OS está publicado y no manda nada. */}
+      <div className="flex items-center justify-between gap-3 rounded-sm border border-border bg-secondary/30 px-3 py-2">
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-foreground">Medición Meta</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+            {tracking
+              ? "Manda los eventos a Facebook Ads"
+              : "No manda nada, aunque esté publicado"}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={tracking}
+          aria-label="Medición Meta"
+          disabled={savingTracking}
+          onClick={toggleTracking}
+          className={cn(
+            "relative h-6 w-11 shrink-0 rounded-full border transition-colors disabled:opacity-50",
+            tracking
+              ? "border-[#22C55E]/50 bg-[#22C55E]"
+              : "border-border bg-secondary",
+          )}
+        >
+          <span
+            className={cn(
+              "absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white transition-all",
+              tracking ? "left-[24px]" : "left-[3px]",
+            )}
+          />
+        </button>
+      </div>
 
       {/* Description */}
       {web.description && (

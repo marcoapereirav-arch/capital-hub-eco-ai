@@ -45,6 +45,9 @@ export const navSections: NavSection[] = [
       { title: "Automatizaciones", href: "/automatizaciones", icon: Zap },
       { title: "Lead Magnets", href: "/webs/lead-magnets", icon: Magnet },
       { title: "Ads", href: "/ads", icon: Megaphone },
+      // Afiliados salió de dentro de Ads (2026-07-31): son fuentes de tráfico de
+      // personas, no configuración de anuncios. Ver SOP marketing/09.
+      { title: "Afiliados", href: "/afiliados", icon: Users },
       { title: "Content Intel", href: "/content-intel", icon: Radar },
       { title: "Instagram", href: "/instagram", icon: Camera },
       { title: "ManyChat", href: "/manychat", icon: MessageSquare },

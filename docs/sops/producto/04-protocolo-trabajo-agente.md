@@ -424,3 +424,30 @@ que nunca llegó a construirse.
 cadena que también aparece en un comentario, o en otro archivo legítimo, y
 concluir en falso. La cadena que se busque tiene que existir **solo** en el
 código nuevo.
+
+---
+
+## REGLA #19 — Todo lo que le mando a Marco tiene que ABRIRSE de un clic
+
+Si le nombro un documento, una página o cualquier cosa que él pueda querer ver,
+**tiene que poder llegar ahí con un clic.** Nombrar un archivo y que no pase nada
+al pulsarlo es una entrega rota.
+
+**How to apply:**
+
+- **Documento del Knowledge:** el link va a la **página del OS** donde se lee
+  (`http://localhost:31XX/knowledge/<slug>` en local, `https://os.capitalhubapp.com/knowledge/<slug>`
+  publicado). Nunca al `.md` suelto: en su pantalla eso no abre nada.
+- **Pantalla del producto:** link completo con `http://`, no el nombre de la ruta.
+- **Si de verdad no hay nada que abrir** (un archivo interno, una tabla), entonces
+  se da la **ruta en un bloque de código en su propia línea**, para que la copie de
+  un toque. Nunca suelta dentro de una frase.
+- Antes de enviar: releer el mensaje y preguntarse *"¿cada cosa que he nombrado
+  aquí se abre?"*. Si algo no se abre, o se arregla el link o se quita.
+
+**Why:** Marco, 2026-07-31. Le entregué un SOP nuevo nombrando el archivo `.md` y
+al pulsarlo no pasaba nada: *"aquí estoy intentando dar al MD y no me clica y no
+me hace nada, o al menos que lo pueda copiar rápido"*. Un enlace que no abre le
+obliga a ir a buscarlo a mano, que es justo lo que yo tenía que ahorrarle.
+
+Va de la mano de la REGLA #10 (siempre entregar el link de localhost).

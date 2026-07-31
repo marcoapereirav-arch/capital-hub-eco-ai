@@ -16,6 +16,13 @@ export type Web = {
   description: string
   status: WebStatus
   hostname: WebHostname
+  /**
+   * Interruptor de medición Meta (píxel + API) de este funnel.
+   * Independiente de `status`: publicado NO obliga a medir (el acceso al OS está
+   * publicado y no debe mandar nada). Los funnels nuevos nacen apagados.
+   * Ver SOP marketing/09-eventos-meta-catalogo.
+   */
+  trackingEnabled: boolean
   createdAt: string
   updatedAt: string
 }

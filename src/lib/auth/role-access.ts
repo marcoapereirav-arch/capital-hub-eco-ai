@@ -87,6 +87,7 @@ const ALL_NAV_HREFS = [
   "/webs/lead-magnets",
   "/automatizaciones",
   "/ads",
+  "/afiliados",
   "/content-intel",
   "/instagram",
   "/manychat",

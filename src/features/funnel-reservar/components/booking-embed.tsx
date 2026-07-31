@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FUNNEL_RESERVAR } from "../config"
 import { LoadingScreen } from "@/components/ui/loading-screen"
+import { track } from "@/lib/meta/pixel-client"
+import { useViewContent } from "@/lib/meta/use-view-content"
 
 /**
  * Página /reservar — Calendly INLINE (online-coffee) como tarjeta blanca limpia sobre
@@ -25,6 +27,12 @@ export function BookingEmbed() {
   const ref = useRef<HTMLDivElement>(null)
   const [ready, setReady] = useState(false)
   const [height, setHeight] = useState(720)
+  // Evita mandar la reserva dos veces si Calendly repite el aviso.
+  const scheduled = useRef(false)
+
+  // Vio la página de reserva. Esta página antes no medía NADA: ni que entraran ni que
+  // reservaran. Ver SOP marketing/09.
+  useViewContent("Reserva de sesión · Calendly")
 
   const name = params.get("name") ?? params.get("nombre") ?? ""
   const email = params.get("email") ?? ""
@@ -67,6 +75,26 @@ export function BookingEmbed() {
       if (typeof e.origin !== "string" || !e.origin.includes("calendly.com")) return
       const data = e.data as { event?: string; payload?: { height?: string } }
       if (data?.event === "calendly.event_scheduled") {
+        // AQUÍ es el momento exacto de la reserva: Calendly avisa a la página en cuanto
+        // el usuario confirma día y hora, antes de que lo llevemos a la gracias.
+        //
+        // `Schedule` es el evento oficial de Meta para "reservó una cita", y es hacia el
+        // que optimiza esta campaña. `agenda_reserva` es el nuestro, para poder separar
+        // estas reservas de cualquier otra agenda futura. Van con el MISMO
+        // identificador, así que Meta cuenta una sola conversión.
+        //
+        // No dependemos del webhook de Calendly (que sigue pendiente de Adrián): esto
+        // funciona hoy, desde el navegador y desde nuestro servidor.
+        if (!scheduled.current) {
+          scheduled.current = true
+          track({
+            event: "agenda_reserva",
+            standardEvent: "Schedule",
+            email: email || undefined,
+            contentName: "Reserva de sesión · Calendly",
+            custom: { funnel: "reservar" },
+          }).catch(() => {})
+        }
         router.push("/reservar/gracias")
         return
       }
@@ -81,7 +109,7 @@ export function BookingEmbed() {
     }
     window.addEventListener("message", onMessage)
     return () => window.removeEventListener("message", onMessage)
-  }, [router])
+  }, [router, email])
 
   return (
     <main
