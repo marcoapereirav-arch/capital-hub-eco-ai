@@ -82,8 +82,8 @@ export function TaskList() {
             key={task.id}
             onClick={() => setSelectedTask(task.id)}
             className={cn(
-              "grid grid-cols-[1fr_120px_100px_100px_80px] gap-2 px-4 py-2.5 border-b border-border cursor-pointer transition-colors hover:bg-accent/30",
-              selectedTaskId === task.id && "bg-accent/50"
+              "grid grid-cols-[1fr_120px_100px_100px_80px] gap-2 px-4 py-2.5 border-b border-border cursor-pointer transition-colors hover:bg-muted/30",
+              selectedTaskId === task.id && "bg-muted/50"
             )}
           >
             {/* Title + due date */}

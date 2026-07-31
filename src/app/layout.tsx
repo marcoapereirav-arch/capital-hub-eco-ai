@@ -1,19 +1,17 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google"
+import { Inter_Tight, JetBrains_Mono } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import PWARegister from "@/components/PWARegister"
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-})
-
+// Inter Tight es la UNICA familia de la marca (brandkit oficial, seccion Tipografia:
+// "Una sola familia: Inter Tight, de 400 a 900"). Antes se cargaba tambien Inter y
+// reclamaba el nombre --font-sans, que es el mismo nombre que usa el tema de estilos:
+// dos cosas distintas con el mismo nombre. Retirada.
 const interTight = Inter_Tight({
   subsets: ['latin'],
-  // Variable propia (no la pisa el stack Apple-first de --font-heading en globals),
-  // asi cuando la referenciamos explicitamente renderiza Inter Tight de verdad.
+  weight: ['400', '500', '600', '700', '800', '900'],
   variable: '--font-inter-tight',
 })
 
@@ -63,7 +61,6 @@ export default function RootLayout({
       lang="es"
       className={cn(
         "dark",
-        inter.variable,
         interTight.variable,
         jetbrainsMono.variable
       )}

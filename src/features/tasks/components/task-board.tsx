@@ -85,12 +85,12 @@ function DroppableColumn({
       <ScrollArea className="flex-1">
         <div
           className={`space-y-2.5 min-h-[80px] rounded-sm p-1 transition-colors ${
-            isOver ? "bg-accent/20 ring-1 ring-foreground/10" : ""
+            isOver ? "bg-muted/20 ring-1 ring-foreground/10" : ""
           }`}
         >
           {tasks.length === 0 ? (
             <div className={`flex items-center justify-center rounded-sm border border-dashed p-10 transition-colors ${
-              isOver ? "border-foreground/30 bg-accent/10" : "border-border"
+              isOver ? "border-foreground/30 bg-muted/10" : "border-border"
             }`}>
               <span className="text-xs text-muted-foreground/30">
                 {isOver ? "Soltar aqui" : "Sin tareas"}

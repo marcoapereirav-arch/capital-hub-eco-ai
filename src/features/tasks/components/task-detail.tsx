@@ -131,7 +131,7 @@ export function TaskDetail() {
             />
           ) : (
             <div
-              className="group flex items-start gap-2 cursor-pointer rounded-sm px-2 py-1 -mx-2 hover:bg-accent/30 transition-colors"
+              className="group flex items-start gap-2 cursor-pointer rounded-sm px-2 py-1 -mx-2 hover:bg-muted/30 transition-colors"
               onClick={() => setIsEditingTitle(true)}
             >
               <h2 className="text-base font-medium text-foreground leading-snug flex-1">

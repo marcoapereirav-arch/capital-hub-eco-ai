@@ -203,13 +203,13 @@ export function TaskFilters() {
         <div className="flex items-center border border-border rounded-sm">
           <button
             onClick={() => setViewMode("list")}
-            className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground")}
+            className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             <List className="h-3 w-3" /> Lista
           </button>
           <button
             onClick={() => setViewMode("board")}
-            className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", viewMode === "board" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground")}
+            className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", viewMode === "board" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             <LayoutGrid className="h-3 w-3" /> Board
           </button>
