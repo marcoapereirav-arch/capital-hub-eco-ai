@@ -224,3 +224,28 @@ Sin estas las rutas nuevas fallarán en runtime cuando ManyChat las llame, pero 
 - **Toda escritura a BD desde un endpoint público debe chequear el `error` retornado y propagarlo al response code.** Los webhooks que silencian errores son peligrosísimos — el caller (ManyChat) cree que entregó el mensaje y nunca reintenta; tú no te enteras hasta que ya hay 200 mensajes perdidos.
 - Cuando se pegan secrets manualmente en el dashboard de Vercel, **verificar que la longitud y prefijo coinciden con el formato esperado** (`sb_secret_*` para Supabase, `EAA*` para Meta corto, `IGAA*` para Meta IG long-lived, etc.). Un caracter perdido al copy-paste es un bug enterrado horas después.
 - `vercel env pull .env.vercel-production` permite descargar las env vars de producción y compararlas contra `.env.local`. Útil para diagnóstico post-incidente. Borrar el archivo después.
+
+
+## 2026-07-31: la guardia del workflow tumbo todos los despliegues
+
+**Sintoma:** dos despliegues de produccion seguidos en **Error a los 8 segundos**.
+La web seguia en pie sirviendo lo viejo, asi que desde fuera no se notaba nada.
+
+**Causa:** `scripts/check-flujo.mjs` gano una guardia que impide trabajar en la
+carpeta principal con una rama que no sea `dev`. Esta enganchada a `prebuild`, y
+`prebuild` **tambien corre en Vercel**. Alli el proyecto se clona en una carpeta
+unica, sin carpetas de chat y con la rama `master`: justo el patron que la
+guardia considera "alguien trabajando donde no debe". Resultado: todo despliegue
+fallaba antes de compilar una sola linea.
+
+**Arreglo:** la guardia se salta cuando `process.env.VERCEL` o `process.env.CI`
+estan puestas. Alli no hay nada que proteger, porque no hay dos chats pisandose.
+
+**La leccion, que vale para cualquier vigilante futuro:** un freno pensado para
+la maquina de quien trabaja **no puede correr igual en el servidor que publica**.
+Antes de enganchar algo a `prebuild`, preguntarse: *esto que comprueba, ¿existe
+en Vercel?* Si la respuesta es no, hay que saltarlo explicitamente.
+
+Y el fallo era dificil de leer: el mensaje hablaba de carpetas de chat, que en
+Vercel no significan nada. Un freno que se dispara donde no toca cuesta mas de
+diagnosticar que el problema que evita.

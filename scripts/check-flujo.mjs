@@ -92,7 +92,21 @@ const principal = worktrees[0]
 const esPrincipal = principal && realpathSync(principal.ruta) === realpathSync(RAIZ)
 const ramaAqui = git('rev-parse --abbrev-ref HEAD')
 
-if (esPrincipal && ramaAqui && ramaAqui !== 'dev') {
+/* Esta guardia es SOLO para la maquina de quien trabaja.
+ *
+ * El servidor que publica la web (Vercel) clona el proyecto en una carpeta
+ * unica, sin carpetas de chat y con la rama que le da la gana (`master`). Eso
+ * es exactamente lo que esta guardia considera "estas en la carpeta principal
+ * con una rama que no toca", asi que tumbaba TODOS los despliegues: la web se
+ * quedaba sirviendo lo viejo y el fallo no se parecia en nada a su causa.
+ *
+ * Ocurrio de verdad el 2026-07-31: dos despliegues seguidos en Error a los 8
+ * segundos, con produccion sin actualizarse.
+ *
+ * Alli no hay nada que proteger (no hay dos chats pisandose), asi que se salta. */
+const enServidorDePublicacion = Boolean(process.env.VERCEL || process.env.CI)
+
+if (!enServidorDePublicacion && esPrincipal && ramaAqui && ramaAqui !== 'dev') {
   problemas.push(
     `Estas trabajando en la CARPETA PRINCIPAL, con la rama \`${ramaAqui}\` puesta.\n` +
       `   Aqui NO se trabaja: es de donde nacen las ramas de los chats.\n` +
