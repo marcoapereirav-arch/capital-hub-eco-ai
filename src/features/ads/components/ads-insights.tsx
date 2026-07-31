@@ -66,25 +66,26 @@ export function AdsInsights() {
     return () => { cancelled = true }
   }, [preset])
 
+  // Los mensajes de error van en lenguaje normal y dicen QUÉ HAY QUE HACER. Antes ponía
+  // "Token Meta sin permiso ads_read", que no le dice nada a quien no es técnico.
   if (!response?.configured && response) {
     return (
       <ErrorBanner
-        title="Meta Ads no configurado"
-        message="En construcción — pendiente conectar Marketing API."
+        title="Falta la cuenta publicitaria"
+        message="No está guardado el número de la cuenta de anuncios ni la llave para leerla. Sin eso no se pueden traer las campañas."
       />
     )
   }
 
   if (response?.error) {
-    // Errores típicos de Meta cuando el token no tiene permiso correcto
-    const isPermissionError = /permission|ads_read|access_token|capability/i.test(response.error)
+    const sinPermiso = /permission|ads_read|access_token|capability/i.test(response.error)
     return (
       <ErrorBanner
-        title={isPermissionError ? "Token Meta sin permiso ads_read" : "Meta API no disponible"}
+        title={sinPermiso ? "La llave de Meta no puede leer las campañas" : "Meta no responde"}
         message={
-          isPermissionError
-            ? "El token actual (CAPI) no tiene acceso a Marketing API. Se necesita un token específico con scope ads_read para ver Insights de Ads."
-            : "No se pudo conectar con Meta. Reintentando en próximos minutos."
+          sinPermiso
+            ? "La llave que tenemos sirve para MANDAR conversiones, pero no para LEER lo que gastan tus campañas. Son dos permisos distintos. El dueño de la cuenta de anuncios tiene que autorizar la lectura y generar una llave nueva. Mientras tanto, la medición de los funnels funciona igual: lo único que no se ve aquí es el gasto."
+            : "No se pudo conectar con Meta ahora mismo. Vuelve a intentarlo en unos minutos."
         }
       />
     )

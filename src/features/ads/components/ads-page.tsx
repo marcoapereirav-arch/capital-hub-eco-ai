@@ -3,11 +3,12 @@
 import { useState } from "react"
 import { Activity, BarChart3, Settings as SettingsIcon } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
 import { AdsInsights } from "./ads-insights"
-import { AdsEventsHealth } from "./ads-events-health"
+import { AdsEventsHealth, RegistroTecnico } from "./ads-events-health"
 
 /**
  * Sección de Ads: TRES pestañas, no cinco (Marco, 2026-07-31).
@@ -63,7 +64,10 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
   return (
     <>
       <ShellHeader title="Ads" />
-      <div className="flex flex-col gap-5 p-4 pb-mobile-nav md:gap-6 md:p-6">
+      {/* PageContainer: márgenes y ancho máximo estándar del OS. Sin él la pantalla se
+          pegaba a los bordes de la aplicación. El candado `npm run check:layout` impide
+          que vuelva a pasar. */}
+      <PageContainer className="pb-mobile-nav">
         <div className="-mx-4 flex items-center gap-2 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
           {TABS.map((t) => {
             const Icon = t.icon
@@ -95,18 +99,11 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
         {tab === "campanas" && <AdsInsights />}
 
         {tab === "eventos" && (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-4">
             <AdsEventsHealth />
-            <div>
-              <h3 className="font-heading text-sm font-semibold text-foreground">
-                Todos los envíos, uno a uno
-              </h3>
-              <p className="mt-1 mb-4 text-sm text-muted-foreground">
-                El detalle de cada evento que salió hacia Meta, con su respuesta. Para cuando algo
-                falla y hay que ver por qué.
-              </p>
+            <RegistroTecnico>
               <AdsTrackerPanel />
-            </div>
+            </RegistroTecnico>
           </div>
         )}
 
@@ -118,7 +115,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
             hasTestEventCode={hasTestEventCode}
           />
         )}
-      </div>
+      </PageContainer>
     </>
   )
 }

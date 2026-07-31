@@ -10,10 +10,11 @@
     "lint": "next lint",
     "check:skills": "node scripts/check-skills.mjs",
     "check:flujo": "node scripts/check-flujo.mjs",
+    "check:layout": "node scripts/check-layout.mjs",
     "chat:nuevo": "node scripts/chat-nuevo.mjs",
     "chat:cerrar": "node scripts/chat-cerrar.mjs",
-    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs",
-    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs"
+    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs",
+    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
