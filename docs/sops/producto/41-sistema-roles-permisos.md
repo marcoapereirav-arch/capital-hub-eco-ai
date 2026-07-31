@@ -136,3 +136,44 @@ Cualquier `super_admin` / `admin` puede impersonar visualmente un rol no-admin p
   - formador: 3 secciones en OS + ADMIN en App para editar su formación
   - closer + setter: 3 secciones (dashboard + operaciones + CRM)
 - **2026-06-17:** Confirmado que el formador en la App debe tener rol ADMIN (mapeo vía Magic Link Bridge cuando exista).
+
+
+## La matriz de Equipo se deriva del menu (2026-07-31)
+
+**El problema:** habia **dos listas de secciones escritas a mano**. Una en
+`src/features/shell/components/nav-config.ts` (el menu lateral) y otra dentro de
+`src/app/api/admin/role-permissions/route.ts` (la matriz de Equipo). Cada seccion
+nueva habia que escribirla en los dos sitios.
+
+Marco lo detecto al no poder dar acceso a Tutoriales: la seccion estaba en el
+menu pero **no tenia fila en la matriz**, asi que no habia forma de concedersela
+a ningun rol. Ademas la matriz arrastraba dos filas (`/contactos` sin entrada de
+menu y una `/operaciones (alt)` duplicada) que ya no correspondian.
+
+**El arreglo:** la segunda lista **desaparece**. La matriz se construye leyendo
+`navSections` del menu. Cualquier seccion nueva aparece sola, para siempre.
+
+Queda una unica excepcion, `RUTAS_SIN_MENU`, para pantallas a las que se llega
+desde dentro de otra seccion y que aun asi necesitan permiso propio. Cada linea
+dice por que existe. Hoy son dos: `/contactos` y `/operaciones`.
+
+**No se hizo con una skill.** Marco pregunto si hacia falta crear una que
+recordara actualizar la matriz al añadir una seccion. Una skill es un
+recordatorio: sigue dependiendo de que alguien se acuerde. Borrar la lista
+duplicada elimina la posibilidad del olvido. Mismo criterio que la regla de
+fabrica: *una regla sin la maquina que la ejecuta no se cumple*.
+
+**Tambien se quitaron los permisos escritos a mano** en el desplegable de
+invitar (`ROLE_OPTIONS.desc` decia "Dashboard / Operaciones / CRM"). Esa frase
+envejecia sola y acababa diciendo lo contrario de lo que hacia el sistema. Ahora
+solo se anota lo que la matriz NO cubre (que super_admin lo ve todo, y que el
+formador es administrador de su formacion en la App).
+
+**`/perfil` no entra en la matriz** a proposito: es la ficha de cada uno y todo
+el mundo tiene que poder abrir la suya.
+
+**Comprobado** con `.test-artifacts/verificar-equipo.mjs`: se leen las secciones
+del menu ya pintado, se comparan con las filas de la matriz, y se enciende y
+apaga el acceso a Tutoriales comprobando que persiste tras recargar. Dos pasadas
+en verde. La comprobacion falla a proposito si lee 0 secciones del menu: comparar
+contra una lista vacia no comprueba nada.

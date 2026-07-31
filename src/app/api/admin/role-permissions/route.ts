@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
+import { navSections } from "@/features/shell/components/nav-config"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -13,35 +14,47 @@ function getAdminClient() {
 }
 
 /**
- * Lista canónica de items del nav OS. Cada row = (label, href).
- * UI matriz: filas = roles (sin super_admin), columnas = estos items.
- * super_admin tiene siempre acceso a todo (no se chequea en BD).
+ * Las secciones de la matriz SE DERIVAN DEL MENU LATERAL. No se escriben aqui.
+ *
+ * Antes habia una segunda lista escrita a mano en este archivo, y el menu tenia
+ * la suya. Cada seccion nueva habia que escribirla en los dos sitios, asi que
+ * tarde o temprano se desincronizaban: al añadir Tutoriales (2026-07-31) entro
+ * en el menu pero no en la matriz, y no habia forma de darle acceso a nadie.
+ * Ademas la matriz arrastraba dos filas de secciones que ya no existian.
+ *
+ * Derivandola, cualquier seccion nueva aparece sola y para siempre.
  */
-const NAV_SECTIONS = [
-  // Operaciones
-  { href: "/dashboard", label: "Dashboard", group: "Operaciones" },
-  { href: "/overview", label: "Operaciones", group: "Operaciones" },
-  { href: "/operaciones", label: "Operaciones (alt)", group: "Operaciones" },
-  { href: "/knowledge", label: "Knowledge", group: "Operaciones" },
-  { href: "/team", label: "Equipo", group: "Operaciones" },
-  // Marketing
-  { href: "/crm", label: "CRM", group: "Marketing" },
+function seccionesDelMenu() {
+  return navSections.flatMap((seccion) =>
+    seccion.items.map((item) => ({
+      href: item.href,
+      label: item.title,
+      group: seccion.label,
+    })),
+  )
+}
+
+/**
+ * Rutas que NO tienen entrada propia en el menu pero si necesitan permiso.
+ *
+ * Son pantallas a las que se llega desde dentro de otra seccion. Si no
+ * estuvieran aqui, no habria forma de abrirlas ni cerrarlas por rol.
+ * Esta lista es la UNICA excepcion, y cada linea dice por que existe.
+ */
+const RUTAS_SIN_MENU = [
+  // Se abre desde CRM, y `ROLE_ROUTES` la concede por separado.
   { href: "/contactos", label: "Contactos", group: "Marketing" },
-  { href: "/calendario", label: "Calendario", group: "Marketing" },
-  { href: "/email-marketing", label: "Email Marketing", group: "Marketing" },
-  { href: "/webs", label: "Webs", group: "Marketing" },
-  { href: "/sistemas", label: "Sistema visual", group: "Marketing" },
-  { href: "/webs/lead-magnets", label: "Lead Magnets", group: "Marketing" },
-  { href: "/automatizaciones", label: "Automatizaciones", group: "Marketing" },
-  { href: "/ads", label: "Ads", group: "Marketing" },
-  { href: "/content-intel", label: "Content Intel", group: "Marketing" },
-  { href: "/instagram", label: "Instagram", group: "Marketing" },
-  { href: "/manychat", label: "ManyChat", group: "Marketing" },
-  // Producto
-  { href: "/invitaciones", label: "Invitaciones App", group: "Producto" },
-  { href: "/integrations", label: "Integraciones", group: "Producto" },
-  { href: "/mision", label: "Misión", group: "Producto" },
+  // Prefijo de las pantallas de Operaciones (board, tareas, proyectos, areas).
+  { href: "/operaciones", label: "Operaciones (pantallas internas)", group: "Operaciones" },
 ]
+
+function catalogoDeSecciones() {
+  const delMenu = seccionesDelMenu()
+  const yaEstan = new Set(delMenu.map((s) => s.href))
+  // Si alguna ruta extra acaba teniendo su propia entrada en el menu, la del
+  // menu manda y no se duplica la fila.
+  return [...delMenu, ...RUTAS_SIN_MENU.filter((r) => !yaEstan.has(r.href))]
+}
 
 const EDITABLE_ROLES = ["marketing", "closer", "setter", "formador"] as const
 
@@ -66,7 +79,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    sections: NAV_SECTIONS,
+    sections: catalogoDeSecciones(),
     roles: EDITABLE_ROLES,
     allowed: Object.fromEntries(
       Object.entries(allowed).map(([role, set]) => [role, Array.from(set)])
@@ -108,7 +121,8 @@ export async function PUT(req: NextRequest) {
   if (!EDITABLE_ROLES.includes(role as typeof EDITABLE_ROLES[number])) {
     return NextResponse.json({ error: "Rol no editable" }, { status: 400 })
   }
-  if (!NAV_SECTIONS.find((s) => s.href === route_href)) {
+  // Mismo catalogo que ve la matriz: si no se puede ver, no se puede conceder.
+  if (!catalogoDeSecciones().find((s) => s.href === route_href)) {
     return NextResponse.json({ error: "route_href no reconocido" }, { status: 400 })
   }
 

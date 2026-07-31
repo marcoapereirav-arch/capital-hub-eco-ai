@@ -25,14 +25,17 @@ type Invitation = {
   created_at: string
 }
 
-// Permisos por rol según SOP 41 (sistema de roles y permisos del OS).
-// Fuente de verdad: src/lib/auth/role-access.ts → ROLE_ROUTES.
+/* Los roles que existen. A proposito NO llevan escrita la lista de secciones a
+ * la que acceden: eso lo manda la matriz de abajo, que se puede cambiar en
+ * cualquier momento. Una lista escrita aqui envejeceria mal y acabaria diciendo
+ * lo contrario de lo que hace el sistema. Lo unico que se anota es lo que la
+ * matriz NO cubre. */
 const ROLE_OPTIONS = [
-  { value: "super_admin", label: "Super Admin", desc: "Acceso total a todo el OS + Equipo + Knowledge + 'Ver como rol'" },
-  { value: "marketing", label: "Marketing", desc: "Dashboard · Operaciones · CRM · Webs" },
-  { value: "closer", label: "Closer", desc: "Dashboard · Operaciones · CRM" },
-  { value: "setter", label: "Setter", desc: "Dashboard · Operaciones · CRM" },
-  { value: "formador", label: "Formador", desc: "Dashboard · Operaciones · CRM · En la App es ADMIN para editar su formación" },
+  { value: "super_admin", label: "Super Admin", desc: "Acceso total. No se le puede quitar nada desde la matriz." },
+  { value: "marketing", label: "Marketing", desc: null },
+  { value: "closer", label: "Closer", desc: null },
+  { value: "setter", label: "Setter", desc: null },
+  { value: "formador", label: "Formador", desc: "En la App es administrador de su propia formación." },
 ]
 
 const ROLE_COLORS: Record<string, string> = {
@@ -115,7 +118,6 @@ export function TeamPage() {
           ) : (
             <div className="rounded-md border border-border divide-y divide-border">
               {members.map((m) => {
-                const roleOpt = ROLE_OPTIONS.find((r) => r.value === m.role)
                 return (
                   <div key={m.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
