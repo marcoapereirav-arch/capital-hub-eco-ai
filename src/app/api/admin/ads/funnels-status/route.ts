@@ -107,11 +107,11 @@ export async function GET() {
       status: web?.status ?? "sin registrar",
       trackingEnabled: web?.trackingEnabled ?? false,
       events,
-      // Verde solo si mide Y todos los eventos que espera han llegado alguna vez.
-      healthy:
-        (web?.trackingEnabled ?? false) &&
-        events.length > 0 &&
-        events.every((e) => !e.neverSeen && e.failed === 0),
+      // Verde = está midiendo y Meta no ha rechazado ningún envío.
+      // Un evento que aún no ha saltado NO cuenta como fallo: significa que nadie ha
+      // hecho esa acción todavía, no que esté roto. Confundirlo hacía que la pantalla
+      // gritara "está roto" el día que se conectaba un evento nuevo.
+      healthy: (web?.trackingEnabled ?? false) && events.every((e) => e.failed === 0),
     }
   })
 

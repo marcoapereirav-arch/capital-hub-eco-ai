@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertTriangle, Check, ChevronDown, Minus, RefreshCw, Target, X } from "lucide-react"
+import { Check, ChevronDown, Minus, RefreshCw, Target, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
@@ -89,9 +89,16 @@ export function AdsEventsHealth() {
 
   const funnels = data?.funnels ?? []
   const midiendo = funnels.filter((f) => f.trackingEnabled)
-  const rotos = midiendo.filter((f) => !f.healthy)
   const enPrueba = data?.capiMode === "test"
-  const todoBien = !enPrueba && midiendo.length > 0 && rotos.length === 0
+
+  // Roto = un envío que Meta RECHAZÓ. Que un evento no haya saltado todavía NO es un
+  // fallo: significa que nadie ha hecho esa acción desde que se conectó. Confundir las
+  // dos cosas hace que la pantalla grite "está roto" cuando lo único que pasa es que
+  // aún no ha entrado nadie.
+  const conFallo = midiendo.filter((f) => f.events.some((e) => e.failed > 0))
+  const sinEstrenar = midiendo.reduce((a, f) => a + f.events.filter((e) => e.neverSeen).length, 0)
+  const llegando = midiendo.reduce((a, f) => a + f.events.filter((e) => !e.neverSeen).length, 0)
+  const todoBien = !enPrueba && midiendo.length > 0 && conFallo.length === 0
 
   return (
     <div className="flex flex-col gap-4" style={{ fontFamily: TIPO }}>
@@ -114,20 +121,22 @@ export function AdsEventsHealth() {
             >
               {enPrueba
                 ? "Meta está tirando tus conversiones"
-                : rotos.length > 0
-                  ? `${rotos.length} ${rotos.length === 1 ? "funnel tiene" : "funnels tienen"} un evento que no llega`
-                  : midiendo.length === 0
-                    ? "No hay ningún funnel midiendo"
-                    : "Todo está midiendo correctamente"}
+                : midiendo.length === 0
+                  ? "No hay ningún funnel midiendo"
+                  : conFallo.length > 0
+                    ? `${conFallo.length} ${conFallo.length === 1 ? "funnel tiene envíos" : "funnels tienen envíos"} que Meta rechazó`
+                    : "Todo conectado y mandando en real"}
             </h3>
             <p className="mt-2 max-w-xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
               {enPrueba
                 ? "El envío está en modo prueba: Meta recibe los eventos y los descarta. No optimizan tus campañas ni construyen audiencias. Cámbialo en Ajustes."
-                : rotos.length > 0
-                  ? "Un evento en rojo no significa que no haya entrado nadie: significa que no está saltando."
-                  : midiendo.length === 0
-                    ? "Enciende la medición de un funnel desde su tarjeta en Webs."
-                    : `${midiendo.length} funnels mandando eventos reales a Facebook Ads.`}
+                : midiendo.length === 0
+                  ? "Enciende la medición de un funnel desde su tarjeta en Webs."
+                  : conFallo.length > 0
+                    ? "Un envío rechazado sí es un fallo real. Míralo en el registro técnico de abajo."
+                    : sinEstrenar > 0
+                      ? `${midiendo.length} funnels mandando eventos reales. Hay ${sinEstrenar} ${sinEstrenar === 1 ? "evento que aún no ha saltado" : "eventos que aún no han saltado"} porque nadie ha hecho esa acción todavía. No es un fallo.`
+                      : `${midiendo.length} funnels mandando eventos reales a Facebook Ads.`}
             </p>
           </div>
 
@@ -146,16 +155,8 @@ export function AdsEventsHealth() {
         {/* Tres números, a la vista */}
         <div className="mt-6 grid grid-cols-3 gap-3">
           <Dato n={midiendo.length} label="funnels midiendo" />
-          <Dato
-            n={midiendo.reduce((a, f) => a + f.events.filter((e) => !e.neverSeen).length, 0)}
-            label="eventos llegando"
-            color={VERDE_CLARO}
-          />
-          <Dato
-            n={midiendo.reduce((a, f) => a + f.events.filter((e) => e.neverSeen).length, 0)}
-            label="sin llegar nunca"
-            color={ROJO}
-          />
+          <Dato n={llegando} label="eventos ya confirmados" color={VERDE_CLARO} />
+          <Dato n={sinEstrenar} label="aún sin estrenar" color="#7C818A" />
         </div>
       </section>
 
@@ -224,16 +225,20 @@ export function AdsEventsHealth() {
                   <div className="text-right">
                     <p
                       className="text-[14px]"
-                      style={{ fontWeight: 600, color: e.neverSeen ? ROJO : "#A6AAB2" }}
+                      style={{ fontWeight: 600, color: e.neverSeen ? "#7C818A" : "#A6AAB2" }}
                     >
-                      {e.neverSeen ? "nunca ha saltado" : hace(e.lastAt)}
+                      {e.neverSeen ? "sin estrenar" : hace(e.lastAt)}
                     </p>
-                    {!e.neverSeen && (
-                      <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
-                        {e.sent} {e.sent === 1 ? "envío" : "envíos"}
-                        {e.failed > 0 && <span style={{ color: ROJO }}> · {e.failed} fallaron</span>}
-                      </p>
-                    )}
+                    <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
+                      {e.neverSeen ? (
+                        "nadie lo ha hecho aún"
+                      ) : (
+                        <>
+                          {e.sent} {e.sent === 1 ? "envío" : "envíos"}
+                          {e.failed > 0 && <span style={{ color: ROJO }}> · {e.failed} fallaron</span>}
+                        </>
+                      )}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -274,10 +279,15 @@ function Chip({ texto, activo }: { texto: string; activo: boolean }) {
   )
 }
 
+/**
+ * Rojo SOLO cuando Meta rechazó un envío. Un evento sin estrenar va en gris: está
+ * conectado, lo que pasa es que nadie ha hecho esa acción todavía. Pintarlo de rojo
+ * hacía leer "roto" donde no lo había.
+ */
 function EstadoEvento({ evento }: { evento: EventRow }) {
-  if (evento.neverSeen) return <X className="h-[18px] w-[18px] shrink-0" style={{ color: ROJO }} />
-  if (evento.failed > 0)
-    return <AlertTriangle className="h-[18px] w-[18px] shrink-0" style={{ color: AMBAR }} />
+  if (evento.failed > 0) return <X className="h-[18px] w-[18px] shrink-0" style={{ color: ROJO }} />
+  if (evento.neverSeen)
+    return <Minus className="h-[18px] w-[18px] shrink-0" style={{ color: "#7C818A" }} />
   return <Check className="h-[18px] w-[18px] shrink-0" style={{ color: VERDE_CLARO }} />
 }
 

@@ -67,7 +67,8 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
       {/* PageContainer: márgenes y ancho máximo estándar del OS. Sin él la pantalla se
           pegaba a los bordes de la aplicación. El candado `npm run check:layout` impide
           que vuelva a pasar. */}
-      <PageContainer className="pb-mobile-nav">
+      {/* pb-24 extra: el botón flotante de "Registrar venta" tapaba la última fila. */}
+      <PageContainer className="pb-mobile-nav [&>*:last-child]:mb-24">
         <div className="-mx-4 flex items-center gap-2 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
           {TABS.map((t) => {
             const Icon = t.icon
