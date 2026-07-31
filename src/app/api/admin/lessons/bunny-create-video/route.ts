@@ -29,6 +29,22 @@ export const runtime = "nodejs"
  * (típicamente 50GB por vídeo) en chunks de 50-100MB.
  *
  * Doc Bunny TUS: https://docs.bunny.net/reference/tus-resumable-uploads
+ *
+ * ---------------------------------------------------------------------------
+ * PENDIENTE DE SEGURIDAD (detectado 2026-07-31, ver SOP producto/61)
+ *
+ * Esta ruta NO comprueba quien llama. Cualquiera que sepa la direccion obtiene
+ * una firma de subida a Bunny valida 24 horas. Las rutas de carpetas ya se
+ * cerraron con `quienLlama` (`lib/bunny-acceso.ts`); esta se quedo fuera.
+ *
+ * NO se cierra aqui a proposito: la App llama SIN cabecera `Authorization`
+ * (`web/src/features/estudio/InspectorLeccion.tsx`), asi que cerrarla hoy
+ * dejaria a los formadores sin poder subir lecciones. El arreglo es en dos
+ * pasos y en este orden:
+ *   1. App: mandar el token de sesion en `Authorization` al llamar aqui.
+ *   2. OS: exigir `quienLlama(...)` en esta ruta.
+ * Invertir el orden rompe las subidas en produccion.
+ * ---------------------------------------------------------------------------
  */
 
 function corsHeaders(origin: string | null): Record<string, string> {
