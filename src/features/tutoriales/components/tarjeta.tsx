@@ -9,6 +9,8 @@ type Props = {
   libraryId: string
   cdnHostname: string
   esAdmin: boolean
+  seleccionado: boolean
+  onSeleccionar: () => void
   onAbrir: () => void
   onPublicar: (publicar: boolean) => void
   onRenombrar: () => void
@@ -17,13 +19,17 @@ type Props = {
 }
 
 /**
- * La ficha de un tutorial.
+ * La ficha de un video.
  *
- * Visual por delante del texto (REGLA #15): miniatura grande, duracion a la
- * vista y el titulo debajo. Nada de una lista de enlaces.
+ * Un clic la selecciona, dos la reproducen. Igual que en Drive, y que las
+ * carpetas: si abrir una carpeta necesita dos clics y abrir un video uno, la
+ * misma pantalla estaria enseñando dos reglas distintas.
+ *
+ * Visual por delante del texto: miniatura grande y duracion a la vista.
  */
 export function Tarjeta({
-  tutorial, libraryId, cdnHostname, esAdmin, onAbrir, onPublicar, onRenombrar, onMover, onBorrar,
+  tutorial, libraryId, cdnHostname, esAdmin, seleccionado,
+  onSeleccionar, onAbrir, onPublicar, onRenombrar, onMover, onBorrar,
 }: Props) {
   const fuente = comoSeReproduce(tutorial, libraryId, cdnHostname)
   const duracion = duracionLegible(tutorial.duracion_seg)
@@ -31,14 +37,35 @@ export function Tarjeta({
   const borrador = tutorial.status === "draft"
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-[#2A2D34] bg-[#0F0F12] transition hover:border-[#22C55E]/40">
-      <button
-        type="button"
-        onClick={onAbrir}
-        disabled={sinVideo}
-        className="relative aspect-video w-full overflow-hidden bg-[#15161A] disabled:cursor-not-allowed"
-        aria-label={sinVideo ? `${tutorial.titulo} (todavía sin vídeo)` : `Reproducir ${tutorial.titulo}`}
-      >
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Vídeo ${tutorial.titulo}`}
+      /* Igual que en las carpetas: el clic no sube al fondo, que es donde vive
+         el "deseleccionar". Si subiera, seleccionar y deseleccionar ocurririan
+         en el mismo clic y no se veria nada. */
+      onClick={(e) => {
+        e.stopPropagation()
+        onSeleccionar()
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation()
+        if (!sinVideo) onAbrir()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !sinVideo) onAbrir()
+        if (e.key === " ") {
+          e.preventDefault()
+          onSeleccionar()
+        }
+      }}
+      className={`group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-lg border transition ${
+        seleccionado
+          ? "border-[#22C55E] bg-[#22C55E]/[0.06]"
+          : "border-[#2A2D34] bg-[#0F0F12] hover:border-[#22C55E]/40"
+      }`}
+    >
+      <div className="relative aspect-video w-full overflow-hidden bg-[#15161A]">
         {fuente?.posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -48,8 +75,7 @@ export function Tarjeta({
             className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         ) : (
-          // Loom no da miniatura por esta via, y una ficha sin vídeo tampoco.
-          // En vez de un hueco gris, un fondo de marca con su icono.
+          // Ficha sin video: en vez de un hueco gris, fondo de marca con icono.
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#15161A] to-[#0F0F12]">
             <Video className="h-10 w-10 text-[#2A2D34]" />
           </div>
@@ -58,7 +84,11 @@ export function Tarjeta({
         {!sinVideo ? (
           <>
             <div className="absolute inset-0 bg-[#0F0F12]/20 transition group-hover:bg-[#0F0F12]/40" />
-            <span className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#22C55E] text-[#0F0F12] shadow-lg transition group-hover:scale-110">
+            <span
+              className={`absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#22C55E] text-[#0F0F12] shadow-lg transition ${
+                seleccionado ? "scale-110" : "group-hover:scale-110"
+              }`}
+            >
               <Play className="ml-0.5 h-6 w-6 fill-current" />
             </span>
           </>
@@ -76,7 +106,7 @@ export function Tarjeta({
             Borrador
           </span>
         ) : null}
-      </button>
+      </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
         <h3 className="text-sm font-semibold leading-snug text-white">{tutorial.titulo}</h3>
@@ -92,7 +122,11 @@ export function Tarjeta({
         <div className="flex items-center gap-2 border-t border-[#2A2D34] px-4 py-3">
           <button
             type="button"
-            onClick={() => onPublicar(borrador)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onPublicar(borrador)
+            }}
+            onDoubleClick={(e) => e.stopPropagation()}
             disabled={sinVideo && borrador}
             className="flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-white/70 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
           >

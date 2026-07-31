@@ -46,6 +46,8 @@ export function TutorialesPage() {
   const [error, setError] = useState<string | null>(null)
   const [viendo, setViendo] = useState<Tutorial | null>(null)
   const [panel, setPanel] = useState<Panel>(null)
+  // Un clic selecciona, dos abren. Como en Drive.
+  const [seleccion, setSeleccion] = useState<string | null>(null)
 
   const cargar = useCallback(async () => {
     try {
@@ -82,6 +84,8 @@ export function TutorialesPage() {
   const videosAqui = carpetaActual ? videos.filter((v) => v.folder_id === carpetaActual.id) : []
 
   function ir(id: string | null) {
+    // Al cambiar de sitio no se arrastra lo seleccionado del sitio anterior.
+    setSeleccion(null)
     router.push(id ? `/tutoriales?carpeta=${id}` : "/tutoriales")
   }
 
@@ -150,6 +154,11 @@ export function TutorialesPage() {
   return (
     <>
       <ShellHeader title="Tutoriales" />
+      {/* Un clic en el fondo deselecciona, como en cualquier escritorio.
+          El alto minimo NO es decorativo: sin el, esta capa solo mide lo que
+          miden las tarjetas, y el hueco vacio de debajo (que es justo donde
+          uno pulsa para soltar la seleccion) se queda fuera y no responde. */}
+      <div onClick={() => setSeleccion(null)} className="min-h-[calc(100dvh-4rem)]">
       <PageContainer>
         {carpetaActual ? <Migas camino={camino} onIr={ir} /> : null}
 
@@ -163,14 +172,23 @@ export function TutorialesPage() {
                 ? carpetaActual.descripcion || "Carpetas y vídeos que hay aquí dentro."
                 : "Cómo se usa el sistema, en vídeo. Para el equipo interno."}
             </p>
+            {/* La regla se dice una vez, en vez de que cada uno la descubra
+                haciendo clic y esperando a que pase algo. */}
+            <p className="mt-1 text-xs text-white/30">Doble clic para abrir.</p>
           </div>
 
           {esAdmin ? (
             <div className="flex shrink-0 flex-wrap gap-2">
               <button
                 type="button"
+                /* Se apaga mientras la direccion todavia apunta a una carpeta
+                   que aun no se ha cargado. Si no, al pulsar justo despues de
+                   entrar en una carpeta, la nueva colgaria de la ANTERIOR: el
+                   sitio donde crees que estas y el que sabe la pantalla no son
+                   el mismo durante ese instante. */
+                disabled={Boolean(carpetaActualId) && !carpetaActual}
                 onClick={() => setPanel({ tipo: "crear" })}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#2A2D34] px-3.5 py-2 text-sm font-medium text-white/75 transition hover:border-[#22C55E]/50 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#2A2D34] px-3.5 py-2 text-sm font-medium text-white/75 transition hover:border-[#22C55E]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <FolderPlus className="h-4 w-4" />
                 Nueva carpeta
@@ -223,6 +241,8 @@ export function TutorialesPage() {
                       carpeta={c}
                       dentro={contarDentro(c.id, carpetas, videos)}
                       esAdmin={esAdmin}
+                      seleccionada={seleccion === c.id}
+                      onSeleccionar={() => setSeleccion(c.id)}
                       onAbrir={() => ir(c.id)}
                       onRenombrar={() => setPanel({ tipo: "renombrar-carpeta", carpeta: c })}
                       onMover={() => setPanel({ tipo: "mover-carpeta", carpeta: c })}
@@ -244,6 +264,8 @@ export function TutorialesPage() {
                       libraryId={datos?.libraryId ?? ""}
                       cdnHostname={datos?.cdnHostname ?? ""}
                       esAdmin={esAdmin}
+                      seleccionado={seleccion === t.id}
+                      onSeleccionar={() => setSeleccion(t.id)}
                       onAbrir={() => setViendo(t)}
                       onPublicar={(p) => publicar(t, p)}
                       onRenombrar={() => setPanel({ tipo: "renombrar-video", video: t })}
@@ -257,6 +279,7 @@ export function TutorialesPage() {
           </div>
         )}
       </PageContainer>
+      </div>
 
       {viendo ? (
         <Reproductor

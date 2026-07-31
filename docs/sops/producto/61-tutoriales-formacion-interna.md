@@ -225,3 +225,41 @@ haya volumen que los pida.
 Sección completa: base de datos con candados, pantalla, panel de administración,
 subida a Bunny en `Tutoriales OS` y soporte de Loom. Carpeta "Montar tu
 formación" creada y esperando los dos vídeos de Marco. PRP-008.
+
+### 2026-07-31 (tarde): comportamiento de Drive y menú que se cortaba
+
+Marco: *"cuando le doy a los 3 botones se tapan las opciones"* y *"tiene que
+funcionar como Google Drive: un toque no hace nada, doble clic para entrar"*.
+
+- **El menú de tres puntos se pinta fuera de la tarjeta** (portal al `body`, con
+  posición fija). Colgaba dentro, y la tarjeta recorta lo que se sale
+  (`overflow-hidden`, necesario para que la portada respete las esquinas): por
+  eso salía cortado. Se abre hacia arriba si abajo no cabe, y se cierra al
+  desplazar en vez de quedarse flotando lejos de su botón.
+- **Un clic selecciona, dos abren**, igual en carpetas y en vídeos. Con teclado,
+  Enter abre directamente: pedir dos pulsaciones dejaría la carpeta inalcanzable
+  para quien no usa ratón.
+
+Tres fallos propios encontrados al verificar, y arreglados:
+
+1. **La selección se cancelaba sola.** El clic subía hasta el fondo de la página,
+   que es donde vive el "deseleccionar", así que seleccionar y deseleccionar
+   ocurrían en el mismo clic. Se veía como que no pasaba nada.
+2. **El hueco vacío de debajo no deseleccionaba.** Esa capa medía lo que medían
+   las tarjetas, así que justo donde uno pulsa para soltar la selección no había
+   nada que responder. Lleva alto mínimo.
+3. **Crear una carpeta justo al entrar en otra la colgaba del sitio anterior.**
+   Durante un instante la dirección ya apunta a la carpeta nueva pero la
+   pantalla todavía no la conoce. El botón se apaga en ese instante.
+
+**Verificado con 40 comprobaciones automáticas, tres pasadas seguidas en verde**
+(`.test-artifacts/verificar-todo.mjs`, se limpia sola al empezar y al terminar):
+crear, renombrar, nombre repetido rechazado, tres niveles, migas que navegan,
+Loom real reconocido y reproduciéndose, publicar y ocultar, mover vídeo, mover
+carpeta con los destinos que harían bucle bloqueados, borrado con nombre escrito,
+enlace a carpeta inexistente, y móvil a 390px con el menú entero dentro.
+
+**Aprendizaje de método:** las dos primeras pasadas dieron falsos fallos por
+restos de una pasada anterior que se rompió a medias (nombres repetidos que el
+producto rechazaba **correctamente**). Una prueba que no limpia su propio estado
+miente. Ahora limpia al empezar y al terminar.
