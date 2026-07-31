@@ -550,11 +550,15 @@ function HeroFit() {
            cuenta atrás ─ reservar
          El hueco grande antes de la promesa es a propósito: separa "cuándo es" de "qué
          te llevas", que son dos cosas distintas. */
-      .hero-col { width: 100%; max-width: 33rem; margin-inline: auto; text-align: center;
-        display: flex; flex-direction: column; align-items: center;
-        --sep: clamp(1.6rem, 7.4vw, 2.8rem);   /* separación fuerte entre bloques distintos */
-        --paso: clamp(0.8rem, 3.4vw, 1.6rem);   /* paso normal de bloque a bloque */
+      /* Las dos medidas del ritmo viven en el PADRE de todo (incluido el formulario).
+         Estaban en la columna de texto y, al sacar el formulario a su propia columna,
+         se quedaba sin ellas: su hueco caía a cero y se pegaba al contador. */
+      .hero-body {
+        --sep: clamp(1.7rem, 7.4vw, 2.8rem);    /* separación fuerte entre bloques distintos */
+        --paso: clamp(1rem, 4.3vw, 1.7rem);     /* paso normal de bloque a bloque */
       }
+      .hero-col { width: 100%; max-width: 33rem; margin-inline: auto; text-align: center;
+        display: flex; flex-direction: column; align-items: center; }
       /* El evento se acerca a la marca, pero SIN pegarse: son dos bloques, no uno. */
       .hero-when { margin-top: clamp(0.85rem, 3.6vw, 1.5rem); }
       .hero-promesa { margin-top: var(--sep); }
@@ -606,7 +610,8 @@ function HeroFit() {
       .hero-atmos { height: 250vw; max-height: 1500px; mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
 
       @media (min-width: 768px) {
-        .hero-col { max-width: 34rem; --sep: 1.9rem; --paso: 1.05rem; }
+        .hero-body { --sep: 1.9rem; --paso: 1.25rem; }
+        .hero-col { max-width: 34rem; }
         .hero-when { margin-top: 1.1rem; }
         .hero-h1 { font-size: 38px; max-width: 17ch; }
         .hero-note { font-size: 15px; max-width: none; }
@@ -635,30 +640,31 @@ function HeroFit() {
       @media (min-width: 1024px) {
         /* Tamaños grandes a propósito: en escritorio hay altura de sobra y, si el
            contenido se queda pequeño, la página se llena de huecos muertos. */
-        .hero-col { max-width: 100%; --sep: 2.4rem; --paso: 1.45rem; }
+        .hero-body { --sep: 2.1rem; --paso: 1.35rem; }
+        .hero-col { max-width: 100%; }
         .hero-when { margin-top: 0; }
         /* La tarjeta arranca a la MISMA altura que el sello del evento, no a media
            página: es lo que hacía que las dos columnas se vieran desalineadas. */
-        .hero-card { margin-top: 0; width: 100%; max-width: none; padding: 1.75rem; }
+        .hero-card { margin-top: 0; width: 100%; max-width: none; padding: 1.9rem; }
         /* El texto no llena la columna entera: medida corta y centrada dentro de ella,
            para que el bloque se lea como un rectángulo limpio y no como líneas sueltas. */
         .hero-col > * { max-width: 31rem; margin-inline: auto; }
-        .hero-h1 { font-size: clamp(40px, 3.5vw, 54px); max-width: 100%; }
+        .hero-h1 { font-size: clamp(32px, 2.7vw, 40px); max-width: 100%; text-wrap: balance; }
         .hero-note { font-size: 15.5px; }
         .hero-sub { font-size: 15px; }
         .hero-fact { font-size: 18px; }
         .hero-src { font-size: 11px; }
         .hero-count { --fk-count-num: 38px; --fk-count-pad: 0.95rem; }
         .hero-count .grid { max-width: 22rem; gap: 0.7rem; }
-        .hero-form-title { font-size: 1.45rem; }
-        .hero-form { margin-top: 1.15rem; gap: 0.7rem; }
-        .hero-input { height: 3.25rem; }
-        .hero-submit { height: 3.5rem; margin-top: 0.5rem; }
+        .hero-form-title { font-size: 1.5rem; }
+        .hero-form { margin-top: 1.25rem; gap: 0.85rem; }
+        .hero-input { height: 3.4rem; }
+        .hero-submit { height: 3.6rem; margin-top: 0.6rem; }
         .hero-atmos { height: 135vh; max-height: none; }
       }
 
       @media (min-width: 1024px) and (min-height: 1180px) {
-        .hero-col { --sep: 2.6rem; --paso: 1.5rem; }
+        .hero-body { --sep: 2.5rem; --paso: 1.5rem; }
         .hero-h1 { font-size: 44px; }
         .hero-sub { font-size: 15px; }
         .hero-fact { font-size: 18px; }
