@@ -424,3 +424,50 @@ que nunca llegó a construirse.
 cadena que también aparece en un comentario, o en otro archivo legítimo, y
 concluir en falso. La cadena que se busque tiene que existir **solo** en el
 código nuevo.
+
+
+---
+
+## REGLA #17: no se guarda en `dev` ni en `main`. Hay un freno que lo impide
+
+**Prohibido hacer `commit` estando en `dev`, `main` o `master`.** Todo trabajo va
+en la rama de su chat, abierta con `npm run chat:nuevo <nombre>`.
+
+**Ya no depende de que la IA se acuerde.** Hay un gancho de git en
+`.githooks/pre-commit` que rechaza el guardado y explica que hacer. Vale para
+todas las carpetas de chat a la vez (`core.hooksPath` es de todo el repo), y
+`chat:nuevo` lo deja puesto, asi que un proyecto recien clonado lo tiene desde
+el primer chat.
+
+**Why:** el 2026-07-31 un chat trabajo toda la tarde en la carpeta principal, sin
+abrir la suya. Consecuencias reales de ese mismo dia:
+
+- Seis cambios entraron directos a `main` saltandose `dev`.
+- `dev` quedo atras tres veces, y hubo que repararla tres veces.
+- La construccion se bloqueo dos veces a mitad de otro trabajo.
+- Otro chat quedo con una copia vieja y a punto de publicar encima.
+
+La regla estaba escrita en `AGENTS.md` desde la v5 del sistema, y aun asi paso.
+
+**El agujero que faltaba tapar.** Ese mismo dia se añadio una guardia en
+`check-flujo.mjs`, pero:
+
+1. Solo salta al **arrancar el servidor o construir**, nunca al guardar. Para
+   entonces el commit ya existe.
+2. Su condicion era `carpeta principal Y rama distinta de dev`, asi que **dejaba
+   pasar justo el caso que estaba ocurriendo**: la carpeta principal con `dev`
+   puesta.
+3. Corria tambien en Vercel, donde no hay carpetas de chat, y **tumbo todos los
+   despliegues** (ver SOP `producto/06`).
+
+El gancho ataca el momento exacto del daño (guardar) y no depende de la carpeta
+ni de la rama que se tenga puesta.
+
+**How to apply:**
+
+- Si el freno salta, no se ha perdido nada: el trabajo sigue sin guardar. Se abre
+  `npm run chat:nuevo <nombre>` y se lleva ahi.
+- **Nunca saltarselo con `--no-verify`.** Si el freno molesta, es que se esta
+  trabajando donde no toca.
+- Publicar sigue igual: la rama entra en `dev` y `dev` en `main` por union, y
+  unir no es guardar, asi que el freno no estorba.
