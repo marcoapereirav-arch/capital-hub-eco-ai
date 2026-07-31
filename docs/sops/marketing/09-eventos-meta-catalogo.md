@@ -53,6 +53,13 @@ Se dispara **solo**, en cada página, en cuanto el píxel carga. No hay que prog
 No significa nada por sí mismo: solo dice "alguien pasó por aquí". Sirve para que Meta
 sepa que la persona existe y para poder perseguirla con anuncios después.
 
+**Ojo con cómo se lee en pantalla.** `PageView` sale del píxel dentro del navegador y
+**nunca pasa por nuestro servidor**, así que jamás aparece en el registro de envíos. Eso
+no significa que no funcione. Por eso en las pantallas va marcado como **automático** y en
+verde, no como "sin estrenar": estar sin registro es su comportamiento normal, no un
+fallo. Todo lo demás sí lo mandamos nosotros y sí queda registrado con su número de
+envíos.
+
 ### 2. `ViewContent` — vio la página que nos importa
 
 Esta la disparamos nosotros **a mano**, solo en las páginas que valen.

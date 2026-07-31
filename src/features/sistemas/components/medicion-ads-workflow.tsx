@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import {
-  ArrowLeft, ArrowRight, ArrowDown, Check, Eye, Globe, Megaphone, MessageCircle,
-  Minus, Server, ShieldCheck, Target, X,
+  ArrowLeft, ArrowRight, ArrowDown, Check, Eye, Megaphone, MessageCircle,
+  Minus, ShieldCheck, Target, X,
 } from "lucide-react"
 import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
@@ -37,10 +37,12 @@ const TIPO = "'Inter Tight', sans-serif"
 export type EventoVivo = {
   name: string
   when: string
-  kind: "estandar" | "nuestro"
+  /** `automatico` es PageView: lo dispara el píxel solo y no pasa por nuestro servidor. */
+  kind: "estandar" | "nuestro" | "automatico"
   sent: number
   neverSeen: boolean
   failed: number
+  automatico: boolean
 }
 
 export type FunnelVivo = {
@@ -124,23 +126,23 @@ export function MedicionAdsWorkflow({
                 icono={Megaphone}
                 titulo="Ve el anuncio"
                 sub="Facebook o Instagram"
-                evento={null}
-                nota="Todavía no es terreno nuestro"
+                eventos={[]}
+                nota="Todavía está dentro de Facebook, no en nuestra web"
               />
               <Flecha />
               <Paso
                 icono={Eye}
                 titulo="Abre la landing"
                 sub="Nuestra página"
-                evento="ViewContent"
-                nota="Audiencia de intención: vio la oferta"
+                eventos={[{ name: "PageView", auto: true }, { name: "ViewContent" }]}
+                nota="PageView dice que entró alguien. ViewContent dice que vio LA OFERTA. El segundo es el que hace buenas las audiencias"
               />
               <Flecha />
               <Paso
                 icono={Check}
                 titulo="Deja sus datos"
                 sub="Nombre, correo, teléfono"
-                evento="Lead"
+                eventos={[{ name: "Lead" }, { name: "webinar_lead" }]}
                 nota="Objetivo de conversión de la campaña"
                 destacado
               />
@@ -149,64 +151,78 @@ export function MedicionAdsWorkflow({
                 icono={MessageCircle}
                 titulo="Nos escribe"
                 sub="Botón de WhatsApp"
-                evento="Contact"
+                eventos={[{ name: "Contact" }]}
                 nota="La señal de intención más alta que capturamos"
+              />
+            </div>
+
+            <p className="mt-4 max-w-3xl text-[15px] leading-relaxed" style={{ color: "#7C818A" }}>
+              PageView va marcado como automático porque lo dispara el píxel solo, en todas las
+              páginas, sin que nosotros programemos nada. Los demás los disparamos a mano en el
+              momento exacto.
+            </p>
+          </Bloque>
+
+          {/* ── 02 · qué mide cada funnel ── */}
+          <Bloque
+            n="02"
+            titulo="Qué está midiendo cada funnel ahora mismo"
+            intro="Datos en vivo, se leen del sistema cada vez que abres esta página. Verde es confirmado: ese evento ya llegó a Meta y sabemos cuántas veces."
+          >
+            <div className="grid gap-4 lg:grid-cols-2">
+              {funnels.map((f) => (
+                <FunnelCard key={f.slug} funnel={f} />
+              ))}
+            </div>
+          </Bloque>
+
+          {/* ── 03 · hacia qué optimiza ── */}
+          <Bloque
+            n="03"
+            titulo="Hacia qué evento optimiza cada campaña"
+            intro="Meta no lo adivina: hay que elegirlo al crear el conjunto de anuncios. Si eliges otro, el presupuesto se va a gente que hace otra cosa."
+          >
+            <div className="grid gap-4 md:grid-cols-2">
+              {funnels
+                .filter((f) => f.trackingEnabled && f.optimizeFor)
+                .map((f) => (
+                  <div
+                    key={f.slug}
+                    className="rounded-lg border p-5"
+                    style={{ borderColor: "#24462F", background: "#101710" }}
+                  >
+                    <p className="text-[13px] font-semibold" style={{ color: VERDE_CLARO }}>
+                      Campaña de {f.name}
+                    </p>
+                    <p className="mt-2 text-[15px]" style={{ color: "#A6AAB2" }}>
+                      Objetivo de conversión:
+                    </p>
+                    <p className="mt-1 text-[28px] leading-none" style={{ fontWeight: 900, color: "#F5F6F7" }}>
+                      {f.optimizeFor}
+                    </p>
+                  </div>
+                ))}
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <Nota
+                titulo="Fase de aprendizaje"
+                texto="Meta necesita unas cuantas conversiones del evento elegido antes de afinar. Los primeros días reparte casi a ciegas. Es normal: no se toca la campaña durante ese periodo."
+              />
+              <Nota
+                titulo="Públicos que salen de esto"
+                texto="Con ViewContent se hace el retargeting bueno: vieron la oferta y no dejaron datos. Con el evento nuestro se hacen los públicos similares de cada funnel por separado."
+              />
+              <Nota
+                titulo="Calidad, no solo volumen"
+                texto="Contact marca a quien decide escribir. Sirve para descartar creativos que traen leads baratos que luego no contestan."
               />
             </div>
           </Bloque>
 
-          {/* ── 02 · los dos caminos ── */}
+          {/* ── 04 · el catálogo completo ── */}
           <Bloque
-            n="02"
-            titulo="Por dónde viaja cada evento"
-            intro="Todo evento sale por dos caminos a la vez. No es redundancia: es lo que evita perder entre un 20 y un 40 por ciento de las conversiones que el navegador bloquea."
-          >
-            <div className="rounded-lg border p-5 md:p-7" style={{ borderColor: LINEA, background: PANEL }}>
-              <div className="flex flex-col items-stretch gap-4 lg:flex-row">
-                <Camino
-                  icono={Globe}
-                  titulo="Píxel, por el navegador"
-                  sub="El código de Meta en la página"
-                  bueno="Llega al instante y arrastra las cookies de Meta, que son las que mejor identifican a la persona"
-                  malo="Se pierde entero si rechaza cookies, usa bloqueador o navega desde un iPhone con protección de seguimiento"
-                  color={AMBAR}
-                />
-                <Camino
-                  icono={Server}
-                  titulo="API de conversiones, por el servidor"
-                  sub="De nuestro servidor al de Meta"
-                  bueno="No lo bloquea ningún navegador ni ninguna extensión. Manda el correo y el teléfono cifrados, que mejoran el emparejamiento"
-                  malo="Por sí solo le faltan algunas señales del navegador"
-                  color={VERDE}
-                />
-              </div>
-
-              <div className="my-6 flex justify-center">
-                <ArrowDown className="h-6 w-6" style={{ color: "#7C818A" }} />
-              </div>
-
-              <div
-                className="rounded border px-5 py-4 text-center"
-                style={{ borderColor: "#24462F", background: "#101710" }}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <ShieldCheck className="h-5 w-5" style={{ color: VERDE_CLARO }} />
-                  <p className="text-[18px]" style={{ fontWeight: 800, color: "#F5F6F7" }}>
-                    Los dos llevan el mismo identificador de evento
-                  </p>
-                </div>
-                <p className="mx-auto mt-2 max-w-2xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
-                  Meta los reconoce como el mismo hecho y los fusiona: cuenta una sola
-                  conversión y se queda con los datos de los dos. Si el navegador se pierde, el
-                  del servidor la salva. Si llegan los dos, el emparejamiento sale más fino.
-                </p>
-              </div>
-            </div>
-          </Bloque>
-
-          {/* ── 03 · el catálogo completo ── */}
-          <Bloque
-            n="03"
+            n="04"
             titulo="Los 18 eventos de Meta, uno por uno"
             intro="Meta define 17 eventos estándar más PageView. Estos son todos, con lo que significa cada uno para Meta y la decisión que hemos tomado. Ninguno queda sin explicar."
           >
@@ -221,9 +237,9 @@ export function MedicionAdsWorkflow({
             <GrupoEventos uso="descartado" />
           </Bloque>
 
-          {/* ── 04 · dos etiquetas ── */}
+          {/* ── 05 · dos etiquetas ── */}
           <Bloque
-            n="04"
+            n="05"
             titulo="Por qué cada acción manda DOS eventos"
             intro="Además del evento estándar, cada acción dispara uno con nombre nuestro. No son dos conversiones: es la misma, con dos nombres, en el mismo milisegundo y con el mismo identificador. Meta cuenta una."
           >
@@ -266,68 +282,22 @@ export function MedicionAdsWorkflow({
                 aprendizaje del algoritmo entre dos señales en vez de concentrarlo en una.
               </p>
             </div>
-          </Bloque>
 
-          {/* ── 05 · qué mide cada funnel ── */}
-          <Bloque
-            n="05"
-            titulo="Qué mide cada funnel ahora mismo"
-            intro="Datos en vivo, no un dibujo. Esta tabla se lee del sistema cada vez que abres esta página."
-          >
-            <div className="grid gap-4 lg:grid-cols-2">
-              {funnels.map((f) => (
-                <FunnelCard key={f.slug} funnel={f} />
-              ))}
+            <div
+              className="mt-4 flex items-start gap-3 rounded border px-5 py-4"
+              style={{ borderColor: LINEA, background: PANEL }}
+            >
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" style={{ color: VERDE_CLARO }} />
+              <p className="text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+                <strong style={{ color: "#F5F6F7" }}>Y cada evento se manda dos veces: </strong>
+                una desde el navegador de la persona y otra desde nuestro servidor. Es contra el
+                bloqueo de cookies: si el navegador no deja pasar el píxel, el del servidor llega
+                igual y la conversión no se pierde. Las dos llevan el mismo identificador, así
+                que Meta las junta y cuenta una.
+              </p>
             </div>
           </Bloque>
 
-          {/* ── 06 · configurar la campaña ── */}
-          <Bloque
-            n="06"
-            titulo="Cómo se configura la campaña en el gestor de anuncios"
-            intro="La medición no sirve de nada si la campaña optimiza hacia otra cosa. Meta no elige el evento por ti: hay que decírselo al crear el conjunto de anuncios."
-          >
-            <div className="grid gap-4 md:grid-cols-2">
-              {funnels
-                .filter((f) => f.trackingEnabled && f.optimizeFor)
-                .map((f) => (
-                  <div
-                    key={f.slug}
-                    className="rounded-lg border p-5"
-                    style={{ borderColor: "#24462F", background: "#101710" }}
-                  >
-                    <p className="text-[13px] font-semibold" style={{ color: VERDE_CLARO }}>
-                      Campaña de {f.name}
-                    </p>
-                    <p className="mt-2 text-[15px]" style={{ color: "#A6AAB2" }}>
-                      Objetivo de conversión:
-                    </p>
-                    <p className="mt-1 text-[26px] leading-none" style={{ fontWeight: 900, color: "#F5F6F7" }}>
-                      {f.optimizeFor}
-                    </p>
-                    <p className="mt-3 text-[14px] leading-relaxed" style={{ color: "#7C818A" }}>
-                      Si eliges otro evento, Meta buscará otra cosa y el presupuesto se va a
-                      perfiles que no hacen lo que a ti te importa.
-                    </p>
-                  </div>
-                ))}
-            </div>
-
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <Nota
-                titulo="Fase de aprendizaje"
-                texto="Meta necesita unas cuantas conversiones del evento elegido antes de afinar. Los primeros días reparte casi a ciegas. Es normal y le pasa a todo el mundo: no se toca la campaña durante ese periodo."
-              />
-              <Nota
-                titulo="Públicos que salen de aquí"
-                texto="Con ViewContent se hace el retargeting bueno (vieron la oferta y no dejaron datos). Con el evento nuestro se hacen los públicos similares de cada funnel por separado."
-              />
-              <Nota
-                titulo="Medir la calidad, no solo el volumen"
-                texto="Contact marca a quien decide escribir. Es la señal más cercana a la venta que capturamos hoy, y sirve para juzgar creativos que traen leads baratos pero que no contestan."
-              />
-            </div>
-          </Bloque>
         </div>
       </PageContainer>
     </>
@@ -452,13 +422,18 @@ function Flecha() {
   )
 }
 
+/**
+ * Un paso del recorrido con TODOS los eventos que saltan en él, no solo el principal.
+ * En la landing saltan dos a la vez (PageView y ViewContent) y hay que verlo: si solo se
+ * enseña uno, parece que el otro no existe.
+ */
 function Paso({
-  icono: Icono, titulo, sub, evento, nota, destacado = false,
+  icono: Icono, titulo, sub, eventos, nota, destacado = false,
 }: {
   icono: typeof Eye
   titulo: string
   sub: string
-  evento: string | null
+  eventos: { name: string; auto?: boolean }[]
   nota: string
   destacado?: boolean
 }) {
@@ -478,17 +453,28 @@ function Paso({
         {sub}
       </p>
 
-      {evento ? (
-        <span
-          className="mt-3 inline-block rounded-[3px] border px-2 py-1 text-[13px]"
-          style={{ fontWeight: 600, borderColor: "#24462F", background: "#101710", color: VERDE_CLARO }}
-        >
-          {evento}
+      {eventos.length === 0 ? (
+        <span className="mt-3 inline-block text-[13px]" style={{ color: "#7C818A" }}>
+          Meta todavía no se entera de nada
         </span>
       ) : (
-        <span className="mt-3 inline-block text-[13px]" style={{ color: "#7C818A" }}>
-          sin evento
-        </span>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {eventos.map((e) => (
+            <span
+              key={e.name}
+              className="rounded-[3px] border px-2 py-1 text-[13px]"
+              style={{
+                fontWeight: 600,
+                borderColor: e.auto ? LINEA : "#24462F",
+                background: e.auto ? "transparent" : "#101710",
+                color: e.auto ? "#A6AAB2" : VERDE_CLARO,
+              }}
+            >
+              {e.name}
+              {e.auto && <span style={{ color: "#7C818A" }}> · automático</span>}
+            </span>
+          ))}
+        </div>
       )}
 
       <p className="mt-2.5 text-[13px] leading-snug" style={{ color: "#A6AAB2" }}>
@@ -533,41 +519,6 @@ function Tarjeta({
         style={{ borderColor: LINEA, color: "#7C818A" }}
       >
         {cierre}
-      </p>
-    </div>
-  )
-}
-
-function Camino({
-  icono: Icono, titulo, sub, bueno, malo, color,
-}: {
-  icono: typeof Globe
-  titulo: string
-  sub: string
-  bueno: string
-  malo: string
-  color: string
-}) {
-  return (
-    <div className="flex-1 rounded border p-5" style={{ borderColor: LINEA }}>
-      <div className="flex items-center gap-2.5">
-        <Icono className="h-5 w-5 shrink-0" style={{ color }} />
-        <div>
-          <p className="text-[17px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
-            {titulo}
-          </p>
-          <p className="text-[13px]" style={{ color: "#7C818A" }}>
-            {sub}
-          </p>
-        </div>
-      </div>
-      <p className="mt-3.5 flex gap-2 text-[14px] leading-relaxed" style={{ color: "#A6AAB2" }}>
-        <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
-        {bueno}
-      </p>
-      <p className="mt-2 flex gap-2 text-[14px] leading-relaxed" style={{ color: "#7C818A" }}>
-        <X className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ROJO }} />
-        {malo}
       </p>
     </div>
   )
@@ -637,11 +588,21 @@ function FunnelCard({ funnel: f }: { funnel: FunnelVivo }) {
                   {e.when}
                 </p>
                 <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
-                  {e.name} · {e.kind === "estandar" ? "estándar de Meta" : "nuestro"}
+                  {e.name} ·{" "}
+                  {e.kind === "automatico"
+                    ? "automático del píxel"
+                    : e.kind === "estandar"
+                      ? "estándar de Meta"
+                      : "nuestro"}
                 </p>
               </div>
-              <span className="shrink-0 text-[14px]" style={{ color: e.neverSeen ? "#7C818A" : "#A6AAB2" }}>
-                {e.neverSeen ? "sin estrenar" : `${e.sent}`}
+              {/* PageView no pasa por nuestro servidor, así que no hay número de envíos que
+                  enseñar. Decir "sin estrenar" ahí sería falso: va con el píxel siempre. */}
+              <span
+                className="shrink-0 text-right text-[14px]"
+                style={{ color: e.automatico ? VERDE_CLARO : e.neverSeen ? "#7C818A" : "#A6AAB2" }}
+              >
+                {e.automatico ? "activo" : e.neverSeen ? "sin estrenar" : `${e.sent} envíos`}
               </span>
             </li>
           ))}
