@@ -555,16 +555,16 @@ function HeroFit() {
       .hero-promesa { display: flex; flex-direction: column; align-items: center; gap: 0.55em; }
       .hero-h1 { font-size: clamp(25px, 6.5vw, 44px); line-height: 1.06; letter-spacing: -0.035em; max-width: 19ch; text-wrap: pretty; }
       .hero-strong { font-weight: 800; color: #FFFFFF; }
-      .hero-note { font-size: clamp(13px, 3.5vw, 16px); font-weight: 400; line-height: 1.4; color: #868C95; max-width: 30ch; text-wrap: balance; }
+      .hero-note { font-size: clamp(10.5px, 3.35vw, 16px); font-weight: 400; line-height: 1.4; color: #868C95; max-width: none; white-space: nowrap; }
       .hero-note-em { font-style: normal; font-weight: 700; color: #E4E7EB; }
 
       /* 3 · La prueba. Párrafo claramente secundario, dato como segundo foco, fuente
              firmando en una línea. Sin caja: la caja pesaba más que el propio dato. */
       .hero-prueba { display: flex; flex-direction: column; align-items: center; gap: 0.7em; }
-      .hero-sub { font-size: clamp(12.5px, 3.3vw, 15px); line-height: 1.5; color: #8E939C; max-width: 46ch; text-wrap: pretty; }
+      .hero-sub { font-size: clamp(8px, 2.93vw, 15px); line-height: 1.5; color: #8E939C; max-width: none; text-wrap: pretty; }
       .hero-fact { font-family: 'Inter Tight', sans-serif; font-size: clamp(14.5px, 3.9vw, 18px); font-weight: 600; line-height: 1.35; letter-spacing: -0.015em; color: #FFFFFF; max-width: 34ch; text-wrap: balance; }
-      .hero-src { font-size: clamp(10px, 2.7vw, 11.5px); line-height: 1.4; color: #6B7079; max-width: 46ch; }
-      .hero-src-tag { font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.92em; letter-spacing: 0.14em; text-transform: uppercase; color: #4ADE80; margin-right: 0.55em; }
+      .hero-src { font-size: clamp(7px, 2.2vw, 11.5px); line-height: 1.4; color: #6B7079; max-width: none; white-space: nowrap; }
+      .hero-src-tag { font-family: 'Inter Tight', sans-serif; font-weight: 800; font-size: 0.9em; letter-spacing: 0.1em; text-transform: uppercase; color: #4ADE80; margin-right: 0.45em; }
 
       /* 4 · Cuenta atrás, en casillas */
       .hero-count { width: 100%;
@@ -591,10 +591,10 @@ function HeroFit() {
       @media (min-width: 768px) {
         .hero-col { max-width: 34rem; gap: 1.4rem; }
         .hero-h1 { font-size: 38px; max-width: 17ch; }
-        .hero-note { font-size: 15px; max-width: 34ch; }
-        .hero-sub { font-size: 14.5px; max-width: 50ch; }
+        .hero-note { font-size: 15px; max-width: none; }
+        .hero-sub { font-size: 14.5px; max-width: none; }
         .hero-fact { font-size: 17px; max-width: 40ch; }
-        .hero-src { font-size: 11px; max-width: 52ch; }
+        .hero-src { font-size: 11px; max-width: none; }
         .hero-count { --fk-count-num: 30px; --fk-count-pad: 0.7rem; }
         .hero-count .grid { max-width: 21rem; gap: 0.6rem; }
         .hero-card { padding: 1.4rem; }
