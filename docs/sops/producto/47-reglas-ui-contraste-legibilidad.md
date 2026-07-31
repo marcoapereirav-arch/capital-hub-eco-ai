@@ -138,28 +138,91 @@ suelto con `npm run check:layout`.
 escondida: son las 12 pantallas reales que ya estaban rotas antes del candado. Se van
 quitando de ahí según se toque cada una. **Prohibido añadir nada nuevo a esa lista.**
 
-## Los tokens del OS NO son el brandkit (trampa activa)
+## Los tokens del OS SÍ son el brandkit (trampa CERRADA el 31-jul-2026)
 
-Comprobado el 31-jul-2026 en `globals.css`:
+Durante meses los tokens del OS no coincidían con el brandkit, y esa era la razón de fondo
+de que el OS se viera antiguo aunque el brandkit dijera otra cosa. **Cerrado.**
 
-| Token | Lo que vale de verdad | Lo que dice el brandkit |
+| Token | Valía antes | Vale ahora | Por qué |
+|---|---|---|---|
+| `--accent` | `#2A2D34` gris grafito | **`#22C55E`** verde | `bg-accent` pintaba gris a quien creía poner la marca |
+| `--accent-foreground` | blanco roto | **`#08130C`** tinta | blanco sobre ese verde da **2.11:1** y falla; la tinta da **8.31:1** |
+| `--primary` | `#FFFFFF` blanco puro | **`#22C55E`** verde | el botón blanco es señal del diseño ANTIGUO según el brandkit |
+| `--primary-foreground` | carbón | **`#08130C`** tinta | misma razón de contraste |
+| `--ring` (foco) | gris | **`#22C55E`** | el foco de teclado tiene que verse |
+| `--sidebar-primary` | blanco | **`#22C55E`** | coherencia |
+| `--chart-1` | blanco | **`#22C55E`** | hoy no lo usa ningún gráfico; queda correcto para el que venga |
+| `--font-sans` / `--font-heading` | empezaban por `-apple-system` | **`var(--font-inter-tight)` primero** | en un Mac nunca se llegaba a Inter Tight |
+
+### La trampa nueva que esto crea: `accent` en shadcn NO significa marca
+
+En las plantillas de shadcn, `accent` es **el gris suave que se pinta detrás de una opción
+al pasar el ratón**, no un color de marca. En este proyecto `accent` **es la marca**.
+
+- **Al copiar cualquier componente nuevo de shadcn: cambiar `accent` por `muted`.** Si no,
+  cada opción de menú saldrá verde entera.
+- El que sí sigue siendo superficie gris es **`sidebar-accent`** (el fondo de la opción del
+  menú lateral). Se deja gris a propósito.
+
+Al hacer el cambio se migraron a `muted` los **22 sitios** que usaban `accent` como gris:
+`dropdown-menu.tsx` y las cuatro vistas de tareas (`task-list`, `task-board`,
+`task-filters`, `task-detail`). **Sin esa migración el botón "Board" quedaba en blanco
+sobre verde a 2.09:1**, y se comprobó en vivo (pasó de verdad en una medición con el código
+viejo y el CSS nuevo mezclados).
+
+### Lo que se midió antes de dar el cambio por bueno
+
+Auditoría de contraste sobre 5 pantallas (dashboard, CRM, webs, ads, tareas), con el estado
+anterior y el nuevo, misma vara:
+
+| Ancho | Antes | Después |
 |---|---|---|
-| `--accent` (oscuro) | `#2A2D34`, gris grafito | verde `#22C55E` |
-| `--font-heading` | `-apple-system`, `SF Pro Display` | Inter Tight, y solo esa |
+| 1280px | 26 elementos por debajo del mínimo | **26, exactamente los mismos** |
+| 375px | (mismo conjunto) | **16, todos preexistentes** |
 
-O sea: escribir `bg-accent` en el OS pinta **gris**, no verde, y `font-heading` renderiza
-**la fuente del sistema** en un Mac, no Inter Tight (que sí está cargada, pero solo entra
-como respaldo fuera de Apple). Es la misma trampa que ya pasó en la App con
-`accent: #FFFFFF`.
+**Cero regresiones.** Los que fallan son textos de 9-10px en gris muy apagado y un contador
+rojo, todos anteriores a este cambio y ajenos a los tokens.
 
-**Mientras esos tokens no se cambien:** una pantalla nueva que quiera el brandkit de
-verdad pone los valores explícitos (`#22C55E`, `#4ADE80`, `#0F0F12`, `#131318`, hairline
-`rgba(245,246,247,0.1)`) y declara `fontFamily: "'Inter Tight', sans-serif"`.
+### Dos formas de medir contraste MAL (ya cometidas)
 
-**No se tocan los tokens globales sin encargo:** cambiarlos repinta el OS entero de golpe.
-Es un trabajo aparte, y lo decide Marco.
+1. **Leer `getComputedStyle().color` como si fuera `rgb()`.** Chrome devuelve los colores
+   modernos como `lab(...)` / `oklab(...)`. Sacarles los tres primeros números y tratarlos
+   como rojo/verde/azul da resultados inventados: salían 144 "fallos" falsos, incluido el
+   menú lateral entero. **Se convierte pintando el color en un lienzo de 1x1 y leyendo el
+   píxel**, que funciona con cualquier formato.
+2. **Leer solo `backgroundColor`.** El botón flotante "Registrar venta" salía a 1.03:1
+   porque su verde es un **degradado** (`bg-gradient-to-br from-green-500 to-green-600`) y
+   `backgroundColor` es transparente. Su contraste real es **9.22:1 y 6.37:1** en los dos
+   extremos. Si un elemento sale con contraste imposible, mirar si el color viene de un
+   degradado o de una imagen antes de reportarlo.
+
+**Todo medidor de contraste lleva pares de control** (blanco sobre negro debe dar 21, tinta
+sobre verde 8.31, blanco sobre verde 2.11). Si los controles no salen clavados, el medidor
+está roto y sus resultados no valen.
+
+### Lo que queda pendiente (no entraba en este encargo)
+
+- **La fuente mono sigue viva en ~779 sitios.** El brandkit dice que no debería usarse.
+  Retirarla es un trabajo aparte, no de tokens.
+- **Colores metidos a mano** que se saltan los tokens: el botón flotante de registrar venta
+  (degradado verde + `text-black` + mono), el embudo del dashboard en naranja, el contador
+  rojo de avisos.
+- **Los textos de 9-10px** que no llegan al mínimo de contraste (etiquetas de origen en CRM,
+  "N steps" en webs, fechas en tareas).
 
 ## Cambios versionados
+
+- **2026-07-31** (v6): **los tokens del OS pasan a ser el brandkit de verdad.** `accent` y
+  `primary` al verde `#22C55E` con tinta `#08130C`; `ring`, `sidebar-primary` y `chart-1`
+  al verde; `font-sans` y `font-heading` a Inter Tight de verdad (antes empezaban por
+  `-apple-system`, así que en un Mac nunca se llegaba a ella). Retirada la carga de Inter,
+  que además reclamaba el nombre `--font-sans`, el mismo que usa el tema: dos cosas
+  distintas con el mismo nombre. Migrados a `muted` los 22 usos de `accent` como gris
+  suave, sin lo cual el menú desplegable y el conmutador de tareas se volvían verdes.
+  Medido antes y después con la misma vara: **cero regresiones de contraste** (26 avisos a
+  1280px en los dos estados, los mismos; 16 a 375px, todos preexistentes). Documentadas las
+  dos formas de medir contraste mal que se cometieron por el camino. Encargo de Marco, que
+  además lo había detectado él en `globals.css`.
 
 - **2026-07-31** (v5): candado automático de márgenes (`scripts/check-layout.mjs` en
   `predev` + `prebuild`) tras repetirse el bug por cuarta vez. Documentada la deuda de 12

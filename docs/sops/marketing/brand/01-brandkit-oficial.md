@@ -102,6 +102,21 @@ La pantalla **Knowledge > Brand > "Brandkit Capital Hub"** del OS embebe el bran
 
 ## Cambios versionados
 
+### 2026-07-31 (v11, el OS ya usa el brandkit de verdad)
+Hasta hoy el brandkit vivía en la página `/brandkit` pero **el resto del OS no lo usaba**:
+sus tokens decían otra cosa. `accent` valía gris grafito `#2A2D34` (así que escribir
+`bg-accent` creyendo poner la marca pintaba gris) y la fuente empezaba por `-apple-system`,
+así que en un Mac todo el OS renderizaba con la fuente de Apple y nunca llegaba a Inter
+Tight, pese a estar cargada. Corregido: `accent` y `primary` al verde `#22C55E` con tinta
+`#08130C` encima, foco y menú lateral al verde, y las dos familias tipográficas apuntando a
+Inter Tight de verdad. Detalle técnico, alcance medido y lo que queda pendiente en
+[`producto/47`](../../producto/47-reglas-ui-contraste-legibilidad.md).
+
+**Regla que sale de aquí:** el brandkit no está aplicado por estar escrito. Está aplicado
+cuando los tokens del producto valen lo que dice el brandkit. Antes de dar por buena
+cualquier regla de color o tipografía, se abre el archivo de tokens y se comprueba el
+valor: el nombre de un token no garantiza su valor.
+
 ### 2026-07-08 (v10, una sola carpeta Brand, sin duplicado)
 El Knowledge del OS mostraba el brandkit duplicado: una carpeta "Brand" hardcodeada (solo el brandkit visual) y otra carpeta que salía del markdown de `marketing/brand/` (los documentos). Fusionadas en UNA sola carpeta **Brand** (`knowledge-page.tsx`): brandkit visual + Brand Playbook + esta guía. Además este documento se renombró a "Brandkit, guía y reglas" para no confundirse con el item visual "Brandkit Capital Hub". Detonante: Marco vio el brandkit repetido en dos carpetas.
 
