@@ -398,7 +398,7 @@ function OptinCard() {
             )}
           </button>
 
-          <p className="hero-legal text-center text-[#8A8F99]">Es gratis y es en directo.</p>
+          <p className="hero-legal text-center text-[#8A8F99]">Es gratis. Plazas limitadas.</p>
         </form>
       </div>
     </div>

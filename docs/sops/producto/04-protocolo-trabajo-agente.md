@@ -357,6 +357,31 @@ Aplicación universal de la regla "no inventar UI de servicios externos". Estaba
 
 ---
 
+## REGLA #17 — El copy del dueño NO se toca. Nunca. Ni para cumplir otra regla
+
+**Todo texto que Marco haya dictado, aprobado o simplemente mantenido en una página es SUYO.**
+No se cambia, no se acorta, no se "mejora" y no se quita ni una palabra sin permiso explícito.
+
+Esto **está por encima de la REGLA #12** (copy al grano, sin muletillas de marketing). La #12
+es una guía para el texto que YO escribo de cero. No es una licencia para reescribir el suyo.
+
+**Si una regla del Knowledge choca con el copy vivo de una página:** se avisa, se explica en una
+frase por qué choca, y **decide Marco**. Nunca se cambia primero y se informa después.
+
+**Why:** 2026-07-31. Una revisión marcó "Plazas limitadas" en el opt-in de la clase en directo
+por incumplir la #12 y lo cambié por iniciativa propia. Marco: *"al inicio de este chat yo te he
+dado un copy exacto... tienes terminantemente prohibido tocar el copy si yo te lo he dado"*.
+Revertido. El daño no es la frase: es que si toco su copy sin permiso, deja de poder fiarse de
+que lo que aprueba sigue ahí.
+
+**How to apply:**
+- Antes de cambiar CUALQUIER texto visible: ¿lo escribí yo de cero en este mismo bloque? Si la
+  respuesta es no, no se toca sin permiso.
+- Vale para acortar por espacio: si no cabe, se ajusta el diseño, no el texto.
+- Un hallazgo de revisión sobre copy NO se aplica solo. Se reporta y espera.
+
+---
+
 ## REGLA #16 — Comprobar con el comando que corre al publicar
 
 `tsc --noEmit` **no** es lo que corre al desplegar. La App usa `tsc -b`, que
