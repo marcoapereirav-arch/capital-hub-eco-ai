@@ -26,7 +26,7 @@
  * Enganchado a `prebuild`. Si falla, el despliegue no sale.
  */
 
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, realpathSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { join } from 'node:path'
 
@@ -64,15 +64,23 @@ if (hayDev) {
   )
 }
 
-/* 1-bis · carpetas de chat huerfanas ------------------------------------ */
+/* 0 · NO SE TRABAJA EN LA CARPETA PRINCIPAL ------------------------------ */
 
-// Un chat = una rama = una carpeta. Si un chat se cerro mal, su carpeta se
-// queda ahi. No es un error (no se pierde nada), pero hay que recogerla.
-const wtSalida = git('worktree list --porcelain') || ''
+// Esta es LA guardia del modelo. `/primer` dice "abre tu carpeta con chat:nuevo",
+// pero eso es una instruccion escrita: depende de que la IA la lea y la obedezca.
+// Aqui esta la maquina. En la carpeta principal SOLO puede estar `dev`: es el punto
+// del que nacen las ramas, no un sitio de trabajo. Si hay otra rama puesta, es que
+// un chat se puso a trabajar ahi en vez de abrir la suya, y ese chat se va a pisar
+// con los demas.
+//
+// Corre en `predev`, asi que salta en cuanto alguien intenta arrancar el servidor
+// donde no debe.
+
+const wtCrudo = git('worktree list --porcelain') || ''
 const worktrees = []
 {
   let actual = {}
-  for (const l of wtSalida.split('\n')) {
+  for (const l of wtCrudo.split('\n')) {
     if (l.startsWith('worktree ')) actual = { ruta: l.slice(9) }
     else if (l.startsWith('branch ')) {
       actual.rama = l.slice(7).replace('refs/heads/', '')
@@ -80,6 +88,27 @@ const worktrees = []
     } else if (l === '') actual = {}
   }
 }
+const principal = worktrees[0]
+const esPrincipal = principal && realpathSync(principal.ruta) === realpathSync(RAIZ)
+const ramaAqui = git('rev-parse --abbrev-ref HEAD')
+
+if (esPrincipal && ramaAqui && ramaAqui !== 'dev') {
+  problemas.push(
+    `Estas trabajando en la CARPETA PRINCIPAL, con la rama \`${ramaAqui}\` puesta.\n` +
+      `   Aqui NO se trabaja: es de donde nacen las ramas de los chats.\n` +
+      `   Dos chats aqui se pisan — uno le cambia los archivos al otro a media frase.\n\n` +
+      `   Arreglo, un comando:\n` +
+      `     npm run chat:nuevo <nombre-corto-de-lo-que-haces>\n\n` +
+      `   Eso abre TU carpeta con TU rama, y trabajas ahi sin pisar a nadie.\n` +
+      `   Si ya tenias trabajo hecho en esta rama, no se pierde: sigue en \`${ramaAqui}\`,\n` +
+      `   y desde tu carpeta nueva la unes cuando quieras.`
+  )
+}
+
+/* 1-bis · carpetas de chat huerfanas ------------------------------------ */
+
+// Un chat = una rama = una carpeta. Si un chat se cerro mal, su carpeta se
+// queda ahi. No es un error (no se pierde nada), pero hay que recogerla.
 const chats = worktrees.slice(1).filter((w) => w.rama && !['dev', 'main'].includes(w.rama))
 const huerfanas = chats.filter((w) => {
   const pendiente = git(`log --oneline dev..${w.rama}`)
@@ -152,7 +181,7 @@ if (problemas.length > 0) {
   problemas.forEach((p, i) => console.error(`   ${i + 1}. ${p}\n`))
   console.error(
     '   EL WORKFLOW: dev → rama → dev → main → la web.\n' +
-      '   Fuente: la regla de fabrica `EL WORKFLOW` en AGENTS.md.\n'
+      '   Fuente: AGENTS.md · la regla de fabrica `EL WORKFLOW` en AGENTS.md.\n'
   )
   process.exit(1)
 }

@@ -59,6 +59,8 @@ Cada chat trabaja en **su propia carpeta**, con su rama puesta. **No hay excepci
 
 **El dueño no crea ni borra ninguna carpeta.** Lo hace la IA. Lo unico que cambia para el: cada chat abre en **su propio link de localhost** y la IA se lo da.
 
+⚡ **En la carpeta principal SOLO puede estar `dev`.** Es de donde nacen las ramas, no un sitio de trabajo. Si un chat se pone a trabajar ahi con otra rama puesta, **`npm run dev` se niega a arrancar** (`check:flujo`, en `predev`) y le dice que abra la suya con `chat:nuevo`. Sin esa guardia la regla es solo un parrafo: paso el 2026-07-30 en Capital Hub, con un chat en su carpeta y otro trabajando en la principal, pisandose.
+
 **El recorrido**
 
 ```
