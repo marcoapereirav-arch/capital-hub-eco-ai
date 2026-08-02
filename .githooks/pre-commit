@@ -54,4 +54,19 @@ AVISO
   exit 1
 fi
 
+# EL CANDADO DE BRANDKIT, sobre lo que estas a punto de guardar.
+#
+# Por que aqui: `predev` solo corre al ENCENDER el servidor, y el servidor suele estar ya
+# encendido toda la sesion; `prebuild` solo corre al construir, y en el servidor de
+# publicacion el candado se sale solo a proposito. O sea que se podia escribir, comprobar
+# tipos, guardar, subir, unir y publicar sin que el candado se ejecutara ni una vez, y el
+# diseno viejo saltaba dias despues en el arranque de OTRA carpeta de trabajo, bloqueando a
+# alguien que no escribio esa linea.
+#
+# Guardar es el unico momento que siempre ocurre, y ademas culpa a quien toca.
+# Solo mira TUS archivos, asi que tarda menos de un segundo.
+if [ -f scripts/check-brandkit.mjs ] && command -v node >/dev/null 2>&1; then
+  node scripts/check-brandkit.mjs --staged || exit 1
+fi
+
 exit 0

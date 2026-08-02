@@ -1,0 +1,4460 @@
+{
+  "_lee_esto": [
+    "Esta es la DEUDA de diseno del OS: lo que ya estaba escrito con el brandkit viejo el dia",
+    "que se encendio el candado. Es la lista de la compra del rediseno, y se vacia sola.",
+    "",
+    "No es un numero: es la huella exacta (que regla, que texto, cuantas veces). Por eso no se",
+    "puede cambiar diseno viejo por diseno viejo distinto sin que salte.",
+    "",
+    "NO se edita a mano. Cuando un archivo mejora, el candado lo aprieta solo. Si partes o",
+    "renombras un archivo:  npm run check:brandkit -- --rebase"
+  ],
+  "generado": "2026-08-02",
+  "total": 5347,
+  "archivos": {
+    "src/app/(auth)/check-email/page.tsx": {
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "color-prohibido": {
+        "text-gray-600": 1,
+        "text-blue-600": 1
+      }
+    },
+    "src/app/(auth)/forgot-password/page.tsx": {
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      }
+    },
+    "src/app/(auth)/layout.tsx": {
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1
+      }
+    },
+    "src/app/(auth)/login/page.tsx": {
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      }
+    },
+    "src/app/(auth)/update-password/page.tsx": {
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/app/(main)/dashboard/page.tsx": {
+      "degradado-de-color": {
+        "radial-gradient(": 1
+      }
+    },
+    "src/app/(main)/knowledge/page.tsx": {
+      "color-a-mano": {
+        "#22C55E": 1
+      }
+    },
+    "src/app/(main)/layout.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      }
+    },
+    "src/app/(main)/manychat/page.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      }
+    },
+    "src/app/(public)/agenda/page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      }
+    },
+    "src/app/(public)/legal/layout.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#D1D5DB": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      }
+    },
+    "src/app/(public)/mifge/opengraph-image.tsx": {
+      "degradado-de-color": {
+        "linear-gradient(": 1
+      },
+      "fuente-de-sistema": {
+        "-apple-system": 1
+      },
+      "verde-viejo": {
+        "#37CA37": 3,
+        "rgba(55, 202, 55": 1
+      },
+      "color-a-mano": {
+        "#9CA3AF": 2,
+        "#6B7280": 1
+      },
+      "color-en-funcion": {
+        "rgba(5": 1
+      }
+    },
+    "src/app/api/admin/email-templates/route.ts": {
+      "color-prohibido": {
+        "border-green-500": 2,
+        "text-green-400": 2,
+        "bg-green-500": 2,
+        "border-amber-500": 1,
+        "text-amber-400": 1,
+        "bg-amber-500": 1,
+        "border-cyan-500": 1,
+        "text-cyan-400": 1,
+        "bg-cyan-500": 1,
+        "border-purple-500": 1,
+        "text-purple-400": 1,
+        "bg-purple-500": 1,
+        "border-red-500": 1,
+        "text-red-400": 1,
+        "bg-red-500": 1
+      }
+    },
+    "src/app/api/admin/pipelines/[id]/stages/route.ts": {
+      "color-a-mano": {
+        "#71717a": 1
+      }
+    },
+    "src/app/api/admin/pipelines/route.ts": {
+      "color-a-mano": {
+        "#3b82f6": 1
+      }
+    },
+    "src/app/api/funnel/webinar/whatsapp-click/route.ts": {
+      "color-a-mano": {
+        "#3F3F46": 1
+      }
+    },
+    "src/app/api/manychat/webinar-router/route.ts": {
+      "color-a-mano": {
+        "#2A2D34": 1,
+        "#3F3F46": 1,
+        "#52525B": 1
+      }
+    },
+    "src/app/api/optin/test-personalidad/route.ts": {
+      "color-a-mano": {
+        "#2A2D34": 1,
+        "#3F3F46": 1
+      }
+    },
+    "src/app/api/optin/webinar/route.ts": {
+      "color-a-mano": {
+        "#2A2D34": 1,
+        "#3F3F46": 1
+      }
+    },
+    "src/app/api/webhooks/manychat/route.ts": {
+      "color-a-mano": {
+        "#ec4899": 2
+      }
+    },
+    "src/app/auth/confirm-email-change/page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#F5F6F7": 2,
+        "#9CA3AF": 1,
+        "#FFFFFF": 2,
+        "#FCA5A5": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      }
+    },
+    "src/app/auth/confirm-email/page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#F5F6F7": 1,
+        "#FCA5A5": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      }
+    },
+    "src/app/auth/reset-password/page.tsx": {
+      "color-a-mano": {
+        "#9CA3AF": 1,
+        "#F5F6F7": 2,
+        "#0F0F12": 2,
+        "#2A2D34": 2,
+        "#FFFFFF": 3,
+        "#FCA5A5": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "campo-con-letra-chica": {
+        "text-sm": 1
+      },
+      "acento-blanco": {
+        "background: '#FFFFFF": 1
+      }
+    },
+    "src/app/globals.css": {
+      "fuente-de-sistema": {
+        "-apple-system": 2,
+        "BlinkMacSystemFont": 2,
+        "Helvetica Neue": 2
+      },
+      "fuente-mono": {
+        "--font-mono": 1,
+        "JetBrains Mono": 1
+      }
+    },
+    "src/app/layout.tsx": {
+      "fuente-mono": {
+        "JetBrains_Mono": 2,
+        "--font-mono": 1
+      },
+      "color-a-mano": {
+        "#0F0F12": 1
+      }
+    },
+    "src/app/reportes/funnel-test-personalidad-v2/page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#141418": 1,
+        "#2A2D34": 1,
+        "#F5F6F7": 1,
+        "#D1D5DB": 1,
+        "#9CA3AF": 1,
+        "#6B7280": 1,
+        "#22C55E": 1,
+        "#4ADE80": 1
+      },
+      "fuente-de-sistema": {
+        "-apple-system": 1,
+        "BlinkMacSystemFont": 1
+      }
+    },
+    "src/components/UpdateNotifier.tsx": {
+      "medida-clavada": {
+        "w-[360px]": 1
+      },
+      "color-prohibido": {
+        "bg-green-500": 1,
+        "text-green-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/components/ui/avatar.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "group-data-[size=sm]/avatar:text-xs": 1
+      }
+    },
+    "src/components/ui/badge.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/components/ui/button.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[0.8rem]": 1
+      }
+    },
+    "src/components/ui/card.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "rejilla-sin-movil": {
+        "has-data-[slot=card-action]:grid-cols-[1fr_auto]": 1
+      }
+    },
+    "src/components/ui/dropdown-menu.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      }
+    },
+    "src/components/ui/input.tsx": {
+      "control-pequeno": {
+        "h-8": 1,
+        "file:h-6": 1
+      },
+      "campo-con-letra-chica": {
+        "file:text-sm": 1
+      }
+    },
+    "src/components/ui/loading-screen.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#2A2D34": 1,
+        "#F5F6F7": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1
+      }
+    },
+    "src/components/ui/period-filter.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#16161a": 1,
+        "#06210f": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1,
+        "text-[10px]": 3,
+        "text-[12px]": 4
+      },
+      "color-prohibido": {
+        "text-neutral-50": 1,
+        "text-neutral-400": 1,
+        "text-neutral-100": 1,
+        "text-neutral-500": 5,
+        "text-neutral-200": 3
+      },
+      "control-pequeno": {
+        "h-8": 1,
+        "h-9": 1
+      }
+    },
+    "src/components/ui/scroll-area.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      }
+    },
+    "src/components/ui/sidebar.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "data-[size=sm]:text-xs": 1
+      }
+    },
+    "src/components/ui/tabs.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "esquina-recta": {
+        "rounded-none": 1
+      },
+      "token-diluido": {
+        "text-foreground/60": 1
+      }
+    },
+    "src/components/ui/textarea.tsx": {
+      "campo-con-letra-chica": {
+        "text-sm": 1
+      }
+    },
+    "src/components/ui/tooltip.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/features/ads/components/ads-affiliates-panel.tsx": {
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 1,
+        "text-[11px]": 2,
+        "text-[9px]": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-4": 1
+      }
+    },
+    "src/features/ads/components/ads-config-panel.tsx": {
+      "color-prohibido": {
+        "border-green-500": 3,
+        "bg-green-500": 2,
+        "text-green-300": 3,
+        "border-amber-500": 1,
+        "bg-amber-500": 1,
+        "text-amber-300": 2,
+        "border-red-500": 1,
+        "bg-red-500": 1,
+        "text-red-300": 1,
+        "text-cyan-300": 1,
+        "text-amber-400": 1
+      },
+      "fuente-mono": {
+        "font-mono": 10
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[11px]": 2,
+        "text-[10px]": 3
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      },
+      "token-diluido": {
+        "text-foreground/80": 2
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-12": 1
+      }
+    },
+    "src/features/ads/components/ads-events-health.tsx": {
+      "color-a-mano": {
+        "#22C55E": 1,
+        "#4ADE80": 1,
+        "#E5B567": 1,
+        "#E5675B": 1,
+        "#131318": 4,
+        "#A6AAB2": 5,
+        "#24462F": 2,
+        "#101710": 3,
+        "#F5F6F7": 6,
+        "#7C818A": 12
+      },
+      "color-en-funcion": {
+        "rgba(2": 2,
+        "rgba(3": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 7
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      }
+    },
+    "src/features/ads/components/ads-insights.tsx": {
+      "fuente-mono": {
+        "font-mono": 5
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4,
+        "text-xs": 2,
+        "text-[13px]": 1
+      },
+      "color-prohibido": {
+        "text-emerald-400": 1,
+        "border-emerald-500": 1,
+        "bg-emerald-500": 1,
+        "text-cyan-400": 1,
+        "border-cyan-500": 1,
+        "bg-cyan-500": 1,
+        "text-blue-400": 1,
+        "border-blue-500": 1,
+        "bg-blue-500": 1,
+        "text-amber-400": 1,
+        "border-amber-500": 1,
+        "bg-amber-500": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 2
+      },
+      "color-a-mano": {
+        "#E5B567": 2,
+        "#A6AAB2": 1,
+        "#7C818A": 1
+      }
+    },
+    "src/features/ads/components/ads-tracker-panel.tsx": {
+      "fuente-mono": {
+        "font-mono": 29
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 17
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 22,
+        "text-[11px]": 7,
+        "text-xs": 9,
+        "text-[9px]": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1,
+        "text-muted-foreground/40": 2,
+        "text-muted-foreground/60": 1,
+        "text-foreground/90": 1,
+        "text-foreground/80": 3
+      },
+      "color-prohibido": {
+        "text-green-400": 1,
+        "text-red-400": 2,
+        "text-cyan-400": 1,
+        "border-red-500": 3,
+        "bg-red-500": 3,
+        "text-red-300": 3,
+        "bg-zinc-900": 2,
+        "text-zinc-300": 2,
+        "text-red-200": 1,
+        "border-green-500": 2,
+        "bg-green-500": 1,
+        "text-green-300": 3,
+        "border-amber-500": 1,
+        "text-amber-300": 1,
+        "text-amber-200": 1,
+        "text-cyan-300": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-12": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      }
+    },
+    "src/features/areas/components/area-detail.tsx": {
+      "color-prohibido": {
+        "text-amber-400": 1,
+        "text-green-400": 1,
+        "bg-red-400": 1,
+        "bg-orange-400": 1,
+        "bg-blue-400": 1
+      },
+      "fuente-mono": {
+        "font-mono": 10
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 10
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 7,
+        "text-[10px]": 6
+      }
+    },
+    "src/features/areas/components/areas-overview.tsx": {
+      "color-prohibido": {
+        "ring-blue-500": 1,
+        "bg-blue-500": 1,
+        "bg-blue-400": 1,
+        "ring-green-500": 1,
+        "bg-green-500": 1,
+        "bg-green-400": 1,
+        "ring-amber-500": 1,
+        "bg-amber-500": 2,
+        "bg-amber-400": 1,
+        "ring-purple-500": 1,
+        "bg-purple-500": 1,
+        "bg-purple-400": 1,
+        "border-amber-500": 2,
+        "text-amber-400": 3
+      },
+      "fuente-mono": {
+        "font-mono": 8
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5,
+        "text-[9px]": 1,
+        "text-[10px]": 2
+      }
+    },
+    "src/features/auth/components/ForgotPasswordForm.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-en-funcion": {
+        "rgba(1": 1
+      },
+      "color-a-mano": {
+        "#F5F6F7": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      }
+    },
+    "src/features/auth/components/LoginForm.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-en-funcion": {
+        "rgba(1": 1
+      },
+      "color-a-mano": {
+        "#F5F6F7": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3
+      }
+    },
+    "src/features/auth/components/UpdatePasswordForm.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "border-emerald-500": 1,
+        "bg-emerald-500": 1,
+        "text-emerald-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 4
+      },
+      "color-en-funcion": {
+        "rgba(1": 1
+      },
+      "color-a-mano": {
+        "#F5F6F7": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      }
+    },
+    "src/features/automatizaciones/components/automatizaciones-page.tsx": {
+      "color-prohibido": {
+        "text-green-400": 3,
+        "bg-green-500": 1,
+        "border-green-500": 1,
+        "text-amber-400": 3,
+        "bg-amber-500": 1,
+        "border-amber-500": 1,
+        "text-red-400": 2,
+        "bg-red-500": 1,
+        "border-red-500": 1,
+        "text-cyan-400": 1,
+        "text-blue-400": 1,
+        "text-violet-400": 1,
+        "text-yellow-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 4,
+        "text-[10px]": 7,
+        "text-[9px]": 4,
+        "text-[11px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 13
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 9
+      },
+      "token-diluido": {
+        "text-foreground/80": 1
+      }
+    },
+    "src/features/board/components/board-page.tsx": {
+      "alto-atado-a-la-ventana": {
+        "100vh": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5,
+        "text-[10px]": 5
+      },
+      "fuente-mono": {
+        "font-mono": 11
+      },
+      "color-prohibido": {
+        "text-blue-400": 1,
+        "text-amber-400": 1,
+        "text-green-400": 1,
+        "text-cyan-400": 1
+      },
+      "color-a-mano": {
+        "#2a2d34": 1,
+        "#fbbf24": 1,
+        "#6b7280": 1,
+        "#06b6d4": 1,
+        "#16a34a": 1,
+        "#2563eb": 1,
+        "#ca8a04": 1,
+        "#71717a": 1,
+        "#52525b": 1
+      },
+      "color-en-funcion": {
+        "rgba(1": 1
+      }
+    },
+    "src/features/board/components/legend-modal.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "medida-clavada": {
+        "w-[440px]": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[9px]": 11,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 11
+      },
+      "color-prohibido": {
+        "bg-blue-600": 1,
+        "border-blue-500": 1,
+        "bg-yellow-600": 1,
+        "border-yellow-500": 1,
+        "bg-purple-600": 1,
+        "border-purple-500": 1,
+        "bg-zinc-700": 2,
+        "border-zinc-600": 2,
+        "bg-green-600": 1,
+        "border-green-500": 1,
+        "border-red-400": 1,
+        "bg-red-500": 1,
+        "border-orange-400": 1,
+        "bg-orange-500": 1,
+        "border-zinc-400": 1,
+        "bg-zinc-500": 1
+      }
+    },
+    "src/features/board/components/mission-node.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "border-amber-400": 1,
+        "from-amber-500": 1,
+        "via-orange-500": 1,
+        "to-amber-600": 1,
+        "bg-amber-400": 1,
+        "text-amber-300": 2,
+        "text-amber-200": 4,
+        "text-amber-100": 1
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 2
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 3
+      }
+    },
+    "src/features/board/components/priority-queue.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[9px]": 3,
+        "text-[10px]": 3,
+        "text-[11px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "color-prohibido": {
+        "bg-cyan-500": 3,
+        "text-cyan-950": 1,
+        "fill-cyan-950": 1,
+        "text-cyan-300": 1,
+        "text-red-300": 1,
+        "text-orange-300": 1,
+        "text-zinc-300": 1,
+        "text-yellow-300": 1,
+        "text-cyan-400": 1,
+        "text-orange-400": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "100vh": 1
+      },
+      "token-diluido": {
+        "text-foreground/90": 1
+      }
+    },
+    "src/features/board/components/project-node.tsx": {
+      "degradado-de-color": {
+        "radial-gradient(": 1
+      },
+      "color-a-mano": {
+        "#fff": 1
+      }
+    },
+    "src/features/board/components/task-drawer.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 6,
+        "text-[11px]": 1
+      },
+      "token-diluido": {
+        "text-foreground/80": 1
+      },
+      "color-prohibido": {
+        "bg-cyan-500": 1,
+        "text-cyan-950": 1,
+        "bg-cyan-400": 1,
+        "text-red-400": 1,
+        "text-red-300": 1
+      }
+    },
+    "src/features/board/components/task-node.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "bg-blue-500": 1,
+        "text-blue-100": 1,
+        "border-blue-400": 1,
+        "bg-amber-500": 1,
+        "text-amber-100": 1,
+        "border-amber-400": 1,
+        "bg-purple-500": 1,
+        "text-purple-100": 1,
+        "border-purple-400": 1,
+        "bg-cyan-500": 2,
+        "text-cyan-50": 1,
+        "border-cyan-300": 2,
+        "ring-cyan-400": 1,
+        "bg-red-500": 1,
+        "text-red-100": 1,
+        "border-red-400": 1,
+        "bg-orange-500": 1,
+        "text-orange-100": 1,
+        "border-orange-400": 1,
+        "bg-zinc-500": 1,
+        "text-zinc-100": 1,
+        "border-zinc-400": 1,
+        "bg-zinc-700": 2,
+        "text-zinc-300": 1,
+        "border-zinc-600": 1,
+        "bg-green-600": 1,
+        "bg-blue-600": 1,
+        "bg-yellow-600": 1,
+        "bg-purple-600": 1,
+        "text-green-300": 1,
+        "text-blue-300": 1,
+        "fill-blue-300": 1,
+        "text-yellow-300": 1,
+        "text-purple-300": 1,
+        "text-zinc-400": 1,
+        "ring-blue-300": 1,
+        "shadow-orange-500": 1,
+        "text-orange-400": 1,
+        "bg-zinc-900": 1,
+        "text-cyan-950": 1,
+        "fill-cyan-950": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1,
+        "text-[12px]": 1,
+        "text-[11px]": 1,
+        "text-[10px]": 1,
+        "text-[9px]": 4,
+        "text-[8px]": 1
+      },
+      "color-en-funcion": {
+        "rgba(3": 3
+      },
+      "fuente-mono": {
+        "font-mono": 5
+      }
+    },
+    "src/features/board/services/layout.ts": {
+      "fuente-mono": {
+        "--font-mono": 1
+      }
+    },
+    "src/features/calendario/components/agenda-publica.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#2A2D34": 5,
+        "#16161B": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 2
+      },
+      "verde-viejo": {
+        "#37CA37": 12
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 4,
+        "text-[10px]": 5
+      },
+      "color-prohibido": {
+        "border-amber-500": 1,
+        "bg-amber-500": 1,
+        "text-red-400": 1
+      },
+      "fuente-mono": {
+        "font-mono": 10
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 9
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      }
+    },
+    "src/features/calendario/components/calendario-admin.tsx": {
+      "fuente-mono": {
+        "font-mono": 19
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 16
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 22,
+        "text-[10px]": 7,
+        "text-[9px]": 1
+      },
+      "color-prohibido": {
+        "text-red-400": 4,
+        "border-green-500": 3,
+        "bg-green-500": 2,
+        "border-amber-500": 2,
+        "bg-amber-500": 2,
+        "text-green-400": 4,
+        "text-amber-400": 4,
+        "border-cyan-500": 1,
+        "text-cyan-400": 1,
+        "border-orange-500": 1,
+        "text-orange-400": 1,
+        "border-red-500": 1,
+        "bg-red-500": 1
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      }
+    },
+    "src/features/contactos/components/contact-create-modal.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 2
+      },
+      "color-prohibido": {
+        "text-red-400": 1
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      }
+    },
+    "src/features/contactos/components/contact-detail.tsx": {
+      "color-prohibido": {
+        "border-cyan-500": 1,
+        "text-cyan-400": 1,
+        "bg-cyan-500": 1,
+        "border-amber-500": 1,
+        "text-amber-400": 1,
+        "bg-amber-500": 1,
+        "border-emerald-500": 1,
+        "text-emerald-400": 1,
+        "bg-emerald-500": 1,
+        "border-violet-500": 1,
+        "text-violet-400": 1,
+        "bg-violet-500": 1,
+        "border-orange-500": 1,
+        "text-orange-400": 1,
+        "bg-orange-500": 1,
+        "border-red-500": 1,
+        "text-red-400": 1,
+        "bg-red-500": 1,
+        "text-pink-400": 2,
+        "text-pink-300": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[10px]": 4
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 6
+      }
+    },
+    "src/features/contactos/components/contact-drawer.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 29
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 24,
+        "text-xs": 5
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 21
+      },
+      "color-prohibido": {
+        "border-green-500": 2,
+        "text-green-400": 2,
+        "bg-green-500": 2,
+        "text-red-400": 1,
+        "text-cyan-400": 1
+      }
+    },
+    "src/features/contactos/components/contactos-page.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 6,
+        "text-[9px]": 1
+      },
+      "medida-clavada": {
+        "min-w-[200px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 8
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 6
+      },
+      "control-pequeno": {
+        "h-8": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "100vh": 2
+      },
+      "color-prohibido": {
+        "text-green-400": 3,
+        "border-green-500": 1,
+        "border-red-500": 2,
+        "text-red-400": 2,
+        "border-violet-500": 1,
+        "text-violet-400": 1,
+        "border-amber-500": 1,
+        "text-amber-400": 1,
+        "border-cyan-500": 1,
+        "text-cyan-400": 2
+      },
+      "color-a-mano": {
+        "#4ADE80": 2
+      }
+    },
+    "src/features/contactos/components/pipelines-kanban.tsx": {
+      "color-prohibido": {
+        "border-cyan-500": 1,
+        "border-amber-500": 1,
+        "border-green-500": 1,
+        "border-violet-500": 1,
+        "border-orange-500": 1,
+        "border-red-500": 1,
+        "text-green-400": 2
+      },
+      "fuente-mono": {
+        "font-mono": 6
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[10px]": 4,
+        "text-[9px]": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1
+      }
+    },
+    "src/features/content-intel/components/accounts-tab.tsx": {
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 3,
+        "text-xs": 3,
+        "text-[11px]": 2,
+        "text-[10px]": 1
+      },
+      "control-pequeno": {
+        "h-8": 1
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      }
+    },
+    "src/features/content-intel/components/corpus-chat-panel.tsx": {
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-[280px_1fr]": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "100vh": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 16,
+        "text-[10px]": 9,
+        "text-[11px]": 2
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 1,
+        "text-muted-foreground/70": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      }
+    },
+    "src/features/content-intel/components/cross-query-panel.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 6
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 8
+      },
+      "fuente-mono": {
+        "font-mono": 8
+      }
+    },
+    "src/features/content-intel/components/ideas-tab.tsx": {
+      "sparkles": {
+        "Sparkles": 5
+      },
+      "color-prohibido": {
+        "border-blue-500": 2,
+        "text-blue-500": 2,
+        "border-emerald-500": 3,
+        "text-emerald-500": 3,
+        "border-purple-500": 1,
+        "text-purple-500": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 9,
+        "text-xs": 25,
+        "text-[11px]": 5
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      }
+    },
+    "src/features/content-intel/components/script-chat-panel.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 1,
+        "text-xs": 6
+      },
+      "token-diluido": {
+        "text-foreground/70": 1
+      }
+    },
+    "src/features/content-intel/components/script-generate-form.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[10px]": 5,
+        "text-[11px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1
+      }
+    },
+    "src/features/content-intel/components/script-generator-panel.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 9,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "campo-con-letra-chica": {
+        "text-sm": 1
+      }
+    },
+    "src/features/content-intel/components/studio-panel.tsx": {
+      "sparkles": {
+        "Sparkles": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 14,
+        "text-[11px]": 3
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 2,
+        "text-muted-foreground/70": 1,
+        "text-foreground/90": 2,
+        "text-foreground/80": 1
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 2
+      },
+      "control-pequeno": {
+        "h-9": 2,
+        "h-7": 1,
+        "h-10": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 2
+      }
+    },
+    "src/features/content-intel/components/video-detail-sheet.tsx": {
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 13,
+        "text-[9px]": 1,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 8
+      }
+    },
+    "src/features/content-intel/components/videos-tab.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "token-diluido": {
+        "text-foreground/80": 1,
+        "text-muted-foreground/50": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 6,
+        "text-[11px]": 3,
+        "text-[9px]": 1
+      },
+      "medida-clavada": {
+        "min-w-[200px]": 1
+      },
+      "control-pequeno": {
+        "h-9": 3
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      }
+    },
+    "src/features/content-intel/components/viral-lab-panel.tsx": {
+      "sparkles": {
+        "Sparkles": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 20
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 3,
+        "text-muted-foreground/70": 1,
+        "text-foreground/70": 2,
+        "text-muted-foreground/50": 1,
+        "text-foreground/80": 1
+      },
+      "control-pequeno": {
+        "h-8": 3
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 2
+      }
+    },
+    "src/features/crm/components/crm-tabs-header.tsx": {
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/features/crm/components/mifge-kanban.tsx": {
+      "alto-atado-a-la-ventana": {
+        "100vh": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 2,
+        "text-[11px]": 3,
+        "text-[9px]": 4
+      },
+      "fuente-mono": {
+        "font-mono": 11
+      },
+      "color-prohibido": {
+        "text-emerald-400": 1,
+        "text-red-400": 1,
+        "border-purple-500": 1,
+        "bg-purple-500": 1,
+        "text-purple-300": 1,
+        "border-amber-500": 1,
+        "bg-amber-500": 1,
+        "text-amber-300": 1,
+        "border-cyan-500": 1,
+        "bg-cyan-500": 1,
+        "text-cyan-300": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/dashboard/components/activity-feed.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 1
+      }
+    },
+    "src/features/dashboard/components/business-status.tsx": {
+      "color-prohibido": {
+        "bg-blue-500": 1,
+        "text-blue-400": 1,
+        "border-blue-500": 1,
+        "bg-purple-500": 1,
+        "text-purple-400": 1,
+        "border-purple-500": 1,
+        "bg-amber-500": 1,
+        "text-amber-400": 1,
+        "border-amber-500": 1,
+        "bg-green-500": 1,
+        "text-green-400": 1,
+        "border-green-500": 1,
+        "bg-cyan-500": 1,
+        "text-cyan-400": 1,
+        "border-cyan-500": 1,
+        "bg-zinc-500": 1,
+        "text-zinc-400": 1,
+        "border-zinc-500": 1,
+        "bg-red-500": 1,
+        "text-red-400": 1,
+        "border-red-500": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 2,
+        "text-muted-foreground/40": 1,
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/dashboard/components/date-filter.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5
+      },
+      "control-pequeno": {
+        "h-8": 3
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      }
+    },
+    "src/features/dashboard/components/funnel-cards.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[10px]": 4,
+        "text-[9px]": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1,
+        "text-muted-foreground/60": 1
+      },
+      "fuente-mono": {
+        "font-mono": 5
+      }
+    },
+    "src/features/dashboard/components/funnel-performance.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "text-green-400": 1,
+        "text-red-400": 1,
+        "text-amber-400": 1,
+        "bg-zinc-700": 1,
+        "bg-green-500": 1,
+        "bg-red-500": 1,
+        "bg-amber-500": 1,
+        "bg-zinc-400": 1,
+        "text-zinc-300": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 2
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 3,
+        "text-muted-foreground/40": 2
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      }
+    },
+    "src/features/dashboard/components/kpi-grid.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[9px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/dashboard/components/kpi-overview.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[9px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/dashboard/components/lead-magnets-mini-funnel.tsx": {
+      "color-prohibido": {
+        "border-purple-500": 1,
+        "bg-purple-500": 1,
+        "text-purple-300": 2
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 3
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1,
+        "text-muted-foreground/60": 1,
+        "text-muted-foreground/30": 1
+      }
+    },
+    "src/features/dashboard/components/lead-sources.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/dashboard/components/main-dashboard.tsx": {
+      "color-a-mano": {
+        "#131318": 1,
+        "#F5F6F7": 1,
+        "#A6AAB2": 1,
+        "#7C818A": 1,
+        "#4ADE80": 1,
+        "#0F0F12": 1,
+        "#16161a": 2,
+        "#71717a": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 1,
+        "rgba(7": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 6,
+        "text-[9px]": 1,
+        "text-[12px]": 9,
+        "text-[10px]": 9,
+        "text-[12.5px]": 1,
+        "text-[10.5px]": 1,
+        "text-xs": 5,
+        "text-[11.5px]": 1
+      },
+      "degradado-de-color": {
+        "linear-gradient(": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      },
+      "color-prohibido": {
+        "bg-red-500": 1,
+        "text-red-400": 1
+      }
+    },
+    "src/features/dashboard/components/pending-metrics.tsx": {
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 2,
+        "text-xs": 1,
+        "text-[9px]": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 2,
+        "text-muted-foreground/60": 1,
+        "text-muted-foreground/40": 1
+      }
+    },
+    "src/features/dashboard/components/platform-table.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      }
+    },
+    "src/features/dashboard/components/revenue-chart.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[10px]": 3
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      }
+    },
+    "src/features/email-marketing/components/email-marketing-page.tsx": {
+      "color-prohibido": {
+        "border-red-500": 3,
+        "text-red-400": 6,
+        "bg-red-500": 3,
+        "border-amber-500": 5,
+        "text-amber-400": 5,
+        "bg-amber-500": 4,
+        "border-zinc-500": 1,
+        "text-zinc-400": 1,
+        "bg-zinc-500": 1,
+        "text-cyan-400": 2,
+        "border-cyan-500": 1,
+        "text-green-400": 5,
+        "border-green-500": 5,
+        "text-purple-400": 3,
+        "border-purple-500": 1,
+        "text-blue-400": 1,
+        "border-blue-500": 1,
+        "text-violet-400": 1,
+        "text-amber-300": 2,
+        "bg-green-500": 3,
+        "text-green-300": 1,
+        "text-red-300": 2,
+        "from-green-500": 1,
+        "to-green-600": 1,
+        "bg-zinc-200": 1
+      },
+      "fuente-mono": {
+        "font-mono": 33
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 19
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 18,
+        "text-xs": 25,
+        "text-[9px]": 5,
+        "text-[11px]": 1
+      },
+      "medida-clavada": {
+        "min-w-[280px]": 1,
+        "min-w-[200px]": 1
+      },
+      "token-diluido": {
+        "text-foreground/60": 2,
+        "text-foreground/85": 1,
+        "text-muted-foreground/70": 1,
+        "text-foreground/80": 1
+      },
+      "verde-viejo": {
+        "rgba(55, 202, 55": 2,
+        "#37CA37": 1
+      },
+      "color-en-funcion": {
+        "rgba(5": 2
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "control-pequeno": {
+        "h-7": 3,
+        "h-8": 2
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-[1fr_auto_auto]": 1
+      },
+      "color-a-mano": {
+        "#0F0F12": 1
+      }
+    },
+    "src/features/funnel-reservar/components/booking-embed.tsx": {
+      "color-a-mano": {
+        "#F5F6F7": 2,
+        "#0F0F12": 1,
+        "#9CA3AF": 1,
+        "#22C55E": 2,
+        "#6B7280": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1
+      },
+      "color-en-funcion": {
+        "rgba(3": 4
+      }
+    },
+    "src/features/funnel-reservar/components/thanks-agenda.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 4,
+        "#F5F6F7": 2,
+        "#22C55E": 6,
+        "#9CA3AF": 1,
+        "#C7CBD1": 4,
+        "#2A2D34": 3,
+        "#141418": 2,
+        "#6B7280": 2
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "acento-blanco": {
+        "bg-white": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 4
+      },
+      "esquina-recta": {
+        "rounded-none": 1
+      }
+    },
+    "src/features/funnel-test-personalidad/components/dashboard-section.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "color-a-mano": {
+        "#06b6d4": 1,
+        "#f59e0b": 1,
+        "#10b981": 1,
+        "#8b5cf6": 1,
+        "#f97316": 1,
+        "#ef4444": 1
+      },
+      "color-prohibido": {
+        "border-violet-500": 1,
+        "text-violet-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 1,
+        "text-[10px]": 4,
+        "text-xs": 2
+      },
+      "fuente-mono": {
+        "font-mono": 5
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      }
+    },
+    "src/features/funnel-test-personalidad/components/landing.tsx": {
+      "color-a-mano": {
+        "#F5F6F7": 5,
+        "#0F0F12": 4,
+        "#9CA3AF": 8,
+        "#22C55E": 10,
+        "#7B818C": 1,
+        "#C7CBD1": 3,
+        "#6B7280": 4,
+        "#2A2D34": 5,
+        "#141418": 2,
+        "#1C1D22": 1,
+        "#3F3F46": 2,
+        "#18181B": 1,
+        "#FFFFFF": 1,
+        "#2f6b45": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 7,
+        "text-xs": 1
+      },
+      "esquina-recta": {
+        "rounded-none": 4
+      },
+      "acento-blanco": {
+        "bg-white": 2
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 2,
+        "rgba(3": 5,
+        "rgba(0": 1,
+        "rgba(8": 1
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 4
+      }
+    },
+    "src/features/funnel-test-personalidad/components/test-landing.tsx": {
+      "color-a-mano": {
+        "#F5F6F7": 4,
+        "#0F0F12": 3,
+        "#22C55E": 8,
+        "#9CA3AF": 2,
+        "#D1D5DB": 4,
+        "#6B7280": 2,
+        "#2A2D34": 1,
+        "#18181B": 1,
+        "#3F3F46": 1,
+        "#FFFFFF": 1
+      },
+      "color-en-funcion": {
+        "rgba(3": 1
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 4,
+        "text-[11px]": 1
+      },
+      "esquina-recta": {
+        "rounded-none": 1
+      },
+      "acento-blanco": {
+        "bg-white": 2
+      }
+    },
+    "src/features/funnel-test-personalidad/components/thank-you.tsx": {
+      "color-a-mano": {
+        "#F5F6F7": 3,
+        "#0F0F12": 1,
+        "#22C55E": 4,
+        "#9CA3AF": 2,
+        "#D1D5DB": 1,
+        "#6B7280": 3,
+        "#2A2D34": 1,
+        "#141418": 1
+      },
+      "color-en-funcion": {
+        "rgba(3": 1
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 4
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/funnel-webinar/components/landing.tsx": {
+      "color-a-mano": {
+        "#F5F6F7": 3,
+        "#0F0F12": 1,
+        "#22C55E": 4,
+        "#4ADE80": 6,
+        "#2A2D34": 2,
+        "#1C1D22": 1,
+        "#6B7280": 1,
+        "#A6ABB4": 1,
+        "#8A8F99": 3,
+        "#3F3F46": 1,
+        "#18181B": 1,
+        "#141418": 1,
+        "#C7CBD1": 1,
+        "#FFFFFF": 2,
+        "#868C95": 1,
+        "#E4E7EB": 1,
+        "#8E939C": 1,
+        "#6B7079": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 2,
+        "text-[11px]": 1
+      },
+      "color-en-funcion": {
+        "rgba(1": 2
+      },
+      "degradado-de-color": {
+        "linear-gradient(": 4,
+        "bg-gradient-to-": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "medida-clavada": {
+        "w-[210px]": 1
+      }
+    },
+    "src/features/funnel-webinar/components/thank-you.tsx": {
+      "color-a-mano": {
+        "#22C55E": 5,
+        "#4ADE80": 5,
+        "#F5F6F7": 2,
+        "#9CA3AF": 1,
+        "#FFFFFF": 1,
+        "#0F0F12": 1,
+        "#C7CBD1": 1,
+        "#08130C": 1,
+        "#8A8F99": 2,
+        "#D1D5DB": 1,
+        "#1C1D22": 1,
+        "#6B7280": 1,
+        "#25D366": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[12px]": 1,
+        "text-[13px]": 2,
+        "text-[11px]": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "color-en-funcion": {
+        "rgba(3": 2
+      }
+    },
+    "src/features/instagram/components/calendar-view.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 6,
+        "text-[10px]": 8
+      },
+      "fuente-mono": {
+        "font-mono": 9
+      }
+    },
+    "src/features/instagram/components/ig-overview.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[9px]": 2,
+        "text-[10px]": 2,
+        "text-[11px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 8
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      }
+    },
+    "src/features/instagram/components/ig-thumb.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1
+      }
+    },
+    "src/features/integrations/components/connect-form.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      }
+    },
+    "src/features/integrations/components/platform-card.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3
+      }
+    },
+    "src/features/invitaciones/components/invitaciones-page.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 10,
+        "text-[10px]": 10,
+        "text-[9px]": 1,
+        "text-[11px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 18
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 13
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      },
+      "color-prohibido": {
+        "border-amber-500": 2,
+        "text-amber-400": 2,
+        "border-emerald-500": 3,
+        "text-emerald-400": 4,
+        "border-red-500": 1,
+        "text-red-400": 5,
+        "bg-red-500": 1,
+        "bg-emerald-500": 1
+      },
+      "medida-clavada": {
+        "min-w-[200px]": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 1,
+        "text-muted-foreground/70": 1
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 2
+      },
+      "control-pequeno": {
+        "h-9": 3
+      },
+      "campo-con-letra-chica": {
+        "text-sm": 4
+      }
+    },
+    "src/features/knowledge/components/ArchivePanel.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#1E1E1E": 1,
+        "#4ADE80": 6
+      },
+      "color-en-funcion": {
+        "rgba(2": 3
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 2,
+        "text-[11px]": 2
+      },
+      "color-prohibido": {
+        "text-neutral-100": 6,
+        "border-red-300": 2,
+        "text-red-300": 2
+      },
+      "esquina-hinchada": {
+        "rounded-[14px]": 1
+      }
+    },
+    "src/features/knowledge/components/KnowledgeBrainClient.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "bg-neutral-950": 1
+      },
+      "color-a-mano": {
+        "#4ADE80": 3,
+        "#22C55E": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1
+      }
+    },
+    "src/features/knowledge/components/KnowledgeEditorClient.tsx": {
+      "color-a-mano": {
+        "#4ADE80": 20
+      },
+      "color-prohibido": {
+        "text-neutral-100": 19,
+        "text-emerald-400": 1,
+        "text-red-300": 2,
+        "border-red-300": 2,
+        "bg-neutral-950": 3
+      },
+      "control-pequeno": {
+        "h-9": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 6
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4,
+        "text-[11px]": 4,
+        "text-xs": 5
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      }
+    },
+    "src/features/knowledge/components/brain/DriveView.tsx": {
+      "color-a-mano": {
+        "#1E1E1E": 5,
+        "#4ADE80": 21
+      },
+      "color-en-funcion": {
+        "rgba(2": 3
+      },
+      "esquina-hinchada": {
+        "rounded-[14px]": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1,
+        "text-[11px]": 5,
+        "text-[12px]": 1
+      },
+      "color-prohibido": {
+        "text-neutral-100": 15,
+        "text-red-300": 2,
+        "bg-red-500": 1
+      },
+      "medida-clavada": {
+        "min-w-[180px]": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      }
+    },
+    "src/features/knowledge/components/brain/FolderPicker.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#4ADE80": 6,
+        "#1E1E1E": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1
+      },
+      "color-prohibido": {
+        "text-neutral-100": 7
+      },
+      "control-pequeno": {
+        "h-8": 1
+      }
+    },
+    "src/features/knowledge/components/brain/KnowledgeBrain.tsx": {
+      "color-a-mano": {
+        "#1E1E1E": 1,
+        "#4ADE80": 8,
+        "#22C55E": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 3
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 2,
+        "text-[10px]": 2
+      },
+      "color-prohibido": {
+        "bg-neutral-950": 1,
+        "text-neutral-100": 6
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-[minmax(0,1fr)_auto]": 1
+      }
+    },
+    "src/features/knowledge/components/brain/PreviewCard.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#4ADE80": 8,
+        "#1E1E1E": 1
+      },
+      "medida-clavada": {
+        "w-[320px]": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1,
+        "text-[12px]": 1,
+        "text-[11px]": 2
+      },
+      "color-prohibido": {
+        "text-neutral-100": 4
+      }
+    },
+    "src/features/knowledge/components/brain/Scene.tsx": {
+      "color-en-funcion": {
+        "rgba(0": 1,
+        "rgba(2": 1
+      },
+      "color-a-mano": {
+        "#F4F4FA": 1,
+        "#22C55E": 1,
+        "#4ADE80": 2,
+        "#050505": 2,
+        "#16A34A": 1
+      }
+    },
+    "src/features/knowledge/components/brain/SettingsPanel.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#4ADE80": 28,
+        "#1E1E1E": 3,
+        "#22C55E": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 8
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 6,
+        "text-[11px]": 4,
+        "text-[12px]": 1
+      },
+      "color-prohibido": {
+        "text-neutral-100": 12
+      },
+      "control-pequeno": {
+        "h-8": 1,
+        "h-10": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-[1fr_auto]": 1
+      },
+      "campo-con-letra-chica": {
+        "text-sm": 1
+      }
+    },
+    "src/features/knowledge/components/brain/TreePanel.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "text-neutral-100": 18
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4
+      },
+      "color-a-mano": {
+        "#1E1E1E": 1,
+        "#4ADE80": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 3
+      },
+      "esquina-hinchada": {
+        "rounded-[14px]": 1
+      },
+      "medida-clavada": {
+        "w-[340px]": 1
+      }
+    },
+    "src/features/lead-magnets/components/lead-magnets-admin.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 7,
+        "text-[9px]": 4,
+        "text-[10px]": 5,
+        "text-[11px]": 1
+      },
+      "control-pequeno": {
+        "h-9": 1,
+        "h-10": 2,
+        "h-8": 3
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "color-prohibido": {
+        "border-green-500": 1,
+        "bg-green-500": 1,
+        "text-green-300": 1,
+        "border-zinc-500": 1,
+        "bg-zinc-500": 1,
+        "text-zinc-400": 1,
+        "border-red-500": 2,
+        "text-red-400": 1,
+        "bg-red-500": 2,
+        "text-red-300": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 3,
+        "text-muted-foreground/60": 3
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      }
+    },
+    "src/features/lead-magnets/components/lm-delivery.tsx": {
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 2,
+        "text-muted-foreground/50": 1
+      }
+    },
+    "src/features/lead-magnets/components/lm-invalid.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "border-amber-500": 1,
+        "bg-amber-500": 1,
+        "text-amber-400": 1
+      }
+    },
+    "src/features/manychat/components/inbox-view.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 2,
+        "text-[11px]": 1,
+        "text-xs": 1
+      }
+    },
+    "src/features/manychat/components/kpi-card.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[9px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/manychat/components/manychat-overview.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[10px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      }
+    },
+    "src/features/manychat/components/subscribers-list.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 10
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 9,
+        "text-xs": 3
+      }
+    },
+    "src/features/manychat/components/tags-panel.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[11px]": 1,
+        "text-[10px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      }
+    },
+    "src/features/manychat/components/webinar-funnel-panel.tsx": {
+      "color-a-mano": {
+        "#22C55E": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 9,
+        "text-[11px]": 1,
+        "text-[10px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1
+      },
+      "color-con-nombre": {
+        "color: GREEN": 3
+      }
+    },
+    "src/features/mision/components/mision-page.tsx": {
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 16
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 6,
+        "text-[11px]": 8,
+        "text-[10px]": 4
+      },
+      "fuente-mono": {
+        "font-mono": 15
+      },
+      "color-prohibido": {
+        "text-red-300": 4,
+        "text-orange-300": 3,
+        "text-red-400": 1,
+        "text-blue-300": 1,
+        "bg-cyan-300": 1,
+        "border-cyan-500": 1,
+        "text-cyan-300": 1,
+        "text-emerald-400": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/notifications/components/NotificationPrefs.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 2,
+        "text-[11px]": 1
+      },
+      "color-prohibido": {
+        "text-red-400": 1,
+        "bg-green-500": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/notifications/components/NotificationsPanel.tsx": {
+      "color-prohibido": {
+        "text-green-400": 6,
+        "text-red-400": 4,
+        "bg-red-500": 1,
+        "bg-red-400": 1
+      },
+      "color-a-mano": {
+        "#4ADE80": 1
+      },
+      "control-pequeno": {
+        "h-8": 1
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1,
+        "text-[10px]": 3,
+        "text-xs": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      }
+    },
+    "src/features/notifications/components/PushNotificationPrompt.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3
+      }
+    },
+    "src/features/notifications/components/PushSettings.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 1
+      },
+      "color-prohibido": {
+        "text-green-400": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      }
+    },
+    "src/features/operaciones-dashboard/components/operaciones-dashboard.tsx": {
+      "color-prohibido": {
+        "bg-blue-400": 3,
+        "ring-blue-500": 1,
+        "bg-blue-500": 1,
+        "bg-green-400": 1,
+        "ring-green-500": 1,
+        "bg-green-500": 2,
+        "bg-amber-400": 1,
+        "ring-amber-500": 1,
+        "bg-amber-500": 3,
+        "bg-purple-400": 1,
+        "ring-purple-500": 1,
+        "bg-purple-500": 1,
+        "from-amber-500": 1,
+        "to-red-500": 1,
+        "from-blue-500": 1,
+        "to-cyan-500": 1,
+        "from-emerald-500": 1,
+        "to-green-500": 1,
+        "from-purple-500": 1,
+        "to-pink-500": 1,
+        "bg-red-400": 2,
+        "text-red-400": 5,
+        "bg-orange-400": 2,
+        "text-orange-400": 1,
+        "text-blue-400": 1,
+        "from-green-600": 2,
+        "to-green-400": 2,
+        "text-amber-400": 5,
+        "border-amber-500": 2,
+        "border-green-500": 1,
+        "text-green-400": 4,
+        "text-cyan-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5,
+        "text-[10px]": 22,
+        "text-[9px]": 3
+      },
+      "fuente-mono": {
+        "font-mono": 26
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 22
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 3
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/pipelines/components/pipeline-selector.tsx": {
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1,
+        "text-xs": 2
+      },
+      "control-pequeno": {
+        "h-8": 1
+      }
+    },
+    "src/features/pipelines/components/pipelines-manager-drawer.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 1
+      }
+    },
+    "src/features/pipelines/components/pipelines-page.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 11,
+        "text-[10px]": 13,
+        "text-[9px]": 3
+      },
+      "fuente-mono": {
+        "font-mono": 22
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 20
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 1,
+        "text-muted-foreground/60": 1
+      },
+      "color-prohibido": {
+        "text-amber-400": 2,
+        "fill-amber-400": 2,
+        "border-amber-500": 1,
+        "border-red-500": 1,
+        "text-red-400": 4,
+        "bg-red-500": 1
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 2
+      },
+      "control-pequeno": {
+        "h-9": 2,
+        "h-8": 2
+      },
+      "campo-con-letra-chica": {
+        "text-sm": 3
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-6": 2,
+        "grid-cols-4": 1
+      }
+    },
+    "src/features/profile/components/profile-page.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 3,
+        "text-xs": 3
+      },
+      "color-prohibido": {
+        "text-green-400": 1,
+        "text-red-400": 1
+      }
+    },
+    "src/features/projects/components/project-detail.tsx": {
+      "color-prohibido": {
+        "border-cyan-500": 1,
+        "text-cyan-400": 1,
+        "bg-cyan-500": 1,
+        "border-amber-500": 1,
+        "text-amber-400": 1,
+        "bg-amber-500": 1,
+        "border-green-500": 1,
+        "text-green-400": 1,
+        "bg-green-500": 1,
+        "text-emerald-600": 1,
+        "text-emerald-400": 1,
+        "bg-emerald-500": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 7
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      }
+    },
+    "src/features/projects/components/projects-overview.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5,
+        "text-[10px]": 8
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "color-prohibido": {
+        "text-emerald-600": 2,
+        "text-emerald-400": 2,
+        "text-red-400": 1,
+        "text-amber-400": 2,
+        "text-cyan-400": 1,
+        "text-zinc-400": 1,
+        "bg-emerald-500": 1,
+        "text-blue-600": 1,
+        "text-blue-400": 1,
+        "text-amber-600": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-4": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/agenda-thanks-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#2A2D34": 5,
+        "#18181B": 1,
+        "#9CA3AF": 2,
+        "#111113": 1,
+        "#D1D5DB": 1,
+        "#6B7280": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "color-prohibido": {
+        "bg-green-500": 1,
+        "text-green-500": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1,
+        "text-xs": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      }
+    },
+    "src/features/public-pages/funnel-lt8/checkout-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 3,
+        "#2A2D34": 10,
+        "#9CA3AF": 7,
+        "#6B7280": 1,
+        "#4B5563": 1,
+        "#111113": 1,
+        "#D1D5DB": 2
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4,
+        "text-xs": 5,
+        "text-[11px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/BioModal.tsx": {
+      "color-a-mano": {
+        "#111113": 1,
+        "#2A2D34": 1,
+        "#E5E5E5": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Button.tsx": {
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1,
+        "text-xs": 1
+      },
+      "color-a-mano": {
+        "#E5E5E5": 1,
+        "#2A2D34": 2
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Clients.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 1,
+        "#0F0F12": 1,
+        "#9CA3AF": 1
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Confetti.tsx": {
+      "color-a-mano": {
+        "#FFFFFF": 1,
+        "#9CA3AF": 1,
+        "#F3F4F6": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/CustomCursor.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Footer.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#2A2D34": 2,
+        "#6B7280": 2,
+        "#9CA3AF": 1,
+        "#4B5563": 2
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[11px]": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Header.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#2A2D34": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Hero.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 4,
+        "#2A2D34": 3,
+        "#18181B": 1,
+        "#9CA3AF": 2,
+        "#6B7280": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[8px]": 1,
+        "text-[9px]": 1,
+        "text-xs": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/components/Services.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 3,
+        "#18181B": 1,
+        "#F5F6F7": 1,
+        "#6B7280": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/funnel-lt8-page.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 16,
+        "#F5F6F7": 1,
+        "#6B7280": 4,
+        "#9CA3AF": 5,
+        "#0F0F12": 7,
+        "#18181B": 1,
+        "#D1D5DB": 6,
+        "#4B5563": 1,
+        "#111113": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 4
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 1
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 2
+      }
+    },
+    "src/features/public-pages/funnel-lt8/styles.css": {
+      "fuente-de-sistema": {
+        "-apple-system": 1,
+        "BlinkMacSystemFont": 1,
+        "Segoe UI": 1
+      },
+      "color-a-mano": {
+        "#0F0F12": 4,
+        "#F5F6F7": 1,
+        "#ffffff": 1,
+        "#000000": 3,
+        "#2db82d": 1,
+        "#FFFFFF": 6,
+        "#2A2D34": 2,
+        "#9CA3AF": 2,
+        "#18181B": 4,
+        "#4B5563": 1,
+        "#FFC439": 1,
+        "#F3F4F6": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1,
+        "--font-mono": 3,
+        "JetBrains Mono": 3
+      },
+      "acento-blanco": {
+        "background-color: #ffffff": 1,
+        "background-color: #FFFFFF": 1
+      },
+      "verde-viejo": {
+        "#37ca37": 2
+      },
+      "color-en-funcion": {
+        "rgba(2": 7,
+        "rgba(0": 4,
+        "rgba(4": 1,
+        "rgba(1": 1
+      },
+      "degradado-de-color": {
+        "linear-gradient(": 2
+      },
+      "color-con-nombre": {
+        "color: white": 4,
+        "color: black": 1
+      }
+    },
+    "src/features/public-pages/funnel-lt8/thanks-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#2A2D34": 10,
+        "#18181B": 1,
+        "#9CA3AF": 15,
+        "#6B7280": 6,
+        "#D1D5DB": 6,
+        "#111113": 3,
+        "#E5E5E5": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "acento-blanco": {
+        "bg-white": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      },
+      "color-prohibido": {
+        "bg-green-500": 1,
+        "text-green-500": 2,
+        "text-amber-500": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1,
+        "text-xs": 4
+      },
+      "fuente-mono": {
+        "font-mono": 10
+      },
+      "color-en-funcion": {
+        "rgba(2": 1
+      }
+    },
+    "src/features/public-pages/funnel-mifge/agenda-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#2A2D34": 2,
+        "#18181B": 2,
+        "#9CA3AF": 2,
+        "#6B7280": 2,
+        "#D1D5DB": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "verde-viejo": {
+        "#37ca37": 3
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[10px]": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      }
+    },
+    "src/features/public-pages/funnel-mifge/agenda-thanks-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#2A2D34": 4,
+        "#18181B": 1,
+        "#9CA3AF": 2,
+        "#111113": 1,
+        "#D1D5DB": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "color-prohibido": {
+        "bg-green-500": 1,
+        "text-green-500": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      }
+    },
+    "src/features/public-pages/funnel-mifge/checkout-page.tsx": {
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#2A2D34": 3,
+        "#16161B": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 2
+      },
+      "fuente-mono": {
+        "font-mono": 13
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 14
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 4,
+        "text-[10px]": 7,
+        "text-[9px]": 3
+      },
+      "color-prohibido": {
+        "text-red-400": 1,
+        "border-amber-500": 2,
+        "bg-amber-500": 1,
+        "text-amber-400": 2
+      },
+      "verde-viejo": {
+        "#37CA37": 9
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-3": 1
+      },
+      "color-con-nombre": {
+        "Color: \"green": 1
+      }
+    },
+    "src/features/public-pages/funnel-mifge/components/CalendarBooker.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 11,
+        "#18181B": 2,
+        "#6B7280": 12,
+        "#9CA3AF": 5,
+        "#0F0F12": 1,
+        "#4B5563": 1
+      },
+      "fuente-mono": {
+        "font-mono": 17
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 10
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 11,
+        "text-[9px]": 1,
+        "text-[8px]": 1
+      },
+      "color-prohibido": {
+        "border-red-500": 2,
+        "bg-red-500": 2,
+        "text-red-300": 3
+      },
+      "verde-viejo": {
+        "#37ca37": 10
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-7": 1,
+        "grid-cols-3": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      }
+    },
+    "src/features/public-pages/funnel-mifge/components/Hero.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 4,
+        "#2A2D34": 3,
+        "#18181B": 1,
+        "#9CA3AF": 2,
+        "#6B7280": 2,
+        "#4B5563": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 2
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[8px]": 1,
+        "text-[9px]": 1,
+        "text-xs": 3,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      }
+    },
+    "src/features/public-pages/funnel-mifge/components/LegalFooter.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 1,
+        "#0B0B0E": 1,
+        "#6B7280": 1,
+        "#9CA3AF": 4
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 1
+      }
+    },
+    "src/features/public-pages/funnel-mifge/funnel-mifge-page.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 13,
+        "#F5F6F7": 1,
+        "#6B7280": 6,
+        "#9CA3AF": 7,
+        "#0F0F12": 9,
+        "#4B5563": 2,
+        "#0B0B0E": 2,
+        "#18181B": 2,
+        "#D1D5DB": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 7
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1,
+        "text-xs": 4,
+        "text-[10px]": 1
+      },
+      "verde-viejo": {
+        "#37ca37": 2
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 2
+      }
+    },
+    "src/features/public-pages/funnel-mifge/thanks-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 1,
+        "#2A2D34": 4,
+        "#18181B": 1,
+        "#9CA3AF": 7,
+        "#6B7280": 4,
+        "#0B0B0E": 1,
+        "#D1D5DB": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      },
+      "color-prohibido": {
+        "bg-green-500": 1,
+        "text-green-500": 1,
+        "text-amber-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1,
+        "text-xs": 4,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 6
+      }
+    },
+    "src/features/public-pages/funnel-mifge/upsell-anual-page.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#9CA3AF": 2,
+        "#6B7280": 4,
+        "#D1D5DB": 1,
+        "#4B5563": 2
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 1
+      },
+      "color-prohibido": {
+        "bg-amber-500": 1,
+        "text-red-400": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5,
+        "text-[10px]": 1
+      },
+      "verde-viejo": {
+        "#37ca37": 7
+      },
+      "fuente-mono": {
+        "font-mono": 6
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 4
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      }
+    },
+    "src/features/public-pages/kit/funnel-kit.tsx": {
+      "color-a-mano": {
+        "#22C55E": 4,
+        "#4ADE80": 5,
+        "#08130C": 1,
+        "#F5F6F7": 2,
+        "#2A2D34": 2,
+        "#8A8F99": 3,
+        "#0F0F12": 2,
+        "#141418": 1
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 9,
+        "linear-gradient(": 5,
+        "bg-gradient-to-": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 8,
+        "rgba(7": 1,
+        "rgba(0": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[12px]": 2,
+        "text-[13px]": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-4": 1
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/reset-cache/components/reset-cache-page.tsx": {
+      "color-a-mano": {
+        "#F5F6F7": 1,
+        "#0F0F12": 1,
+        "#9CA3AF": 2,
+        "#2A2D34": 1,
+        "#18181B": 1,
+        "#D1D5DB": 1,
+        "#6B7280": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 3,
+        "text-[10px]": 1
+      },
+      "fuente-mono": {
+        "JetBrains Mono": 4
+      }
+    },
+    "src/features/sales/components/registrar-venta-modal.tsx": {
+      "modal-a-mano": {
+        "fixed inset-0": 2
+      },
+      "color-prohibido": {
+        "border-amber-500": 2,
+        "border-green-500": 5,
+        "text-amber-400": 1,
+        "text-green-400": 4,
+        "text-amber-300": 2,
+        "bg-amber-500": 1,
+        "text-amber-200": 1,
+        "text-green-300": 1,
+        "bg-green-500": 3,
+        "text-red-400": 2,
+        "border-red-500": 2,
+        "bg-red-500": 3,
+        "from-green-500": 1,
+        "to-green-600": 1,
+        "text-red-300": 2
+      },
+      "fuente-mono": {
+        "font-mono": 14
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 11
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 8,
+        "text-xs": 8,
+        "text-[11px]": 1
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "token-diluido": {
+        "text-foreground/90": 1
+      }
+    },
+    "src/features/sales/components/registrar-venta-widget.tsx": {
+      "color-prohibido": {
+        "from-green-500": 1,
+        "to-green-600": 1,
+        "border-green-400": 1
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/features/sales/components/sale-stage-prompt.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "color-prohibido": {
+        "border-green-500": 2,
+        "bg-green-500": 3,
+        "text-green-400": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1,
+        "text-[12px]": 2
+      }
+    },
+    "src/features/shell/components/app-sidebar.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1,
+        "text-[10px]": 2,
+        "text-[9px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/shell/components/mobile-bottom-nav.tsx": {
+      "rejilla-sin-movil": {
+        "grid-cols-5": 1
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 3,
+        "text-xs": 3
+      }
+    },
+    "src/features/shell/components/mobile-header.tsx": {
+      "alto-fijo-con-zona-segura": {
+        "alto fijo + zona segura": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 1
+      }
+    },
+    "src/features/shell/components/page-nav-header.tsx": {
+      "token-diluido": {
+        "text-muted-foreground/40": 1,
+        "text-muted-foreground/60": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 2,
+        "text-xs": 1
+      }
+    },
+    "src/features/shell/components/user-menu.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 2,
+        "text-xs": 2
+      }
+    },
+    "src/features/shell/components/view-as-role-banner.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#F5F6F7": 2,
+        "#2A2D34": 1,
+        "#9CA3AF": 1,
+        "#FFFFFF": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "acento-blanco": {
+        "background: \"#FFFFFF": 1
+      }
+    },
+    "src/features/shell/components/view-as-role-dropdown.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      }
+    },
+    "src/features/sistemas/components/medicion-ads-workflow.tsx": {
+      "color-a-mano": {
+        "#22C55E": 1,
+        "#4ADE80": 1,
+        "#E5B567": 1,
+        "#E5675B": 1,
+        "#131318": 1,
+        "#9CA3AF": 1,
+        "#F5F6F7": 15,
+        "#A6AAB2": 13,
+        "#101710": 7,
+        "#7C818A": 19,
+        "#24462F": 5,
+        "#3A3D44": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 4,
+        "rgba(3": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 13
+      }
+    },
+    "src/features/sistemas/components/sistemas-hub.tsx": {
+      "color-en-funcion": {
+        "rgba(3": 6
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 4,
+        "text-[13px]": 1
+      },
+      "color-a-mano": {
+        "#22C55E": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 1
+      }
+    },
+    "src/features/sistemas/components/webinar-workflow.tsx": {
+      "color-a-mano": {
+        "#22C55E": 17,
+        "#9CA3AF": 5,
+        "#F5F6F7": 6,
+        "#2A2D34": 12,
+        "#141418": 4,
+        "#4ADE80": 3,
+        "#0F0F12": 8,
+        "#C7CBD1": 1,
+        "#6B7280": 1,
+        "#08130C": 3,
+        "#7B818C": 2,
+        "#8fe6ab": 1,
+        "#4B5563": 1,
+        "#202c33": 1,
+        "#0b141a": 1,
+        "#005c4b": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1,
+        "text-[11px]": 4,
+        "text-[12px]": 2,
+        "text-[9px]": 1,
+        "text-[10.5px]": 2,
+        "text-[10px]": 1,
+        "text-[6.5px]": 3,
+        "text-[8.5px]": 3,
+        "text-[7.5px]": 2,
+        "text-[7px]": 2,
+        "text-[8px]": 2
+      },
+      "esquina-hinchada": {
+        "rounded-2xl": 2
+      },
+      "color-en-funcion": {
+        "rgba(3": 5
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 1
+      },
+      "acento-blanco": {
+        "bg-white": 2
+      }
+    },
+    "src/features/sistemas/lib/systems.ts": {
+      "color-a-mano": {
+        "#22C55E": 2
+      }
+    },
+    "src/features/tags/components/contact-tags-panel.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 3,
+        "text-xs": 3
+      },
+      "medida-clavada": {
+        "min-w-[180px]": 1
+      }
+    },
+    "src/features/tags/components/tag-chips.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-[9px]": 1,
+        "text-[10px]": 1
+      }
+    },
+    "src/features/tags/components/tag-filter-button.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2,
+        "text-[11px]": 1,
+        "text-[10px]": 1
+      },
+      "control-pequeno": {
+        "h-8": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "medida-clavada": {
+        "min-w-[220px]": 1
+      }
+    },
+    "src/features/tags/components/tags-page.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[10px]": 4
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 6
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 1
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      },
+      "color-prohibido": {
+        "text-red-400": 2,
+        "bg-red-500": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-6": 1
+      },
+      "control-pequeno": {
+        "h-8": 1
+      }
+    },
+    "src/features/tasks/components/task-board.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "medida-clavada": {
+        "w-[280px]": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 1,
+        "text-[9px]": 1,
+        "text-xs": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/30": 1
+      }
+    },
+    "src/features/tasks/components/task-card.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[13px]": 1,
+        "text-[9px]": 2,
+        "text-[8px]": 1
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      },
+      "fuente-mono": {
+        "font-mono": 3
+      },
+      "token-diluido": {
+        "text-muted-foreground/50": 1
+      }
+    },
+    "src/features/tasks/components/task-detail.tsx": {
+      "medida-clavada": {
+        "w-[420px]": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/0": 1,
+        "text-muted-foreground/40": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 6,
+        "text-[8px]": 1,
+        "text-[10px]": 3
+      },
+      "control-pequeno": {
+        "h-7": 4
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      }
+    },
+    "src/features/tasks/components/task-filters.tsx": {
+      "color-prohibido": {
+        "border-blue-500": 1,
+        "text-blue-400": 1,
+        "bg-blue-500": 1,
+        "border-red-500": 1,
+        "text-red-400": 1,
+        "bg-red-500": 1,
+        "border-amber-500": 1,
+        "text-amber-400": 1,
+        "bg-amber-500": 1,
+        "border-green-500": 1,
+        "text-green-400": 1,
+        "bg-green-500": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 8,
+        "text-[10px]": 1
+      },
+      "control-pequeno": {
+        "h-7": 5
+      }
+    },
+    "src/features/tasks/components/task-list.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/40": 1,
+        "text-muted-foreground/50": 1,
+        "text-muted-foreground/30": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-[1fr_120px_100px_100px_80px]": 2
+      },
+      "fuente-mono": {
+        "font-mono": 10
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 8,
+        "text-[9px]": 2,
+        "text-[8px]": 1
+      }
+    },
+    "src/features/tasks/components/task-page.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/features/tasks/components/task-quick-capture.tsx": {
+      "token-diluido": {
+        "text-muted-foreground/50": 1
+      },
+      "fuente-mono": {
+        "font-mono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 1
+      }
+    },
+    "src/features/team/components/accept-invite-page.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#0F0F12": 5,
+        "#16161B": 1,
+        "#2A2D34": 4
+      },
+      "alto-atado-a-la-ventana": {
+        "min-h-screen": 2
+      },
+      "verde-viejo": {
+        "#37CA37": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 3
+      },
+      "color-en-funcion": {
+        "rgba(1": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "fuente-mono": {
+        "font-mono": 5
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      },
+      "color-prohibido": {
+        "text-red-400": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/team/components/team-page.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "border-purple-500": 1,
+        "text-purple-400": 1,
+        "border-pink-500": 1,
+        "text-pink-400": 1,
+        "border-amber-500": 2,
+        "text-amber-400": 2,
+        "border-orange-500": 2,
+        "text-orange-400": 2,
+        "border-cyan-500": 1,
+        "text-cyan-400": 1,
+        "text-red-400": 4,
+        "bg-amber-500": 1,
+        "text-green-400": 2,
+        "border-green-500": 2,
+        "text-red-300": 1,
+        "bg-red-500": 1,
+        "border-red-500": 1,
+        "bg-green-500": 1,
+        "text-green-300": 1
+      },
+      "fuente-mono": {
+        "font-mono": 29
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 22
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 23,
+        "text-xs": 14,
+        "text-[9px]": 2
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 3
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 2,
+        "text-sm": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/70": 2,
+        "text-muted-foreground/60": 1
+      },
+      "medida-clavada": {
+        "min-w-[200px]": 1
+      }
+    },
+    "src/features/tutoriales/components/menu-acciones.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#2A2D34": 1,
+        "#15161A": 1
+      },
+      "color-prohibido": {
+        "text-red-400": 1,
+        "bg-red-500": 1
+      }
+    },
+    "src/features/tutoriales/components/nuevo-tutorial.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 4,
+        "#2A2D34": 8,
+        "#15161A": 1,
+        "#22C55E": 9,
+        "#4ADE80": 5
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 14,
+        "text-[11px]": 1
+      },
+      "color-prohibido": {
+        "text-amber-400": 1,
+        "border-red-500": 1,
+        "bg-red-500": 1,
+        "text-red-400": 1,
+        "text-red-300": 1
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      }
+    },
+    "src/features/tutoriales/components/panel.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 3,
+        "#2A2D34": 4,
+        "#15161A": 1,
+        "#22C55E": 2,
+        "#4ADE80": 3
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 10
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 1
+      },
+      "color-prohibido": {
+        "text-red-300": 3,
+        "border-red-500": 1,
+        "bg-red-500": 2,
+        "text-red-400": 1,
+        "text-red-200": 1,
+        "bg-red-400": 1
+      }
+    },
+    "src/features/tutoriales/components/reproductor.tsx": {
+      "color-a-mano": {
+        "#0F0F12": 2,
+        "#22C55E": 2
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      }
+    },
+    "src/features/tutoriales/components/tarjeta-carpeta.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#22C55E": 4,
+        "#2A2D34": 1,
+        "#15161A": 1,
+        "#181A1F": 1,
+        "#4ADE80": 2
+      },
+      "accion-solo-con-raton": {
+        "group-hover:opacity-100": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      }
+    },
+    "src/features/tutoriales/components/tarjeta.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-a-mano": {
+        "#22C55E": 4,
+        "#2A2D34": 3,
+        "#0F0F12": 7,
+        "#15161A": 2
+      },
+      "degradado-de-color": {
+        "bg-gradient-to-": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 5
+      },
+      "color-prohibido": {
+        "bg-amber-500": 1,
+        "text-amber-400": 1
+      }
+    },
+    "src/features/tutoriales/components/tutoriales-page.tsx": {
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3
+      },
+      "color-a-mano": {
+        "#2A2D34": 4,
+        "#22C55E": 5,
+        "#0F0F12": 3,
+        "#4ADE80": 3
+      },
+      "color-prohibido": {
+        "border-amber-500": 1,
+        "bg-amber-500": 1,
+        "text-amber-200": 1,
+        "border-red-500": 1,
+        "bg-red-500": 1,
+        "text-red-300": 1
+      }
+    },
+    "src/features/video-edit/components/video-edit-editor.tsx": {
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "fuente-mono": {
+        "font-mono": 4
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 9,
+        "text-xs": 17,
+        "text-[11px]": 1
+      },
+      "alto-atado-a-la-ventana": {
+        "100vh": 2
+      },
+      "control-pequeno": {
+        "h-7": 1,
+        "h-6": 1,
+        "h-8": 3
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 2
+      }
+    },
+    "src/features/video-edit/components/video-edit-panel.tsx": {
+      "sparkles": {
+        "Sparkles": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 19,
+        "text-[10px]": 7
+      },
+      "color-prohibido": {
+        "text-amber-500": 1
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 1
+      },
+      "control-pequeno": {
+        "h-8": 1
+      }
+    },
+    "src/features/webs/components/calls-admin-panel.tsx": {
+      "fuente-mono": {
+        "font-mono": 18
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 11
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 10,
+        "text-[9px]": 1,
+        "text-xs": 4,
+        "text-[11px]": 2
+      },
+      "color-prohibido": {
+        "text-red-400": 1,
+        "text-cyan-400": 2,
+        "text-green-400": 1,
+        "text-orange-400": 1,
+        "text-cyan-300": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 2,
+        "text-foreground/90": 1
+      },
+      "rejilla-sin-movil": {
+        "grid-cols-12": 1
+      },
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      }
+    },
+    "src/features/webs/components/google-calendar-card.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 4,
+        "text-[10px]": 2
+      },
+      "color-prohibido": {
+        "border-orange-500": 1,
+        "bg-orange-500": 1,
+        "text-orange-400": 2,
+        "border-green-500": 1,
+        "bg-green-500": 1,
+        "text-green-400": 1
+      },
+      "fuente-mono": {
+        "font-mono": 9
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 5
+      }
+    },
+    "src/features/webs/components/meeting-url-card.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3,
+        "text-[10px]": 4
+      },
+      "color-prohibido": {
+        "border-green-500": 1,
+        "bg-green-500": 1,
+        "border-amber-500": 1,
+        "bg-amber-500": 1,
+        "text-green-400": 2,
+        "text-amber-400": 1,
+        "text-red-400": 1
+      },
+      "fuente-mono": {
+        "font-mono": 6
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 3
+      }
+    },
+    "src/features/webs/components/web-card.tsx": {
+      "pantalla-solo-para-monitor": {
+        "archivo sin instrucciones de telefono": 1
+      },
+      "color-prohibido": {
+        "bg-yellow-500": 1,
+        "text-yellow-400": 1,
+        "border-yellow-500": 1,
+        "bg-green-500": 1,
+        "text-green-400": 2,
+        "border-green-500": 1,
+        "bg-zinc-500": 1,
+        "text-zinc-400": 1,
+        "border-zinc-500": 1
+      },
+      "fuente-mono": {
+        "font-mono": 7
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[10px]": 4,
+        "text-[11px]": 2,
+        "text-xs": 4
+      },
+      "token-diluido": {
+        "text-foreground/70": 2,
+        "text-muted-foreground/60": 2
+      },
+      "control-pequeno": {
+        "h-6": 1
+      },
+      "color-a-mano": {
+        "#22C55E": 2
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/webs/components/web-edit-modal.tsx": {
+      "modal-a-mano": {
+        "fixed inset-0": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 11,
+        "text-[12px]": 4,
+        "text-[11px]": 14,
+        "text-[10px]": 1
+      },
+      "campo-con-letra-chica": {
+        "text-xs": 3,
+        "text-sm": 1
+      },
+      "token-diluido": {
+        "text-muted-foreground/60": 4,
+        "text-muted-foreground/70": 4
+      },
+      "fuente-mono": {
+        "font-mono": 13
+      },
+      "color-prohibido": {
+        "border-green-500": 1,
+        "bg-green-500": 1,
+        "text-green-400": 1,
+        "border-yellow-500": 1,
+        "bg-yellow-500": 1,
+        "text-yellow-400": 1
+      },
+      "color-a-mano": {
+        "#22C55E": 1
+      },
+      "control-pequeno": {
+        "h-6": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/features/webs/components/webs-page.tsx": {
+      "fuente-mono": {
+        "font-mono": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 2
+      },
+      "token-diluido": {
+        "text-muted-foreground/40": 1,
+        "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/welcome/components/welcome-page.tsx": {
+      "color-a-mano": {
+        "#FFFFFF": 1,
+        "#F5F6F7": 3,
+        "#D1D5DB": 2,
+        "#9CA3AF": 2,
+        "#0F0F12": 2
+      },
+      "mayusculas-separadas": {
+        "uppercase + tracking ancho": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-[11px]": 1
+      },
+      "fuente-mono": {
+        "JetBrains Mono": 1
+      },
+      "esquina-recta": {
+        "rounded-none": 1
+      },
+      "acento-blanco": {
+        "bg-white": 1
+      }
+    },
+    "src/funnels/CH_funnel_hub/page.tsx": {
+      "color-a-mano": {
+        "#6B7280": 13,
+        "#3F3F46": 1,
+        "#F5F6F7": 19,
+        "#9CA3AF": 6,
+        "#FFFFFF": 5,
+        "#18181B": 6,
+        "#0F0F12": 6
+      },
+      "fuente-mono": {
+        "JetBrains Mono": 10
+      },
+      "color-en-funcion": {
+        "rgba(1": 3,
+        "rgba(4": 2,
+        "rgba(2": 3
+      },
+      "degradado-de-color": {
+        "linear-gradient(": 3,
+        "radial-gradient(": 2
+      },
+      "acento-blanco": {
+        "background: '#FFFFFF": 4
+      }
+    },
+    "src/lib/cookies/CookieConsent.tsx": {
+      "color-a-mano": {
+        "#2A2D34": 3,
+        "#0F0F12": 1,
+        "#9CA3AF": 2,
+        "#2db82d": 1
+      },
+      "verde-viejo": {
+        "#37ca37": 2
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 3
+      },
+      "fuente-mono": {
+        "font-mono": 2
+      }
+    },
+    "src/lib/email/templates/_base-layout.ts": {
+      "color-a-mano": {
+        "#FAFAFA": 1,
+        "#D1D5DB": 1,
+        "#9CA3AF": 1,
+        "#6B7280": 1,
+        "#18181B": 1
+      },
+      "fuente-de-sistema": {
+        "-apple-system": 1,
+        "BlinkMacSystemFont": 1,
+        "Segoe UI": 1,
+        "Helvetica,": 1
+      },
+      "fuente-mono": {
+        "JetBrains Mono": 1
+      }
+    },
+    "src/lib/email/templates/_layout.tsx": {
+      "color-a-mano": {
+        "#18181B": 1,
+        "#FAFAFA": 2,
+        "#D1D5DB": 1,
+        "#9CA3AF": 1,
+        "#6B7280": 1
+      },
+      "fuente-de-sistema": {
+        "-apple-system": 1,
+        "BlinkMacSystemFont": 1,
+        "Segoe UI": 1,
+        "Helvetica,": 1
+      }
+    },
+    "src/lib/email/templates/internal-error-alert.tsx": {
+      "color-a-mano": {
+        "#FF6B6B": 1
+      },
+      "color-en-funcion": {
+        "rgba(2": 1
+      }
+    },
+    "src/lib/email/templates/internal-gcal-alert.tsx": {
+      "color-a-mano": {
+        "#FF6B6B": 2
+      },
+      "color-en-funcion": {
+        "rgba(2": 1
+      }
+    },
+    "src/lib/email/templates/password-changed.tsx": {
+      "color-a-mano": {
+        "#0a0a0c": 1,
+        "#e5e7eb": 1,
+        "#71717a": 1,
+        "#fafafa": 2,
+        "#d4d4d8": 2,
+        "#27272a": 2,
+        "#a1a1aa": 2,
+        "#52525b": 1
+      },
+      "fuente-de-sistema": {
+        "-apple-system": 1,
+        "BlinkMacSystemFont": 1,
+        "Segoe UI": 1
+      }
+    },
+    "src/remotion/components/CaptionDiego.tsx": {
+      "color-en-funcion": {
+        "rgba(0": 2
+      }
+    },
+    "src/remotion/components/SubtitleKaraoke.tsx": {
+      "fuente-de-sistema": {
+        "SF Pro": 1,
+        "-apple-system": 1
+      },
+      "color-en-funcion": {
+        "rgba(0": 2
+      }
+    },
+    "src/remotion/components/VivenciaText.tsx": {
+      "fuente-de-sistema": {
+        "Helvetica Neue": 1
+      },
+      "color-en-funcion": {
+        "rgba(0": 3
+      }
+    },
+    "src/remotion/components/WarmColorGrade.tsx": {
+      "color-en-funcion": {
+        "rgba(2": 5,
+        "rgba(1": 1
+      },
+      "degradado-de-color": {
+        "linear-gradient(": 2
+      }
+    },
+    "src/remotion/compositions/MisionVivencias.tsx": {
+      "color-en-funcion": {
+        "rgba(0": 2
+      },
+      "degradado-de-color": {
+        "radial-gradient(": 1
+      }
+    },
+    "src/remotion/lib/fonts.ts": {
+      "fuente-de-sistema": {
+        "-apple-system": 1,
+        "BlinkMacSystemFont": 1
+      }
+    }
+  }
+}
