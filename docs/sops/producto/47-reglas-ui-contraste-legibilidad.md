@@ -193,6 +193,24 @@ build roto. En el CRM eran 1508px de contactos invisibles.
   buscar los contenedores con `overflow-y` scrollable y comparar `scrollHeight` con
   `clientHeight`. Si el contenido desborda y ninguno puede bajar, está roto.
 
+## El botón flotante de "Registrar venta" se come el pie de TODAS las pantallas
+
+El widget de Registrar venta es `fixed` abajo a la derecha y flota por encima de todo el OS.
+Ocupa los **últimos 72px** de la ventana (48px de alto + 24px de separación). Cualquier cosa
+que quede al final de una página (un paginador, la última fila de una tabla, un botón de
+guardar) **queda debajo de él y no se puede pulsar**.
+
+- Toda pantalla con contenido que llegue al fondo reserva ese hueco: `pb-28 md:pb-28` en su
+  `<PageContainer>`.
+- **La variante `md:` NO sobra.** `PageContainer` ya trae `md:py-6`, y a partir de 768px eso
+  gana a un `pb-28` suelto. `tailwind-merge` tampoco lo arregla, porque una clase con `md:`
+  y otra sin él **no se consideran en conflicto**: las deja las dos y decide la cascada.
+  Pasó el 2026-08-06: la clase estaba puesta en el HTML y el padding real seguía siendo
+  24px. **Comprobar siempre el valor calculado, no que la clase esté escrita.**
+- **Cómo se comprueba** que algo del pie es pulsable de verdad: `document.elementFromPoint()`
+  en el centro del botón tiene que devolver ese botón. Que se vea no basta: puede estar
+  debajo de una capa transparente.
+
 ## Aplicar el brandkit a una pantalla del OS (referencia: el CRM)
 
 El CRM (`/crm`, las 3 pestañas) se rehizo con el brandkit oficial el 2026-08-06 y sirve de
@@ -225,6 +243,12 @@ y prohibido volver a meterlas): `crm/tags/page.tsx` y `crm-tabs-header.tsx`.
   `lib/brand.ts` por sección y la trampa de las clases de Tailwind montadas con plantilla.
   Resuelta deuda de layout de 2 pantallas. Disparador: Marco, *"la pantalla se queda pegada,
   no puedo hacer scroll... y quiero que todo esté funcional y con el diseño nuevo"*.
+
+- **2026-08-06** (v7): documentado que el **botón flotante de Registrar venta se come los
+  últimos 72px de cualquier pantalla**, con el hueco que hay que reservar (`pb-28 md:pb-28`)
+  y la trampa de que la variante `md:` es obligatoria porque `PageContainer` trae `md:py-6`
+  y `tailwind-merge` no considera en conflicto una clase con `md:` y otra sin él. Detonante:
+  el paginador nuevo de Contactos quedaba debajo del botón y no se podía pulsar.
 
 - **2026-07-31** (v5): candado automático de márgenes (`scripts/check-layout.mjs` en
   `predev` + `prebuild`) tras repetirse el bug por cuarta vez. Documentada la deuda de 12

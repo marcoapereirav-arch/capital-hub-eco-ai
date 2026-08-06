@@ -87,6 +87,19 @@ El OS recoge transiciones automáticas: `lead` → `agendado` (al reservar) y `a
 - **El scroll del CRM vive en UN solo sitio**: el hueco de contenido de `src/app/(main)/crm/layout.tsx`. Las páginas hijas no crean su propio scroll vertical ni recortan
 - **Diseño: brandkit oficial**, con los valores explícitos de `src/features/crm/lib/brand.ts` (los tokens del OS no son el brandkit, ver SOP 47)
 
+## Paginación de la lista: 20 por página (Marco, 2026-08-06)
+
+La vista **Contactos** enseña **20 contactos por página**. Se pasa de página con Anterior / Siguiente o con el número.
+
+- Se pagina sobre el resultado **ya filtrado**, así que los filtros y el buscador mandan sobre la paginación, no al revés.
+- **Cualquier cambio de filtro o de búsqueda devuelve a la página 1.** Quedarse en la 3 después de filtrar desconcierta.
+- El número de página se recorta al pintar (`paginaSegura`), no se guarda recortado: si un filtro deja menos páginas de las que había, **nunca se ve una página en blanco**, se cae sola a la última que existe.
+- Con una sola página el paginador **no se pinta**: sobra.
+- El pie dice siempre "Viendo X a Y de Z", para que el contador de arriba y lo que hay en pantalla no puedan parecer contradictorios.
+- Con muchas páginas los números se resumen (`1 ... 12 13 14 ... 25`). En móvil se sustituyen por "2 de 25": no caben.
+- La lista trae de la base **hasta 500 contactos** (el tope del endpoint). Si algún día se llega a ese tope, la pantalla **lo dice**: un tope invisible convertiría el contador y el paginador en una mentira.
+- El **kanban NO se pagina**: sus columnas ya scrollean por dentro y partir un funnel en páginas no significa nada.
+
 ## La lista y el kanban NO manejan la misma lista de stages
 
 Es la trampa que más veces ha roto esta pantalla, y por eso está aparte:
@@ -222,3 +235,10 @@ Marco: *"la pantalla se queda pegada, no puedo hacer scroll... y quiero que todo
 - Al añadir un filtro, se comprueba abriendo el desplegable, no leyendo el código.
 
 **Diseño:** las 3 pestañas, la ficha del contacto y el alta pasan al brandkit oficial, con los valores en `src/features/crm/lib/brand.ts`. El color de los stages deja de ser un neón por columna y pasa a significar algo (gris que avanza, verde en la venta, ámbar en el aviso, apagado en perdido).
+
+### 2026-08-06: paginación de la lista de contactos
+Marco: *"en contactos no puede pasar de una lista de más de 20 contactos, cuando pasa tienes que pasar de página"*.
+
+Vista Contactos paginada de 20 en 20 (detalle en la sección "Paginación de la lista"). El kanban queda igual: sus columnas ya scrollean por dentro.
+
+Bug encontrado y arreglado en el mismo bloque: el paginador quedaba **debajo del botón flotante de Registrar venta** y no se podía pulsar. Regla nueva en el SOP [47](47-reglas-ui-contraste-legibilidad.md), porque afecta al pie de cualquier pantalla del OS, no solo a esta.

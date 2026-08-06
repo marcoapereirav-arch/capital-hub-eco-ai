@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Search, Plus, ChevronRight, X, Phone, Mail } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Search, Plus, ChevronLeft, ChevronRight, X, Phone, Mail } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { ContactDrawer } from "./contact-drawer"
@@ -41,6 +41,16 @@ type ContactRow = {
 // Los stages REALES se leen del pipeline activo via usePipelines().
 const FALLBACK_STAGES = [{ value: "lead", label: "Lead" }]
 
+/** Contactos por pagina en la vista LISTA (Marco, 2026-08-06). */
+const POR_PAGINA = 20
+
+/**
+ * Cuantos contactos se traen de la base de una vez. Es el tope que acepta el endpoint.
+ * Si algun dia se llega a el, la pantalla lo DICE (ver el aviso del pie): un tope que no
+ * se ve convierte el contador y el paginador en una mentira.
+ */
+const TOPE_DE_CARGA = 500
+
 const eur = (n: number) => `${Math.round(n).toLocaleString("es-ES")} EUR`
 
 export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
@@ -57,6 +67,10 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [hasCallFilter, setHasCallFilter] = useState<"all" | "yes" | "no">("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [pagina, setPagina] = useState(1)
+  // Sitio al que se vuelve al cambiar de pagina: arriba del todo, con el buscador
+  // y los filtros a la vista. Sin esto se cambia de pagina y se sigue a mitad de lista.
+  const arribaRef = useRef<HTMLDivElement | null>(null)
   // La vista la fija la URL (/crm/contactos = lista, /crm/pipeline = kanban).
   // No hay conmutador interno: cada sub-pestana es su propia direccion (SOP producto/13).
   const view = initialView
@@ -187,6 +201,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     try {
       const url = new URL("/api/admin/contacts", window.location.origin)
       if (stageFilter !== "all") url.searchParams.set("stage", stageFilter)
+      url.searchParams.set("limit", String(TOPE_DE_CARGA))
       const res = await fetch(url.pathname + url.search).then((r) => r.json())
       setContacts(res.contacts ?? [])
     } finally {
@@ -253,6 +268,28 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     (dateRange !== "all" ? 1 : 0) +
     (hasCallFilter !== "all" ? 1 : 0) +
     (tagFilter.size > 0 ? 1 : 0)
+
+  // --- Paginacion de la vista LISTA -----------------------------------------
+  // `paginaSegura` se calcula al pintar, no se guarda. Asi, si un filtro deja menos
+  // paginas de las que habia, NUNCA se ve una pagina en blanco: se cae sola a la ultima
+  // que existe, incluso antes de que el efecto de mas abajo devuelva a la primera.
+  const totalPaginas = Math.max(1, Math.ceil(filtered.length / POR_PAGINA))
+  const paginaSegura = Math.min(pagina, totalPaginas)
+  const desde = (paginaSegura - 1) * POR_PAGINA
+  const enPantalla = filtered.slice(desde, desde + POR_PAGINA)
+
+  // Al cambiar cualquier filtro o la busqueda se vuelve a la primera pagina: seguir en
+  // la 3 despues de filtrar es desconcertante.
+  const firmaDeFiltros = [
+    search, stageFilter, pipelineFilter, originFilter, ownerFilter,
+    productFilter, dateRange, hasCallFilter, [...tagFilter].sort().join(","),
+  ].join("|")
+  useEffect(() => { setPagina(1) }, [firmaDeFiltros])
+
+  function irAPagina(n: number) {
+    setPagina(Math.min(Math.max(1, n), totalPaginas))
+    arribaRef.current?.scrollIntoView({ block: "start" })
+  }
 
   function clearAllFilters() {
     setStageFilter("all")
@@ -465,7 +502,16 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   // LISTA
   return (
     <>
-      <PageContainer>
+      {/* `pb-28 md:pb-28`: el boton flotante de "Registrar venta" vive pegado abajo a la
+          derecha y se comia los botones de pagina, que quedaban justo debajo (el widget
+          ocupa los ultimos 72px de la ventana). Este hueco deja que el paginador suba por
+          encima de el al llegar al final.
+          La variante `md:` NO sobra: `PageContainer` trae `md:py-6`, y a partir de 768px
+          esa gana al `pb-28` suelto. `tailwind-merge` tampoco lo resuelve, porque una
+          clase con `md:` y otra sin el no se consideran en conflicto. Resultado sin ella:
+          la clase estaba puesta y el padding real seguia siendo 24px. */}
+      <PageContainer className="pb-28 md:pb-28">
+        <div ref={arribaRef} aria-hidden className="scroll-mt-4" />
         {Toolbar}
 
         {loading ? (
@@ -477,8 +523,9 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
             onCreate={() => setCreating(true)}
           />
         ) : (
+          <>
           <ul className="divide-y divide-[rgba(245,246,247,0.1)] overflow-hidden rounded-[8px] border border-[rgba(245,246,247,0.1)] bg-[#131318]">
-            {filtered.map((c) => {
+            {enPantalla.map((c) => {
               const stage = STAGES_VISIBLES.find((s) => s.value === c.stage)
               const tone = stageTone(c.stage)
               const contactTags = tagsByContact.get(c.id) ?? []
@@ -544,6 +591,23 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
               )
             })}
           </ul>
+
+          <Paginador
+            pagina={paginaSegura}
+            totalPaginas={totalPaginas}
+            desde={desde + 1}
+            hasta={desde + enPantalla.length}
+            total={filtered.length}
+            onIr={irAPagina}
+          />
+
+          {contacts.length >= TOPE_DE_CARGA && (
+            <p className="text-[13px] text-[#E5B567]">
+              Se están mostrando los {TOPE_DE_CARGA} contactos más recientes. Usa los filtros
+              o el buscador para encontrar los anteriores.
+            </p>
+          )}
+          </>
         )}
       </PageContainer>
 
@@ -558,6 +622,117 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
       )}
       {overlays}
     </>
+  )
+}
+
+/**
+ * Que numeros de pagina se enseñan. Siempre la primera, la ultima y las vecinas de la
+ * actual; el resto se resume con puntos suspensivos (`null`). Sin esto, 500 contactos
+ * pintaban 25 botones de 44px y el paginador se comia la pantalla.
+ */
+function numerosDePagina(actual: number, total: number): (number | null)[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+
+  const vecinas = [actual - 1, actual, actual + 1].filter((n) => n > 1 && n < total)
+  const conBordes = [1, ...vecinas, total]
+
+  const salida: (number | null)[] = []
+  let anterior = 0
+  for (const n of conBordes) {
+    if (n - anterior > 1) salida.push(null)
+    salida.push(n)
+    anterior = n
+  }
+  return salida
+}
+
+/**
+ * Paginador de la lista de contactos: 20 por pagina (Marco, 2026-08-06).
+ *
+ * Siempre dice EN PALABRAS cuantos se estan viendo y de cuantos, para que el numero de
+ * arriba y lo que hay en pantalla nunca parezcan contradecirse.
+ * Con una sola pagina no se pinta nada: un paginador de una pagina es ruido.
+ */
+function Paginador({
+  pagina,
+  totalPaginas,
+  desde,
+  hasta,
+  total,
+  onIr,
+}: {
+  pagina: number
+  totalPaginas: number
+  desde: number
+  hasta: number
+  total: number
+  onIr: (n: number) => void
+}) {
+  if (totalPaginas <= 1) return null
+
+  const flecha =
+    "inline-flex min-h-[44px] items-center gap-1.5 rounded-[4px] border " +
+    "border-[rgba(245,246,247,0.1)] px-3 text-[14px] font-semibold text-[#A6AAB2] " +
+    "transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] " +
+    "hover:text-[#F5F6F7] disabled:pointer-events-none disabled:opacity-35"
+
+  return (
+    <nav
+      aria-label="Páginas de contactos"
+      className="flex flex-wrap items-center justify-between gap-3 pt-1"
+    >
+      <p className="text-[14px] text-[#A6AAB2]">
+        Viendo <span className="font-semibold text-[#F5F6F7]">{desde}</span> a{" "}
+        <span className="font-semibold text-[#F5F6F7]">{hasta}</span> de{" "}
+        <span className="font-semibold text-[#F5F6F7]">{total}</span>
+      </p>
+
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => onIr(pagina - 1)} disabled={pagina === 1} className={flecha}>
+          <ChevronLeft className="h-4 w-4" />
+          Anterior
+        </button>
+
+        {/* En movil el numero de pagina se dice con palabras: los botones no caben. */}
+        <span className="px-2 text-[14px] text-[#A6AAB2] sm:hidden">
+          {pagina} de {totalPaginas}
+        </span>
+
+        <div className="hidden items-center gap-1 sm:flex">
+          {numerosDePagina(pagina, totalPaginas).map((n, i) =>
+            n === null ? (
+              <span key={`hueco-${i}`} aria-hidden className="px-1 text-[14px] text-[#7C818A]">
+                ...
+              </span>
+            ) : (
+              <button
+                key={n}
+                onClick={() => onIr(n)}
+                aria-label={`Ir a la página ${n}`}
+                aria-current={n === pagina ? "page" : undefined}
+                className={cn(
+                  "min-h-[44px] min-w-[44px] rounded-[4px] border text-[14px] font-semibold tabular-nums transition-colors",
+                  n === pagina
+                    ? "border-[#24462F] bg-[#101710] text-[#4ADE80]"
+                    : "border-transparent text-[#A6AAB2] hover:bg-[#16161B] hover:text-[#F5F6F7]"
+                )}
+              >
+                {n}
+              </button>
+            )
+          )}
+        </div>
+
+        <button
+          onClick={() => onIr(pagina + 1)}
+          disabled={pagina === totalPaginas}
+          className={flecha}
+        >
+          Siguiente
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+    </nav>
   )
 }
 

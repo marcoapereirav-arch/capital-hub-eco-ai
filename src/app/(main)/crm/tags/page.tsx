@@ -8,8 +8,11 @@ export const dynamic = "force-dynamic"
  * en un solo sitio. Aqui solo van los margenes estandar del OS (<PageContainer>).
  */
 export default function CrmTagsRoute() {
+  // `pb-28 md:pb-28`: hueco para que el boton flotante de "Registrar venta" no tape la
+  // ultima fila de etiquetas. La variante `md:` hace falta porque `PageContainer` trae
+  // `md:py-6` y en escritorio gana al `pb-28` suelto. Mismo caso que en la lista.
   return (
-    <PageContainer>
+    <PageContainer className="pb-28 md:pb-28">
       <TagsPage />
     </PageContainer>
   )
