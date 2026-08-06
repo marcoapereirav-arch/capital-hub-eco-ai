@@ -2,6 +2,10 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
+import { PageContainer } from '@/components/ui/page-container'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { updateSop, deleteSop, moveSop, createFolder } from '@/actions/knowledge'
 import { QUADRANTS, QUADRANT_LABEL, type FolderRow, type Quadrant, type SopRow } from '../services/quadrants'
 
@@ -11,6 +15,10 @@ interface FolderOption {
   label: string  // ya con indentación visual
   quadrant: Quadrant
 }
+
+/** Desplegable nativo con la ropa del tema y 44 puntos de alto en telefono. */
+const SELECT_CLASS =
+  'h-11 w-full min-w-0 rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:h-9 md:text-sm'
 
 function buildFolderOptions(folders: FolderRow[]): FolderOption[] {
   const opts: FolderOption[] = []
@@ -41,6 +49,14 @@ function buildFolderOptions(folders: FolderRow[]): FolderOption[] {
   return opts
 }
 
+/**
+ * Pantalla de un documento del Knowledge: se lee y se escribe aqui.
+ *
+ * Es una pagina de LECTURA, asi que el cuerpo va a 16 puntos con interlineado
+ * holgado. Antes iba a 14 puntos y en fuente de maquina de escribir, y las
+ * etiquetas a 10 y 11 puntos con las mayusculas separadas: en un telefono, con
+ * el zoom desactivado, eso no habia forma de leerlo.
+ */
 export function KnowledgeEditorClient({ sop, folders }: { sop: SopRow; folders: FolderRow[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -125,125 +141,148 @@ export function KnowledgeEditorClient({ sop, folders }: { sop: SopRow; folders: 
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
-      {/* Header */}
-      <header className="mb-5 flex items-center gap-3">
+    <>
+      <PageContainer narrow>
+        {/* Siempre hay salida: boton de volver visible, con texto, arriba a la izquierda. */}
         <button
           onClick={() => router.push(backHref)}
-          className="shrink-0 w-9 h-9 flex items-center justify-center text-neutral-100/60 hover:text-[#4ADE80] border border-[#4ADE80]/20 hover:border-[#4ADE80]/40 transition-colors"
-          aria-label="Volver"
+          className="inline-flex h-11 w-fit items-center gap-1.5 text-[15px] font-medium text-muted-foreground transition-colors md:h-auto md:hover:text-foreground"
           title={fromParam ? 'Volver a donde estabas en el cerebro' : 'Volver al cerebro'}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
+          <ArrowLeft className="h-4 w-4" /> Volver al cerebro
         </button>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 font-body">
-            Knowledge · {QUADRANT_LABEL[quadrant]} · {sop.slug}
-          </p>
-          <p className="text-[11px] font-body text-neutral-100/40 mt-0.5">
-            Última edición: {new Date(sop.updated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
-            {savedAt && <span className="ml-2 text-emerald-400/80">· Guardado {savedAt}</span>}
-          </p>
-        </div>
-        <button
-          onClick={onDelete}
-          disabled={isPending}
-          className="shrink-0 text-[11px] uppercase tracking-widest text-red-300/70 hover:text-red-300 border border-red-300/25 hover:border-red-300/50 px-3 py-2 font-body disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          Borrar
-        </button>
-        <button
-          onClick={onSave}
-          disabled={!dirty || isPending}
-          className="shrink-0 text-[11px] uppercase tracking-widest text-[#4ADE80]/90 hover:text-[#4ADE80] bg-[#4ADE80]/10 hover:bg-[#4ADE80]/20 border border-[#4ADE80]/30 px-3 py-2 font-body disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          {isPending ? 'Guardando…' : dirty ? 'Guardar' : 'Guardado'}
-        </button>
-      </header>
 
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Título"
-        className="w-full bg-transparent border-none px-0 py-1 mb-2 font-display text-2xl md:text-3xl text-neutral-100 placeholder:text-neutral-100/30 outline-none"
-      />
+        <header className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-primary">
+              Knowledge · {QUADRANT_LABEL[quadrant]} · {sop.slug}
+            </p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Última edición: {new Date(sop.updated_at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}
+              {savedAt && <span className="ml-2 text-primary">· Guardado {savedAt}</span>}
+            </p>
+          </div>
+          {/* En escritorio las dos acciones van arriba; en telefono, Guardar vive
+              en la barra pegada abajo y aqui solo queda Borrar. */}
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="destructive" onClick={onDelete} disabled={isPending}>
+              Borrar
+            </Button>
+            <Button onClick={onSave} disabled={!dirty || isPending} className="hidden md:inline-flex">
+              {isPending ? 'Guardando…' : dirty ? 'Guardar' : 'Guardado'}
+            </Button>
+          </div>
+        </header>
 
-      <input
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Descripción corta (1 línea)"
-        className="w-full bg-transparent border-none px-0 py-1 mb-4 text-sm font-body text-neutral-100/60 placeholder:text-neutral-100/30 outline-none"
-      />
-
-      {/* Cuadrante + Carpeta jerárquica + Active */}
-      <div className="flex flex-wrap items-center gap-4 mb-4">
-        <label className="flex items-center gap-2 text-xs font-body text-neutral-100/70">
-          <span className="uppercase tracking-widest text-[10px] text-neutral-100/50">Cuadrante</span>
-          <select
-            value={quadrant}
-            onChange={(e) => {
-              const newQ = e.target.value as Quadrant
-              setQuadrant(newQ)
-              // Si la carpeta actual pertenece a otro quadrant, la deseleccionamos
-              const opt = folderOptions.find((o) => o.id === folderId)
-              if (opt && opt.quadrant !== newQ) setFolderId(null)
-            }}
-            className="bg-white/5 border border-[#4ADE80]/20 px-2 py-1 text-xs font-body text-neutral-100 outline-none focus:border-[#4ADE80]/50"
-          >
-            {QUADRANTS.map((q) => (
-              <option key={q.key} value={q.key} className="bg-neutral-950 text-neutral-100">
-                {q.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-xs font-body text-neutral-100/70">
-          <span className="uppercase tracking-widest text-[10px] text-neutral-100/50">Carpeta</span>
-          <select
-            value={folderId ?? ''}
-            onChange={(e) => setFolderId(e.target.value || null)}
-            className="bg-white/5 border border-[#4ADE80]/20 px-2 py-1 text-xs font-body text-neutral-100 outline-none focus:border-[#4ADE80]/50 max-w-[260px]"
-          >
-            <option value="" className="bg-neutral-950 text-neutral-100">— (raíz del cuadrante) —</option>
-            {optionsForQuadrant.map((o) => (
-              <option key={o.id} value={o.id} className="bg-neutral-950 text-neutral-100">{o.label}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={onCreateFolderInline}
-            disabled={isPending}
-            className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 hover:text-[#4ADE80] border border-[#4ADE80]/25 hover:border-[#4ADE80]/50 px-2 py-1 transition-colors disabled:opacity-40"
-            title="Crea una carpeta nueva en la raíz del cuadrante actual"
-          >
-            + Nueva
-          </button>
-        </label>
-        <label className="flex items-center gap-2 text-xs font-body text-neutral-100/70 cursor-pointer select-none">
+        <div>
+          <label htmlFor="ke-titulo" className="sr-only">Título</label>
           <input
-            type="checkbox"
-            checked={active}
-            onChange={(e) => setActive(e.target.checked)}
-            className="accent-[#4ADE80]"
+            id="ke-titulo"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Título"
+            enterKeyHint="next"
+            className="w-full min-w-0 border-none bg-transparent px-0 py-1 text-2xl font-semibold text-foreground outline-none placeholder:text-muted-foreground md:text-3xl"
           />
-          <span>Activo · lo leen las IAs del SaaS</span>
-        </label>
-      </div>
 
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        spellCheck={false}
-        placeholder="Contenido en markdown..."
-        className="w-full min-h-[60vh] bg-white/[0.02] border border-[#4ADE80]/15 focus:border-[#4ADE80]/40 px-4 py-3 text-sm font-mono text-neutral-100 placeholder:text-neutral-100/30 outline-none resize-y leading-relaxed"
-      />
+          <label htmlFor="ke-descripcion" className="sr-only">Descripción corta</label>
+          <input
+            id="ke-descripcion"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Descripción corta (1 línea)"
+            enterKeyHint="next"
+            className="w-full min-w-0 border-none bg-transparent px-0 py-1 text-base text-muted-foreground outline-none placeholder:text-muted-foreground"
+          />
+        </div>
 
-      <p className="mt-3 text-[11px] font-body text-neutral-100/40 leading-relaxed">
-        Soporta markdown estándar: encabezados, listas, tablas, código, énfasis. Aplica al instante en el chat tras
-        guardar.
-      </p>
-    </div>
+        {/* Cuadrante + Carpeta jerárquica + Active. Una columna en telefono. */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-muted-foreground">Cuadrante</span>
+            <select
+              value={quadrant}
+              onChange={(e) => {
+                const newQ = e.target.value as Quadrant
+                setQuadrant(newQ)
+                // Si la carpeta actual pertenece a otro quadrant, la deseleccionamos
+                const opt = folderOptions.find((o) => o.id === folderId)
+                if (opt && opt.quadrant !== newQ) setFolderId(null)
+              }}
+              className={SELECT_CLASS}
+            >
+              {QUADRANTS.map((q) => (
+                <option key={q.key} value={q.key}>
+                  {q.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-muted-foreground">Carpeta</span>
+            <div className="flex items-center gap-2">
+              <label htmlFor="ke-carpeta" className="sr-only">Carpeta</label>
+              <select
+                id="ke-carpeta"
+                value={folderId ?? ''}
+                onChange={(e) => setFolderId(e.target.value || null)}
+                className={SELECT_CLASS}
+              >
+                <option value="">— (raíz del cuadrante) —</option>
+                {optionsForQuadrant.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
+              <Button
+                variant="outline"
+                onClick={onCreateFolderInline}
+                disabled={isPending}
+                className="shrink-0"
+                title="Crea una carpeta nueva en la raíz del cuadrante actual"
+              >
+                + Nueva
+              </Button>
+            </div>
+          </div>
+
+          <label className="flex min-h-11 cursor-pointer select-none items-center gap-2 md:col-span-2">
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={(e) => setActive(e.target.checked)}
+              className="h-5 w-5 rounded-sm border-border bg-card accent-primary"
+            />
+            <span className="text-[15px] text-foreground">Activo · lo leen las IAs del SaaS</span>
+          </label>
+        </div>
+
+        {/* El cuerpo del documento: 16 puntos e interlineado holgado. */}
+        <label htmlFor="ke-contenido" className="sr-only">Contenido en markdown</label>
+        <Textarea
+          id="ke-contenido"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          spellCheck={false}
+          placeholder="Contenido en markdown..."
+          className="min-h-[60dvh] resize-y bg-card px-4 py-3 text-base leading-relaxed text-foreground md:text-base"
+        />
+
+        <p className="text-[15px] leading-relaxed text-muted-foreground">
+          Soporta markdown estándar: encabezados, listas, tablas, código, énfasis. Aplica al instante en el chat tras
+          guardar.
+        </p>
+
+        {/* TELEFONO: la accion principal, pegada abajo DENTRO del contenedor que se
+            desplaza. Con `fixed` el teclado la tapa justo cuando hace falta.
+            Se ancla POR ENCIMA de la barra de abajo (56 puntos + la franja de
+            gestos): pegada a bottom-0 quedaria justo detras del menu. */}
+        <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-border bg-background px-4 py-3 md:hidden">
+          <Button onClick={onSave} disabled={!dirty || isPending} className="w-full">
+            {isPending ? 'Guardando…' : dirty ? 'Guardar' : 'Guardado'}
+          </Button>
+        </div>
+      </PageContainer>
+    </>
   )
 }

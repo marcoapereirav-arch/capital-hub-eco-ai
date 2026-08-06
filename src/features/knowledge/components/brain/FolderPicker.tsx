@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 import type { BrainFolder, BrainQuadrant } from './types'
 
 interface FlatNode {
@@ -82,10 +84,13 @@ function flattenTree(
 }
 
 /**
- * Modal "Mover a..." para docs y folders. Muestra árbol completo de
- * cuadrantes + carpetas. El usuario selecciona destino y se ejecuta la
- * acción de mover (callback). Auto-excluye destinos inválidos
- * (descendientes propios) cuando se mueve una folder.
+ * "Mover a..." para docs y folders. Muestra el árbol completo de cuadrantes +
+ * carpetas. El usuario selecciona destino y se ejecuta la acción de mover
+ * (callback). Auto-excluye destinos inválidos (descendientes propios) cuando se
+ * mueve una folder.
+ *
+ * Hoja inferior en telefono, cajon por la derecha en escritorio: el lado va FIJO
+ * y el cambio se hace con clases, nunca con JavaScript.
  */
 export function FolderPicker({
   open,
@@ -115,54 +120,44 @@ export function FolderPicker({
   useEffect(() => {
     if (!open) return
     setQuery('')
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
-
-  if (!open) return null
+  }, [open])
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className="fixed z-[120] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(480px,92vw)] max-h-[80vh] flex flex-col rounded-2xl border border-[#4ADE80]/30 bg-[#1E1E1E] shadow-2xl"
-        role="dialog"
-        aria-label={title}
+    <Sheet
+      open={open}
+      onOpenChange={(abierto) => {
+        if (!abierto) onClose()
+      }}
+    >
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        className={cn(
+          'rounded-t-xl',
+          // El escritorio repite la condicion del lado porque las clases del kit
+          // (`data-[side=bottom]:...`) pesan mas que un `md:` suelto y lo ganan.
+          'md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-md md:border-l md:pb-0',
+        )}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#4ADE80]/15">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 font-body">Mover a</p>
-            <h2 className="font-display text-base text-neutral-100">{title}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 inline-flex items-center justify-center rounded text-neutral-100/55 hover:text-[#4ADE80] hover:bg-white/5"
-            aria-label="Cerrar"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <SheetTitle className="text-[17px] font-semibold">{title}</SheetTitle>
+        </SheetHeader>
 
-        <div className="px-3 py-2 border-b border-[#4ADE80]/15">
+        <div className="border-b border-border px-4 pb-3">
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filtrar carpetas…"
-            className="w-full bg-transparent text-sm text-neutral-100 placeholder:text-neutral-100/30 outline-none px-2 py-1.5"
+            enterKeyHint="search"
+            className="h-11 w-full rounded-lg border border-border bg-transparent px-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring md:h-9 md:text-sm"
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="pb-safe-4">
           {filtered.length === 0 ? (
-            <p className="text-sm italic text-neutral-100/40 text-center py-6">Sin resultados.</p>
+            <p className="px-4 py-6 text-center text-[15px] text-muted-foreground">Sin resultados.</p>
           ) : (
             <ul>
               {filtered.map((n, i) => (
@@ -175,17 +170,18 @@ export function FolderPicker({
                     }}
                     disabled={n.disabled}
                     title={n.disabledReason}
-                    className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm font-body transition-colors ${
+                    className={cn(
+                      'flex min-h-12 w-full items-center gap-2 px-4 py-2 text-left text-[15px] transition-colors',
                       n.disabled
-                        ? 'text-neutral-100/25 cursor-not-allowed'
-                        : 'text-neutral-100/85 hover:bg-white/5 hover:text-[#4ADE80]'
-                    }`}
+                        ? 'cursor-not-allowed text-muted-foreground opacity-50'
+                        : 'text-foreground active:bg-muted md:hover:bg-muted',
+                    )}
                     style={{ paddingLeft: `${1 + n.depth * 1}rem` }}
                   >
                     {n.kind === 'quadrant-root' ? (
-                      <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ background: n.color }} />
+                      <span aria-hidden className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: n.color }} />
                     ) : (
-                      <span className="inline-block w-2.5 h-2.5 rotate-45 shrink-0" style={{ background: n.color, opacity: n.disabled ? 0.3 : 1 }} />
+                      <span aria-hidden className="inline-block h-2.5 w-2.5 shrink-0 rotate-45" style={{ background: n.color }} />
                     )}
                     <span className="truncate">{n.label}</span>
                   </button>
@@ -194,7 +190,7 @@ export function FolderPicker({
             </ul>
           )}
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   )
 }

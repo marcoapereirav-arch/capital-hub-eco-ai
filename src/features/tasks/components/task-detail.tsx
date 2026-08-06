@@ -28,6 +28,7 @@ import {
   ChevronDown,
   Pencil,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { useTaskStore } from "../store/task-store"
 import type { GTDStatus, Priority, Assignee } from "../types/task"
 import { GTD_LABELS, PRIORITY_LABELS, ASSIGNEE_LABELS } from "../types/task"
@@ -39,6 +40,9 @@ const STATUS_ICONS: Record<GTDStatus, typeof Inbox> = {
   someday: Bookmark,
   done: CheckCircle2,
 }
+
+// Boton de cada campo del detalle: 44 puntos en telefono, compacto en monitor.
+const CAMPO_BOTON = "h-11 gap-1.5 text-[15px] md:h-7 md:text-sm"
 
 export function TaskDetail() {
   const selectedTaskId = useTaskStore((s) => s.selectedTaskId)
@@ -108,7 +112,28 @@ export function TaskDetail() {
 
   return (
     <Sheet open={!!selectedTaskId} onOpenChange={(open) => { if (!open) handleClose() }}>
-      <SheetContent className="w-[420px] sm:w-[420px] overflow-y-auto">
+      <SheetContent
+        side="bottom"
+        className={cn(
+          // TELEFONO: hoja inferior. El alto maximo, el desplazamiento propio y la
+          // zona segura de abajo ya vienen de sheet.tsx.
+          "rounded-t-xl pb-safe-4",
+          // ESCRITORIO: cajon por la derecha, decidido con CLASES y nunca con
+          // JavaScript. Los overrides llevan el mismo selector de dato que la
+          // base (md:data-[side=bottom]:...) porque una clase suelta pierde por
+          // especificidad contra data-[side=bottom]:... y el cajon se quedaria
+          // pegado abajo tambien en el monitor.
+          "md:data-[side=bottom]:inset-x-auto md:data-[side=bottom]:inset-y-0",
+          "md:data-[side=bottom]:right-0 md:data-[side=bottom]:left-auto",
+          "md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none",
+          "md:data-[side=bottom]:w-full md:data-[side=bottom]:max-w-[420px]",
+          "md:data-[side=bottom]:rounded-t-none md:data-[side=bottom]:border-t-0",
+          "md:data-[side=bottom]:border-l md:data-[side=bottom]:pb-0"
+        )}
+      >
+        {/* Agarradera: es lo que hace que se lea como hoja y no como error */}
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+
         <SheetHeader className="pb-4">
           <SheetTitle className="sr-only">Detalle de tarea</SheetTitle>
           <SheetDescription className="sr-only">Editar los detalles de la tarea seleccionada</SheetDescription>
@@ -120,6 +145,7 @@ export function TaskDetail() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={commitTitle}
+              enterKeyHint="done"
               onKeyDown={(e) => {
                 if (e.key === "Enter") commitTitle()
                 if (e.key === "Escape") {
@@ -127,30 +153,33 @@ export function TaskDetail() {
                   setIsEditingTitle(false)
                 }
               }}
-              className="text-base font-medium bg-transparent border-border px-2 h-auto focus-visible:ring-1 text-foreground"
+              className="border-border bg-transparent font-medium text-foreground focus-visible:ring-1"
             />
           ) : (
-            <div
-              className="group flex items-start gap-2 cursor-pointer rounded-sm px-2 py-1 -mx-2 hover:bg-muted/30 transition-colors"
+            <button
+              type="button"
+              className="group -mx-2 flex min-h-11 w-full cursor-pointer items-start gap-2 rounded-lg px-2 py-1 text-left transition-colors active:bg-muted md:hover:bg-muted/30"
               onClick={() => setIsEditingTitle(true)}
             >
-              <h2 className="text-base font-medium text-foreground leading-snug flex-1">
+              <h2 className="min-w-0 flex-1 text-[17px] leading-snug font-medium text-foreground md:text-base">
                 {task.title}
               </h2>
-              <Pencil className="h-3 w-3 mt-1 shrink-0 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
-            </div>
+              {/* Visible en telefono: sin raton, un lapiz que solo aparece al
+                  pasar por encima no existe. */}
+              <Pencil className="mt-1 h-4 w-4 shrink-0 text-muted-foreground md:text-transparent md:group-hover:text-muted-foreground" />
+            </button>
           )}
         </SheetHeader>
 
-        <div className="space-y-5 pt-2">
+        <div className="space-y-5 px-4 pt-2 pb-4">
           {/* Status */}
           <DetailRow label="Estado">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
-                  <StatusIcon className="h-3 w-3" />
+                <Button variant="outline" size="sm" className={CAMPO_BOTON}>
+                  <StatusIcon className="h-4 w-4" />
                   {GTD_LABELS[task.status]}
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -161,7 +190,7 @@ export function TaskDetail() {
                       key={status}
                       onClick={() => updateTask(task.id, { status })}
                     >
-                      <Icon className="mr-2 h-3.5 w-3.5" />
+                      <Icon className="mr-2 h-4 w-4" />
                       {GTD_LABELS[status]}
                     </DropdownMenuItem>
                   )
@@ -174,9 +203,9 @@ export function TaskDetail() {
           <DetailRow label="Prioridad">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+                <Button variant="outline" size="sm" className={CAMPO_BOTON}>
                   {PRIORITY_LABELS[task.priority]}
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -196,9 +225,9 @@ export function TaskDetail() {
           <DetailRow label="Asignado">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
+                <Button variant="outline" size="sm" className={CAMPO_BOTON}>
                   {ASSIGNEE_LABELS[task.assignee]}
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
@@ -218,9 +247,9 @@ export function TaskDetail() {
           <DetailRow label="Proyecto / Area">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs">
-                  {paraItem ? paraItem.name : "Sin asignar"}
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                <Button variant="outline" size="sm" className={cn(CAMPO_BOTON, "max-w-full")}>
+                  <span className="min-w-0 truncate">{paraItem ? paraItem.name : "Sin asignar"}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="max-h-60 overflow-y-auto">
@@ -236,7 +265,7 @@ export function TaskDetail() {
                     >
                       <Badge
                         variant="outline"
-                        className="font-mono text-[8px] px-1 py-0 mr-2 border-border text-muted-foreground"
+                        className="mr-2 border-border text-sm text-muted-foreground"
                       >
                         {item.type === "project" ? "P" : item.type === "area" ? "A" : "R"}
                       </Badge>
@@ -257,7 +286,7 @@ export function TaskDetail() {
                   dueDate: e.target.value || null,
                 })
               }
-              className="h-7 w-auto text-xs bg-transparent border-border"
+              className="w-auto border-border bg-transparent"
             />
           </DetailRow>
 
@@ -265,10 +294,11 @@ export function TaskDetail() {
 
           {/* Description */}
           <div className="space-y-2">
-            <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+            <label htmlFor="notas-tarea" className="block text-sm font-medium text-muted-foreground">
               Notas
-            </span>
+            </label>
             <textarea
+              id="notas-tarea"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={() => {
@@ -277,14 +307,14 @@ export function TaskDetail() {
                 }
               }}
               placeholder="Agregar notas..."
-              className="w-full min-h-[100px] resize-none rounded-sm border border-border bg-secondary/30 p-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring"
+              className="min-h-[100px] w-full resize-none rounded-lg border border-border bg-secondary/30 p-3 text-base text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:outline-none md:text-sm"
             />
           </div>
 
           <Separator />
 
           {/* Meta */}
-          <div className="space-y-1 text-[10px] font-mono text-muted-foreground/40">
+          <div className="space-y-1 text-sm text-muted-foreground">
             <p>Creada: {new Date(task.createdAt).toLocaleString("es-ES")}</p>
             {task.completedAt && (
               <p>Completada: {new Date(task.completedAt).toLocaleString("es-ES")}</p>
@@ -294,11 +324,10 @@ export function TaskDetail() {
           {/* Delete */}
           <Button
             variant="ghost"
-            size="sm"
             onClick={handleDelete}
-            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2 text-xs"
+            className="w-full gap-2 text-[15px] text-destructive hover:bg-destructive/10 hover:text-destructive md:text-sm"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
             Eliminar tarea
           </Button>
         </div>
@@ -315,8 +344,8 @@ function DetailRow({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <span className="text-sm font-medium text-muted-foreground">
         {label}
       </span>
       {children}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Check, ChevronDown, Minus, RefreshCw, Target, X } from "lucide-react"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 import { cn } from "@/lib/utils"
 
 /**
@@ -11,9 +12,9 @@ import { cn } from "@/lib/utils"
  * vez que llegó a Meta. Un evento que se espera y nunca llegó sale en rojo: antes eso era
  * invisible y solo se notaba cuando las campañas no optimizaban.
  *
- * Diseño con el brandkit real (carbón, verde #22C55E, Inter Tight, esquinas de 4 y 8px).
- * OJO: en el OS el token `accent` vale gris #2A2D34 y `font-heading` cae en la fuente del
- * sistema, así que aquí los valores van explícitos. Ver SOP marketing/brand/01.
+ * Todo el color sale de los tokens del tema (verde de marca, rojo de error, carbón). Antes
+ * esta pantalla llevaba la paleta grabada a mano en atributos `style`, asi que no escuchaba
+ * al tema: el dia que cambiara la marca se quedaba con los colores viejos.
  */
 
 type EventRow = {
@@ -38,13 +39,6 @@ type FunnelRow = {
   healthy: boolean
   events: EventRow[]
 }
-
-const VERDE = "#22C55E"
-const VERDE_CLARO = "#4ADE80"
-const AMBAR = "#E5B567"
-const ROJO = "#E5675B"
-const LINEA = "rgba(245,246,247,0.1)"
-const TIPO = "'Inter Tight', sans-serif"
 
 function hace(iso: string | null): string {
   if (!iso) return "nunca"
@@ -77,14 +71,7 @@ export function AdsEventsHealth() {
   }, [])
 
   if (loading && !data) {
-    return (
-      <div
-        className="rounded-lg border p-6 text-[15px]"
-        style={{ borderColor: LINEA, background: "#131318", color: "#A6AAB2", fontFamily: TIPO }}
-      >
-        Revisando qué está midiendo…
-      </div>
-    )
+    return <LoadingScreen fullscreen={false} className="min-h-[200px] rounded-lg border border-border" />
   }
 
   const funnels = data?.funnels ?? []
@@ -101,24 +88,20 @@ export function AdsEventsHealth() {
   const todoBien = !enPrueba && midiendo.length > 0 && conFallo.length === 0
 
   return (
-    <div className="flex flex-col gap-4" style={{ fontFamily: TIPO }}>
+    <div className="flex flex-col gap-4">
       {/* ── El veredicto. Lo primero y lo más grande ── */}
       <section
-        className="rounded-lg border p-5 md:p-6"
-        style={{
-          borderColor: todoBien ? "#24462F" : LINEA,
-          background: todoBien ? "#101710" : "#131318",
-        }}
+        className={cn(
+          "rounded-xl border p-4 md:p-6",
+          todoBien ? "border-primary/40 bg-primary/10" : "border-border bg-card"
+        )}
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-start md:justify-between">
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold" style={{ color: VERDE_CLARO }}>
+            <p className="text-sm font-semibold text-primary">
               Estado de la medición
             </p>
-            <h3
-              className="mt-2 text-[26px] leading-[1.1] tracking-tight md:text-[32px]"
-              style={{ fontWeight: 900, color: "#F5F6F7" }}
-            >
+            <h3 className="mt-2 text-2xl leading-[1.1] font-black tracking-tight text-foreground md:text-[32px]">
               {enPrueba
                 ? "Meta está tirando tus conversiones"
                 : midiendo.length === 0
@@ -127,7 +110,7 @@ export function AdsEventsHealth() {
                     ? `${conFallo.length} ${conFallo.length === 1 ? "funnel tiene envíos" : "funnels tienen envíos"} que Meta rechazó`
                     : "Todo conectado y mandando en real"}
             </h3>
-            <p className="mt-2 max-w-xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+            <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
               {enPrueba
                 ? "El envío está en modo prueba: Meta recibe los eventos y los descarta. No optimizan tus campañas ni construyen audiencias. Cámbialo en Ajustes."
                 : midiendo.length === 0
@@ -144,40 +127,33 @@ export function AdsEventsHealth() {
             type="button"
             onClick={load}
             disabled={loading}
-            className="flex min-h-11 shrink-0 items-center gap-2 rounded border px-3.5 text-[14px] font-semibold transition-opacity disabled:opacity-50"
-            style={{ borderColor: LINEA, color: "#A6AAB2" }}
+            className="flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-border px-3.5 text-[15px] font-semibold text-muted-foreground transition-opacity active:bg-muted disabled:opacity-50 md:h-8 md:w-auto md:text-sm"
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             Actualizar
           </button>
         </div>
 
-        {/* Tres números, a la vista */}
-        <div className="mt-6 grid grid-cols-3 gap-3">
+        {/* Tres números, a la vista. En telefono van apilados: tres columnas de
+            110 puntos parten las etiquetas en cuatro lineas. */}
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
           <Dato n={midiendo.length} label="funnels midiendo" />
-          <Dato n={llegando} label="eventos ya confirmados" color={VERDE_CLARO} />
-          <Dato n={sinEstrenar} label="aún sin estrenar" color="#7C818A" />
+          <Dato n={llegando} label="eventos ya confirmados" tono="bien" />
+          <Dato n={sinEstrenar} label="aún sin estrenar" tono="suave" />
         </div>
       </section>
 
       {/* ── Una tarjeta por funnel ── */}
       {funnels.map((f) => (
-        <section
-          key={f.slug}
-          className="overflow-hidden rounded-lg border"
-          style={{ borderColor: LINEA, background: "#131318" }}
-        >
-          <header
-            className="flex flex-wrap items-center gap-3 border-b px-5 py-4"
-            style={{ borderColor: LINEA }}
-          >
+        <section key={f.slug} className="overflow-hidden rounded-xl border border-border bg-card">
+          <header className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-4 md:gap-3 md:px-5">
             <Semaforo ok={f.healthy} apagado={!f.trackingEnabled} />
 
             <div className="min-w-0 flex-1">
-              <p className="text-[17px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
+              <p className="truncate text-[17px] leading-tight font-extrabold text-foreground">
                 {f.name}
               </p>
-              <p className="mt-1 text-[13px]" style={{ color: "#7C818A" }}>
+              <p className="mt-1 truncate text-sm text-muted-foreground">
                 {f.path}
               </p>
             </div>
@@ -187,55 +163,53 @@ export function AdsEventsHealth() {
           </header>
 
           {f.optimizeFor && f.trackingEnabled && (
-            <div
-              className="flex items-center gap-2.5 border-b px-5 py-3"
-              style={{ borderColor: LINEA, background: "#101710" }}
-            >
-              <Target className="h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
-              <span className="text-[14px]" style={{ color: "#A6AAB2" }}>
+            <div className="flex items-start gap-2.5 border-b border-border bg-primary/10 px-4 py-3 md:items-center md:px-5">
+              <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary md:mt-0" />
+              <span className="min-w-0 text-sm text-muted-foreground">
                 Su campaña en Facebook Ads debe optimizar hacia{" "}
-                <strong style={{ fontWeight: 700, color: "#F5F6F7" }}>{f.optimizeFor}</strong>
+                <strong className="font-bold text-foreground">{f.optimizeFor}</strong>
               </span>
             </div>
           )}
 
           {f.events.length === 0 ? (
-            <p className="px-5 py-5 text-[15px]" style={{ color: "#7C818A" }}>
+            <p className="px-4 py-5 text-[15px] text-muted-foreground md:px-5">
               Este funnel no tiene eventos asignados.
             </p>
           ) : (
             <ul>
               {f.events.map((e) => (
+                // TELEFONO: el estado y el nombre arriba, el recuento debajo.
+                // MONITOR: la fila de siempre con el recuento a la derecha.
                 <li
                   key={e.name}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b px-5 py-3.5 last:border-b-0"
-                  style={{ borderColor: LINEA }}
+                  className="flex flex-col gap-1.5 border-b border-border px-4 py-3.5 last:border-b-0 md:flex-row md:flex-wrap md:items-center md:gap-x-4 md:px-5"
                 >
-                  <EstadoEvento evento={e} />
-
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[15px]" style={{ fontWeight: 600, color: "#F5F6F7" }}>
-                      {e.when}
-                    </p>
-                    <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
-                      {e.name} · {e.kind === "estandar" ? "evento de Meta" : "evento nuestro"}
-                    </p>
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <EstadoEvento evento={e} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-semibold text-foreground">
+                        {e.when}
+                      </p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
+                        {e.name} · {e.kind === "estandar" ? "evento de Meta" : "evento nuestro"}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="text-right">
-                    <p
-                      className="text-[14px]"
-                      style={{ fontWeight: 600, color: e.neverSeen ? "#7C818A" : "#A6AAB2" }}
-                    >
+                  <div className="pl-7 md:pl-0 md:text-right">
+                    <p className="text-sm font-semibold text-muted-foreground">
                       {e.neverSeen ? "sin estrenar" : hace(e.lastAt)}
                     </p>
-                    <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                       {e.neverSeen ? (
                         "nadie lo ha hecho aún"
                       ) : (
                         <>
-                          {e.sent} {e.sent === 1 ? "envío" : "envíos"}
-                          {e.failed > 0 && <span style={{ color: ROJO }}> · {e.failed} fallaron</span>}
+                          <span className="tabular-nums">{e.sent}</span> {e.sent === 1 ? "envío" : "envíos"}
+                          {e.failed > 0 && (
+                            <span className="text-destructive"> · <span className="tabular-nums">{e.failed}</span> fallaron</span>
+                          )}
                         </>
                       )}
                     </p>
@@ -250,13 +224,18 @@ export function AdsEventsHealth() {
   )
 }
 
-function Dato({ n, label, color = "#F5F6F7" }: { n: number; label: string; color?: string }) {
+function Dato({ n, label, tono = "normal" }: { n: number; label: string; tono?: "normal" | "bien" | "suave" }) {
   return (
-    <div className="rounded border px-3.5 py-3" style={{ borderColor: LINEA }}>
-      <p className="text-[28px] leading-none" style={{ fontWeight: 900, color }}>
+    <div className="rounded-lg border border-border px-3.5 py-3">
+      <p
+        className={cn(
+          "text-[28px] leading-none font-black tabular-nums",
+          tono === "bien" ? "text-primary" : tono === "suave" ? "text-muted-foreground" : "text-foreground"
+        )}
+      >
         {n}
       </p>
-      <p className="mt-1.5 text-[13px] leading-snug" style={{ color: "#7C818A" }}>
+      <p className="mt-1.5 text-sm leading-snug text-muted-foreground">
         {label}
       </p>
     </div>
@@ -266,13 +245,12 @@ function Dato({ n, label, color = "#F5F6F7" }: { n: number; label: string; color
 function Chip({ texto, activo }: { texto: string; activo: boolean }) {
   return (
     <span
-      className="shrink-0 rounded-[3px] border px-2.5 py-1 text-[13px]"
-      style={{
-        fontWeight: 600,
-        borderColor: activo ? "#24462F" : LINEA,
-        background: activo ? "#101710" : "transparent",
-        color: activo ? VERDE_CLARO : "#7C818A",
-      }}
+      className={cn(
+        "shrink-0 rounded-sm border px-2.5 py-1 text-sm font-semibold",
+        activo
+          ? "border-primary/40 bg-primary/10 text-primary"
+          : "border-border text-muted-foreground"
+      )}
     >
       {texto}
     </span>
@@ -285,24 +263,24 @@ function Chip({ texto, activo }: { texto: string; activo: boolean }) {
  * hacía leer "roto" donde no lo había.
  */
 function EstadoEvento({ evento }: { evento: EventRow }) {
-  if (evento.failed > 0) return <X className="h-[18px] w-[18px] shrink-0" style={{ color: ROJO }} />
+  if (evento.failed > 0) return <X className="mt-0.5 h-[18px] w-[18px] shrink-0 text-destructive" />
   if (evento.neverSeen)
-    return <Minus className="h-[18px] w-[18px] shrink-0" style={{ color: "#7C818A" }} />
-  return <Check className="h-[18px] w-[18px] shrink-0" style={{ color: VERDE_CLARO }} />
+    return <Minus className="mt-0.5 h-[18px] w-[18px] shrink-0 text-muted-foreground" />
+  return <Check className="mt-0.5 h-[18px] w-[18px] shrink-0 text-primary" />
 }
 
 function Semaforo({ ok, apagado }: { ok: boolean; apagado: boolean }) {
   if (apagado) {
-    return <Minus className="h-4 w-4 shrink-0" style={{ color: "#7C818A" }} />
+    return <Minus className="h-4 w-4 shrink-0 text-muted-foreground" />
   }
+  // El halo se hace con un anillo del token, no con una sombra de color a mano.
   return (
     <span
       aria-hidden
-      className="h-2.5 w-2.5 shrink-0 rounded-full"
-      style={{
-        background: ok ? VERDE : ROJO,
-        boxShadow: `0 0 10px ${ok ? "rgba(34,197,94,0.8)" : "rgba(229,103,91,0.7)"}`,
-      }}
+      className={cn(
+        "h-2.5 w-2.5 shrink-0 rounded-full ring-4",
+        ok ? "bg-primary ring-primary/25" : "bg-destructive ring-destructive/25"
+      )}
     />
   )
 }
@@ -315,31 +293,28 @@ export function RegistroTecnico({ children }: { children: React.ReactNode }) {
   const [abierto, setAbierto] = useState(false)
 
   return (
-    <section
-      className="overflow-hidden rounded-lg border"
-      style={{ borderColor: LINEA, background: "#131318", fontFamily: TIPO }}
-    >
+    <section className="overflow-hidden rounded-xl border border-border bg-card">
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
-        className="flex min-h-11 w-full items-center gap-3 px-5 py-4 text-left"
+        aria-expanded={abierto}
+        className="flex min-h-11 w-full items-center gap-3 px-4 py-4 text-left active:bg-muted md:px-5"
       >
         <ChevronDown
-          className={cn("h-4 w-4 shrink-0 transition-transform", abierto && "rotate-180")}
-          style={{ color: "#7C818A" }}
+          className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", abierto && "rotate-180")}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-[15px]" style={{ fontWeight: 700, color: "#F5F6F7" }}>
+          <p className="text-[15px] font-bold text-foreground">
             Registro técnico
           </p>
-          <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Cada envío con la respuesta exacta de Meta. Solo hace falta si algo falla.
           </p>
         </div>
       </button>
 
       {abierto && (
-        <div className="border-t px-5 py-5" style={{ borderColor: LINEA }}>
+        <div className="border-t border-border px-4 py-5 md:px-5">
           {children}
         </div>
       )}

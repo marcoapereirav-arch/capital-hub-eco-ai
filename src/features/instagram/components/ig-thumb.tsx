@@ -40,9 +40,9 @@ export function IgThumb({
     return (
       <div className={`flex h-full w-full items-center justify-center bg-card/40 text-muted-foreground ${className ?? ""}`}>
         {fallbackText ? (
-          <span className="text-[10px] font-mono uppercase tracking-wider">{fallbackText}</span>
+          <span className="px-2 text-center text-sm md:text-[13px]">{fallbackText}</span>
         ) : (
-          <Film className="h-6 w-6 opacity-50" />
+          <Film className="h-6 w-6" />
         )}
       </div>
     )

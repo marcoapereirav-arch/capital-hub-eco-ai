@@ -1,10 +1,15 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Calendar, Clock, Check, AlertCircle, Loader2 } from "lucide-react"
+import { Check, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 type Slot = { start: string; end: string }
+
+/** Campo de escritura. text-base en telefono o el iPhone se acerca solo al tocarlo. */
+const CLASES_CAMPO =
+  "h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
 
 export function AgendaPublica() {
   const [slots, setSlots] = useState<Slot[]>([])
@@ -88,15 +93,15 @@ export function AgendaPublica() {
   if (success) {
     const d = new Date(success.start)
     return (
-      <div className="min-h-screen bg-[#0F0F12] text-white flex items-center justify-center px-6">
+      <div className="flex min-h-dvh items-center justify-center bg-background px-4 text-foreground md:px-6">
         <div className="max-w-md text-center">
-          <Check className="h-12 w-12 mx-auto mb-4 text-[#37CA37]" />
-          <h1 className="text-2xl font-semibold mb-2">¡Confirmada tu llamada!</h1>
-          <p className="text-white/70 mb-6">
+          <Check className="mx-auto mb-4 h-12 w-12 text-primary" />
+          <h1 className="mb-2 text-2xl font-semibold">¡Confirmada tu llamada!</h1>
+          <p className="mb-6 text-[15px] text-muted-foreground">
             {d.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })} a las{" "}
             {d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })} (hora España)
           </p>
-          <p className="text-white/50 text-xs">
+          <p className="text-[15px] text-muted-foreground">
             Te llegará un email con los detalles y el link de la videollamada.
           </p>
         </div>
@@ -105,38 +110,43 @@ export function AgendaPublica() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F12] text-white">
-      <div className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+    <div className="min-h-dvh bg-background text-foreground">
+      <div className="mx-auto max-w-5xl px-4 py-10 md:px-6 md:py-16">
         {rescheduled && (
-          <div className="mb-6 rounded-sm border border-amber-500/40 bg-amber-500/[0.06] p-3 text-center text-sm">
+          <div className="mb-6 rounded-lg border border-warn/40 bg-warn/10 p-3 text-center text-[15px] text-warn">
             Tu llamada anterior se ha cancelado. Elige un nuevo hueco abajo.
           </div>
         )}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 border border-[#2A2D34] px-3 py-1 rounded-sm mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#37CA37] animate-pulse" />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-white/70">
+        <div className="mb-8 text-center md:mb-10">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-border px-3 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="text-sm font-semibold text-muted-foreground">
               Reserva tu llamada con Adrián
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight">
+          <h1 className="text-3xl font-bold uppercase tracking-tight md:text-4xl">
             Agenda 20 minutos
           </h1>
-          <p className="text-white/60 mt-2 text-sm">Elige día y hora abajo. Vídeollamada por Zoom.</p>
+          <p className="mt-2 text-[15px] text-muted-foreground">Elige día y hora abajo. Vídeollamada por Zoom.</p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-white/50">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando disponibilidad…
+          <div className="flex flex-col items-center justify-center gap-3 py-16">
+            <LoadingScreen fullscreen={false} className="bg-transparent" />
+            <p className="text-[15px] text-muted-foreground">Cargando disponibilidad…</p>
           </div>
         ) : byDay.length === 0 ? (
-          <div className="text-center py-20 text-white/60">
-            No hay slots disponibles en las próximas 3 semanas. Por favor, escribe a Adrián directamente.
+          <div className="flex min-h-[200px] flex-col items-center justify-center px-6 py-16 text-center">
+            <p className="max-w-[42ch] text-[15px] text-muted-foreground">
+              No hay slots disponibles en las próximas 3 semanas. Por favor, escribe a Adrián directamente.
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-            {/* Días */}
-            <div className="space-y-1.5 max-h-[60vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-[260px_1fr]">
+            {/* Días. En telefono es una tira deslizable de lado (el unico
+                deslizamiento lateral permitido, dentro de su propia caja); en
+                ordenador vuelve a ser la columna de la izquierda. */}
+            <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:max-h-[60dvh] md:flex-col md:gap-1.5 md:overflow-x-hidden md:overflow-y-auto md:px-0 md:pr-2">
               {byDay.map(([day, list]) => {
                 const d = new Date(day + "T00:00:00")
                 const isActive = activeDay === day
@@ -145,19 +155,19 @@ export function AgendaPublica() {
                     key={day}
                     onClick={() => { setActiveDay(day); setSelectedSlot(null) }}
                     className={cn(
-                      "w-full text-left rounded-sm border px-3 py-2 transition-all",
+                      "w-[9.5rem] shrink-0 snap-start rounded-lg border px-3 py-2 text-left transition-colors md:w-full",
                       isActive
-                        ? "border-[#37CA37] bg-[#37CA37]/[0.07]"
-                        : "border-[#2A2D34] hover:border-border"
+                        ? "border-primary bg-primary/10"
+                        : "border-border md:hover:border-primary/40"
                     )}
                   >
-                    <div className="text-xs font-mono uppercase tracking-wider text-white/50">
+                    <div className="text-sm font-semibold text-muted-foreground">
                       {d.toLocaleDateString("es-ES", { weekday: "long" })}
                     </div>
-                    <div className="text-sm capitalize">
+                    <div className="text-[15px] capitalize text-foreground md:text-sm">
                       {d.toLocaleDateString("es-ES", { day: "numeric", month: "long" })}
                     </div>
-                    <div className="text-[10px] font-mono text-white/40 mt-0.5">
+                    <div className="mt-0.5 text-sm text-muted-foreground tabular-nums">
                       {list.length} hueco{list.length === 1 ? "" : "s"}
                     </div>
                   </button>
@@ -169,17 +179,19 @@ export function AgendaPublica() {
             <div className="space-y-4">
               {!selectedSlot ? (
                 <>
-                  <h2 className="text-sm font-mono uppercase tracking-wider text-white/50">
+                  <h2 className="text-sm font-semibold text-muted-foreground">
                     Horarios disponibles
                   </h2>
-                  <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                  {/* Dos columnas en telefono: con tres, cada hueco baja de lo que
+                      acierta un dedo y la hora se parte. */}
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                     {slotsForActiveDay.map((s) => {
                       const d = new Date(s.start)
                       return (
                         <button
                           key={s.start}
                           onClick={() => setSelectedSlot(s)}
-                          className="rounded-sm border border-[#2A2D34] hover:border-[#37CA37] hover:bg-[#37CA37]/[0.05] px-3 py-2 text-sm font-mono transition-all"
+                          className="h-11 rounded-lg border border-border px-3 text-[15px] text-foreground tabular-nums transition-colors active:bg-muted md:h-9 md:text-sm md:hover:border-primary md:hover:bg-primary/10"
                         >
                           {d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
                         </button>
@@ -189,11 +201,11 @@ export function AgendaPublica() {
                 </>
               ) : (
                 <form onSubmit={handleBook} className="space-y-4">
-                  <div className="rounded-sm border border-[#37CA37]/40 bg-[#37CA37]/[0.05] p-3">
-                    <div className="text-xs font-mono uppercase tracking-wider text-[#37CA37] mb-1">
+                  <div className="rounded-lg border border-primary/40 bg-primary/10 p-3">
+                    <div className="mb-1 text-sm font-semibold text-primary">
                       Slot seleccionado
                     </div>
-                    <div className="text-base">
+                    <div className="text-base text-foreground">
                       {new Date(selectedSlot.start).toLocaleString("es-ES", {
                         weekday: "long",
                         day: "numeric",
@@ -206,27 +218,27 @@ export function AgendaPublica() {
                     <button
                       type="button"
                       onClick={() => setSelectedSlot(null)}
-                      className="text-[10px] font-mono uppercase tracking-wider text-white/50 underline mt-1"
+                      className="inline-flex h-11 items-center text-[15px] text-muted-foreground underline md:h-8 md:text-sm"
                     >
                       Cambiar
                     </button>
                   </div>
 
-                  <Input label="Nombre completo *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} required />
-                  <Input label="Email *" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
-                  <Input label="Teléfono (opcional)" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+                  <Input label="Nombre completo *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} required autoComplete="name" />
+                  <Input label="Email *" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
+                  <Input label="Teléfono (opcional)" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
                   <Textarea label="Notas (opcional)" value={form.notes} onChange={(v) => setForm({ ...form, notes: v })} placeholder="¿Algo que Adrián deba saber antes?" />
 
                   {error && (
-                    <div className="flex items-center gap-2 text-red-400 text-xs">
-                      <AlertCircle className="h-3.5 w-3.5" /> {error}
+                    <div className="flex items-center gap-2 text-[15px] text-destructive">
+                      <AlertCircle className="h-4 w-4 shrink-0" /> {error}
                     </div>
                   )}
 
                   <button
                     type="submit"
                     disabled={booking || !form.name || !form.email}
-                    className="w-full bg-[#37CA37] text-black font-mono uppercase tracking-wider py-3 rounded-sm hover:opacity-90 disabled:opacity-30"
+                    className="h-11 w-full rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-10"
                   >
                     {booking ? "Reservando…" : "Confirmar reserva"}
                   </button>
@@ -246,22 +258,29 @@ function Input({
   onChange,
   type = "text",
   required,
+  inputMode,
+  autoComplete,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   type?: string
   required?: boolean
+  inputMode?: React.ComponentProps<"input">["inputMode"]
+  autoComplete?: string
 }) {
   return (
-    <label className="block">
-      <span className="block text-[10px] font-mono uppercase tracking-wider text-white/60 mb-1">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <Etiqueta>{label}</Etiqueta>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
-        className="w-full rounded-sm border border-[#2A2D34] bg-[#16161B] px-3 py-2 text-sm focus:border-[#37CA37] focus:outline-none"
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        enterKeyHint="next"
+        className={CLASES_CAMPO}
       />
     </label>
   )
@@ -279,15 +298,24 @@ function Textarea({
   placeholder?: string
 }) {
   return (
-    <label className="block">
-      <span className="block text-[10px] font-mono uppercase tracking-wider text-white/60 mb-1">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <Etiqueta>{label}</Etiqueta>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full rounded-sm border border-[#2A2D34] bg-[#16161B] px-3 py-2 text-sm focus:border-[#37CA37] focus:outline-none resize-none"
+        className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
       />
     </label>
   )
+}
+
+/**
+ * Etiqueta de un campo. Va en su propio componente a proposito: escrita pegada
+ * al <input> el candado la confunde con la letra DEL campo (mira dos lineas
+ * arriba y dos abajo) y bloquea el guardado. Aqui la clase no toca ningun campo.
+ */
+function Etiqueta({ children }: { children: React.ReactNode }) {
+  return <span className="text-sm font-medium text-muted-foreground">{children}</span>
 }

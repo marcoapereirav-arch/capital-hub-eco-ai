@@ -5,8 +5,8 @@ import {
   ArrowLeft, ChevronRight, Megaphone, MessagesSquare, Radio, Play, BadgeCheck,
   Check, type LucideIcon,
 } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
+import { cn } from "@/lib/utils"
 
 /**
  * Board visual del Funnel del Webinar (/sistemas/webinar).
@@ -15,8 +15,13 @@ import { PageContainer } from "@/components/ui/page-container"
  * la página de gracias, el correo, el WhatsApp) para ver exactamente cómo es y cómo se
  * envía. Flujo ordenado, sin solapes: en móvil va en vertical, en escritorio en horizontal.
  * La fecha, el tag y los ajustes llegan por props desde el server (getWebinarSettings), así
- * lo que se ve coincide con lo que pasa de verdad. Colores del brandkit (verde #22C55E);
- * el mock de WhatsApp usa los colores propios de WhatsApp solo para que se reconozca.
+ * lo que se ve coincide con lo que pasa de verdad.
+ *
+ * Sobre el tamaño de letra de los mock-ups: en el telefono la ficha ocupa el ancho entero,
+ * asi que el texto va a 14 puntos y SE LEE. En escritorio baja a 13, que es el suelo, y ni
+ * un punto menos: 8 puntos en un monitor tampoco se leen. Como la letra no cambia el ancho
+ * de la ficha (224 puntos fijos), lo unico que crece es el alto, y la fila ya se desplaza
+ * de lado dentro de su propia caja. Antes iba a 6,5 puntos en TODAS partes.
  */
 
 // Glifo de WhatsApp (hereda color con currentColor).
@@ -29,10 +34,20 @@ function WhatsappGlyph({ className }: { className?: string }) {
 }
 
 type Actor = "sistema" | "equipo" | "adrian"
-const ACTOR: Record<Actor, { label: string; dot: string }> = {
-  sistema: { label: "Sistema · automático", dot: "#22C55E" },
-  equipo: { label: "Equipo", dot: "#9CA3AF" },
-  adrian: { label: "Adrián", dot: "#F5F6F7" },
+const ACTOR: Record<Actor, { label: string; punto: string }> = {
+  sistema: { label: "Sistema · automático", punto: "bg-primary" },
+  equipo: { label: "Equipo", punto: "bg-muted-foreground" },
+  adrian: { label: "Adrián", punto: "bg-foreground" },
+}
+
+/** El punto verde que late. Con clases del tema, sin CSS ni color a mano. */
+function PuntoVivo() {
+  return (
+    <span className="relative flex h-2 w-2 shrink-0">
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+    </span>
+  )
 }
 
 export function WebinarWorkflow({
@@ -48,45 +63,47 @@ export function WebinarWorkflow({
 }) {
   return (
     <>
-      <ShellHeader title="Sistema visual" />
       <PageContainer wide>
         {/* Volver */}
         <Link
           href="/sistemas"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#9CA3AF] transition-colors hover:text-[#F5F6F7]"
+          className="inline-flex h-11 w-fit items-center gap-1.5 text-[15px] font-medium text-muted-foreground transition-colors md:h-auto md:hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Volver a Sistema visual
         </Link>
 
         {/* Encabezado */}
-        <header className="ww-rise relative mt-4 overflow-hidden rounded-2xl border border-[#2A2D34] bg-[#141418] p-5 md:p-6">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full opacity-70 blur-2xl"
-            style={{ background: "radial-gradient(circle, rgba(34,197,94,0.18), transparent 70%)" }}
-          />
-          <span className="relative inline-flex items-center gap-2 rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10 px-3 py-1 text-[11px] font-medium text-[#4ADE80]">
-            <span className="ww-dot" /> Activo ahora
+        <header className="ww-rise relative mt-4 overflow-hidden rounded-xl border border-border bg-card p-4 md:p-6">
+          <span className="relative inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+            <PuntoVivo /> Activo ahora
           </span>
-          <h1 className="relative mt-3 text-xl font-semibold tracking-tight text-[#F5F6F7] md:text-2xl" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+          <h1 className="relative mt-3 text-xl font-semibold tracking-tight text-foreground md:text-2xl">
             Funnel del Webinar
           </h1>
-          <p className="relative mt-1.5 max-w-2xl text-sm leading-relaxed text-[#9CA3AF]">
+          <p className="relative mt-1.5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
             Así se ve la película completa: del anuncio hasta que la persona te escribe por WhatsApp.
             Ese mensaje es el punto de éxito; a partir de ahí se le nutre dentro del chat.
           </p>
           <div className="relative mt-4 flex flex-wrap items-center gap-2">
             {(["sistema", "equipo", "adrian"] as Actor[]).map((a) => (
-              <span key={a} className="inline-flex items-center gap-1.5 rounded-full border border-[#2A2D34] bg-[#0F0F12] px-2.5 py-1 text-[11px] font-medium text-[#C7CBD1]">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: ACTOR[a].dot }} />
+              <span
+                key={a}
+                className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-background px-2.5 py-1 text-sm font-medium text-foreground"
+              >
+                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", ACTOR[a].punto)} />
                 {ACTOR[a].label}
               </span>
             ))}
           </div>
         </header>
 
-        {/* Flujo: vertical en móvil, horizontal en escritorio. Cada paso lleva su mock-up. */}
-        <div className="ww-rise relative mt-4 overflow-x-auto rounded-2xl border border-[#2A2D34] bg-[#0F0F12] p-4 md:p-6" style={{ animationDelay: "80ms" }}>
+        {/* Flujo: vertical en móvil, horizontal en escritorio. Cada paso lleva su mock-up.
+            El desplazamiento lateral vive DENTRO de esta caja (nunca arrastra la pagina) y
+            solo existe en escritorio, donde los siete pasos van en fila. */}
+        <div
+          className="ww-rise relative mt-4 rounded-xl border border-border bg-background p-4 md:overflow-x-auto md:p-6"
+          style={{ animationDelay: "80ms" }}
+        >
           <div className="flex flex-col items-stretch gap-0 md:flex-row md:items-center">
 
             <Step n={1} title="Tráfico" actor="equipo" icon={Megaphone}
@@ -100,8 +117,8 @@ export function WebinarWorkflow({
             <Connector label="al dejar sus datos" />
 
             {/* Lo que recibe al instante: dos cosas a la vez */}
-            <div className="flex shrink-0 flex-col">
-              <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-wide text-[#6B7280]">Al instante recibe</p>
+            <div className="flex w-full shrink-0 flex-col md:w-auto">
+              <p className="mb-2 text-center text-sm font-medium text-muted-foreground">Al instante recibe</p>
               <div className="flex flex-col gap-3">
                 <Step n={3} title="Página de gracias" actor="sistema" compact mock={<MockGracias />} />
                 <Step n={4} title="Correo de confirmación" actor="sistema" compact
@@ -129,12 +146,11 @@ export function WebinarWorkflow({
           </div>
         </div>
 
+        {/* Solo movimiento: ni un color escrito aqui. */}
         <style>{`
           .ww-rise { opacity: 0; transform: translateY(14px); animation: ww-rise .6s cubic-bezier(.22,.61,.36,1) forwards; }
           @keyframes ww-rise { to { opacity: 1; transform: translateY(0); } }
-          .ww-dot { width: 7px; height: 7px; border-radius: 9999px; background: #22C55E; box-shadow: 0 0 0 0 rgba(34,197,94,.55); animation: ww-pulse 2.4s ease-out infinite; }
-          @keyframes ww-pulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)} 70%{box-shadow:0 0 0 8px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
-          @media (prefers-reduced-motion: reduce) { .ww-rise { animation: none !important; opacity: 1 !important; transform: none !important; } .ww-dot { animation: none !important; } }
+          @media (prefers-reduced-motion: reduce) { .ww-rise { animation: none !important; opacity: 1 !important; transform: none !important; } }
         `}</style>
       </PageContainer>
     </>
@@ -158,32 +174,41 @@ function Step({
   const a = ACTOR[actor]
   return (
     <div
-      className={`flex shrink-0 flex-col rounded-xl border p-3 ${
-        success ? "border-[#22C55E]/55 bg-[#22C55E]/[0.06]" : "border-[#2A2D34] bg-[#141418]"
-      } w-full md:w-[224px] ${compact ? "" : "md:self-stretch"}`}
+      className={cn(
+        "flex w-full shrink-0 flex-col rounded-lg border p-3 md:w-[224px]",
+        success ? "border-primary/55 bg-primary/10" : "border-border bg-card",
+        compact ? "" : "md:self-stretch",
+      )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#2A2D34] bg-[#0F0F12] text-[11px] font-semibold text-[#F5F6F7]">{n}</span>
-          <h3 className="text-[12px] font-semibold leading-tight text-[#F5F6F7]">{title}</h3>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border bg-background text-sm font-semibold tabular-nums text-foreground">
+            {n}
+          </span>
+          <h3 className="min-w-0 text-[15px] font-semibold leading-tight text-foreground md:text-sm">{title}</h3>
         </div>
         {success && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#22C55E] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#08130C]">
-            <Check className="h-2.5 w-2.5" /> Éxito
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-primary px-1.5 py-0.5 text-sm font-bold text-primary-foreground md:text-[13px]">
+            <Check className="h-3 w-3" /> Éxito
           </span>
         )}
       </div>
 
       {mock}
-      {desc && <p className="text-[12px] leading-snug text-[#9CA3AF]">{desc}</p>}
+      {desc && <p className="text-sm leading-snug text-muted-foreground">{desc}</p>}
 
       <div className="mt-2 flex items-center gap-1.5">
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: a.dot }} />
-        <span className="text-[10.5px] font-medium text-[#7B818C]">{a.label}</span>
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", a.punto)} />
+        <span className="text-sm font-medium text-muted-foreground md:text-[13px]">{a.label}</span>
       </div>
 
       {foot && (
-        <p className={`mt-2 border-t pt-2 text-[10.5px] leading-snug ${success ? "border-[#22C55E]/25 text-[#8fe6ab]" : "border-[#2A2D34] text-[#7B818C]"}`}>
+        <p
+          className={cn(
+            "mt-2 border-t pt-2 text-sm leading-snug md:text-[13px]",
+            success ? "border-primary/25 text-primary" : "border-border text-muted-foreground",
+          )}
+        >
           {foot}
         </p>
       )}
@@ -193,15 +218,17 @@ function Step({
 
 /* ── Conector (flecha + etiqueta). Abajo en móvil, a la derecha en escritorio ── */
 function Connector({ label, green }: { label?: string; green?: boolean }) {
-  const color = green ? "#22C55E" : "#4B5563"
   return (
     <div className="flex shrink-0 flex-col items-center justify-center gap-1 py-2 md:w-[92px] md:py-0">
       {label && (
-        <span className="max-w-[88px] rounded-full border border-[#2A2D34] bg-[#141418] px-2 py-0.5 text-center text-[10px] font-medium leading-tight text-[#9CA3AF]">
+        <span className="rounded-sm border border-border bg-card px-2 py-0.5 text-center text-sm font-medium leading-tight text-muted-foreground md:max-w-[88px] md:text-[13px]">
           {label}
         </span>
       )}
-      <ChevronRight className="h-5 w-5 rotate-90 md:rotate-0" style={{ color }} strokeWidth={2.5} />
+      <ChevronRight
+        className={cn("h-5 w-5 rotate-90 md:rotate-0", green ? "text-primary" : "text-muted-foreground")}
+        strokeWidth={2.5}
+      />
     </div>
   )
 }
@@ -210,35 +237,37 @@ function Connector({ label, green }: { label?: string; green?: boolean }) {
 
 function MockLanding() {
   return (
-    <div className="mb-2 rounded-lg border border-[#2A2D34] bg-[#0F0F12] p-2.5">
+    <div className="mb-2 rounded-lg border border-border bg-background p-2.5">
       <div className="flex items-center justify-between">
-        <span className="text-[6.5px] font-bold tracking-[0.1em] text-[#F5F6F7]">CAPITAL HUB</span>
-        <span className="h-1 w-1 rounded-full bg-[#22C55E]" />
+        <span className="text-sm font-bold tracking-[0.1em] text-foreground md:text-[13px]">CAPITAL HUB</span>
+        <span className="h-1 w-1 rounded-full bg-primary" />
       </div>
-      <p className="mt-2 text-center text-[8.5px] font-semibold leading-tight text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
-        Dejé mi trabajo y gané <span className="text-[#4ADE80]">4.000 €</span>
+      <p className="mt-2 text-center text-sm font-semibold leading-tight text-foreground md:text-[13px]">
+        Dejé mi trabajo y gané <span className="text-primary">4.000 €</span>
       </p>
-      <div className="mt-2 flex aspect-[16/9] items-center justify-center rounded-md border border-[#2A2D34] bg-[#141418]">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#22C55E]/15">
-          <Play className="ml-0.5 h-3 w-3 text-[#22C55E]" fill="currentColor" />
+      <div className="mt-2 flex aspect-[16/9] items-center justify-center rounded-lg border border-border bg-card">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15">
+          <Play className="ml-0.5 h-3.5 w-3.5 text-primary" fill="currentColor" />
         </span>
       </div>
-      <div className="mt-2 rounded-md bg-white py-1 text-center text-[7.5px] font-semibold text-[#0F0F12]">Reservar mi plaza</div>
+      <div className="mt-2 rounded-lg bg-primary py-1.5 text-center text-sm font-semibold text-primary-foreground md:text-[13px]">
+        Reservar mi plaza
+      </div>
     </div>
   )
 }
 
 function MockGracias() {
   return (
-    <div className="mb-2 rounded-lg border border-[#2A2D34] bg-[#0F0F12] p-2.5 text-center">
-      <span className="inline-flex items-center gap-1 rounded-full border border-[#22C55E]/40 bg-[#22C55E]/10 px-1.5 py-0.5 text-[6.5px] font-medium text-[#4ADE80]">
-        <BadgeCheck className="h-2 w-2" /> Plaza confirmada
+    <div className="mb-2 rounded-lg border border-border bg-background p-2.5 text-center">
+      <span className="inline-flex items-center gap-1 rounded-sm border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-sm font-medium text-primary md:text-[13px]">
+        <BadgeCheck className="h-3 w-3" /> Plaza confirmada
       </span>
-      <p className="mt-2 text-[8.5px] font-semibold leading-tight text-white" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+      <p className="mt-2 text-sm font-semibold leading-tight text-foreground md:text-[13px]">
         Último paso: escríbeme por WhatsApp
       </p>
-      <div className="mt-2 flex items-center justify-center gap-1 rounded-md bg-[#22C55E] py-1.5 text-[7.5px] font-semibold text-[#08130C]">
-        <WhatsappGlyph className="h-2.5 w-2.5" /> Conseguir mi entrada
+      <div className="mt-2 flex items-center justify-center gap-1 rounded-lg bg-primary py-1.5 text-sm font-semibold text-primary-foreground md:text-[13px]">
+        <WhatsappGlyph className="h-3 w-3" /> Conseguir mi entrada
       </div>
     </div>
   )
@@ -246,19 +275,21 @@ function MockGracias() {
 
 function MockEmail({ withWhatsapp }: { withWhatsapp: boolean }) {
   return (
-    <div className="mb-2 overflow-hidden rounded-lg border border-[#2A2D34] bg-white">
-      <div className="border-b border-black/10 px-2.5 py-1.5">
-        <span className="text-[6.5px] font-bold tracking-[0.1em] text-[#0F0F12]">CAPITAL HUB</span>
+    // Un correo se ve sobre superficie clara con tinta oscura: por eso el mock invierte
+    // el par de tokens (fondo `foreground`, texto `background`) en vez de escribir blanco.
+    <div className="mb-2 overflow-hidden rounded-lg border border-border bg-foreground">
+      <div className="border-b border-background/10 px-2.5 py-1.5">
+        <span className="text-sm font-bold tracking-[0.1em] text-background md:text-[13px]">CAPITAL HUB</span>
       </div>
       <div className="p-2.5">
-        <p className="text-[8.5px] font-bold leading-tight text-[#0F0F12]">Tu plaza está reservada</p>
+        <p className="text-sm font-bold leading-tight text-background md:text-[13px]">Tu plaza está reservada</p>
         <div className="mt-1.5 space-y-1">
-          <span className="block h-1 w-full rounded bg-black/10" />
-          <span className="block h-1 w-4/5 rounded bg-black/10" />
+          <span className="block h-1 w-full rounded-sm bg-background/10" />
+          <span className="block h-1 w-4/5 rounded-sm bg-background/10" />
         </div>
         {withWhatsapp && (
-          <div className="mt-2 flex items-center justify-center gap-1 rounded-md bg-[#22C55E] py-1.5 text-[7px] font-semibold text-[#08130C]">
-            <WhatsappGlyph className="h-2.5 w-2.5" /> Conseguir mi entrada por WhatsApp
+          <div className="mt-2 flex items-center justify-center gap-1 rounded-lg bg-primary py-1.5 text-sm font-semibold text-primary-foreground md:text-[13px]">
+            <WhatsappGlyph className="h-3 w-3" /> Conseguir mi entrada por WhatsApp
           </div>
         )}
       </div>
@@ -268,17 +299,17 @@ function MockEmail({ withWhatsapp }: { withWhatsapp: boolean }) {
 
 function MockWhatsapp({ message }: { message: string }) {
   return (
-    <div className="mb-2 overflow-hidden rounded-lg border border-[#2A2D34]">
-      <div className="flex items-center gap-1.5 bg-[#202c33] px-2.5 py-1.5">
-        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#22C55E]">
-          <WhatsappGlyph className="h-2.5 w-2.5 text-white" />
+    <div className="mb-2 overflow-hidden rounded-lg border border-border">
+      <div className="flex items-center gap-1.5 bg-secondary px-2.5 py-1.5">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+          <WhatsappGlyph className="h-3 w-3 text-primary-foreground" />
         </span>
-        <span className="text-[8px] font-medium text-white">Adrián · Capital Hub</span>
+        <span className="text-sm font-medium text-foreground md:text-[13px]">Adrián · Capital Hub</span>
       </div>
-      <div className="flex min-h-[64px] justify-end bg-[#0b141a] p-2">
-        <div className="max-w-[88%] rounded-lg rounded-tr-sm bg-[#005c4b] px-2 py-1.5 text-[8px] leading-snug text-white">
+      <div className="flex min-h-[64px] justify-end bg-background p-2">
+        <div className="max-w-[88%] rounded-lg rounded-tr-sm bg-primary px-2 py-1.5 text-sm leading-snug text-primary-foreground md:text-[13px]">
           {message}
-          <span className="mt-0.5 block text-right text-[7px] text-white/60">enviado</span>
+          <span className="mt-0.5 block text-right text-sm text-primary-foreground md:text-[13px]">enviado</span>
         </div>
       </div>
     </div>

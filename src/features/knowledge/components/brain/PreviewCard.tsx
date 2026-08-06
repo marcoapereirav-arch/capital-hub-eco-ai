@@ -53,26 +53,27 @@ export function PreviewCard({
   if (!state) return null
 
   // Posicionado relativo al tap pero clamped al viewport. Offset 16px arriba/derecha
-  // para no taparlo con el cursor o el dedo.
-  const W = 320
-  const H = 180  // alto aproximado, suficiente para evitar overflow vertical
+  // para no taparlo con el cursor o el dedo. El ancho se mide con el hueco REAL de la
+  // ventana: en un telefono de 375 puntos, 320 clavados se salian por el borde.
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1024
   const vh = typeof window !== 'undefined' ? window.innerHeight : 768
-  const left = Math.min(Math.max(state.x + 16, 8), vw - W - 8)
-  const top = Math.min(Math.max(state.y - H - 16, 8), vh - H - 8)
+  const W = Math.min(320, vw - 32)
+  const H = 200 // alto aproximado, suficiente para evitar overflow vertical
+  const left = Math.min(Math.max(state.x + 16, 16), Math.max(16, vw - W - 16))
+  const top = Math.min(Math.max(state.y - H - 16, 16), Math.max(16, vh - H - 16))
 
   return (
     <div
       ref={ref}
-      className="fixed z-[90] w-[320px] rounded-lg border border-[#4ADE80]/35 bg-[#1E1E1E]/95 p-4 shadow-[0_16px_32px_-8px_rgba(0,0,0,0.8)] backdrop-blur-md animate-fade-in"
-      style={{ left, top }}
+      className="fixed z-[90] rounded-lg border border-primary/35 bg-popover p-4 shadow-lg"
+      style={{ left, top, width: W }}
       role="dialog"
       aria-label="Previsualización del documento"
     >
-      <p className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 mb-1.5 font-body">Documento</p>
-      <h3 className="font-display text-base text-neutral-100 leading-snug mb-2">{state.title}</h3>
+      <p className="mb-1.5 text-sm font-semibold text-primary">Documento</p>
+      <h3 className="mb-2 text-base leading-snug font-semibold text-foreground">{state.title}</h3>
       {state.description && (
-        <p className="text-[12px] font-body text-neutral-100/65 leading-relaxed line-clamp-4 mb-3">
+        <p className="mb-3 line-clamp-4 text-sm leading-relaxed text-muted-foreground">
           {state.description}
         </p>
       )}
@@ -82,13 +83,13 @@ export function PreviewCard({
             onOpen(state.slug)
             onClose()
           }}
-          className="flex-1 text-[11px] uppercase tracking-widest text-[#4ADE80] bg-[#4ADE80]/15 hover:bg-[#4ADE80]/25 border border-[#4ADE80]/40 px-3 py-2 font-body transition-colors"
+          className="h-11 flex-1 rounded-lg border border-primary/40 bg-primary/15 px-3 text-[15px] font-semibold text-primary transition-colors md:h-9"
         >
           Abrir documento
         </button>
         <button
           onClick={onClose}
-          className="text-[11px] uppercase tracking-widest text-neutral-100/60 hover:text-neutral-100 border border-[#4ADE80]/15 hover:border-[#4ADE80]/30 px-3 py-2 font-body transition-colors"
+          className="h-11 shrink-0 rounded-lg border border-border px-3 text-[15px] text-muted-foreground transition-colors md:h-9"
         >
           Cerrar
         </button>

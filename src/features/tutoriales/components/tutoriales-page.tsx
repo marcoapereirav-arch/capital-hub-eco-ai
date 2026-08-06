@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { FolderPlus, Plus, GraduationCap } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
+import { Button } from "@/components/ui/button"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { Tarjeta } from "./tarjeta"
 import { TarjetaCarpeta } from "./tarjeta-carpeta"
@@ -141,9 +141,8 @@ export function TutorialesPage() {
   if (cargando) {
     return (
       <>
-        <ShellHeader title="Tutoriales" />
         <PageContainer>
-          <LoadingScreen fullscreen={false} className="min-h-[60vh]" />
+          <LoadingScreen fullscreen={false} className="min-h-[60dvh]" />
         </PageContainer>
       </>
     )
@@ -153,7 +152,6 @@ export function TutorialesPage() {
 
   return (
     <>
-      <ShellHeader title="Tutoriales" />
       {/* Un clic en el fondo deselecciona, como en cualquier escritorio.
           El alto minimo NO es decorativo: sin el, esta capa solo mide lo que
           miden las tarjetas, y el hueco vacio de debajo (que es justo donde
@@ -162,25 +160,27 @@ export function TutorialesPage() {
       <PageContainer>
         {carpetaActual ? <Migas camino={camino} onIr={ir} /> : null}
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        {/* En telefono el titulo y las acciones se apilan, y los botones van a
+            ancho completo: en una fila se salian por la derecha. */}
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-white">
+            <h1 className="truncate text-lg font-semibold text-foreground">
               {carpetaActual ? carpetaActual.nombre : "Tutoriales"}
             </h1>
-            <p className="mt-0.5 text-sm text-white/50">
+            <p className="mt-0.5 text-[15px] text-muted-foreground">
               {carpetaActual
                 ? carpetaActual.descripcion || "Carpetas y vídeos que hay aquí dentro."
                 : "Cómo se usa el sistema, en vídeo. Para el equipo interno."}
             </p>
             {/* La regla se dice una vez, en vez de que cada uno la descubra
                 haciendo clic y esperando a que pase algo. */}
-            <p className="mt-1 text-xs text-white/30">Doble clic para abrir.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Doble clic para abrir.</p>
           </div>
 
           {esAdmin ? (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <button
-                type="button"
+            <div className="flex shrink-0 flex-col gap-2 md:flex-row">
+              <Button
+                variant="outline"
                 /* Se apaga mientras la direccion todavia apunta a una carpeta
                    que aun no se ha cargado. Si no, al pulsar justo despues de
                    entrar en una carpeta, la nueva colgaria de la ANTERIOR: el
@@ -188,38 +188,33 @@ export function TutorialesPage() {
                    el mismo durante ese instante. */
                 disabled={Boolean(carpetaActualId) && !carpetaActual}
                 onClick={() => setPanel({ tipo: "crear" })}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#2A2D34] px-3.5 py-2 text-sm font-medium text-white/75 transition hover:border-[#22C55E]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <FolderPlus className="h-4 w-4" />
+                <FolderPlus className="mr-1.5 h-4 w-4" />
                 Nueva carpeta
-              </button>
+              </Button>
               {/* Un video vive DENTRO de una carpeta, nunca suelto en la raiz:
                   por eso el boton solo aparece cuando has entrado en una. */}
               {carpetaActual ? (
-                <button
-                  type="button"
-                  onClick={() => setPanel({ tipo: "nuevo-video" })}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#22C55E] px-3.5 py-2 text-sm font-semibold text-[#0F0F12] transition hover:bg-[#4ADE80]"
-                >
-                  <Plus className="h-4 w-4" />
+                <Button onClick={() => setPanel({ tipo: "nuevo-video" })}>
+                  <Plus className="mr-1.5 h-4 w-4" />
                   Añadir vídeo
-                </button>
+                </Button>
               ) : null}
             </div>
           ) : null}
         </div>
 
         {perdido ? (
-          <p className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/[0.06] p-3 text-sm text-amber-200">
+          <p className="mb-6 rounded-lg border border-warn/30 bg-warn/10 p-3 text-[15px] text-warn">
             Esa carpeta ya no existe.{" "}
-            <button type="button" onClick={() => ir(null)} className="underline hover:text-white">
+            <button type="button" onClick={() => ir(null)} className="underline">
               Volver al principio
             </button>
           </p>
         ) : null}
 
         {error ? (
-          <p className="mb-6 rounded-lg border border-red-500/30 bg-red-500/[0.06] p-3 text-sm text-red-300">{error}</p>
+          <p className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-[15px] text-destructive">{error}</p>
         ) : null}
 
         {vacio ? (
@@ -233,8 +228,8 @@ export function TutorialesPage() {
           <div className="space-y-8">
             {subcarpetas.length > 0 ? (
               <section>
-                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/40">Carpetas</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Carpetas</h2>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {subcarpetas.map((c) => (
                     <TarjetaCarpeta
                       key={c.id}
@@ -255,8 +250,8 @@ export function TutorialesPage() {
 
             {videosAqui.length > 0 ? (
               <section>
-                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-white/40">Vídeos</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Vídeos</h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {videosAqui.map((t) => (
                     <Tarjeta
                       key={t.id}
@@ -394,12 +389,12 @@ function Vacio({
   esAdmin, dentroDeCarpeta, onCrear, onAñadir,
 }: { esAdmin: boolean; dentroDeCarpeta: boolean; onCrear: () => void; onAñadir: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#2A2D34] px-6 py-16 text-center">
-      <GraduationCap className="mb-4 h-10 w-10 text-[#2A2D34]" />
-      <h2 className="text-base font-semibold text-white">
+    <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-10 text-center">
+      <GraduationCap className="h-10 w-10 text-muted-foreground" />
+      <h2 className="text-[17px] font-semibold text-foreground">
         {dentroDeCarpeta ? "Esta carpeta está vacía" : "Todavía no hay tutoriales"}
       </h2>
-      <p className="mt-1.5 max-w-sm text-sm leading-relaxed text-white/50">
+      <p className="max-w-[38ch] text-[15px] leading-relaxed text-muted-foreground">
         {!esAdmin
           ? "Cuando se publique el primero, aparecerá aquí."
           : dentroDeCarpeta
@@ -407,29 +402,17 @@ function Vacio({
             : "Crea la primera carpeta para empezar a organizar."}
       </p>
       {esAdmin ? (
-        <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <div className="flex w-full flex-col justify-center gap-2 md:w-auto md:flex-row">
           {dentroDeCarpeta ? (
-            <button
-              type="button"
-              onClick={onAñadir}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#22C55E] px-4 py-2.5 text-sm font-semibold text-[#0F0F12] transition hover:bg-[#4ADE80]"
-            >
-              <Plus className="h-4 w-4" />
+            <Button onClick={onAñadir}>
+              <Plus className="mr-1.5 h-4 w-4" />
               Añadir vídeo
-            </button>
+            </Button>
           ) : null}
-          <button
-            type="button"
-            onClick={onCrear}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
-              dentroDeCarpeta
-                ? "border border-[#2A2D34] text-white/75 hover:border-[#22C55E]/50 hover:text-white"
-                : "bg-[#22C55E] text-[#0F0F12] hover:bg-[#4ADE80]"
-            }`}
-          >
-            <FolderPlus className="h-4 w-4" />
+          <Button variant={dentroDeCarpeta ? "outline" : "default"} onClick={onCrear}>
+            <FolderPlus className="mr-1.5 h-4 w-4" />
             {dentroDeCarpeta ? "Crear subcarpeta" : "Crear la primera carpeta"}
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

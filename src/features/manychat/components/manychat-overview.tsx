@@ -42,12 +42,12 @@ export function ManychatOverviewView({ overview }: { overview: ManychatOverview 
   return (
     <div className="flex flex-col gap-6">
       {overview.syncError && (
-        <div className="border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           Último sync con error: {overview.syncError}
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
         {cards.map(c => (
           <KpiCard key={c.title} title={c.title} value={c.value} source={c.source} />
         ))}
@@ -56,30 +56,33 @@ export function ManychatOverviewView({ overview }: { overview: ManychatOverview 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+            <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
               Top Tags
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Tags con más suscriptores asignados.
             </p>
           </CardHeader>
           <CardContent>
             {overview.topTags.length === 0 ? (
-              <EmptyHint message="Aún no hay tags con suscriptores. Webhook arrancará a poblarlos." />
+              <EmptyHint
+                title="Todavía no hay tags"
+                message="Aún no hay tags con suscriptores. Webhook arrancará a poblarlos."
+              />
             ) : (
               <ul className="flex flex-col gap-3">
                 {overview.topTags.map(t => (
-                  <li key={t.name} className="flex items-center gap-3">
-                    <span className="w-32 truncate font-mono text-xs text-foreground">
+                  <li key={t.name} className="flex items-center gap-3 text-sm">
+                    <span className="w-24 shrink-0 truncate text-foreground md:w-32">
                       {t.name}
                     </span>
-                    <div className="flex h-1 flex-1 items-center bg-border">
+                    <div className="flex h-1.5 min-w-0 flex-1 items-center rounded-full bg-border">
                       <div
-                        className="h-full bg-foreground"
+                        className="h-full rounded-full bg-primary"
                         style={{ width: `${(t.count / maxTagCount) * 100}%` }}
                       />
                     </div>
-                    <span className="w-10 text-right font-mono text-xs text-muted-foreground">
+                    <span className="w-12 shrink-0 text-right tabular-nums text-muted-foreground">
                       {t.count}
                     </span>
                   </li>
@@ -91,25 +94,28 @@ export function ManychatOverviewView({ overview }: { overview: ManychatOverview 
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+            <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
               Eventos Recientes
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Últimos 20 eventos recibidos vía webhook.
             </p>
           </CardHeader>
           <CardContent>
             {overview.recentEvents.length === 0 ? (
-              <EmptyHint message="Sin eventos todavía. Configura External Request en ManyChat para empezar a recibir." />
+              <EmptyHint
+                title="Sin eventos todavía"
+                message="Configura External Request en ManyChat para empezar a recibir."
+              />
             ) : (
               <ul className="flex flex-col">
                 {overview.recentEvents.map((e: ManychatEvent) => (
                   <li
                     key={e.id}
-                    className="flex items-center justify-between border-b border-border py-2 last:border-b-0"
+                    className="flex items-center justify-between gap-2 border-b border-border py-2 last:border-b-0"
                   >
-                    <span className="text-xs text-foreground">{eventLabel(e.event_type)}</span>
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="min-w-0 truncate text-[15px] text-foreground">{eventLabel(e.event_type)}</span>
+                    <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
                       {formatDate(e.received_at)}
                     </span>
                   </li>
@@ -120,10 +126,10 @@ export function ManychatOverviewView({ overview }: { overview: ManychatOverview 
         </Card>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground md:gap-3">
         <span>Último sync: {formatDate(overview.lastSync)}</span>
         <span>•</span>
-        <Badge variant="secondary" className="font-mono text-[10px]">
+        <Badge variant="secondary" className="h-auto py-0.5 text-sm">
           IG: {overview.igChannelActive ? 'Conectado' : 'Inactivo'}
         </Badge>
       </div>
@@ -131,10 +137,11 @@ export function ManychatOverviewView({ overview }: { overview: ManychatOverview 
   )
 }
 
-function EmptyHint({ message }: { message: string }) {
+function EmptyHint({ title, message }: { title: string; message: string }) {
   return (
-    <div className="border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-      {message}
+    <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center">
+      <h3 className="text-[17px] font-semibold text-foreground">{title}</h3>
+      <p className="max-w-[38ch] text-[15px] text-muted-foreground">{message}</p>
     </div>
   )
 }

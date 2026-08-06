@@ -16,7 +16,7 @@ import { deriveSectionTitle } from "./nav-config"
  *   - derecha: campana de notificaciones, anclada a la línea (ya no es una píldora
  *     flotante descoordinada arriba a la derecha).
  *
- * Sustituye al antiguo <OsTopBar> flotante y al <ShellHeader> por página.
+ * Sustituye al antiguo <OsTopBar> flotante y a la cabecera por página, ya retirada.
  */
 export function TopBar() {
   const pathname = usePathname()

@@ -2,7 +2,13 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Power, Pencil, Trash2, ExternalLink, Tag } from "lucide-react"
+import { Plus, Power, Pencil, Trash2, Tag } from "lucide-react"
+import { PageContainer } from "@/components/ui/page-container"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 import {
   createLeadMagnet,
   updateLeadMagnet,
@@ -28,30 +34,27 @@ export function LeadMagnetsAdmin({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-border px-4 py-3 md:px-6 md:py-4">
-        <div>
-          <h1 className="font-heading text-lg font-semibold text-foreground md:text-xl">
-            Lead Magnets
-          </h1>
-          <p className="mt-0.5 text-xs text-muted-foreground md:text-sm">
-            {initialList.length} {initialList.length === 1 ? "recurso" : "recursos"} ·{" "}
-            {initialList.filter((lm) => lm.active).length} activos
-          </p>
+    <>
+      <PageContainer>
+        {/* En telefono el titulo y la accion se apilan: en una sola fila el boton
+            se salia por la derecha y el subtitulo quedaba partido. */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold text-foreground md:text-xl">Lead Magnets</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {initialList.length} {initialList.length === 1 ? "recurso" : "recursos"} ·{" "}
+              {initialList.filter((lm) => lm.active).length} activos
+            </p>
+          </div>
+          <Button
+            onClick={() => setMode({ kind: "create" })}
+            className="w-full shrink-0 md:w-auto"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Nuevo
+          </Button>
         </div>
-        <button
-          type="button"
-          onClick={() => setMode({ kind: "create" })}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md bg-foreground px-3 text-xs font-medium text-background transition-opacity hover:opacity-90 md:h-10 md:px-4 md:text-sm"
-        >
-          <Plus className="h-3.5 w-3.5 md:h-4 md:w-4" />
-          Nuevo
-        </button>
-      </header>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto p-4 pb-mobile-nav md:p-6">
         {initialList.length === 0 ? (
           <EmptyState onCreate={() => setMode({ kind: "create" })} />
         ) : (
@@ -80,39 +83,33 @@ export function LeadMagnetsAdmin({
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
 
-      {/* Form modal */}
+      {/* Formulario en hoja inferior */}
       {mode.kind !== "list" && (
         <LeadMagnetForm
           initial={mode.kind === "edit" ? mode.lm : null}
           onClose={handleClose}
         />
       )}
-    </div>
+    </>
   )
 }
 
 function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center text-center">
-      <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card">
+    <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card">
         <Tag className="h-5 w-5 text-muted-foreground" />
-      </div>
-      <h2 className="font-heading text-lg font-semibold text-foreground">
-        Aún no tienes lead magnets
-      </h2>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+      </span>
+      <h2 className="text-[17px] font-semibold text-foreground">Aún no tienes lead magnets</h2>
+      <p className="max-w-[38ch] text-[15px] text-muted-foreground">
         Los lead magnets capturan emails desde comentarios de Instagram. Crea el primero.
       </p>
-      <button
-        type="button"
-        onClick={onCreate}
-        className="mt-6 inline-flex h-10 items-center gap-1.5 rounded-md bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
-      >
-        <Plus className="h-4 w-4" />
+      <Button onClick={onCreate}>
+        <Plus className="mr-1.5 h-4 w-4" />
         Crear el primero
-      </button>
+      </Button>
     </div>
   )
 }
@@ -135,29 +132,27 @@ function LeadMagnetCard({
 
   return (
     <article
-      className={`relative flex flex-col gap-3 rounded-lg border p-4 transition-opacity ${
-        lm.active
-          ? "border-border bg-card"
-          : "border-border bg-card/40 opacity-60"
-      }`}
+      className={cn(
+        "relative flex flex-col gap-3 rounded-lg border border-border p-4 transition-opacity",
+        lm.active ? "bg-card" : "bg-card/40 opacity-60",
+      )}
     >
       {/* Header */}
       <header>
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-heading text-sm font-semibold text-foreground">{lm.name}</h3>
+          <h3 className="min-w-0 flex-1 text-[15px] font-semibold text-foreground">{lm.name}</h3>
           <span
-            className={`shrink-0 rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${
+            className={cn(
+              "shrink-0 rounded-sm border px-2 py-0.5 text-sm font-semibold",
               lm.active
-                ? "border-green-500/30 bg-green-500/10 text-green-300"
-                : "border-zinc-500/30 bg-zinc-500/10 text-zinc-400"
-            }`}
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-border bg-muted text-muted-foreground",
+            )}
           >
             {lm.active ? "Activo" : "Pausado"}
           </span>
         </div>
-        <p className="mt-1 truncate font-mono text-[10px] text-muted-foreground/70">
-          /lm/{lm.slug}
-        </p>
+        <p className="mt-1 truncate text-sm text-muted-foreground">/lm/{lm.slug}</p>
       </header>
 
       {/* Keywords */}
@@ -166,71 +161,60 @@ function LeadMagnetCard({
           {lm.manychat_keywords.map((kw) => (
             <span
               key={kw}
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground"
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-sm text-muted-foreground"
             >
-              <Tag className="h-2.5 w-2.5" />
+              <Tag className="h-3 w-3" />
               {kw}
             </span>
           ))}
         </div>
       )}
 
-      {/* Stats */}
-      <dl className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+      {/* Stats: dos columnas en telefono, tres en escritorio. A tres columnas en
+          375 puntos cada cifra sale a 100 y la etiqueta se parte. */}
+      <dl className="grid grid-cols-2 gap-2 border-t border-border pt-3 md:grid-cols-3">
         <div>
-          <dt className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground/60">
-            Opt-ins
-          </dt>
-          <dd className="font-heading text-base font-semibold text-foreground">{lm.optins_total}</dd>
+          <dt className="text-sm text-muted-foreground">Opt-ins</dt>
+          <dd className="text-base font-semibold tabular-nums text-foreground">{lm.optins_total}</dd>
         </div>
         <div>
-          <dt className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground/60">
-            Abiertos
-          </dt>
-          <dd className="font-heading text-base font-semibold text-foreground">{lm.opens_total}</dd>
+          <dt className="text-sm text-muted-foreground">Abiertos</dt>
+          <dd className="text-base font-semibold tabular-nums text-foreground">{lm.opens_total}</dd>
         </div>
         <div>
-          <dt className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground/60">
-            → Trial
-          </dt>
-          <dd className="font-heading text-base font-semibold text-foreground">
+          <dt className="text-sm text-muted-foreground">→ Trial</dt>
+          <dd className="text-base font-semibold tabular-nums text-foreground">
             {lm.converted_to_trial_total}
-            <span className="ml-1 text-[10px] font-normal text-muted-foreground/70">
-              ({conversionRate}%)
-            </span>
+            <span className="ml-1 text-sm font-normal text-muted-foreground">({conversionRate}%)</span>
           </dd>
         </div>
       </dl>
 
       {/* Actions */}
-      <div className="flex items-center gap-1 border-t border-border pt-3">
-        <button
-          type="button"
-          onClick={onEdit}
-          disabled={pending}
-          className="inline-flex h-8 items-center gap-1 rounded-sm border border-border px-2 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
-        >
-          <Pencil className="h-3 w-3" />
+      <div className="flex items-center gap-2 border-t border-border pt-3">
+        <Button variant="outline" onClick={onEdit} disabled={pending}>
+          <Pencil className="mr-1.5 h-4 w-4" />
           Editar
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           onClick={onToggle}
           disabled={pending}
-          className="inline-flex h-8 items-center gap-1 rounded-sm border border-border px-2 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
           title={lm.active ? "Pausar" : "Activar"}
         >
-          <Power className="h-3 w-3" />
+          <Power className="mr-1.5 h-4 w-4" />
           {lm.active ? "Pausar" : "Activar"}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="destructive"
+          size="icon"
           onClick={onDelete}
           disabled={pending}
-          className="ml-auto inline-flex h-8 items-center gap-1 rounded-sm border border-red-500/30 px-2 text-xs text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+          aria-label={`Borrar ${lm.name}`}
+          className="ml-auto"
         >
-          <Trash2 className="h-3 w-3" />
-        </button>
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </article>
   )
@@ -292,43 +276,45 @@ function LeadMagnetForm({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 md:items-center"
-      onClick={onClose}
+    <Sheet
+      open
+      onOpenChange={(abierto) => {
+        if (!abierto) onClose()
+      }}
     >
-      <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-lg border border-border bg-card md:rounded-lg"
-        onClick={(e) => e.stopPropagation()}
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        className={cn(
+          "rounded-t-xl",
+          // Se repite la condicion del lado porque las clases del kit (`data-[side=bottom]:...`)
+          // pesan mas que un `md:` suelto; sin repetirla el cajon sale por la izquierda.
+          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-lg md:border-l md:pb-0",
+        )}
       >
-        <header className="flex items-center justify-between border-b border-border px-4 py-3 md:px-6 md:py-4">
-          <h2 className="font-heading text-base font-semibold text-foreground">
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <SheetTitle className="text-[17px] font-semibold">
             {isEdit ? "Editar lead magnet" : "Nuevo lead magnet"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs text-muted-foreground hover:text-foreground"
-          >
-            Cerrar
-          </button>
-        </header>
+          </SheetTitle>
+        </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-y-auto">
-          <div className="flex flex-col gap-4 p-4 md:p-6">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="flex flex-col gap-4 px-4 pb-4">
             <Field label="Nombre">
-              <input
+              <Input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Test Vocacional Digital"
                 required
                 minLength={2}
                 maxLength={120}
-                className="form-input"
+                enterKeyHint="next"
               />
             </Field>
 
             <Field label="Slug" hint="Solo minúsculas, números y guiones. Aparece en /lm/<slug>">
-              <input
+              <Input
                 value={form.slug}
                 onChange={(e) =>
                   setForm({ ...form, slug: e.target.value.toLowerCase().replace(/\s+/g, "-") })
@@ -337,22 +323,24 @@ function LeadMagnetForm({
                 required
                 pattern="[a-z0-9-]+"
                 disabled={isEdit}
-                className="form-input"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </Field>
 
             <Field label="Descripción" hint="Aparece en la página /lm/<slug>">
-              <textarea
+              <Textarea
                 value={form.description ?? ""}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={3}
                 placeholder="Descubre qué profesión digital encaja con tu perfil..."
-                className="form-input resize-none"
+                className="resize-none"
               />
             </Field>
 
             <Field label="Tipo de entrega">
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                 <RadioOption
                   checked={form.delivery_kind === "dynamic"}
                   onChange={() => setForm({ ...form, delivery_kind: "dynamic" })}
@@ -373,12 +361,14 @@ function LeadMagnetForm({
                 label="Ruta interna"
                 hint="ej: /lm/test-vocacional/quiz — la página dinámica que construyes en código"
               >
-                <input
+                <Input
                   value={form.delivery_route}
                   onChange={(e) => setForm({ ...form, delivery_route: e.target.value })}
                   placeholder="/lm/test-vocacional/quiz"
                   required
-                  className="form-input"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                 />
               </Field>
             ) : (
@@ -386,13 +376,13 @@ function LeadMagnetForm({
                 label="URL del recurso"
                 hint="URL del PDF/imagen en Storage o link externo"
               >
-                <input
+                <Input
                   type="url"
+                  inputMode="url"
                   value={form.delivery_asset_url}
                   onChange={(e) => setForm({ ...form, delivery_asset_url: e.target.value })}
                   placeholder="https://..."
                   required
-                  className="form-input"
                 />
               </Field>
             )}
@@ -401,76 +391,42 @@ function LeadMagnetForm({
               label="Keywords ManyChat"
               hint="Separadas por coma. La keyword del comentario IG que activa este LM. Ej: TEST, test vocacional"
             >
-              <input
+              <Input
                 value={form.manychat_keywords}
                 onChange={(e) => setForm({ ...form, manychat_keywords: e.target.value })}
                 placeholder="TEST, test vocacional"
-                className="form-input"
               />
             </Field>
 
-            <label className="inline-flex cursor-pointer items-center gap-2">
+            <label className="flex min-h-11 cursor-pointer items-center gap-2">
               <input
                 type="checkbox"
                 checked={form.active}
                 onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                className="h-4 w-4 rounded border-border bg-background"
+                className="h-5 w-5 rounded-sm border-border bg-background accent-primary"
               />
-              <span className="text-sm text-foreground">Activo (recibe opt-ins)</span>
+              <span className="text-[15px] text-foreground">Activo (recibe opt-ins)</span>
             </label>
 
             {error && (
-              <div className="rounded-sm border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+              <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
-              </div>
+              </p>
             )}
           </div>
 
-          <footer className="flex items-center justify-end gap-2 border-t border-border bg-card/60 px-4 py-3 md:px-6">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={pending}
-              className="inline-flex h-10 items-center rounded-md border border-border px-4 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
-            >
+          {/* Pegada abajo DENTRO de la hoja, para que el teclado no la tape. */}
+          <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-safe-4 md:pb-3">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={pending}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="inline-flex h-10 items-center rounded-md bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={pending}>
               {pending ? "Guardando..." : isEdit ? "Guardar" : "Crear"}
-            </button>
-          </footer>
+            </Button>
+          </div>
         </form>
-      </div>
-
-      <style jsx>{`
-        :global(.form-input) {
-          height: 2.5rem;
-          width: 100%;
-          border-radius: 0.375rem;
-          border: 1px solid hsl(var(--border));
-          background-color: hsl(var(--background));
-          padding: 0 0.75rem;
-          font-size: 0.875rem;
-          color: hsl(var(--foreground));
-        }
-        :global(textarea.form-input) {
-          height: auto;
-          padding: 0.5rem 0.75rem;
-        }
-        :global(.form-input:focus) {
-          outline: none;
-          border-color: hsl(var(--foreground));
-        }
-        :global(.form-input::placeholder) {
-          color: hsl(var(--muted-foreground));
-          opacity: 0.5;
-        }
-      `}</style>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -485,13 +441,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </label>
+      <span className="mb-1.5 block text-sm font-semibold text-muted-foreground">{label}</span>
       {children}
-      {hint && (
-        <p className="mt-1 text-[11px] text-muted-foreground/70">{hint}</p>
-      )}
+      {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
     </div>
   )
 }
@@ -511,14 +463,16 @@ function RadioOption({
     <button
       type="button"
       onClick={onChange}
-      className={`flex flex-1 flex-col items-start gap-0.5 rounded-md border p-3 text-left transition-colors ${
+      aria-pressed={checked}
+      className={cn(
+        "flex min-h-11 flex-1 flex-col items-start justify-center gap-0.5 rounded-lg border p-3 text-left transition-colors",
         checked
-          ? "border-foreground bg-foreground/5"
-          : "border-border bg-background hover:bg-secondary"
-      }`}
+          ? "border-primary bg-primary/10"
+          : "border-border bg-background active:bg-secondary md:hover:bg-secondary",
+      )}
     >
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <span className="text-[10px] text-muted-foreground">{hint}</span>
+      <span className="text-[15px] font-medium text-foreground">{label}</span>
+      <span className="text-sm text-muted-foreground">{hint}</span>
     </button>
   )
 }

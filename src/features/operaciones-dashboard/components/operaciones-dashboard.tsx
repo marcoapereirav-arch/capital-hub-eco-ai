@@ -4,26 +4,13 @@ import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Calendar, Target, Users, AlertCircle, ChevronRight, Flag, LayoutGrid, FolderKanban, CheckCircle2, Circle } from "lucide-react"
+import { PageContainer } from "@/components/ui/page-container"
 import { useTaskStore } from "@/features/tasks/store/task-store"
 import { ROOT_AREAS, ASSIGNEE_LABELS } from "@/features/tasks/types/task"
 import type { Task, Assignee } from "@/features/tasks/types/task"
 import type { DueRange } from "@/features/tasks/store/task-store"
 import { TaskDetail } from "@/features/tasks/components/task-detail"
 import { cn } from "@/lib/utils"
-
-const AREA_COLORS: Record<string, { dot: string; ring: string; tint: string }> = {
-  area_marketing: { dot: "bg-blue-400", ring: "ring-blue-500/30", tint: "bg-blue-500/[0.05]" },
-  area_producto:  { dot: "bg-green-400", ring: "ring-green-500/30", tint: "bg-green-500/[0.05]" },
-  area_ventas:    { dot: "bg-amber-400", ring: "ring-amber-500/30", tint: "bg-amber-500/[0.05]" },
-  area_finanzas:  { dot: "bg-purple-400", ring: "ring-purple-500/30", tint: "bg-purple-500/[0.05]" },
-}
-
-const FOCUS_GRADIENTS: Record<string, string> = {
-  amber: "from-amber-500 to-red-500",
-  blue: "from-blue-500 to-cyan-500",
-  green: "from-emerald-500 to-green-500",
-  purple: "from-purple-500 to-pink-500",
-}
 
 export function OperacionesDashboard() {
   const router = useRouter()
@@ -211,11 +198,15 @@ export function OperacionesDashboard() {
   // TODAS las tareas no-done de los proyectos del foco activo, agrupadas por
   // prioridad. Da la claridad de "qué falta exactamente" para el webinar.
   const PRIORITY_ORDER = ["urgent", "high", "normal", "low"] as const
+  // Los cuatro niveles se distinguen con los tokens del tema: rojo de error para lo
+  // urgente, ambar de aviso para lo alto y grises para el resto. Antes eran colores
+  // sueltos de Tailwind (red-400, orange-400, blue-400) que pintaban una paleta que
+  // no es la de la marca.
   const PRIORITY_META: Record<string, { label: string; dot: string; text: string }> = {
-    urgent: { label: "Urgentes", dot: "bg-red-400", text: "text-red-400" },
-    high: { label: "Altas", dot: "bg-orange-400", text: "text-orange-400" },
-    normal: { label: "Normales", dot: "bg-blue-400", text: "text-blue-400" },
-    low: { label: "Bajas", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+    urgent: { label: "Urgentes", dot: "bg-destructive", text: "text-destructive" },
+    high: { label: "Altas", dot: "bg-warn", text: "text-warn" },
+    normal: { label: "Normales", dot: "bg-primary", text: "text-primary" },
+    low: { label: "Bajas", dot: "bg-muted-foreground", text: "text-muted-foreground" },
   }
   const focusOpenByPriority = useMemo(() => {
     if (mode === "general") return []
@@ -241,51 +232,56 @@ export function OperacionesDashboard() {
 
   if (loading && !initialized) {
     return (
-      <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+      <div className="flex h-full items-center justify-center px-6 text-[15px] text-muted-foreground">
         Cargando dashboard…
       </div>
     )
   }
 
   return (
-    <div className="h-full overflow-auto p-4 md:p-6">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="h-full overflow-auto no-overscroll">
+      <PageContainer className="max-w-6xl space-y-6">
         {/* ============ MODE SWITCHER + FILTRO STATUS PROYECTOS ============ */}
-        <div className="flex items-center gap-3 flex-wrap">
+        {/* En telefono los dos grupos van uno debajo del otro y cada uno se desliza
+            dentro de su caja: en una sola fila no caben y se amontonaban. */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
           {/* General / Focos */}
-          <div className="flex items-center gap-1 rounded-md bg-muted/40 p-0.5 w-fit">
+          <div className="-mx-1 flex snap-x gap-1 overflow-x-auto px-1 md:mx-0 md:w-fit md:overflow-visible md:rounded-lg md:bg-muted/40 md:px-0.5 md:py-0.5">
             <button
               onClick={() => setMode("general")}
               className={cn(
-                "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                mode === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                "inline-flex h-11 shrink-0 snap-start items-center gap-1.5 rounded-lg px-3 text-[15px] font-medium whitespace-nowrap transition-colors md:h-8 md:text-sm",
+                mode === "general" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground md:hover:text-foreground"
               )}
             >
-              <LayoutGrid className="h-3 w-3" /> General
+              <LayoutGrid className="h-4 w-4 shrink-0" /> General
             </button>
             {focuses.filter((f) => f.active).map((f) => (
               <button
                 key={f.id}
                 onClick={() => setMode(f.id)}
                 className={cn(
-                  "rounded px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
-                  mode === f.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  "inline-flex h-11 shrink-0 snap-start items-center gap-1.5 rounded-lg px-3 text-[15px] font-medium whitespace-nowrap transition-colors md:h-8 md:text-sm",
+                  mode === f.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground md:hover:text-foreground"
                 )}
               >
-                <Flag className="h-3 w-3" /> {f.name}
+                <Flag className="h-4 w-4 shrink-0" /> {f.name}
               </button>
             ))}
           </div>
 
           {/* Filtro de status proyectos. Default: abiertos. */}
-          <div className="flex items-center gap-1 rounded-md bg-muted/40 p-0.5 w-fit ml-auto">
+          <div className="-mx-1 flex snap-x gap-1 overflow-x-auto px-1 md:mx-0 md:ml-auto md:w-fit md:overflow-visible md:rounded-lg md:bg-muted/40 md:px-0.5 md:py-0.5">
             {(["abiertos", "pausados", "finalizados", "todos"] as const).map((opt) => (
               <button
                 key={opt}
                 onClick={() => setProjectStatusFilter(opt)}
                 className={cn(
-                  "rounded px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider transition-colors",
-                  projectStatusFilter === opt ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  // `capitalize` en vez de `uppercase`: pinta el valor del enum
+                  // como etiqueta ("Abiertos") sin las mayusculas espaciadas del
+                  // diseno viejo.
+                  "h-11 shrink-0 snap-start rounded-lg px-3 text-[15px] font-medium whitespace-nowrap capitalize transition-colors md:h-8 md:px-2.5 md:text-sm",
+                  projectStatusFilter === opt ? "bg-background text-foreground shadow-sm" : "text-muted-foreground md:hover:text-foreground"
                 )}
               >
                 {opt}
@@ -296,20 +292,20 @@ export function OperacionesDashboard() {
 
         {/* ============ HERO ============ */}
         {activeFocus ? (
-          <section className="rounded-md border border-border bg-card/40 p-5 md:p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <Flag className={cn("h-4 w-4", `text-${activeFocus.color}-400`)} />
-              <span className={cn("font-mono text-[10px] uppercase tracking-widest", `text-${activeFocus.color}-400`)}>
+          <section className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Flag className="h-4 w-4 shrink-0 text-primary" />
+              <span className="text-sm font-semibold text-primary">
                 FOCO ACTIVO
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold mb-1">{activeFocus.name}</h1>
+            <h1 className="mb-1 text-2xl font-semibold tracking-tight md:text-3xl">{activeFocus.name}</h1>
             {activeFocus.description && (
-              <p className="text-xs text-muted-foreground mb-3 max-w-2xl">{activeFocus.description}</p>
+              <p className="mb-3 max-w-2xl text-[15px] text-muted-foreground">{activeFocus.description}</p>
             )}
             {focusCountdown && (
               <>
-                <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider mb-5">
+                <p className="mb-5 text-[15px] font-medium text-muted-foreground">
                   {focusCountdown.daysLeft === 0
                     ? "ES HOY"
                     : focusCountdown.weeks > 0
@@ -317,22 +313,22 @@ export function OperacionesDashboard() {
                       : `Quedan ${focusCountdown.daysLeft} día${focusCountdown.daysLeft === 1 ? "" : "s"}`}
                 </p>
 
-                <div className="space-y-1.5 mb-4">
-                  <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                <div className="mb-4 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     <span>Tiempo transcurrido</span>
-                    <span>{Math.round(focusCountdown.timePct)}%</span>
+                    <span className="tabular-nums">{Math.round(focusCountdown.timePct)}%</span>
                   </div>
-                  <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
                     <div
-                      className={cn("h-full bg-gradient-to-r transition-all", FOCUS_GRADIENTS[activeFocus.color] ?? FOCUS_GRADIENTS.amber)}
+                      className="h-full bg-primary transition-all"
                       style={{ width: `${focusCountdown.timePct}%` }}
                     />
                   </div>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-                    <span>
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                    <span className="tabular-nums">
                       {focusCountdown.startDate?.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
-                    <span>
+                    <span className="tabular-nums">
                       {focusCountdown.endDate.toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                   </div>
@@ -341,36 +337,36 @@ export function OperacionesDashboard() {
             )}
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span>Tareas completadas del foco</span>
-                <span>{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
+                <span className="tabular-nums">{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
               </div>
-              <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
+              <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full bg-primary transition-all" style={{ width: `${tasksPct}%` }} />
               </div>
             </div>
           </section>
         ) : (
           // MODO GENERAL: hero distinto
-          <section className="rounded-md border border-border bg-card/40 p-5 md:p-6">
-            <div className="flex items-center gap-2 mb-3">
-              <LayoutGrid className="h-4 w-4 text-muted-foreground" />
-              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <section className="rounded-xl border border-border bg-card p-4 md:p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm font-semibold text-muted-foreground">
                 VISTA GENERAL · TODO EL NEGOCIO
               </span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-semibold mb-1">Operaciones</h1>
-            <p className="text-xs text-muted-foreground mb-5 max-w-2xl">
+            <h1 className="mb-1 text-2xl font-semibold tracking-tight md:text-3xl">Operaciones</h1>
+            <p className="mb-5 max-w-2xl text-[15px] text-muted-foreground">
               {scopedProjects.filter((p) => p.status === "active").length} activos · {scopedProjects.filter((p) => p.status === "paused").length} pausados · {scopedProjects.filter((p) => p.status === "completed").length} completados · {totalScopedTasks} tareas totales (incluido Someday)
             </p>
 
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span>Completadas globalmente</span>
-                <span>{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
+                <span className="tabular-nums">{doneScoped} / {totalScopedTasks} · {Math.round(tasksPct)}%</span>
               </div>
-              <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-green-600 to-green-400 transition-all" style={{ width: `${tasksPct}%` }} />
+              <div className="h-2.5 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full bg-primary transition-all" style={{ width: `${tasksPct}%` }} />
               </div>
             </div>
           </section>
@@ -378,34 +374,34 @@ export function OperacionesDashboard() {
 
         {/* ============ TODO LO QUE FALTA DEL FOCO (expandible) ============ */}
         {activeFocus && focusOpenTotal > 0 && (
-          <section className="rounded-md border border-border bg-card/40">
+          <section className="rounded-xl border border-border bg-card">
             <button
               onClick={() => setShowAllFocus((v) => !v)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+              className="flex w-full flex-col gap-1 px-4 py-3 text-left md:flex-row md:items-center md:justify-between md:gap-3"
             >
-              <span className="text-sm font-semibold flex items-center gap-2">
-                <Flag className={cn("h-4 w-4", `text-${activeFocus.color}-400`)} />
-                Todo lo que falta para «{activeFocus.name}»
+              <span className="flex min-w-0 items-center gap-2 text-[15px] font-semibold md:text-sm">
+                <Flag className="h-4 w-4 shrink-0 text-primary" />
+                <span className="min-w-0">Todo lo que falta para «{activeFocus.name}»</span>
               </span>
-              <span className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
-                {focusOpenTotal} pendientes · {showAllFocus ? "ocultar" : "ver todo"}
-                <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", showAllFocus && "rotate-90")} />
+              <span className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
+                <span className="tabular-nums">{focusOpenTotal}</span> pendientes · {showAllFocus ? "ocultar" : "ver todo"}
+                <ChevronRight className={cn("h-4 w-4 transition-transform", showAllFocus && "rotate-90")} />
               </span>
             </button>
 
             {showAllFocus && (
-              <div className="border-t border-border px-4 py-3 space-y-4">
+              <div className="space-y-4 border-t border-border px-4 py-3">
                 {focusOpenByPriority.map((group) => {
                   const meta = PRIORITY_META[group.prio]
                   return (
                     <div key={group.prio} className="space-y-1">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className={cn("h-2 w-2 rounded-full", meta.dot)} />
-                        <span className={cn("text-[10px] font-mono uppercase tracking-widest", meta.text)}>
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span className={cn("h-2 w-2 shrink-0 rounded-full", meta.dot)} />
+                        <span className={cn("text-sm font-semibold", meta.text)}>
                           {meta.label}
                         </span>
-                        <span className="text-[10px] font-mono text-muted-foreground">({group.tasks.length})</span>
-                        <div className="flex-1 h-px bg-border/40" />
+                        <span className="text-sm tabular-nums text-muted-foreground">({group.tasks.length})</span>
+                        <div className="h-px flex-1 bg-border" />
                       </div>
                       <div className="space-y-0.5">
                         {group.tasks.map((t) => {
@@ -417,27 +413,29 @@ export function OperacionesDashboard() {
                             <button
                               key={t.id}
                               onClick={() => setSelectedTask(t.id)}
-                              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-sm hover:bg-card/60 text-left transition-colors"
+                              className="flex min-h-[56px] w-full flex-col gap-1 rounded-lg px-2 py-2 text-left transition-colors active:bg-muted md:min-h-0 md:flex-row md:items-center md:gap-2.5 md:hover:bg-muted"
                             >
-                              <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", meta.dot)} />
-                              <span className="flex-1 min-w-0 text-sm truncate">{t.title}</span>
-                              {projectName(t.paraId) && (
-                                <span className="hidden sm:block text-[10px] font-mono uppercase tracking-wider text-muted-foreground/60 truncate max-w-[140px]">
-                                  {projectName(t.paraId)}
-                                </span>
-                              )}
-                              <span className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
-                                {t.status}
+                              <span className="flex min-w-0 items-center gap-2.5 md:flex-1">
+                                <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", meta.dot)} />
+                                <span className="min-w-0 flex-1 truncate text-[15px] md:text-sm">{t.title}</span>
                               </span>
-                              {days !== null && (
-                                <span className={cn(
-                                  "text-[10px] font-mono shrink-0",
-                                  days < 0 ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"
-                                )}>
-                                  {days < 0 ? `${days}d` : days === 0 ? "hoy" : `+${days}d`}
-                                </span>
-                              )}
-                              <span className="shrink-0 text-muted-foreground">👤 {ASSIGNEE_LABELS[t.assignee] ?? t.assignee}</span>
+                              <span className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-5 text-sm text-muted-foreground md:shrink-0 md:flex-nowrap md:pl-0">
+                                {projectName(t.paraId) && (
+                                  <span className="max-w-[140px] truncate">
+                                    {projectName(t.paraId)}
+                                  </span>
+                                )}
+                                <span>{t.status}</span>
+                                {days !== null && (
+                                  <span className={cn(
+                                    "tabular-nums",
+                                    days < 0 ? "text-destructive" : days <= 3 ? "text-warn" : "text-muted-foreground"
+                                  )}>
+                                    {days < 0 ? `${days}d` : days === 0 ? "hoy" : `+${days}d`}
+                                  </span>
+                                )}
+                                <span>{ASSIGNEE_LABELS[t.assignee] ?? t.assignee}</span>
+                              </span>
                             </button>
                           )
                         })}
@@ -451,7 +449,7 @@ export function OperacionesDashboard() {
         )}
 
         {/* ============ STATS CARDS ============ */}
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <StatCard
             label={mode === "general" ? "Total tareas" : "Total foco"}
             value={totalScopedTasks}
@@ -487,84 +485,78 @@ export function OperacionesDashboard() {
 
         {/* ============ ÁREAS ============ */}
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold flex items-center gap-2">
-            <Target className="h-4 w-4 text-muted-foreground" /> Progreso por área
+          <h2 className="flex items-center gap-2 text-[15px] font-semibold md:text-sm">
+            <Target className="h-4 w-4 shrink-0 text-muted-foreground" /> Progreso por área
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {byArea.map((a) => {
-              const c = AREA_COLORS[a.id]
-              return (
-                <Link
-                  key={a.id}
-                  href={`/areas/${a.id}`}
-                  className={cn("rounded-md border border-border p-3 ring-1 transition hover:border-border", c?.ring, c?.tint)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("h-2 w-2 rounded-full", c?.dot)} />
-                      <span className="text-sm font-medium">{a.name}</span>
-                    </div>
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                      {a.projects.length} proy
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">
-                    <span>{a.done} / {a.total} tareas</span>
-                    <span>{Math.round(a.pct)}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                    <div className={cn("h-full transition-all", c?.dot)} style={{ width: `${a.pct}%` }} />
-                  </div>
-                </Link>
-              )
-            })}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {byArea.map((a) => (
+              <Link
+                key={a.id}
+                href={`/areas/${a.id}`}
+                className="rounded-lg border border-border bg-card p-3 transition-colors active:bg-muted md:hover:border-primary/50"
+              >
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <span className="min-w-0 flex-1 truncate text-[15px] font-medium md:text-sm">{a.name}</span>
+                  <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                    {a.projects.length} proy
+                  </span>
+                </div>
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                  <span className="tabular-nums">{a.done} / {a.total} tareas</span>
+                  <span className="tabular-nums">{Math.round(a.pct)}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${a.pct}%` }} />
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
 
         {/* ============ PROYECTOS ============ */}
         {projectsProgress.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <FolderKanban className="h-4 w-4 text-muted-foreground" /> Proyectos
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold md:text-sm">
+              <FolderKanban className="h-4 w-4 shrink-0 text-muted-foreground" /> Proyectos
             </h2>
-            <div className="rounded-md border border-border divide-y divide-border">
+            <div className="divide-y divide-border rounded-lg border border-border">
               {projectsProgress.map((p) => (
                 <Link
                   key={p.id}
                   href={`/projects/${p.id}`}
                   className={cn(
-                    "flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-card/40 transition-colors",
+                    "flex min-h-[56px] items-center justify-between gap-3 px-3 py-2.5 transition-colors active:bg-muted md:hover:bg-muted",
                     p.status === "paused" && "opacity-60",
                     p.status === "completed" && "opacity-50"
                   )}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm truncate">{p.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-[15px] md:text-sm">{p.name}</span>
                       {p.status === "paused" && (
-                        <span className="shrink-0 text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-amber-500/40 text-amber-400">
+                        <span className="shrink-0 rounded-sm border border-warn/40 px-1.5 py-0.5 text-sm text-warn">
                           pausado
                         </span>
                       )}
                       {p.status === "completed" && (
-                        <span className="shrink-0 text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border border-green-500/40 text-green-400">
+                        <span className="shrink-0 rounded-sm border border-primary/40 px-1.5 py-0.5 text-sm text-primary">
                           completado
                         </span>
                       )}
                     </div>
-                    <div className="h-1 rounded-full bg-secondary overflow-hidden">
-                      <div className="h-full bg-green-500" style={{ width: `${p.pct}%` }} />
+                    <div className="h-1 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full bg-primary" style={{ width: `${p.pct}%` }} />
                     </div>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  <div className="shrink-0 text-right text-sm text-muted-foreground">
+                    <div className="tabular-nums">
                       {p.done} / {p.total}
                     </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
+                    <div className="tabular-nums">
                       {p.open} abiertas
                     </div>
                   </div>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </Link>
               ))}
             </div>
@@ -574,27 +566,27 @@ export function OperacionesDashboard() {
         {/* ============ POR PERSONA ============ */}
         {byAssignee.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" /> Carga por persona
-              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            <h2 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-semibold md:text-sm">
+              <Users className="h-4 w-4 shrink-0 text-muted-foreground" /> Carga por persona
+              <span className="text-sm font-normal text-muted-foreground">
                 (click para ver sus tareas)
               </span>
             </h2>
-            <div className="rounded-md border border-border divide-y divide-border">
+            <div className="divide-y divide-border rounded-lg border border-border">
               {byAssignee.map((a) => (
                 <button
                   key={a.assignee}
                   type="button"
                   onClick={() => navigateToTasks({ assignee: a.assignee, status: "all" })}
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors hover:bg-card/60"
+                  className="flex min-h-[56px] w-full flex-col gap-1 px-3 py-2 text-left transition-colors active:bg-muted md:min-h-0 md:flex-row md:items-center md:justify-between md:hover:bg-muted"
                 >
-                  <span>{ASSIGNEE_LABELS[a.assignee as keyof typeof ASSIGNEE_LABELS] ?? a.assignee}</span>
-                  <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
-                    <span className="text-muted-foreground">{a.open} abiertas</span>
-                    {a.overdue > 0 && <span className="text-red-400">{a.overdue} vencidas</span>}
-                    <span className="text-muted-foreground">{a.total} total</span>
-                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                  </div>
+                  <span className="text-[15px] md:text-sm">{ASSIGNEE_LABELS[a.assignee as keyof typeof ASSIGNEE_LABELS] ?? a.assignee}</span>
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    <span className="tabular-nums text-muted-foreground">{a.open} abiertas</span>
+                    {a.overdue > 0 && <span className="tabular-nums text-destructive">{a.overdue} vencidas</span>}
+                    <span className="tabular-nums text-muted-foreground">{a.total} total</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </span>
                 </button>
               ))}
             </div>
@@ -604,13 +596,13 @@ export function OperacionesDashboard() {
         {/* ============ ACCIONES HUMANAS ============ */}
         {humanActions.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-amber-400" /> Acciones humanas pendientes
-              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            <h2 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] font-semibold md:text-sm">
+              <Users className="h-4 w-4 shrink-0 text-warn" /> Acciones humanas pendientes
+              <span className="text-sm font-normal text-muted-foreground">
                 (no Marco / no AI — bloquean avance)
               </span>
             </h2>
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border">
+            <div className="divide-y divide-border rounded-lg border border-warn/30 bg-warn/5">
               {humanActions.map((t) => (
                 <TaskRow key={t.id} task={t} startOfToday={startOfToday} now={now} variant="amber" />
               ))}
@@ -621,17 +613,17 @@ export function OperacionesDashboard() {
         {/* ============ PRÓXIMOS DEADLINES ============ */}
         {upcomingDeadlines.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" /> Próximos deadlines
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold md:text-sm">
+              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" /> Próximos deadlines
             </h2>
-            <div className="rounded-md border border-border divide-y divide-border">
+            <div className="divide-y divide-border rounded-lg border border-border">
               {upcomingDeadlines.map((t) => (
                 <TaskRow key={t.id} task={t} startOfToday={startOfToday} now={now} variant="default" />
               ))}
             </div>
           </section>
         )}
-      </div>
+      </PageContainer>
 
       {/* Detalle de task lateral — controlado por el store (selectedTaskId). */}
       <TaskDetail />
@@ -683,52 +675,57 @@ function TaskRow({
       onClick={handleOpen}
       onKeyDown={(e) => { if (e.key === "Enter") handleOpen() }}
       className={cn(
-        "w-full flex items-center justify-between gap-3 px-3 py-2 text-left transition-colors hover:bg-card/60 cursor-pointer",
-        variant === "amber" && "hover:bg-amber-500/[0.08]",
+        "flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left transition-colors active:bg-muted md:gap-3 md:px-3 md:py-2",
+        variant === "amber" && "active:bg-warn/10 md:hover:bg-warn/10",
+        variant === "default" && "md:hover:bg-muted",
         isDone && "opacity-50"
       )}
     >
-      {/* Quick-action: marcar/desmarcar done */}
+      {/* Quick-action: marcar/desmarcar done. A 44 puntos en telefono, que es lo
+          que acierta un dedo; antes era un icono suelto de 16. */}
       <button
         type="button"
         onClick={handleToggleDone}
         title={isDone ? "Marcar como pendiente" : "Marcar como hecha"}
-        className="shrink-0 hover:scale-110 transition-transform"
+        className="flex size-11 shrink-0 items-center justify-center rounded-lg md:size-8"
       >
         {isDone ? (
-          <CheckCircle2 className="h-4 w-4 text-green-400" />
+          <CheckCircle2 className="h-5 w-5 text-primary" />
         ) : (
-          <Circle className="h-4 w-4 text-muted-foreground hover:text-green-400" />
+          <Circle className="h-5 w-5 text-muted-foreground" />
         )}
       </button>
 
-      {/* Title + priority dot */}
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span
-          className={cn(
-            "h-1.5 w-1.5 rounded-full shrink-0",
-            task.priority === "urgent" && "bg-red-400",
-            task.priority === "high" && "bg-orange-400",
-            task.priority === "normal" && "bg-blue-400",
-            task.priority === "low" && "bg-muted-foreground/40"
-          )}
-        />
-        <span className={cn("text-sm truncate", isDone && "line-through")}>{task.title}</span>
-      </div>
+      {/* Title + meta. En telefono la meta baja debajo del titulo: en una sola fila
+          el titulo se comia el sitio de la persona y de la fecha. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1 md:flex-row md:items-center md:justify-between md:gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className={cn(
+              "h-1.5 w-1.5 shrink-0 rounded-full",
+              task.priority === "urgent" && "bg-destructive",
+              task.priority === "high" && "bg-warn",
+              task.priority === "normal" && "bg-primary",
+              task.priority === "low" && "bg-muted-foreground"
+            )}
+          />
+          <span className={cn("min-w-0 flex-1 truncate text-[15px] md:text-sm", isDone && "line-through")}>{task.title}</span>
+        </div>
 
-      {/* Meta: persona + fecha */}
-      <div className="flex items-center gap-3 shrink-0 text-[10px] font-mono uppercase tracking-wider">
-        <span className="text-muted-foreground">
-          {ASSIGNEE_LABELS[task.assignee as keyof typeof ASSIGNEE_LABELS] ?? task.assignee}
-        </span>
-        {days !== null && (
-          <span className={cn(
-            isOverdue ? "text-red-400" : days <= 3 ? "text-amber-400" : "text-muted-foreground"
-          )}>
-            {isOverdue ? `${Math.abs(days)}d tarde` : days === 0 ? "Hoy" : `${days}d`}
+        <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 pl-3.5 text-sm md:pl-0">
+          <span className="text-muted-foreground">
+            {ASSIGNEE_LABELS[task.assignee as keyof typeof ASSIGNEE_LABELS] ?? task.assignee}
           </span>
-        )}
-        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          {days !== null && (
+            <span className={cn(
+              "tabular-nums",
+              isOverdue ? "text-destructive" : days <= 3 ? "text-warn" : "text-muted-foreground"
+            )}>
+              {isOverdue ? `${Math.abs(days)}d tarde` : days === 0 ? "Hoy" : `${days}d`}
+            </span>
+          )}
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </div>
       </div>
     </div>
   )
@@ -749,22 +746,24 @@ function StatCard({
   accent?: "cyan" | "green" | "red" | "amber"
   onClick?: () => void
 }) {
+  // Los cuatro acentos se traducen a los tokens del tema: no hay cyan ni amber en
+  // la marca. Verde = bien, rojo = error, ambar = aviso, neutro = informativo.
   const accentColor = {
-    cyan: "text-cyan-400",
-    green: "text-green-400",
-    red: "text-red-400",
-    amber: "text-amber-400",
+    cyan: "text-foreground",
+    green: "text-primary",
+    red: "text-destructive",
+    amber: "text-warn",
   }[accent ?? "cyan"]
 
   const content = (
     <>
-      <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">
-        <Icon className={cn("h-3 w-3", accent && accentColor)} />
-        {label}
+      <div className="mb-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Icon className={cn("h-4 w-4 shrink-0", accent && accentColor)} />
+        <span className="min-w-0 truncate">{label}</span>
       </div>
-      <div className={cn("text-2xl font-semibold", accent && accentColor)}>{value}</div>
+      <div className={cn("text-2xl font-semibold tabular-nums", accent && accentColor)}>{value}</div>
       {sublabel && (
-        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+        <div className="mt-0.5 text-sm text-muted-foreground">
           {sublabel}
         </div>
       )}
@@ -776,12 +775,12 @@ function StatCard({
       <button
         type="button"
         onClick={onClick}
-        className="rounded-md border border-border bg-card/40 p-3 text-left transition-all hover:border-border hover:bg-card/60 cursor-pointer"
+        className="cursor-pointer rounded-lg border border-border bg-card p-3 text-left transition-colors active:bg-muted md:hover:border-primary/50"
       >
         {content}
       </button>
     )
   }
 
-  return <div className="rounded-md border border-border bg-card/40 p-3">{content}</div>
+  return <div className="rounded-lg border border-border bg-card p-3">{content}</div>
 }

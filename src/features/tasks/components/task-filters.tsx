@@ -7,14 +7,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LayoutGrid, List, User, X, ArrowDownUp, Search } from "lucide-react"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { LayoutGrid, List, User, X, ArrowDownUp, Search, SlidersHorizontal } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useTaskStore } from "../store/task-store"
 import type { DueRange, SortBy } from "../store/task-store"
 import type { Assignee } from "../types/task"
 import { ASSIGNEE_LABELS, ROOT_AREAS } from "../types/task"
 import { cn } from "@/lib/utils"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 
 const SORT_LABELS: Record<SortBy, string> = {
   priority: "Prioridad",
@@ -54,6 +60,10 @@ export function TaskFilters() {
   const viewMode = useTaskStore((s) => s.viewMode)
   const setViewMode = useTaskStore((s) => s.setViewMode)
   const tasks = useTaskStore((s) => s.tasks)
+
+  // Hoja inferior con los filtros secundarios. En telefono no caben seis
+  // controles en una fila: se juntan detras de un solo boton "Filtros".
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
 
   // Counts por preset en vivo. CRÍTICO: cada count debe coincidir EXACTAMENTE con
   // el filtro que aplica el preset al hacer click. Si el chip "Vencidas" filtra
@@ -101,22 +111,39 @@ export function TaskFilters() {
     filters.areaId !== null ||
     filters.search !== ""
 
+  // Cuantos filtros secundarios estan puestos, para el numero del boton "Filtros".
+  const activosSecundarios =
+    (filters.assignee !== "all" ? 1 : 0) +
+    (filters.priority !== "all" ? 1 : 0) +
+    (filters.areaId !== null ? 1 : 0)
+
   const activeAreaName = filters.areaId
     ? ROOT_AREAS.find((a) => a.id === filters.areaId)?.name ?? "Área"
     : null
 
+  // Cada preset con el token que le corresponde: rojo de error para lo vencido,
+  // ambar de aviso para lo de esta semana, verde de marca para lo hecho. Antes
+  // eran blue / red / amber / green de Tailwind, cuatro colores fuera de marca.
   const PRESETS: Array<{ id: Preset; label: string; count: number; color: string }> = [
-    { id: "pendientes", label: "Pendientes", count: counts.pendientes, color: "border-blue-500/40 text-blue-400 bg-blue-500/[0.06]" },
-    { id: "vencidas", label: "Vencidas", count: counts.vencidas, color: "border-red-500/40 text-red-400 bg-red-500/[0.06]" },
-    { id: "esta_semana", label: "Esta semana", count: counts.esta_semana, color: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]" },
-    { id: "hechas", label: "Hechas", count: counts.hechas, color: "border-green-500/40 text-green-400 bg-green-500/[0.06]" },
-    { id: "todas", label: "Todas", count: counts.todas, color: "border-border text-muted-foreground bg-card/30" },
+    { id: "pendientes", label: "Pendientes", count: counts.pendientes, color: "border-border text-foreground bg-muted" },
+    { id: "vencidas", label: "Vencidas", count: counts.vencidas, color: "border-destructive/40 text-destructive bg-destructive/10" },
+    { id: "esta_semana", label: "Esta semana", count: counts.esta_semana, color: "border-warn/40 text-warn bg-warn/10" },
+    { id: "hechas", label: "Hechas", count: counts.hechas, color: "border-primary/40 text-primary bg-primary/10" },
+    { id: "todas", label: "Todas", count: counts.todas, color: "border-border text-muted-foreground bg-card" },
   ]
+
+  function limpiar() {
+    resetFilters()
+    applyPreset("pendientes")
+  }
+
+  const listaOrden = (Object.keys(SORT_LABELS) as SortBy[])
+  const listaPersonas = (Object.keys(ASSIGNEE_LABELS) as Assignee[])
 
   return (
     <div className="space-y-2">
-      {/* PRESETS (fila 1) — chips grandes y claros, click directo */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      {/* PRESETS (fila 1) — tira deslizable en telefono, fila normal en monitor */}
+      <div className="-mx-1 flex snap-x gap-1.5 overflow-x-auto px-1 md:mx-0 md:flex-wrap md:items-center md:overflow-visible md:px-0">
         {PRESETS.map((p) => {
           const active = isPresetActive(p.id, filters.status, filters.dueRange)
           return (
@@ -124,13 +151,13 @@ export function TaskFilters() {
               key={p.id}
               onClick={() => applyPreset(p.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-xs font-mono uppercase tracking-wider transition-colors",
-                active ? p.color + " font-semibold" : "border-border text-muted-foreground hover:bg-card hover:text-foreground"
+                "inline-flex h-11 shrink-0 snap-start items-center gap-1.5 rounded-lg border px-3 text-[15px] whitespace-nowrap transition-colors md:h-8 md:px-2.5 md:text-sm",
+                active ? p.color + " font-semibold" : "border-border text-muted-foreground md:hover:bg-card md:hover:text-foreground"
               )}
             >
               {p.label}
               <span className={cn(
-                "min-w-[18px] px-1 rounded-sm text-[10px] flex items-center justify-center",
+                "flex min-w-[20px] items-center justify-center rounded-sm px-1 text-sm tabular-nums",
                 active ? "bg-foreground/10" : "bg-card/60"
               )}>
                 {p.count}
@@ -140,29 +167,166 @@ export function TaskFilters() {
         })}
       </div>
 
-      {/* FILTROS SECUNDARIOS (fila 2) — para refinar dentro del preset */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      {/* ================= TELEFONO: busqueda propia + vista + Filtros ================= */}
+      <div className="flex flex-col gap-2 md:hidden">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={filters.search}
             onChange={(e) => setFilters({ search: e.target.value })}
             placeholder="Buscar…"
-            className="h-7 rounded-sm border border-border bg-background pl-7 pr-2 text-xs w-32 md:w-44"
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            className="h-11 w-full rounded-lg border border-border bg-background pr-3 pl-9 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          <div className="flex flex-1 items-center rounded-lg border border-border">
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-l-lg text-[15px]",
+                viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground"
+              )}
+            >
+              <List className="h-4 w-4 shrink-0" /> Lista
+            </button>
+            <button
+              onClick={() => setViewMode("board")}
+              className={cn(
+                "inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-r-lg text-[15px]",
+                viewMode === "board" ? "bg-muted text-foreground" : "text-muted-foreground"
+              )}
+            >
+              <LayoutGrid className="h-4 w-4 shrink-0" /> Board
+            </button>
+          </div>
+
+          <button
+            onClick={() => setFiltrosAbiertos(true)}
+            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 text-[15px] text-foreground active:bg-muted"
+          >
+            <SlidersHorizontal className="h-4 w-4 shrink-0" />
+            Filtros
+            {activosSecundarios > 0 && <span className="tabular-nums">({activosSecundarios})</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Hoja inferior con los filtros secundarios */}
+      <Sheet open={filtrosAbiertos} onOpenChange={setFiltrosAbiertos}>
+        <SheetContent side="bottom" className="rounded-t-xl pb-safe-4 md:hidden">
+          <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border" />
+          <SheetHeader className="px-4 pb-0">
+            <SheetTitle className="text-[17px] font-semibold">Filtros</SheetTitle>
+          </SheetHeader>
+
+          <div className="space-y-5 px-4 pb-4">
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Persona</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setFilters({ assignee: "all" })}
+                  className={cn(
+                    "h-11 rounded-lg border px-3 text-[15px]",
+                    filters.assignee === "all"
+                      ? "border-primary/40 bg-primary/10 font-semibold text-primary"
+                      : "border-border text-muted-foreground"
+                  )}
+                >
+                  Todas
+                </button>
+                {listaPersonas.map((a) => (
+                  <button
+                    key={a}
+                    onClick={() => setFilters({ assignee: a })}
+                    className={cn(
+                      "h-11 rounded-lg border px-3 text-[15px]",
+                      filters.assignee === a
+                        ? "border-primary/40 bg-primary/10 font-semibold text-primary"
+                        : "border-border text-muted-foreground"
+                    )}
+                  >
+                    {ASSIGNEE_LABELS[a]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {activeAreaName && (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Área</span>
+                <button
+                  onClick={() => setFilters({ areaId: null })}
+                  className="inline-flex h-11 w-fit items-center gap-1.5 rounded-lg border border-border px-3 text-[15px] text-foreground"
+                >
+                  {activeAreaName}
+                  <X className="h-4 w-4 shrink-0" />
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Orden</span>
+              <div className="flex flex-wrap gap-2">
+                {listaOrden.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setFilters({ sortBy: s })}
+                    className={cn(
+                      "h-11 rounded-lg border px-3 text-[15px]",
+                      filters.sortBy === s
+                        ? "border-primary/40 bg-primary/10 font-semibold text-primary"
+                        : "border-border text-muted-foreground"
+                    )}
+                  >
+                    {SORT_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {hasSecondaryFilter && (
+              <button
+                onClick={() => {
+                  limpiar()
+                  setFiltrosAbiertos(false)
+                }}
+                className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-border text-[15px] text-foreground active:bg-muted"
+              >
+                <X className="h-4 w-4 shrink-0" /> Limpiar
+              </button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ================= ESCRITORIO: la barra en una fila ================= */}
+      <div className="hidden md:flex md:flex-wrap md:items-center md:gap-1.5">
+        <div className="relative">
+          <Search className="absolute top-1/2 left-2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={filters.search}
+            onChange={(e) => setFilters({ search: e.target.value })}
+            placeholder="Buscar…"
+            type="search"
+            className="md:h-8 w-44 rounded-lg border border-border bg-background pr-2 pl-7 text-base md:text-sm"
           />
         </div>
 
         {/* Persona */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className={cn("h-7 px-2 gap-1 text-xs", filters.assignee !== "all" ? "text-foreground bg-card" : "text-muted-foreground")}>
+            <Button variant="ghost" size="sm" className={cn("gap-1", filters.assignee !== "all" ? "bg-card text-foreground" : "text-muted-foreground")}>
               <User className="h-3 w-3" />
               {filters.assignee === "all" ? "Persona" : ASSIGNEE_LABELS[filters.assignee] ?? filters.assignee}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => setFilters({ assignee: "all" })}>Todas</DropdownMenuItem>
-            {(Object.keys(ASSIGNEE_LABELS) as Assignee[]).map((a) => (
+            {listaPersonas.map((a) => (
               <DropdownMenuItem key={a} onClick={() => setFilters({ assignee: a })}>
                 {ASSIGNEE_LABELS[a]}
               </DropdownMenuItem>
@@ -172,9 +336,9 @@ export function TaskFilters() {
 
         {/* Área */}
         {activeAreaName && (
-          <Badge variant="outline" className="gap-1 h-7 text-xs">
+          <Badge variant="outline" className="md:h-8 gap-1 text-sm">
             {activeAreaName}
-            <button onClick={() => setFilters({ areaId: null })}>
+            <button onClick={() => setFilters({ areaId: null })} aria-label="Quitar filtro de área">
               <X className="h-3 w-3" />
             </button>
           </Badge>
@@ -185,13 +349,13 @@ export function TaskFilters() {
         {/* Sort */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-xs text-muted-foreground">
+            <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
               <ArrowDownUp className="h-3 w-3" />
               {SORT_LABELS[filters.sortBy]}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(Object.keys(SORT_LABELS) as SortBy[]).map((s) => (
+            {listaOrden.map((s) => (
               <DropdownMenuItem key={s} onClick={() => setFilters({ sortBy: s })}>
                 {SORT_LABELS[s]}
               </DropdownMenuItem>
@@ -200,16 +364,16 @@ export function TaskFilters() {
         </DropdownMenu>
 
         {/* View toggle */}
-        <div className="flex items-center border border-border rounded-sm">
+        <div className="flex items-center rounded-lg border border-border">
           <button
             onClick={() => setViewMode("list")}
-            className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
+            className={cn("inline-flex md:h-8 items-center gap-1 rounded-l-lg px-2 text-sm", viewMode === "list" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             <List className="h-3 w-3" /> Lista
           </button>
           <button
             onClick={() => setViewMode("board")}
-            className={cn("h-7 px-2 inline-flex items-center gap-1 text-xs", viewMode === "board" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
+            className={cn("inline-flex md:h-8 items-center gap-1 rounded-r-lg px-2 text-sm", viewMode === "board" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground")}
           >
             <LayoutGrid className="h-3 w-3" /> Board
           </button>
@@ -218,11 +382,8 @@ export function TaskFilters() {
         {/* Reset */}
         {hasSecondaryFilter && (
           <button
-            onClick={() => {
-              resetFilters()
-              applyPreset("pendientes")
-            }}
-            className="h-7 px-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border rounded-sm"
+            onClick={limpiar}
+            className="inline-flex md:h-8 items-center gap-1 rounded-lg border border-border px-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <X className="h-3 w-3" /> Limpiar
           </button>

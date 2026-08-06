@@ -5,8 +5,8 @@ import {
   ArrowLeft, ArrowRight, ArrowDown, Check, Eye, Globe, MessageCircle,
   Megaphone, Minus, Server, ShieldCheck, Target, ToggleLeft, X,
 } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
+import { cn } from "@/lib/utils"
 
 /**
  * Board visual de la MEDICIÓN de Facebook Ads (/sistemas/medicion-ads).
@@ -18,17 +18,10 @@ import { PageContainer } from "@/components/ui/page-container"
  * Los datos son REALES: llegan por props desde el servidor (catálogo de funnels + tabla
  * `webs` + registro de envíos). Lo que se ve aquí es lo que está pasando de verdad.
  *
- * Brandkit explícito: en el OS el token `accent` vale gris y `font-heading` cae en la
- * fuente del sistema. Ver SOP producto/47.
+ * Es una pagina de LECTURA: el cuerpo va a 16 puntos con interlineado holgado, y ni un
+ * color escrito a mano. Antes esta pantalla tenia su propia paleta en constantes (VERDE,
+ * AMBAR, PANEL, LINEA...) y su propia familia tipografica, asi que no escuchaba al tema.
  */
-
-const VERDE = "#22C55E"
-const VERDE_CLARO = "#4ADE80"
-const AMBAR = "#E5B567"
-const ROJO = "#E5675B"
-const LINEA = "rgba(245,246,247,0.1)"
-const PANEL = "#131318"
-const TIPO = "'Inter Tight', sans-serif"
 
 export type EventoVivo = {
   name: string
@@ -62,31 +55,23 @@ export function MedicionAdsWorkflow({
 
   return (
     <>
-      <ShellHeader title="Sistema visual" />
       <PageContainer wide>
-        <div style={{ fontFamily: TIPO }} className="flex flex-col gap-10 pb-16">
+        <div className="flex flex-col gap-10">
+          {/* Siempre hay salida: boton de volver visible, con texto, a 44 puntos. */}
           <Link
             href="/sistemas"
-            className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-[#9CA3AF] transition-colors hover:text-[#F5F6F7]"
+            className="inline-flex h-11 w-fit items-center gap-1.5 text-[15px] font-semibold text-muted-foreground transition-colors md:h-auto md:hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" /> Volver a Sistema visual
           </Link>
 
           {/* ── Portada ── */}
           <header>
-            <p className="text-[13px] font-semibold" style={{ color: VERDE_CLARO }}>
-              Publicidad
-            </p>
-            <h1
-              className="mt-2 text-[32px] leading-[1.05] tracking-tight md:text-[44px]"
-              style={{ fontWeight: 900, color: "#F5F6F7" }}
-            >
+            <p className="text-sm font-semibold text-primary">Publicidad</p>
+            <h1 className="mt-2 text-[32px] font-black leading-[1.05] tracking-tight text-foreground md:text-[44px]">
               Cómo medimos Facebook Ads
             </h1>
-            <p
-              className="mt-3 max-w-2xl text-[16px] leading-relaxed"
-              style={{ color: "#A6AAB2" }}
-            >
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
               Desde que alguien ve el anuncio hasta que Meta cuenta la conversión. Qué se
               dispara en cada paso, por qué van dos etiquetas, y hacia qué tiene que optimizar
               cada campaña.
@@ -95,7 +80,7 @@ export function MedicionAdsWorkflow({
 
           {/* ── 1. El recorrido ── */}
           <Bloque n="01" titulo="El recorrido de una persona">
-            <p className="mb-6 max-w-2xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+            <p className="mb-6 max-w-2xl text-base leading-relaxed text-muted-foreground">
               Cada paso avisa a Meta. Si un paso no avisa, Meta no sabe que existió y no puede
               aprender de él.
             </p>
@@ -138,16 +123,15 @@ export function MedicionAdsWorkflow({
 
           {/* ── 2. Por qué dos etiquetas ── */}
           <Bloque n="02" titulo="Por qué cada acción manda DOS etiquetas">
-            <p className="mb-6 max-w-2xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+            <p className="mb-6 max-w-2xl text-base leading-relaxed text-muted-foreground">
               No son dos conversiones. Es la misma, con dos nombres, en el mismo milisegundo y
-              con el mismo identificador. Meta cuenta <strong style={{ color: "#F5F6F7" }}>una</strong>.
+              con el mismo identificador. Meta cuenta <strong className="text-foreground">una</strong>.
               Cada nombre alimenta un motor distinto de Meta.
             </p>
 
             <div className="grid gap-4 md:grid-cols-2">
               <Tarjeta
-                borde={VERDE}
-                fondo="#101710"
+                destacada
                 titulo="Lead"
                 etiqueta="El nombre de Meta"
                 puntos={[
@@ -158,8 +142,6 @@ export function MedicionAdsWorkflow({
                 cierre="Sin esto, el algoritmo empieza de cero y no sale de la fase de aprendizaje."
               />
               <Tarjeta
-                borde={LINEA}
-                fondo={PANEL}
                 titulo="webinar_lead"
                 etiqueta="Nuestro nombre"
                 puntos={[
@@ -174,7 +156,7 @@ export function MedicionAdsWorkflow({
 
           {/* ── 3. Los dos caminos ── */}
           <Bloque n="03" titulo="Por dónde viaja el dato: dos caminos, uno se salva siempre">
-            <div className="rounded-lg border p-5 md:p-7" style={{ borderColor: LINEA, background: PANEL }}>
+            <div className="rounded-xl border border-border bg-card p-4 md:p-7">
               <div className="flex flex-col items-stretch gap-4 lg:flex-row">
                 <Camino
                   icono={Globe}
@@ -182,7 +164,7 @@ export function MedicionAdsWorkflow({
                   sub="El píxel de Meta"
                   bueno="Instantáneo"
                   malo="Se pierde si rechaza cookies o usa un navegador con protección"
-                  color={AMBAR}
+                  aviso
                 />
                 <Camino
                   icono={Server}
@@ -190,25 +172,21 @@ export function MedicionAdsWorkflow({
                   sub="La API de conversiones"
                   bueno="No lo bloquea nadie, nunca"
                   malo="Le faltan algunas señales del navegador"
-                  color={VERDE}
                 />
               </div>
 
               <div className="my-6 flex justify-center">
-                <ArrowDown className="h-6 w-6" style={{ color: "#7C818A" }} />
+                <ArrowDown className="h-6 w-6 text-muted-foreground" />
               </div>
 
-              <div
-                className="rounded border px-5 py-4 text-center"
-                style={{ borderColor: "#24462F", background: "#101710" }}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <ShieldCheck className="h-5 w-5" style={{ color: VERDE_CLARO }} />
-                  <p className="text-[17px]" style={{ fontWeight: 800, color: "#F5F6F7" }}>
+              <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-4 text-center md:px-5">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <ShieldCheck className="h-5 w-5 shrink-0 text-primary" />
+                  <p className="text-[17px] font-extrabold text-foreground">
                     Los dos llevan el mismo identificador
                   </p>
                 </div>
-                <p className="mt-2 text-[15px]" style={{ color: "#A6AAB2" }}>
+                <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
                   Meta entiende que es el mismo hecho y lo cuenta una sola vez. Si el navegador
                   se pierde, el del servidor lo salva.
                 </p>
@@ -252,42 +230,36 @@ export function MedicionAdsWorkflow({
           {/* ── 6. Lo que falta ── */}
           <Bloque n="06" titulo="Lo único que falta">
             {marketingTokenListo ? (
-              <div
-                className="flex items-start gap-3 rounded-lg border p-5"
-                style={{ borderColor: "#24462F", background: "#101710" }}
-              >
-                <Check className="mt-0.5 h-5 w-5 shrink-0" style={{ color: VERDE_CLARO }} />
-                <div>
-                  <p className="text-[17px]" style={{ fontWeight: 800, color: "#F5F6F7" }}>
+              <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 p-4 md:p-5">
+                <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-[17px] font-extrabold text-foreground">
                     Nada. El sistema está completo
                   </p>
-                  <p className="mt-1.5 text-[15px]" style={{ color: "#A6AAB2" }}>
+                  <p className="mt-1.5 text-[15px] leading-relaxed text-muted-foreground">
                     Los funnels miden y las campañas se leen desde el OS.
                   </p>
                 </div>
               </div>
             ) : (
-              <div
-                className="rounded-lg border p-5 md:p-6"
-                style={{ borderColor: "rgba(229,181,103,0.35)", background: "rgba(229,181,103,0.06)" }}
-              >
-                <p className="text-[19px]" style={{ fontWeight: 800, color: AMBAR }}>
+              <div className="rounded-lg border border-warn/35 bg-warn/10 p-4 md:p-6">
+                <p className="text-[19px] font-extrabold text-warn">
                   Ver el gasto de las campañas dentro del OS
                 </p>
-                <p className="mt-2 max-w-2xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+                <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
                   La medición funciona entera. Lo único que no se puede hacer todavía es LEER
                   desde aquí lo que gastan tus campañas: la llave que tenemos sirve para
                   escribir conversiones, no para leer rendimiento. Son dos permisos distintos.
                 </p>
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
                   <DatoTecnico k="Cuenta de anuncios" v="2550903125083729" />
                   <DatoTecnico k="Aplicación" v="1304166178499280" />
                   <DatoTecnico k="Usuario del sistema" v="122108163171278108" />
                   <DatoTecnico k="Permiso que falta" v="ads_read" destacado />
                 </div>
-                <p className="mt-4 text-[15px]" style={{ color: "#A6AAB2" }}>
+                <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
                   Cuando llegue la llave nueva se guarda como{" "}
-                  <strong style={{ color: "#F5F6F7" }}>META_MARKETING_API_TOKEN</strong> y la
+                  <strong className="text-foreground">META_MARKETING_API_TOKEN</strong> y la
                   pestaña de Campañas se llena sola. No hay que programar nada más.
                 </p>
               </div>
@@ -305,15 +277,10 @@ function Bloque({ n, titulo, children }: { n: string; titulo: string; children: 
   return (
     <section>
       <div className="mb-4 flex items-center gap-3">
-        <span className="text-[13px] font-semibold" style={{ color: VERDE_CLARO }}>
-          {n}
-        </span>
-        <span className="h-px flex-1" style={{ background: LINEA }} />
+        <span className="text-sm font-semibold tabular-nums text-primary">{n}</span>
+        <span className="h-px flex-1 bg-border" />
       </div>
-      <h2
-        className="mb-4 text-[22px] leading-tight tracking-tight md:text-[26px]"
-        style={{ fontWeight: 800, color: "#F5F6F7" }}
-      >
+      <h2 className="mb-4 text-[22px] font-extrabold leading-tight tracking-tight text-foreground md:text-[26px]">
         {titulo}
       </h2>
       {children}
@@ -324,8 +291,8 @@ function Bloque({ n, titulo, children }: { n: string; titulo: string; children: 
 function Flecha() {
   return (
     <div className="flex items-center justify-center lg:px-1">
-      <ArrowRight className="hidden h-5 w-5 lg:block" style={{ color: "#7C818A" }} />
-      <ArrowDown className="h-5 w-5 lg:hidden" style={{ color: "#7C818A" }} />
+      <ArrowRight className="hidden h-5 w-5 text-muted-foreground lg:block" />
+      <ArrowDown className="h-5 w-5 text-muted-foreground lg:hidden" />
     </div>
   )
 }
@@ -342,74 +309,55 @@ function Paso({
 }) {
   return (
     <div
-      className="flex-1 rounded-lg border p-4"
-      style={{
-        borderColor: destacado ? "#24462F" : LINEA,
-        background: destacado ? "#101710" : PANEL,
-      }}
+      className={cn(
+        "flex-1 rounded-lg border p-4",
+        destacado ? "border-primary/30 bg-primary/10" : "border-border bg-card",
+      )}
     >
-      <Icono className="h-5 w-5" style={{ color: destacado ? VERDE_CLARO : "#7C818A" }} />
-      <p className="mt-3 text-[16px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
-        {titulo}
-      </p>
-      <p className="mt-1 text-[13px]" style={{ color: "#7C818A" }}>
-        {sub}
-      </p>
+      <Icono className={cn("h-5 w-5", destacado ? "text-primary" : "text-muted-foreground")} />
+      <p className="mt-3 text-base font-extrabold leading-tight text-foreground">{titulo}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
 
       {evento ? (
-        <span
-          className="mt-3 inline-block rounded-[3px] border px-2 py-1 text-[13px]"
-          style={{ fontWeight: 600, borderColor: "#24462F", background: "#101710", color: VERDE_CLARO }}
-        >
+        <span className="mt-3 inline-block rounded-sm border border-primary/30 bg-primary/10 px-2 py-1 text-sm font-semibold text-primary">
           {evento}
         </span>
       ) : (
-        <span className="mt-3 inline-block text-[13px]" style={{ color: "#7C818A" }}>
-          sin evento
-        </span>
+        <span className="mt-3 inline-block text-sm text-muted-foreground">sin evento</span>
       )}
 
-      <p className="mt-2.5 text-[13px] leading-snug" style={{ color: "#A6AAB2" }}>
-        {nota}
-      </p>
+      <p className="mt-2.5 text-sm leading-snug text-muted-foreground">{nota}</p>
     </div>
   )
 }
 
 function Tarjeta({
-  borde, fondo, titulo, etiqueta, puntos, cierre,
+  destacada = false, titulo, etiqueta, puntos, cierre,
 }: {
-  borde: string
-  fondo: string
+  destacada?: boolean
   titulo: string
   etiqueta: string
   puntos: string[]
   cierre: string
 }) {
   return (
-    <div className="rounded-lg border p-5" style={{ borderColor: borde, background: fondo }}>
-      <p className="text-[13px] font-semibold" style={{ color: "#7C818A" }}>
-        {etiqueta}
-      </p>
-      <p className="mt-1 text-[22px] leading-tight" style={{ fontWeight: 900, color: "#F5F6F7" }}>
-        {titulo}
-      </p>
+    <div
+      className={cn(
+        "rounded-lg border p-4 md:p-5",
+        destacada ? "border-primary/40 bg-primary/10" : "border-border bg-card",
+      )}
+    >
+      <p className="text-sm font-semibold text-muted-foreground">{etiqueta}</p>
+      <p className="mt-1 text-[22px] font-black leading-tight text-foreground">{titulo}</p>
       <ul className="mt-4 flex flex-col gap-2.5">
         {puntos.map((p) => (
-          <li key={p} className="flex gap-2.5 text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
-            <span
-              aria-hidden
-              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ background: "#7C818A" }}
-            />
+          <li key={p} className="flex gap-2.5 text-[15px] leading-relaxed text-muted-foreground">
+            <span aria-hidden className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
             <span>{p}</span>
           </li>
         ))}
       </ul>
-      <p
-        className="mt-4 border-t pt-3 text-[14px] leading-relaxed"
-        style={{ borderColor: LINEA, color: "#7C818A" }}
-      >
+      <p className="mt-4 border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
         {cierre}
       </p>
     </div>
@@ -417,34 +365,31 @@ function Tarjeta({
 }
 
 function Camino({
-  icono: Icono, titulo, sub, bueno, malo, color,
+  icono: Icono, titulo, sub, bueno, malo, aviso = false,
 }: {
   icono: typeof Globe
   titulo: string
   sub: string
   bueno: string
   malo: string
-  color: string
+  /** El camino que se puede perder va en ambar de aviso; el seguro, en verde. */
+  aviso?: boolean
 }) {
   return (
-    <div className="flex-1 rounded border p-4" style={{ borderColor: LINEA }}>
+    <div className="flex-1 rounded-lg border border-border p-4">
       <div className="flex items-center gap-2.5">
-        <Icono className="h-5 w-5" style={{ color }} />
-        <div>
-          <p className="text-[16px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
-            {titulo}
-          </p>
-          <p className="text-[13px]" style={{ color: "#7C818A" }}>
-            {sub}
-          </p>
+        <Icono className={cn("h-5 w-5 shrink-0", aviso ? "text-warn" : "text-primary")} />
+        <div className="min-w-0">
+          <p className="text-base font-extrabold leading-tight text-foreground">{titulo}</p>
+          <p className="text-sm text-muted-foreground">{sub}</p>
         </div>
       </div>
-      <p className="mt-3 flex gap-2 text-[14px]" style={{ color: "#A6AAB2" }}>
-        <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
+      <p className="mt-3 flex gap-2 text-sm text-muted-foreground">
+        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
         {bueno}
       </p>
-      <p className="mt-1.5 flex gap-2 text-[14px]" style={{ color: "#7C818A" }}>
-        <X className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ROJO }} />
+      <p className="mt-1.5 flex gap-2 text-sm text-muted-foreground">
+        <X className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
         {malo}
       </p>
     </div>
@@ -453,72 +398,57 @@ function Camino({
 
 function FunnelCard({ funnel: f }: { funnel: FunnelVivo }) {
   return (
-    <div className="overflow-hidden rounded-lg border" style={{ borderColor: LINEA, background: PANEL }}>
-      <div className="flex items-center gap-3 border-b px-5 py-4" style={{ borderColor: LINEA }}>
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="flex items-center gap-3 border-b border-border px-4 py-4 md:px-5">
         <span
           aria-hidden
-          className="h-2.5 w-2.5 shrink-0 rounded-full"
-          style={{
-            background: f.trackingEnabled ? VERDE : "#3A3D44",
-            boxShadow: f.trackingEnabled ? "0 0 10px rgba(34,197,94,0.8)" : "none",
-          }}
+          className={cn(
+            "h-2.5 w-2.5 shrink-0 rounded-full",
+            f.trackingEnabled ? "bg-primary" : "bg-muted",
+          )}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-[17px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
-            {f.name}
-          </p>
-          <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
-            {f.path}
-          </p>
+          <p className="truncate text-[17px] font-extrabold leading-tight text-foreground">{f.name}</p>
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">{f.path}</p>
         </div>
         {!f.trackingEnabled && (
-          <span className="shrink-0 text-[13px]" style={{ color: "#7C818A" }}>
-            sin medir
-          </span>
+          <span className="shrink-0 text-sm text-muted-foreground">sin medir</span>
         )}
       </div>
 
       {f.optimizeFor && f.trackingEnabled && (
-        <div
-          className="flex items-center gap-2.5 border-b px-5 py-3"
-          style={{ borderColor: LINEA, background: "#101710" }}
-        >
-          <Target className="h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
-          <span className="text-[14px]" style={{ color: "#A6AAB2" }}>
+        <div className="flex items-center gap-2.5 border-b border-border bg-primary/10 px-4 py-3 md:px-5">
+          <Target className="h-4 w-4 shrink-0 text-primary" />
+          <span className="min-w-0 text-sm text-muted-foreground">
             Su campaña optimiza hacia{" "}
-            <strong style={{ fontWeight: 700, color: "#F5F6F7" }}>{f.optimizeFor}</strong>
+            <strong className="font-bold text-foreground">{f.optimizeFor}</strong>
           </span>
         </div>
       )}
 
       {f.events.length === 0 ? (
-        <p className="px-5 py-4 text-[14px]" style={{ color: "#7C818A" }}>
-          Sin eventos asignados.
-        </p>
+        <p className="px-4 py-4 text-sm text-muted-foreground md:px-5">Sin eventos asignados.</p>
       ) : (
         <ul>
           {f.events.map((e) => (
             <li
               key={e.name}
-              className="flex items-center gap-3 border-b px-5 py-3 last:border-b-0"
-              style={{ borderColor: LINEA }}
+              className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 md:px-5"
             >
               {e.failed > 0 ? (
-                <X className="h-4 w-4 shrink-0" style={{ color: ROJO }} />
+                <X className="h-4 w-4 shrink-0 text-destructive" />
               ) : e.neverSeen ? (
-                <Minus className="h-4 w-4 shrink-0" style={{ color: "#7C818A" }} />
+                <Minus className="h-4 w-4 shrink-0 text-muted-foreground" />
               ) : (
-                <Check className="h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
+                <Check className="h-4 w-4 shrink-0 text-primary" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-[14px]" style={{ fontWeight: 600, color: "#F5F6F7" }}>
-                  {e.when}
-                </p>
-                <p className="mt-0.5 text-[13px]" style={{ color: "#7C818A" }}>
+                <p className="text-sm font-semibold text-foreground">{e.when}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
                   {e.name} · {e.kind === "estandar" ? "de Meta" : "nuestro"}
                 </p>
               </div>
-              <span className="shrink-0 text-[14px]" style={{ color: e.neverSeen ? "#7C818A" : "#A6AAB2" }}>
+              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
                 {e.neverSeen ? "sin estrenar" : `${e.sent}`}
               </span>
             </li>
@@ -540,35 +470,29 @@ function Interruptor({
 }) {
   return (
     <div
-      className="rounded-lg border p-5"
-      style={{ borderColor: ok ? "#24462F" : "rgba(229,181,103,0.35)", background: ok ? "#101710" : PANEL }}
+      className={cn(
+        "rounded-lg border p-4 md:p-5",
+        ok ? "border-primary/30 bg-primary/10" : "border-warn/35 bg-card",
+      )}
     >
       <div className="flex items-center gap-2.5">
-        <ToggleLeft className="h-5 w-5" style={{ color: ok ? VERDE_CLARO : AMBAR }} />
-        <p className="text-[17px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
-          {titulo}
-        </p>
+        <ToggleLeft className={cn("h-5 w-5 shrink-0", ok ? "text-primary" : "text-warn")} />
+        <p className="min-w-0 text-[17px] font-extrabold leading-tight text-foreground">{titulo}</p>
       </div>
-      <p className="mt-3 text-[24px] leading-none" style={{ fontWeight: 900, color: ok ? VERDE_CLARO : AMBAR }}>
+      <p className={cn("mt-3 text-2xl font-black leading-none tabular-nums", ok ? "text-primary" : "text-warn")}>
         {estado}
       </p>
-      <p className="mt-2.5 text-[14px] leading-relaxed" style={{ color: "#A6AAB2" }}>
-        {explica}
-      </p>
-      <p className="mt-3 text-[13px]" style={{ color: "#7C818A" }}>
-        Se toca en: {donde}
-      </p>
+      <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">{explica}</p>
+      <p className="mt-3 text-sm text-muted-foreground">Se toca en: {donde}</p>
     </div>
   )
 }
 
 function DatoTecnico({ k, v, destacado = false }: { k: string; v: string; destacado?: boolean }) {
   return (
-    <div className="rounded border px-3 py-2" style={{ borderColor: LINEA }}>
-      <p className="text-[13px]" style={{ color: "#7C818A" }}>
-        {k}
-      </p>
-      <p className="mt-0.5 text-[15px]" style={{ fontWeight: 700, color: destacado ? AMBAR : "#F5F6F7" }}>
+    <div className="rounded-lg border border-border px-3 py-2">
+      <p className="text-sm text-muted-foreground">{k}</p>
+      <p className={cn("mt-0.5 text-[15px] font-bold tabular-nums", destacado ? "text-warn" : "text-foreground")}>
         {v}
       </p>
     </div>

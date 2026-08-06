@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { createClient } from "@/lib/supabase/server"
 import { loadMisionInitialData } from "@/features/mision/services/mision-server"
 import { MisionPage } from "@/features/mision/components/mision-page"
@@ -34,7 +33,6 @@ export default async function MisionRoutePage() {
 
   return (
     <>
-      <ShellHeader title="Misión" />
       <MisionPage
         initialPhases={phases}
         initialTasks={tasks}

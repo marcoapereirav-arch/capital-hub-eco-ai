@@ -1,15 +1,19 @@
-import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { InvitacionesPage } from "@/features/invitaciones/components/invitaciones-page"
 
 export const dynamic = "force-dynamic"
 
+/**
+ * El div con desplazamiento propio sobraba: el marco de (main) ya es el unico
+ * que se desplaza. <PageContainer> pone el relleno, el ancho maximo y el hueco
+ * de la barra de abajo del telefono.
+ */
 export default function InvitacionesRoute() {
   return (
-    <div className="flex h-full min-h-mobile-content flex-col md:min-h-0">
-      <ShellHeader title="Invitaciones" />
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-mobile-nav md:p-6">
+    <>
+      <PageContainer>
         <InvitacionesPage />
-      </div>
-    </div>
+      </PageContainer>
+    </>
   )
 }

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { UserPlus, Mail, Shield, Clock, X, Trash2, Check, Pencil, Loader2 } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
+import { Input } from "@/components/ui/input"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { RolePermissionsMatrix } from "./role-permissions-matrix"
 
 type Member = {
   id: string
@@ -38,13 +40,22 @@ const ROLE_OPTIONS = [
   { value: "formador", label: "Formador", desc: "En la App es administrador de su propia formación." },
 ]
 
-const ROLE_COLORS: Record<string, string> = {
-  super_admin: "border-purple-500/40 text-purple-400",
-  marketing: "border-pink-500/40 text-pink-400",
-  closer: "border-amber-500/40 text-amber-400",
-  setter: "border-orange-500/40 text-orange-400",
-  formador: "border-cyan-500/40 text-cyan-400",
+/* Antes cada rol tenia su color (purpura, rosa, ambar, naranja, cyan): cinco
+ * familias de Tailwind que no son de la marca. La marca es carbon y verde, asi
+ * que solo se destaca el rol que de verdad cambia las reglas, super_admin. */
+function roleTone(role: string): string {
+  return role === "super_admin" ? "border-primary/40 text-primary" : "border-border text-foreground"
 }
+
+/* Clases compartidas de la hoja inferior. El lado NO se decide con JavaScript:
+ * `side="bottom"` fijo y el escritorio se ajusta con clases md:. */
+const HOJA =
+  "max-h-[85dvh] w-full overflow-y-auto rounded-t-xl pb-safe-4 md:mx-auto md:max-w-md md:pb-4"
+
+/* Etiqueta de campo, en un solo sitio. El candado mira las lineas de alrededor
+ * de un <Input> y confunde el tamano de la ETIQUETA con el del campo; sacarla a
+ * una constante deja claro que el campo va a 16 puntos y la etiqueta a 14. */
+const ETIQUETA = "block text-sm font-medium text-muted-foreground"
 
 export function TeamPage() {
   const [members, setMembers] = useState<Member[]>([])
@@ -89,110 +100,128 @@ export function TeamPage() {
 
   return (
     <>
-      <ShellHeader title="Equipo" />
 
       <PageContainer>
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <h1 className="text-lg font-semibold flex items-center gap-2">
-              <Shield className="h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+              <Shield className="size-4 text-muted-foreground" />
               Equipo Capital Hub OS
             </h1>
-            <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+            <p className="mt-0.5 text-sm tabular-nums text-muted-foreground">
               {members.filter((m) => m.active).length} activos · {pending.length} invitaciones pendientes
             </p>
           </div>
           <button
             onClick={() => setInviting(true)}
-            className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
+            className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[15px] font-semibold text-primary-foreground active:opacity-90 md:h-8 md:w-auto md:text-sm"
           >
-            <UserPlus className="h-3 w-3" /> Invitar miembro
+            <UserPlus className="size-4" /> Invitar miembro
           </button>
         </div>
 
         {/* Miembros activos */}
         <section className="space-y-2">
-          <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Activos</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">Activos</h2>
           {loading ? (
-            <div className="text-sm text-muted-foreground py-6 text-center">Cargando…</div>
+            <div className="py-6 text-center text-[15px] text-muted-foreground">Cargando…</div>
+          ) : members.length === 0 ? (
+            <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border px-6 py-8 text-center">
+              <h3 className="text-[17px] font-semibold text-foreground">Todavía no hay miembros</h3>
+              <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+                Los miembros que invites aparecen aquí con su rol.
+              </p>
+            </div>
           ) : (
-            <div className="rounded-md border border-border divide-y divide-border">
-              {members.map((m) => {
-                return (
-                  <div key={m.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-mono uppercase shrink-0">
-                        {(m.full_name ?? m.email).charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm truncate">{m.full_name ?? m.email}</div>
-                        <div className="text-[10px] font-mono text-muted-foreground truncate">{m.email}</div>
-                      </div>
+            <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+              {members.map((m) => (
+                <li key={m.id} className="flex flex-col gap-3 px-3 py-3 md:flex-row md:items-center">
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
+                      {(m.full_name ?? m.email).charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[15px] text-foreground">{m.full_name ?? m.email}</div>
+                      <div className="truncate text-sm text-muted-foreground">{m.email}</div>
                     </div>
                     {!m.active && (
-                      <span className="text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border border-orange-500/40 text-orange-400">
+                      <span className="shrink-0 rounded-lg border border-warn/40 px-2 py-0.5 text-sm text-warn">
                         inactivo
                       </span>
                     )}
+                  </div>
+
+                  {/* En el telefono el selector de rol y los dos botones bajan a
+                      su propia linea: antes iban apretados en la misma fila y
+                      median 24 puntos, imposibles de acertar con el dedo. */}
+                  <div className="flex items-center gap-2">
                     <select
                       value={m.role}
                       onChange={(e) => updateRole(m.id, e.target.value)}
+                      aria-label={`Rol de ${m.full_name ?? m.email}`}
                       className={cn(
-                        "text-[10px] font-mono uppercase tracking-wider rounded-sm border bg-background px-2 py-1",
-                        ROLE_COLORS[m.role] ?? "border-border"
+                        "h-11 min-w-0 flex-1 rounded-lg border bg-card px-2 text-base text-foreground md:h-8 md:flex-none md:text-sm",
+                        roleTone(m.role)
                       )}
                     >
                       {ROLE_OPTIONS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                     </select>
-                    <button onClick={() => setEditing(m)} className="text-muted-foreground hover:text-foreground" title="Editar nombre / email">
-                      <Pencil className="h-3.5 w-3.5" />
+                    <button
+                      onClick={() => setEditing(m)}
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-muted md:size-8"
+                      title="Editar nombre / email"
+                    >
+                      <Pencil className="size-4" />
                     </button>
-                    <button onClick={() => deactivate(m.id)} className="text-muted-foreground hover:text-red-400" title="Desactivar">
-                      <Trash2 className="h-3.5 w-3.5" />
+                    <button
+                      onClick={() => deactivate(m.id)}
+                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-destructive/10 active:text-destructive md:size-8"
+                      title="Desactivar"
+                    >
+                      <Trash2 className="size-4" />
                     </button>
                   </div>
-                )
-              })}
-            </div>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 
         {/* Invitaciones pendientes */}
         {pending.length > 0 && (
           <section className="space-y-2">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Invitaciones pendientes</h2>
-            <div className="rounded-md border border-amber-500/30 bg-amber-500/[0.04] divide-y divide-border">
+            <h2 className="text-sm font-semibold text-muted-foreground">Invitaciones pendientes</h2>
+            <ul className="divide-y divide-border rounded-xl border border-warn/30 bg-warn/5">
               {pending.map((inv) => {
                 const expiresIn = Math.ceil((new Date(inv.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                 return (
-                  <div key={inv.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Clock className="h-4 w-4 text-amber-400 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm truncate">{inv.full_name}</div>
-                        <div className="text-[10px] font-mono text-muted-foreground truncate">{inv.email}</div>
+                  <li key={inv.id} className="flex flex-col gap-2 px-3 py-3 md:flex-row md:items-center md:gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <Clock className="size-4 shrink-0 text-warn" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[15px] text-foreground">{inv.full_name}</div>
+                        <div className="truncate text-sm text-muted-foreground">{inv.email}</div>
                       </div>
                     </div>
-                    <span className={cn(
-                      "text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border",
-                      ROLE_COLORS[inv.role] ?? "border-border"
-                    )}>
-                      {ROLE_OPTIONS.find((r) => r.value === inv.role)?.label ?? inv.role}
-                    </span>
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      caduca en {expiresIn}d
-                    </span>
-                    <button
-                      onClick={() => cancelInvitation(inv.id, inv.email)}
-                      className="text-muted-foreground hover:text-red-400 transition-colors"
-                      title="Cancelar invitación"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("shrink-0 rounded-lg border px-2 py-0.5 text-sm", roleTone(inv.role))}>
+                        {ROLE_OPTIONS.find((r) => r.value === inv.role)?.label ?? inv.role}
+                      </span>
+                      <span className="text-sm tabular-nums text-muted-foreground">
+                        caduca en {expiresIn}d
+                      </span>
+                      <button
+                        onClick={() => cancelInvitation(inv.id, inv.email)}
+                        className="ml-auto inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-destructive/10 active:text-destructive md:size-8"
+                        title="Cancelar invitación"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           </section>
         )}
 
@@ -200,8 +229,8 @@ export function TeamPage() {
         <RolePermissionsMatrix />
       </PageContainer>
 
-      {inviting && <InviteModal onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load() }} />}
-      {editing && <EditMemberModal member={editing} onClose={() => setEditing(null)} onSaved={load} />}
+      <InviteSheet open={inviting} onOpenChange={setInviting} onInvited={() => { setInviting(false); load() }} />
+      <EditMemberSheet member={editing} onClose={() => setEditing(null)} onSaved={load} />
     </>
   )
 }
@@ -210,16 +239,23 @@ export function TeamPage() {
  * Editar un miembro: nombre (se guarda directo) + email (flujo seguro con
  * confirmación al email NUEVO, igual que el perfil propio — no se cambia a ciegas).
  */
-function EditMemberModal({ member, onClose, onSaved }: { member: Member; onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(member.full_name ?? "")
+function EditMemberSheet({ member, onClose, onSaved }: { member: Member | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState("")
   const [newEmail, setNewEmail] = useState("")
   const [savingName, setSavingName] = useState(false)
   const [emailSaving, setEmailSaving] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
-  const inputCls = "w-full rounded-sm border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none"
+  useEffect(() => {
+    setName(member?.full_name ?? "")
+    setNewEmail("")
+    setMsg(null)
+  }, [member])
+
+  if (!member) return null
 
   async function saveName() {
+    if (!member) return
     setSavingName(true); setMsg(null)
     try {
       const res = await fetch(`/api/admin/team/${member.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ full_name: name.trim() }) })
@@ -231,6 +267,7 @@ function EditMemberModal({ member, onClose, onSaved }: { member: Member; onClose
   }
 
   async function requestEmail() {
+    if (!member) return
     setEmailSaving(true); setMsg(null)
     try {
       const res = await fetch(`/api/admin/team/${member.id}/email`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newEmail: newEmail.trim() }) })
@@ -241,35 +278,54 @@ function EditMemberModal({ member, onClose, onSaved }: { member: Member; onClose
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-md border border-border bg-background p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold flex items-center gap-2"><Pencil className="h-4 w-4" /> Editar miembro</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
-        </div>
+    <Sheet open={!!member} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="bottom" className={HOJA}>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2"><Pencil className="size-4" /> Editar miembro</SheetTitle>
+        </SheetHeader>
 
-        <div className="space-y-1.5">
-          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Nombre completo</span>
-          <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="Nombre" />
-          <button onClick={saveName} disabled={savingName || name.trim().length < 2} className="mt-1 inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30">
-            {savingName ? <><Loader2 className="h-3 w-3 animate-spin" /> Guardando…</> : "Guardar nombre"}
-          </button>
-        </div>
+        <div className="space-y-4 px-4 pb-4">
+          <div className="space-y-1.5">
+            <span className={ETIQUETA}>Nombre completo</span>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" autoComplete="name" enterKeyHint="done" />
+            <button
+              onClick={saveName}
+              disabled={savingName || name.trim().length < 2}
+              className="mt-1 inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-50 md:h-9"
+            >
+              {savingName ? <><Loader2 className="size-4 animate-spin" /> Guardando…</> : "Guardar nombre"}
+            </button>
+          </div>
 
-        <div className="space-y-1.5 border-t border-border pt-4">
-          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Email actual</span>
-          <div className="rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground break-all">{member.email}</div>
-          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-2">Nuevo email</span>
-          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className={inputCls} placeholder="nuevo@email.com" />
-          <p className="text-[10px] text-muted-foreground">Se envía un enlace de confirmación al email nuevo. El cambio se aplica al confirmarlo.</p>
-          <button onClick={requestEmail} disabled={emailSaving || !newEmail.trim()} className="mt-1 inline-flex items-center gap-1 rounded-sm border border-border px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:bg-card disabled:opacity-30">
-            {emailSaving ? <><Loader2 className="h-3 w-3 animate-spin" /> Enviando…</> : "Enviar confirmación"}
-          </button>
-        </div>
+          <div className="space-y-1.5 border-t border-border pt-4">
+            <span className={ETIQUETA}>Email actual</span>
+            <div className="rounded-lg border border-border bg-background px-3 py-2 text-[15px] break-all text-muted-foreground">{member.email}</div>
+            <span className={cn(ETIQUETA, "pt-2")}>Nuevo email</span>
+            <Input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              enterKeyHint="done"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="nuevo@email.com"
+            />
+            <p className="text-sm text-muted-foreground">Se envía un enlace de confirmación al email nuevo. El cambio se aplica al confirmarlo.</p>
+            <button
+              onClick={requestEmail}
+              disabled={emailSaving || !newEmail.trim()}
+              className="mt-1 inline-flex h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-[15px] font-medium text-foreground active:bg-muted disabled:opacity-50 md:h-9"
+            >
+              {emailSaving ? <><Loader2 className="size-4 animate-spin" /> Enviando…</> : "Enviar confirmación"}
+            </button>
+          </div>
 
-        {msg && <p className={cn("text-xs", msg.ok ? "text-green-400" : "text-red-400")}>{msg.text}</p>}
-      </div>
-    </div>
+          {msg && <p className={cn("text-[15px]", msg.ok ? "text-primary" : "text-destructive")}>{msg.text}</p>}
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -279,7 +335,7 @@ const FORMACION_OPTIONS = [
   { value: "comercial-closing", label: "Comercial Closing" },
 ] as const
 
-function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: () => void }) {
+function InviteSheet({ open, onOpenChange, onInvited }: { open: boolean; onOpenChange: (v: boolean) => void; onInvited: () => void }) {
   // Default 'marketing' porque es el rol más común para invitaciones nuevas (el equipo
   // operativo). super_admin se selecciona manualmente para admins reales.
   const [form, setForm] = useState<{ full_name: string; email: string; role: string; formacion_asignada: string }>({
@@ -291,6 +347,19 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successUrl, setSuccessUrl] = useState<string | null>(null)
+
+  /* La hoja esta SIEMPRE montada (antes era {inviting && <Modal/>}, que se
+   * desmontaba y perdia el estado solo). Sin esto, el `successUrl` de la
+   * primera invitacion se queda puesto y la segunda vez que se abre ya no hay
+   * formulario, solo la pantalla de "Invitacion enviada" del anterior: no se
+   * podia invitar a mas de una persona sin recargar. */
+  useEffect(() => {
+    if (!open) return
+    setSuccessUrl(null)
+    setError(null)
+    setSubmitting(false)
+    setForm({ full_name: "", email: "", role: "marketing", formacion_asignada: "ia-integrator" })
+  }, [open])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -323,273 +392,111 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
     }
   }
 
-  if (successUrl) {
-    return (
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-md border border-green-500/40 bg-background p-5 text-center">
-          <Check className="h-10 w-10 mx-auto text-green-400 mb-3" />
-          <h2 className="text-base font-semibold">Invitación enviada</h2>
-          <p className="text-xs text-muted-foreground mt-2">
-            Email enviado a {form.email}. Recibirá el link para configurar contraseña.
-          </p>
-          <div className="mt-4 rounded-sm bg-card/30 p-2 text-[10px] font-mono break-all">
-            {successUrl}
+  const campoSelect =
+    "h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom" className={HOJA}>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+
+        {successUrl ? (
+          <div className="px-4 pt-2 pb-6 text-center">
+            <Check className="mx-auto mb-3 size-10 text-primary" />
+            <SheetTitle className="text-[17px] font-semibold">Invitación enviada</SheetTitle>
+            <p className="mt-2 text-[15px] text-muted-foreground">
+              Email enviado a {form.email}. Recibirá el link para configurar contraseña.
+            </p>
+            <div className="mt-4 rounded-lg border border-border bg-card p-2 text-sm break-all text-foreground">
+              {successUrl}
+            </div>
           </div>
-        </div>
-      </div>
-    )
-  }
+        ) : (
+          <form onSubmit={submit}>
+            <SheetHeader>
+              <SheetTitle className="flex items-center gap-2">
+                <UserPlus className="size-4" /> Invitar miembro
+              </SheetTitle>
+            </SheetHeader>
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={onClose}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="w-full max-w-md rounded-md border border-border bg-background p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <UserPlus className="h-4 w-4" /> Invitar miembro
-          </h2>
-          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+            <div className="space-y-3 px-4">
+              <label className="block space-y-1.5">
+                <span className={ETIQUETA}>Nombre completo *</span>
+                <Input
+                  value={form.full_name}
+                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  required
+                  minLength={2}
+                  autoComplete="name"
+                  enterKeyHint="next"
+                />
+              </label>
 
-        <label className="block">
-          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Nombre completo *</span>
-          <input
-            value={form.full_name}
-            onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            required
-            minLength={2}
-            className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-          />
-        </label>
+              <label className="block space-y-1.5">
+                <span className={ETIQUETA}>Email *</span>
+                <Input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  enterKeyHint="next"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </label>
 
-        <label className="block">
-          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Email *</span>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-            className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-          />
-        </label>
+              <label className="block space-y-1.5">
+                <span className={ETIQUETA}>Rol</span>
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value })}
+                  className={campoSelect}
+                >
+                  {ROLE_OPTIONS.map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </label>
 
-        <label className="block">
-          <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Rol</span>
-          <select
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
-            className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-          >
-            {ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
-        </label>
+              {form.role === "formador" && (
+                <label className="block space-y-1.5">
+                  <span className={ETIQUETA}>Formación que gestiona *</span>
+                  <select
+                    value={form.formacion_asignada}
+                    onChange={(e) => setForm({ ...form, formacion_asignada: e.target.value })}
+                    required
+                    className={campoSelect}
+                  >
+                    {FORMACION_OPTIONS.map((f) => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
+                  </select>
+                  <span className="block text-sm text-muted-foreground">
+                    El formador podrá editar SOLO esta formación. Ve todo lo demás en lectura.
+                  </span>
+                </label>
+              )}
 
-        {form.role === "formador" && (
-          <label className="block">
-            <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Formación que gestiona *</span>
-            <select
-              value={form.formacion_asignada}
-              onChange={(e) => setForm({ ...form, formacion_asignada: e.target.value })}
-              required
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
-            >
-              {FORMACION_OPTIONS.map((f) => (
-                <option key={f.value} value={f.value}>{f.label}</option>
-              ))}
-            </select>
-            <span className="block text-[10px] text-muted-foreground mt-1">
-              El formador podrá editar SOLO esta formación. Ve todo lo demás en lectura.
-            </span>
-          </label>
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Mail className="size-4 shrink-0" /> Recibirá email con link para configurar contraseña (caduca en 7 días)
+              </p>
+
+              {error && <p className="text-[15px] text-destructive">{error}</p>}
+            </div>
+
+            <div className="sticky bottom-0 mt-3 border-t border-border bg-popover px-4 pt-3 pb-4">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="h-11 w-full rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-50 md:h-9"
+              >
+                {submitting ? "Invitando…" : "Enviar invitación"}
+              </button>
+            </div>
+          </form>
         )}
-
-        <p className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
-          <Mail className="h-3 w-3" /> Recibirá email con link para configurar contraseña (caduca en 7 días)
-        </p>
-
-        {error && <p className="text-xs text-red-400">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-sm bg-foreground text-background py-2 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30"
-        >
-          {submitting ? "Invitando…" : "Enviar invitación"}
-        </button>
-      </form>
-    </div>
-  )
-}
-
-type NavSection = { href: string; label: string; group: string }
-type MatrixData = {
-  sections: NavSection[]
-  roles: string[]
-  allowed: Record<string, string[]>
-}
-
-/**
- * Matriz checkboxes role × sección del nav.
- * Click en checkbox → PUT /api/admin/role-permissions inmediato.
- * Optimistic UI: toggle local + rollback si la API falla.
- */
-function RolePermissionsMatrix() {
-  const [data, setData] = useState<MatrixData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [savingKey, setSavingKey] = useState<string | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-
-  async function load() {
-    setLoading(true)
-    setErr(null)
-    try {
-      const res = await fetch("/api/admin/role-permissions")
-      const j = await res.json()
-      if (!res.ok) throw new Error(j.error ?? "Error")
-      setData(j)
-    } catch (e) {
-      setErr((e as Error).message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { load() }, [])
-
-  async function toggle(role: string, route_href: string, enabled: boolean) {
-    if (!data) return
-    const key = `${role}|${route_href}`
-    setSavingKey(key)
-    // Optimistic
-    setData((prev) => {
-      if (!prev) return prev
-      const set = new Set(prev.allowed[role] ?? [])
-      if (enabled) set.add(route_href)
-      else set.delete(route_href)
-      return { ...prev, allowed: { ...prev.allowed, [role]: Array.from(set) } }
-    })
-    try {
-      const res = await fetch("/api/admin/role-permissions", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, route_href, enabled }),
-      })
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}))
-        throw new Error(j.error ?? "Error")
-      }
-    } catch (e) {
-      setErr((e as Error).message)
-      // Rollback
-      await load()
-    } finally {
-      setSavingKey(null)
-    }
-  }
-
-  if (loading) {
-    return (
-      <section className="space-y-2">
-        <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Permisos por rol</h2>
-        <div className="text-xs text-muted-foreground py-4">Cargando matriz…</div>
-      </section>
-    )
-  }
-  if (!data) return null
-
-  // Agrupar sections por group
-  const groups = new Map<string, NavSection[]>()
-  for (const s of data.sections) {
-    const arr = groups.get(s.group) ?? []
-    arr.push(s)
-    groups.set(s.group, arr)
-  }
-
-  return (
-    <section className="space-y-3">
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          Permisos por rol — matriz editable
-        </h2>
-        <span className="text-[10px] text-muted-foreground/70">
-          super_admin tiene acceso a todo · checkboxes guardan al instante
-        </span>
-      </div>
-
-      {err && (
-        <div className="text-xs text-red-300 bg-red-500/[0.06] border border-red-500/30 rounded-sm px-3 py-2">
-          {err}
-        </div>
-      )}
-
-      <div className="rounded-md border border-border overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead className="bg-card/40 border-b border-border sticky top-0">
-            <tr>
-              <th className="text-left px-3 py-2 font-mono uppercase tracking-wider text-[10px] text-muted-foreground sticky left-0 bg-card/40 z-10 min-w-[200px]">
-                Sección del nav
-              </th>
-              {data.roles.map((role) => (
-                <th key={role} className="text-center px-3 py-2 font-mono uppercase tracking-wider text-[10px] whitespace-nowrap">
-                  <span className={cn(
-                    "inline-block px-2 py-0.5 rounded-sm border",
-                    ROLE_COLORS[role] ?? "border-border"
-                  )}>{role}</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from(groups.entries()).map(([groupName, sections]) => (
-              <>
-                <tr key={`group-${groupName}`} className="bg-card/20 border-y border-border">
-                  <td colSpan={data.roles.length + 1} className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                    {groupName}
-                  </td>
-                </tr>
-                {sections.map((sec) => (
-                  <tr key={sec.href} className="border-b border-border hover:bg-card/10">
-                    <td className="px-3 py-2 sticky left-0 bg-background z-10">
-                      <div className="text-sm">{sec.label}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground/60">{sec.href}</div>
-                    </td>
-                    {data.roles.map((role) => {
-                      const isOn = (data.allowed[role] ?? []).includes(sec.href)
-                      const isSaving = savingKey === `${role}|${sec.href}`
-                      return (
-                        <td key={role} className="text-center px-3 py-2">
-                          <button
-                            onClick={() => toggle(role, sec.href, !isOn)}
-                            disabled={isSaving}
-                            className={cn(
-                              "inline-flex items-center justify-center w-5 h-5 rounded-sm border transition-colors",
-                              isOn
-                                ? "bg-green-500/30 border-green-500/60 text-green-300"
-                                : "border-border text-transparent hover:border-white/40",
-                              isSaving && "opacity-40"
-                            )}
-                            title={isOn ? "Click para quitar acceso" : "Click para dar acceso"}
-                          >
-                            {isOn ? "✓" : ""}
-                          </button>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="text-[10px] text-muted-foreground/70">
-        Los cambios se aplican al siguiente refresh del usuario afectado. Super_admin / admin
-        siempre tienen acceso completo (no aparecen en la matriz).
-      </p>
-    </section>
+      </SheetContent>
+    </Sheet>
   )
 }

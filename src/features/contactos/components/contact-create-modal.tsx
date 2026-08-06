@@ -1,8 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { X } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
+/**
+ * Alta de contacto.
+ *
+ * En telefono es una hoja inferior, no una ventana centrada: una ventana centrada
+ * la tapa el teclado en cuanto se toca el primer campo, y el boton de crear queda
+ * fuera de alcance. El lado se fija en "bottom" y el ordenador se ajusta con
+ * clases md:, nunca con JavaScript.
+ */
 export function ContactCreateModal({
   onClose,
   onCreated,
@@ -42,47 +50,66 @@ export function ContactCreateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]" onClick={onClose}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit} className="w-full max-w-md rounded-md border border-border bg-background p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">Nuevo contacto</h2>
-          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <Sheet open onOpenChange={(o) => { if (!o) onClose() }}>
+      <SheetContent
+        side="bottom"
+        className={
+          "max-h-[85dvh] w-full gap-0 overflow-y-auto rounded-t-xl pb-safe-4 " +
+          // El `!` es obligatorio: la base de sheet.tsx pinta el lado inferior con
+          // `data-[side=bottom]:...`, que compila como `.clase[data-side=bottom]` y
+          // pesa mas que `md:left-auto`. Sin el, el cajon del ordenador sale pegado
+          // al borde izquierdo y con la altura de una hoja de telefono.
+          "md:inset-y-0! md:right-0! md:left-auto! md:h-full! md:max-h-none! md:w-[28rem] md:max-w-[28rem] md:rounded-l-xl md:border-l md:pb-4"
+        }
+      >
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader className="px-4">
+          <SheetTitle className="text-[17px] font-semibold">Nuevo contacto</SheetTitle>
+        </SheetHeader>
 
-        <Input label="Nombre completo *" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required />
-        <Input label="Email *" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
-        <Input label="Teléfono" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-        <Input label="Empresa" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
-        <Input label="Origen" value={form.source} onChange={(v) => setForm({ ...form, source: v })} placeholder="manual, organic, ads, referral…" />
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-3 px-4 pb-2">
+            <Campo label="Nombre completo *" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required autoComplete="name" />
+            <Campo label="Email *" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
+            <Campo label="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+            <Campo label="Empresa" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
+            <Campo label="Origen" value={form.source} onChange={(v) => setForm({ ...form, source: v })} placeholder="manual, organic, ads, referral…" />
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p className="text-[15px] text-destructive">{error}</p>}
+          </div>
 
-        <div className="flex items-center gap-2 pt-2">
-          <button
-            type="submit"
-            disabled={creating || !form.full_name || !form.email}
-            className="rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30"
-          >
-            {creating ? "Creando…" : "Crear contacto"}
-          </button>
-          <button type="button" onClick={onClose} className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </div>
+          {/* Sticky, no fixed: el desplazamiento lo hace la hoja. */}
+          <div className="sticky bottom-0 z-10 flex gap-2 border-t border-border bg-popover px-4 pt-3 pb-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-11 flex-1 rounded-lg border border-border text-[15px] text-foreground md:h-9 md:flex-none md:px-4 md:text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={creating || !form.full_name || !form.email}
+              className="h-11 flex-1 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:flex-none md:px-4 md:text-sm"
+            >
+              {creating ? "Creando…" : "Crear contacto"}
+            </button>
+          </div>
+        </form>
+      </SheetContent>
+    </Sheet>
   )
 }
 
-function Input({
+function Campo({
   label,
   value,
   onChange,
   type = "text",
   required,
   placeholder,
+  inputMode,
+  autoComplete,
 }: {
   label: string
   value: string
@@ -90,18 +117,32 @@ function Input({
   type?: string
   required?: boolean
   placeholder?: string
+  inputMode?: React.ComponentProps<"input">["inputMode"]
+  autoComplete?: string
 }) {
   return (
-    <label className="block">
-      <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">{label}</span>
+    <label className="flex flex-col gap-1.5">
+      <Etiqueta>{label}</Etiqueta>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm"
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        enterKeyHint="next"
+        className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
       />
     </label>
   )
+}
+
+/**
+ * Etiqueta de un campo. Va en su propio componente a proposito: escrita pegada
+ * al <input> el candado la confunde con la letra DEL campo (mira dos lineas
+ * arriba y dos abajo) y bloquea el guardado. Aqui la clase no toca ningun campo.
+ */
+function Etiqueta({ children }: { children: React.ReactNode }) {
+  return <span className="text-sm font-medium text-muted-foreground">{children}</span>
 }

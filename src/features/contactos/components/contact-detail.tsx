@@ -8,7 +8,7 @@ import {
   Phone,
   AtSign,
   Calendar,
-  DollarSign,
+  Euro,
   Tag,
   Activity,
   FileText,
@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { clasesDeStage } from "./stage-chip"
 
 type Contact = {
   id: string
@@ -45,15 +46,6 @@ const STAGE_LABELS: Record<string, string> = {
   seguimiento: "Seguimiento",
   no_show: "No show",
   perdido: "Perdido",
-}
-
-const STAGE_COLORS: Record<string, string> = {
-  lead: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
-  agendado: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
-  alumno: "border-emerald-500/40 text-emerald-400 bg-emerald-500/[0.06]",
-  seguimiento: "border-violet-500/40 text-violet-400 bg-violet-500/[0.06]",
-  no_show: "border-orange-500/40 text-orange-400 bg-orange-500/[0.06]",
-  perdido: "border-red-500/40 text-red-400 bg-red-500/[0.06]",
 }
 
 type Tab = "datos" | "journey" | "notas" | "comunicaciones"
@@ -87,35 +79,43 @@ export function ContactDetail({ contact }: { contact: Contact }) {
     }
   }
 
+  const pestanas = [
+    { id: "datos", label: "Datos", icon: FileText },
+    { id: "journey", label: "Journey", icon: Activity },
+    { id: "notas", label: "Notas", icon: FileText },
+    { id: "comunicaciones", label: "Comunicaciones", icon: Mail },
+  ] as const
+
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="shrink-0 border-b border-border bg-card/30 px-4 py-3 md:px-6">
+      {/* Cabecera */}
+      <header className="shrink-0 border-b border-border bg-card px-4 py-3 md:px-6">
+        {/* Siempre hay salida: boton de volver visible, con texto, arriba a la izquierda */}
         <Link
           href="/crm/contactos"
-          className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="mb-2 inline-flex h-11 items-center gap-1.5 text-[15px] text-muted-foreground md:h-8 md:text-sm md:hover:text-foreground"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Contactos
+          <ArrowLeft className="h-4 w-4" /> Contactos
         </Link>
         <div className="flex items-start gap-3">
-          <div className="h-12 w-12 rounded-full bg-secondary border-2 border-border flex items-center justify-center text-base font-semibold text-secondary-foreground">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-secondary text-base font-semibold text-secondary-foreground">
             {initials || "?"}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-semibold">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="min-w-0 text-xl font-semibold text-foreground">
                 {contact.full_name ?? "Sin nombre"}
               </h1>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider",
-                  STAGE_COLORS[contact.stage] ?? "border-border text-muted-foreground",
+                  "inline-flex shrink-0 items-center gap-1 rounded-sm border px-2 py-0.5 text-sm",
+                  clasesDeStage(contact.stage)
                 )}
               >
                 {STAGE_LABELS[contact.stage] ?? contact.stage}
               </span>
             </div>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {contact.origin && <span>desde {contact.origin}</span>}
               {contact.origin && contact.created_at && <span> · </span>}
               <span>
@@ -130,44 +130,41 @@ export function ContactDetail({ contact }: { contact: Contact }) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-4 flex items-center gap-1 border-b border-border -mb-3 overflow-x-auto">
-          {(
-            [
-              { id: "datos", label: "Datos", icon: FileText },
-              { id: "journey", label: "Journey", icon: Activity },
-              { id: "notas", label: "Notas", icon: FileText },
-              { id: "comunicaciones", label: "Comunicaciones", icon: Mail },
-            ] as const
-          ).map((t) => (
+        {/* Pestañas: tira deslizable de 44 puntos, sale de los margenes para que
+            se entienda que hay mas a la derecha */}
+        <div className="-mx-4 -mb-3 mt-4 flex snap-x gap-1 overflow-x-auto border-b border-border px-4 md:-mx-6 md:px-6">
+          {pestanas.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-2 text-xs font-mono uppercase tracking-wider border-b-2 transition-colors",
+                // Sin `-mb-px`: al declarar overflow-x el navegador calcula overflow-y
+                // como auto, y ese margen negativo dejaba la tira con 1 punto de
+                // desplazamiento vertical.
+                "inline-flex h-11 shrink-0 snap-start items-center gap-1.5 border-b-2 px-3 text-[15px] whitespace-nowrap transition-colors md:h-10 md:text-sm",
                 tab === t.id
-                  ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
+                  ? "border-primary font-semibold text-foreground"
+                  : "border-transparent text-muted-foreground md:hover:text-foreground"
               )}
             >
-              <t.icon className="h-3 w-3" />
+              <t.icon className="h-4 w-4" />
               {t.label}
             </button>
           ))}
         </div>
       </header>
 
-      {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
+      {/* Contenido */}
+      <div className="no-overscroll min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:px-6 md:py-6 md:pb-6">
         <div className="mx-auto max-w-4xl">
           {tab === "datos" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <DataCard label="Email" value={contact.email} icon={Mail} />
               <DataCard label="Teléfono" value={contact.phone} icon={Phone} />
               <DataCard label="Empresa" value={contact.company} icon={FileText} />
               {contact.instagram_username && (
                 <DataCard
-                  label="AtSign"
+                  label="Instagram"
                   value={"@" + contact.instagram_username}
                   icon={AtSign}
                   href={`https://instagram.com/${contact.instagram_username}`}
@@ -188,7 +185,7 @@ export function ContactDetail({ contact }: { contact: Contact }) {
                       }).format(contact.total_revenue)
                     : "—"
                 }
-                icon={DollarSign}
+                icon={Euro}
               />
               <DataCard
                 label="Cash collected"
@@ -217,21 +214,23 @@ export function ContactDetail({ contact }: { contact: Contact }) {
               />
 
               {contact.manychat_subscriber_id && (
-                <div className="md:col-span-2 rounded-md border border-border bg-card/30 p-3 flex items-center gap-3">
-                  <AtSign className="h-4 w-4 text-pink-400" />
-                  <div className="flex-1">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3 md:col-span-2">
+                  <AtSign className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-muted-foreground">
                       ManyChat subscriber
                     </div>
-                    <div className="text-xs font-mono">{contact.manychat_subscriber_id}</div>
+                    <div className="break-all text-[15px] text-foreground tabular-nums md:text-sm">
+                      {contact.manychat_subscriber_id}
+                    </div>
                   </div>
                   <a
                     href={`https://manychat.com/subscriber/${contact.manychat_subscriber_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-pink-400 hover:text-pink-300"
+                    className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 text-[15px] text-foreground md:h-8 md:text-sm"
                   >
-                    Abrir chat <ExternalLink className="h-3 w-3" />
+                    Abrir chat <ExternalLink className="h-4 w-4" />
                   </a>
                 </div>
               )}
@@ -247,12 +246,12 @@ export function ContactDetail({ contact }: { contact: Contact }) {
                 onChange={(e) => setNotes(e.target.value)}
                 rows={12}
                 placeholder="Notas sobre este contacto…"
-                className="w-full rounded-md border border-border bg-card/30 p-3 text-sm outline-none focus:border-foreground/40 resize-none"
+                className="w-full resize-none rounded-lg border border-border bg-card p-3 text-base text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
               />
               <button
                 onClick={saveNotes}
                 disabled={savingNotes}
-                className="inline-flex items-center gap-2 rounded-sm bg-foreground text-background px-4 py-2 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-50"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-50 md:h-9 md:w-auto md:text-sm"
               >
                 {savingNotes ? "Guardando…" : "Guardar notas"}
               </button>
@@ -260,8 +259,11 @@ export function ContactDetail({ contact }: { contact: Contact }) {
           )}
 
           {tab === "comunicaciones" && (
-            <div className="rounded-md border border-dashed border-border p-8 text-center text-xs text-muted-foreground">
-              Próximamente: emails enviados, llamadas Zoom, DMs ManyChat.
+            <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border px-6 py-10 text-center">
+              <h3 className="text-[17px] font-semibold text-foreground">Todavía no hay comunicaciones</h3>
+              <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+                Próximamente: emails enviados, llamadas Zoom, DMs ManyChat.
+              </p>
             </div>
           )}
         </div>
@@ -282,17 +284,17 @@ function DataCard({
   href?: string
 }) {
   const content = (
-    <div className="rounded-md border border-border bg-card/30 p-3">
-      <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-        <Icon className="h-3 w-3" />
+    <div className="rounded-lg border border-border bg-card p-3">
+      <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+        <Icon className="h-4 w-4" />
         {label}
       </div>
-      <div className="mt-1.5 text-sm text-foreground truncate">{value || "—"}</div>
+      <div className="mt-1.5 truncate text-[15px] text-foreground md:text-sm">{value || "—"}</div>
     </div>
   )
   if (href && value) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="block transition-opacity md:hover:opacity-80">
         {content}
       </a>
     )
@@ -304,12 +306,14 @@ function JourneyTimeline({ contactId }: { contactId: string }) {
   // Por ahora placeholder. En futuro se conectara a una tabla contact_events
   // que trackee cambios de stage, emails enviados, calls hechas, etc.
   return (
-    <div className="rounded-md border border-dashed border-border p-6 text-xs text-muted-foreground">
-      <div className="mb-2 font-mono uppercase tracking-wider text-[10px]">
-        Timeline · contacto {contactId.slice(0, 8)}
+    <div className="rounded-xl border border-dashed border-border p-6">
+      <div className="mb-2 text-sm font-semibold text-muted-foreground">
+        Timeline · contacto <span className="tabular-nums">{contactId.slice(0, 8)}</span>
       </div>
-      Próximamente: eventos cronológicos (cambios de stage, emails abiertos, llamadas
-      hechas, formularios rellenados).
+      <p className="text-[15px] text-muted-foreground md:text-sm">
+        Próximamente: eventos cronológicos (cambios de stage, emails abiertos, llamadas
+        hechas, formularios rellenados).
+      </p>
     </div>
   )
 }

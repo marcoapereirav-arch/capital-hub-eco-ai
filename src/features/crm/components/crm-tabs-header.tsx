@@ -4,12 +4,15 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Users, Layers, Tag as TagIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 
 /**
- * Header del CRM con título "CRM" y 2 sub-pestañas.
+ * Header del CRM con las 3 sub-pestañas.
  * Visible siempre que el path empiece con /crm.
- * Las pestañas comparten ancho fijo para evitar layout shift.
+ *
+ * En telefono es una tira deslizable a ancho completo (receta 3 de la ley de
+ * pantalla): cada pestaña mide 44 puntos de alto para que se acierte con el dedo,
+ * y la tira se sale de los margenes del shell para que se entienda que hay mas
+ * pestañas a la derecha.
  */
 export function CrmTabsHeader() {
   const pathname = usePathname()
@@ -22,9 +25,8 @@ export function CrmTabsHeader() {
 
   return (
     <>
-      <ShellHeader title="CRM" />
       <div className="shrink-0 border-b border-border bg-background">
-        <div className="px-4 md:px-6 py-2 flex items-center gap-1 overflow-x-auto">
+        <div className="flex snap-x gap-1 overflow-x-auto px-4 md:overflow-visible md:px-6">
           <TabLink href="/crm/contactos" active={inContactos} icon={Users} label="Contactos" />
           <TabLink href="/crm/pipeline" active={inPipeline} icon={Layers} label="Pipeline" />
           <TabLink href="/crm/tags" active={inTags} icon={TagIcon} label="Tags" />
@@ -49,13 +51,16 @@ function TabLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center gap-2 px-3 py-1.5 rounded-sm text-xs font-mono uppercase tracking-wider transition-colors",
+        // Sin `-mb-px`: al declarar overflow-x el navegador calcula overflow-y como
+        // auto, y ese margen negativo dejaba la tira con 1 punto de desplazamiento
+        // vertical (el subrayado verde se veia a la mitad y la tira se movia sola).
+        "inline-flex h-11 shrink-0 snap-start items-center gap-2 border-b-2 px-3 text-[15px] whitespace-nowrap transition-colors md:h-10 md:text-sm",
         active
-          ? "bg-foreground text-background"
-          : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+          ? "border-primary font-semibold text-foreground"
+          : "border-transparent text-muted-foreground md:hover:text-foreground"
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-4 w-4" />
       {label}
     </Link>
   )

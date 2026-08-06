@@ -1,6 +1,5 @@
 "use client"
 
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
 import { AdsAffiliatesPanel } from "./ads-affiliates-panel"
 
@@ -14,7 +13,6 @@ import { AdsAffiliatesPanel } from "./ads-affiliates-panel"
 export function AfiliadosPage() {
   return (
     <>
-      <ShellHeader title="Afiliados" />
       <PageContainer>
         <div>
           <h2 className="font-heading text-base font-semibold text-foreground">

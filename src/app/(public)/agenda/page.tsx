@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { AgendaPublica } from "@/features/calendario/components/agenda-publica"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 export const dynamic = "force-dynamic"
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function AgendaRoute() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0F0F12]" />}>
+    <Suspense fallback={<LoadingScreen />}>
       <AgendaPublica />
     </Suspense>
   )

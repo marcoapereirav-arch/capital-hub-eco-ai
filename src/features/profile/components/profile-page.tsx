@@ -3,12 +3,10 @@
 import { useState } from "react"
 import { User, Mail, Lock, Bell } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
+import { Input } from "@/components/ui/input"
 import { PushSettings } from "@/features/notifications/components/PushSettings"
 import { NotificationPrefs } from "@/features/notifications/components/NotificationPrefs"
 import { cn } from "@/lib/utils"
-
-const inputCls =
-  "w-full rounded-sm border border-border bg-card px-3 py-2 text-sm text-foreground transition-colors placeholder:text-muted-foreground focus:border-foreground/40 focus:outline-none"
 
 export function ProfilePage({ email, fullName, role, userId }: { email: string; fullName: string; role: string | null; userId: string }) {
   const roleLabel = role === "super_admin" || role === "admin" ? "Admin" : role ?? "Miembro"
@@ -63,11 +61,8 @@ export function ProfilePage({ email, fullName, role, userId }: { email: string; 
 
   return (
     <PageContainer>
-      <div>
-        <h1 className="text-lg font-semibold flex items-center gap-2">
-          <User className="h-4 w-4 text-muted-foreground" /> Mi perfil
-        </h1>
-        <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+      <div className="min-w-0">
+        <p className="mt-0.5 truncate text-sm text-muted-foreground">
           {email} · {roleLabel}
         </p>
       </div>
@@ -75,7 +70,13 @@ export function ProfilePage({ email, fullName, role, userId }: { email: string; 
       {/* Nombre */}
       <Section icon={User} title="Nombre">
         <Field label="Nombre completo">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" className={inputCls} />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Tu nombre"
+            autoComplete="name"
+            enterKeyHint="done"
+          />
         </Field>
         <Row>
           <SaveBtn onClick={saveName} disabled={nameSaving || name.trim().length < 2 || name.trim() === fullName}>
@@ -88,12 +89,21 @@ export function ProfilePage({ email, fullName, role, userId }: { email: string; 
       {/* Email */}
       <Section icon={Mail} title="Email">
         <Field label="Email actual">
-          <div className="rounded-sm border border-border bg-background px-3 py-2 text-sm text-muted-foreground">{email}</div>
+          <div className="rounded-lg border border-border bg-background px-3 py-2 text-[15px] break-all text-muted-foreground">{email}</div>
         </Field>
         <Field label="Nuevo email">
-          <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="nuevo@email.com" className={inputCls} />
+          <Input
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            enterKeyHint="done"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="nuevo@email.com"
+          />
         </Field>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Por seguridad, enviamos un enlace de confirmación al email nuevo. El cambio se aplica solo al confirmarlo.
         </p>
         <Row>
@@ -115,10 +125,24 @@ export function ProfilePage({ email, fullName, role, userId }: { email: string; 
       {/* Contraseña */}
       <Section icon={Lock} title="Contraseña">
         <Field label="Nueva contraseña">
-          <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Mínimo 8 caracteres" className={inputCls} />
+          <Input
+            type="password"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
+            enterKeyHint="next"
+          />
         </Field>
         <Field label="Repite la contraseña">
-          <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Repite la contraseña" className={inputCls} />
+          <Input
+            type="password"
+            value={pw2}
+            onChange={(e) => setPw2(e.target.value)}
+            placeholder="Repite la contraseña"
+            autoComplete="new-password"
+            enterKeyHint="done"
+          />
         </Field>
         <Row>
           <SaveBtn onClick={savePassword} disabled={pwSaving || !pw || !pw2}>
@@ -133,9 +157,9 @@ export function ProfilePage({ email, fullName, role, userId }: { email: string; 
 
 function Section({ icon: Icon, title, children }: { icon: typeof User; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-md border border-border bg-card/40 p-4 space-y-3 max-w-xl">
-      <h2 className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" /> {title}
+    <section className="max-w-xl space-y-3 rounded-xl border border-border bg-card p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+        <Icon className="size-4" /> {title}
       </h2>
       {children}
     </section>
@@ -144,8 +168,8 @@ function Section({ icon: Icon, title, children }: { icon: typeof User; title: st
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1">
-      <span className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
+    <label className="block space-y-1.5">
+      <span className="block text-sm font-medium text-muted-foreground">{label}</span>
       {children}
     </label>
   )
@@ -155,12 +179,15 @@ function Row({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap items-center gap-3 pt-1">{children}</div>
 }
 
+/* La accion principal es VERDE con tinta oscura encima. El boton blanco con
+ * texto oscuro (bg-foreground text-background) era el acento del brandkit
+ * anterior. Y 44 puntos de alto en telefono, que es lo que acierta un dedo. */
 function SaveBtn({ onClick, disabled, children }: { onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className="rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
+      className="h-11 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 md:h-9 md:text-sm"
     >
       {children}
     </button>
@@ -168,5 +195,5 @@ function SaveBtn({ onClick, disabled, children }: { onClick: () => void; disable
 }
 
 function Msg({ ok, children }: { ok: boolean; children: React.ReactNode }) {
-  return <span className={cn("text-xs", ok ? "text-green-400" : "text-red-400")}>{children}</span>
+  return <span className={cn("text-sm", ok ? "text-primary" : "text-destructive")}>{children}</span>
 }

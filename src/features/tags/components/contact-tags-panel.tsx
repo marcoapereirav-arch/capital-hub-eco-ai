@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, X, Tag as TagIcon, Loader2 } from "lucide-react"
+import { Plus, X, Tag as TagIcon } from "lucide-react"
 import { tagsService } from "../services/tags-service"
 import { TAG_COLOR_PALETTE, type Tag } from "../types/tag"
-import { cn } from "@/lib/utils"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 /**
  * Panel de tags para un contacto. Muestra los tags asignados y permite anadir/quitar.
@@ -76,18 +76,16 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
   const exactMatch = allTags.some((t) => t.name.toLowerCase() === search.toLowerCase())
 
   return (
-    <div className="px-4 py-3 border-b border-border">
-      <div className="flex items-center gap-2 mb-2">
-        <TagIcon className="h-3 w-3 text-muted-foreground" />
-        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-          Tags
-        </span>
+    <div className="border-b border-border px-4 py-3">
+      <div className="mb-2 flex items-center gap-2">
+        <TagIcon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-semibold text-muted-foreground">Tags</span>
       </div>
 
       {loading ? (
-        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+        <LoadingScreen fullscreen={false} className="min-h-[56px] bg-transparent" />
       ) : (
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {assignedTags.map((tag) => (
             <TagChip key={tag.id} tag={tag} onRemove={() => remove(tag)} />
           ))}
@@ -95,47 +93,48 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
           {!picking ? (
             <button
               onClick={() => setPicking(true)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-mono uppercase tracking-wider border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
+              className="inline-flex h-11 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-[15px] text-muted-foreground transition-colors md:h-8 md:text-sm md:hover:text-foreground"
             >
-              <Plus className="h-3 w-3" /> Añadir tag
+              <Plus className="h-4 w-4" /> Añadir tag
             </button>
           ) : (
-            <div className="relative">
+            <div className="relative w-full md:w-auto">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onBlur={() => setTimeout(() => setPicking(false), 200)}
                 placeholder="Buscar o crear…"
-                className="h-7 rounded-sm border border-border bg-background px-2 text-xs w-40"
+                className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-8 md:w-56 md:text-sm"
                 autoFocus
+                enterKeyHint="done"
                 onKeyDown={(e) => {
                   if (e.key === "Escape") setPicking(false)
                   if (e.key === "Enter" && search.trim() && !exactMatch) createAndAssign()
                 }}
               />
               {(filtered.length > 0 || (search.trim() && !exactMatch)) && (
-                <div className="absolute top-full mt-1 left-0 z-10 bg-card border border-border rounded-sm shadow-lg min-w-[180px] max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-border bg-popover shadow-lg md:w-56">
                   {filtered.slice(0, 10).map((tag) => (
                     <button
                       key={tag.id}
                       onMouseDown={() => assign(tag)}
-                      className="w-full text-left px-2 py-1.5 hover:bg-secondary/50 flex items-center gap-2"
+                      className="flex h-11 w-full items-center gap-2 px-3 text-left text-[15px] text-foreground active:bg-muted md:h-9 md:text-sm md:hover:bg-muted"
                     >
                       <span
-                        className="h-2 w-2 rounded-full shrink-0"
+                        className="h-2 w-2 shrink-0 rounded-full"
                         style={{ backgroundColor: tag.color }}
                       />
-                      <span className="text-xs">{tag.name}</span>
+                      <span className="min-w-0 truncate">{tag.name}</span>
                     </button>
                   ))}
                   {search.trim() && !exactMatch && (
                     <button
                       onMouseDown={createAndAssign}
-                      className="w-full text-left px-2 py-1.5 hover:bg-secondary/50 border-t border-border text-xs text-muted-foreground"
+                      className="flex h-11 w-full items-center gap-1 border-t border-border px-3 text-left text-[15px] text-muted-foreground active:bg-muted md:h-9 md:text-sm md:hover:bg-muted"
                     >
-                      <Plus className="inline h-3 w-3 mr-1" />
-                      Crear "{search.trim()}"
+                      <Plus className="h-4 w-4" />
+                      Crear &quot;{search.trim()}&quot;
                     </button>
                   )}
                 </div>
@@ -148,12 +147,14 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
   )
 }
 
+/**
+ * El color del chip lo elige el usuario al crear el tag: es un dato de producto,
+ * por eso va en `style` y no en clases del tema.
+ */
 function TagChip({ tag, onRemove }: { tag: Tag; onRemove: () => void }) {
   return (
     <span
-      className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-medium border",
-      )}
+      className="inline-flex h-11 items-center gap-0.5 rounded-sm border pr-0 pl-2.5 text-sm font-medium md:h-6"
       style={{
         backgroundColor: `${tag.color}22`,
         color: tag.color,
@@ -163,10 +164,10 @@ function TagChip({ tag, onRemove }: { tag: Tag; onRemove: () => void }) {
       {tag.name}
       <button
         onClick={onRemove}
-        className="hover:opacity-70"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-sm md:h-6 md:w-6"
         aria-label={`Quitar tag ${tag.name}`}
       >
-        <X className="h-2.5 w-2.5" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </span>
   )

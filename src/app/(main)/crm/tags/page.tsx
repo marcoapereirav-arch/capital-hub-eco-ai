@@ -1,15 +1,19 @@
-import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { TagsPage } from "@/features/tags/components/tags-page"
 
 export const dynamic = "force-dynamic"
 
+/**
+ * El desplazamiento y el hueco de la barra de abajo los pone el layout del CRM y
+ * el propio PageContainer. Antes esta pagina montaba su propio contenedor con
+ * `pb-mobile-nav` a mano y se salia de los margenes del shell.
+ */
 export default function CrmTagsRoute() {
   return (
-    <div className="flex h-full min-h-mobile-content flex-col md:min-h-0">
-      <ShellHeader title="Tags" />
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-mobile-nav md:p-6">
+    <>
+      <PageContainer>
         <TagsPage />
-      </div>
-    </div>
+      </PageContainer>
+    </>
   )
 }

@@ -53,13 +53,13 @@ export function ManychatPeriodKpis() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3">
+        <h3 className="font-heading text-[15px] font-semibold text-foreground">
           Actividad del período
         </h3>
         <PeriodFilter onChange={setRange} defaultPreset="30d" />
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <KpiCard title="Nuevos suscriptores" value={loading ? "…" : nuevos} hint={range?.label} source="manychat" />
         <KpiCard title="DMs recibidos" value={loading ? "…" : dms} hint={range?.label} source="eventos" />
       </div>

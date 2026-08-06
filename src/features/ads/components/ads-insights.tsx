@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TrendingUp, Eye, MousePointer, DollarSign, Users, AlertCircle, Loader2 } from "lucide-react"
+import { Eye, MousePointer, DollarSign, Users, AlertCircle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const PRESETS = [
@@ -112,17 +112,17 @@ export function AdsInsights() {
 
   return (
     <div className="space-y-4">
-      {/* Filtro periodo */}
-      <div className="flex items-center gap-1 flex-wrap">
+      {/* Filtro periodo: tira deslizable de una linea, a 44 puntos de alto */}
+      <div className="-mx-4 flex snap-x items-center gap-1 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0">
         {PRESETS.map((p) => (
           <button
             key={p.value}
             onClick={() => setPreset(p.value)}
             className={cn(
-              "px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider rounded-sm border",
+              "h-11 shrink-0 snap-start rounded-lg border px-3 text-[15px] whitespace-nowrap md:h-8 md:text-sm",
               preset === p.value
-                ? "border-foreground/40 bg-card text-foreground"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-card/50",
+                ? "border-primary bg-primary/10 font-semibold text-foreground"
+                : "border-border text-muted-foreground md:hover:bg-card/50 md:hover:text-foreground",
             )}
           >
             {p.label}
@@ -131,40 +131,37 @@ export function AdsInsights() {
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" /> Cargando insights…
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Cargando insights…
         </div>
       )}
 
       {row && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card label="Gasto" value={eur(row.spend)} icon={DollarSign} accent="emerald" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Card label="Gasto" value={eur(row.spend)} icon={DollarSign} destacado />
           <Card
             label="Impresiones"
             value={num(row.impressions)}
             sublabel={`Reach ${num(row.reach)}`}
             icon={Eye}
-            accent="cyan"
           />
           <Card
             label="Clicks"
             value={num(row.clicks)}
             sublabel={`CTR ${num(row.ctr, 2)}% · CPC ${eur(row.cpc)}`}
             icon={MousePointer}
-            accent="blue"
           />
           <Card
             label="Leads"
             value={num(leads ?? "0")}
             sublabel={`${num(purchases ?? "0")} compras`}
             icon={Users}
-            accent="amber"
           />
         </div>
       )}
 
       {row && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Mini label="CPM" value={eur(row.cpm)} />
           <Mini label="Frecuencia" value={num(row.frequency, 2)} />
           <Mini label="ROAS" value="—" />
@@ -179,31 +176,38 @@ function Card({
   value,
   sublabel,
   icon: Icon,
-  accent,
+  destacado = false,
 }: {
   label: string
   value: string
   sublabel?: string
   icon: typeof DollarSign
-  accent: "emerald" | "cyan" | "blue" | "amber"
+  /** La cifra de dinero es la que manda: va en verde de marca, el resto en carbon. */
+  destacado?: boolean
 }) {
-  const colors = {
-    emerald: "text-emerald-400 border-emerald-500/30 bg-emerald-500/[0.05]",
-    cyan: "text-cyan-400 border-cyan-500/30 bg-cyan-500/[0.05]",
-    blue: "text-blue-400 border-blue-500/30 bg-blue-500/[0.05]",
-    amber: "text-amber-400 border-amber-500/30 bg-amber-500/[0.05]",
-  }
   return (
-    <div className={cn("rounded-md border p-3", colors[accent])}>
-      <div className="flex items-start justify-between mb-2">
-        <span className="text-[10px] font-mono uppercase tracking-widest opacity-80">
+    <div
+      className={cn(
+        "rounded-lg border p-3",
+        destacado ? "border-primary/30 bg-primary/10" : "border-border bg-card"
+      )}
+    >
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <span className="min-w-0 truncate text-sm font-semibold text-muted-foreground">
           {label}
         </span>
-        <Icon className="h-3.5 w-3.5 opacity-70" />
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       </div>
-      <div className="text-2xl font-semibold leading-none">{value}</div>
+      <div
+        className={cn(
+          "text-2xl leading-none font-semibold tabular-nums",
+          destacado ? "text-primary" : "text-foreground"
+        )}
+      >
+        {value}
+      </div>
       {sublabel && (
-        <div className="text-[10px] font-mono uppercase tracking-wider opacity-60 mt-1.5">
+        <div className="mt-1.5 text-sm tabular-nums text-muted-foreground">
           {sublabel}
         </div>
       )}
@@ -213,42 +217,33 @@ function Card({
 
 function Mini({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-border bg-card/30 px-3 py-2 flex items-center justify-between">
-      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card/30 px-3 py-2.5">
+      <span className="text-sm font-semibold text-muted-foreground">
         {label}
       </span>
-      <span className="font-mono text-sm">{value}</span>
+      <span className="text-[15px] tabular-nums text-foreground">{value}</span>
     </div>
   )
 }
 
 /**
- * Aviso con brandkit real: ámbar de marca para advertencias, Inter Tight y texto legible.
- * `whitespace-pre-line` para que el mensaje pueda traer los datos exactos en su renglón.
+ * Aviso con el ámbar de marca del tema (`warn`), que es el color oficial para lo que pide
+ * atención sin ser un error. `whitespace-pre-line` para que el mensaje pueda traer los
+ * datos exactos en su renglón.
  */
 function ErrorBanner({ title, message, hint }: { title: string; message: string; hint?: string }) {
   return (
-    <div
-      className="flex gap-3 rounded-lg border p-5"
-      style={{
-        borderColor: "rgba(229,181,103,0.35)",
-        background: "rgba(229,181,103,0.06)",
-        fontFamily: "'Inter Tight', sans-serif",
-      }}
-    >
-      <AlertCircle className="mt-0.5 h-[18px] w-[18px] shrink-0" style={{ color: "#E5B567" }} />
+    <div className="flex gap-3 rounded-xl border border-warn/40 bg-warn/10 p-4 md:p-5">
+      <AlertCircle className="mt-0.5 h-[18px] w-[18px] shrink-0 text-warn" />
       <div className="min-w-0 flex-1">
-        <p className="text-[17px]" style={{ fontWeight: 800, color: "#E5B567" }}>
+        <p className="text-[17px] font-extrabold text-warn">
           {title}
         </p>
-        <p
-          className="mt-2 whitespace-pre-line text-[15px] leading-relaxed"
-          style={{ color: "#A6AAB2" }}
-        >
+        <p className="mt-2 text-[15px] leading-relaxed whitespace-pre-line text-muted-foreground">
           {message}
         </p>
         {hint && (
-          <p className="mt-2 text-[13px]" style={{ color: "#7C818A" }}>
+          <p className="mt-2 text-sm text-muted-foreground">
             {hint}
           </p>
         )}

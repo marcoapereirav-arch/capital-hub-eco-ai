@@ -2,32 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { PageContainer } from "@/components/ui/page-container"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import {
   Rocket,
   Flame,
   Lock,
-  CheckCircle2,
   Zap,
-  Clock,
   Calendar,
   ArrowRight,
-  AlertTriangle,
 } from "lucide-react"
 import {
   ASSIGNEE_INITIALS,
-  ASSIGNEE_LABELS,
   PRIORITY_COLORS,
   PRIORITY_RANK,
   STATUS_COLORS,
@@ -40,7 +29,7 @@ import {
   misionService,
   subscribeMisionRealtime,
 } from "../services/mision-service"
-import type { GTDStatus } from "@/features/tasks/types/task"
+import { TaskDetailSheet } from "./mision-task-detail"
 
 const TARGET_DATE = "2026-05-31"
 const PROJECT_START = "2026-05-07"
@@ -187,38 +176,35 @@ export function MisionPage({
 
   return (
     <>
-      <div className="flex flex-col gap-6 p-4 pb-mobile-nav md:gap-8 md:p-6">
+      <PageContainer className="space-y-6 md:space-y-8">
         {/* HEADER MISIÓN + COUNTDOWN */}
         <section>
           <Card className="border-border bg-card">
-            <CardContent className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  <Rocket className="h-3.5 w-3.5" />
+            <CardContent className="flex flex-col gap-6 p-4 md:flex-row md:items-center md:justify-between md:p-8">
+              <div className="flex min-w-0 flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Rocket className="size-4 shrink-0" />
                   Misión
                 </div>
-                <h1 className="font-heading text-2xl font-medium uppercase leading-tight tracking-[0.05em] text-foreground md:text-4xl">
+                <h1 className="font-heading text-2xl leading-tight font-bold tracking-tight text-foreground md:text-4xl">
                   Producto Terminado
                 </h1>
-                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground md:text-sm">
+                <p className="text-[15px] text-muted-foreground">
                   Capital Hub on point · 31 May 2026
                 </p>
               </div>
 
+              {/* Tres numeros: dos columnas en telefono, tres en monitor. */}
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-                <Stat label="Días restantes" value={String(daysLeft)} accent />
+                <Stat label="Días restantes" value={String(daysLeft)} />
                 <Stat label="% Progreso" value={`${globalProgress}%`} />
-                <Stat
-                  label="Atrasadas"
-                  value={String(overdueCount)}
-                  warn={overdueCount > 0}
-                />
+                <Stat label="Atrasadas" value={String(overdueCount)} warn={overdueCount > 0} />
               </div>
             </CardContent>
 
-            <div className="px-6 pb-6 md:px-8 md:pb-8">
+            <div className="px-4 pb-4 md:px-8 md:pb-8">
               <ProgressBar percent={globalProgress} />
-              <div className="mt-2 flex items-center justify-between text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm tabular-nums text-muted-foreground">
                 <span>{doneTasks}/{totalTasks} tareas</span>
                 <span>Día {daysElapsed} de {daysTotal}</span>
               </div>
@@ -234,29 +220,29 @@ export function MisionPage({
               <Card key={phase.id} className="border-border bg-card">
                 <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
                   <div className="min-w-0 flex-1">
-                    <div className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       Fase {phase.order} · {formatDateShort(phase.targetDate)}
                     </div>
-                    <CardTitle className="mt-1 font-heading text-base font-medium uppercase tracking-[0.05em] text-foreground">
+                    <CardTitle className="mt-1 font-heading text-base font-semibold text-foreground">
                       {phase.name}
                     </CardTitle>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-2">
+                    <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                       {phase.description}
                     </p>
                   </div>
-                  <div className="font-mono text-2xl font-medium text-foreground">
+                  <div className="shrink-0 text-2xl font-semibold tabular-nums text-foreground">
                     {pct}%
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <ProgressBar percent={pct} />
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-mono uppercase tracking-wider">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm tabular-nums">
                     <span className="text-muted-foreground">{done}/{total} done</span>
                     {blocked > 0 && (
-                      <span className="text-red-300">{blocked} bloqueada{blocked > 1 ? "s" : ""}</span>
+                      <span className="text-destructive">{blocked} bloqueada{blocked > 1 ? "s" : ""}</span>
                     )}
                     {overdue > 0 && (
-                      <span className="text-orange-300">{overdue} atrasada{overdue > 1 ? "s" : ""}</span>
+                      <span className="text-warn">{overdue} atrasada{overdue > 1 ? "s" : ""}</span>
                     )}
                   </div>
                 </CardContent>
@@ -269,7 +255,7 @@ export function MisionPage({
 
         {/* LO CRÍTICO HOY */}
         <section className="flex flex-col gap-3">
-          <SectionTitle icon={<Flame className="h-3.5 w-3.5 text-red-400" />}>
+          <SectionTitle icon={<Flame className="size-4 text-destructive" />}>
             Lo crítico hoy
           </SectionTitle>
           {criticalToday.length === 0 ? (
@@ -292,10 +278,10 @@ export function MisionPage({
         {/* MI CHECKLIST */}
         {currentAssignee && (
           <section className="flex flex-col gap-3">
-            <SectionTitle icon={<Zap className="h-3.5 w-3.5 text-blue-300" />}>
+            <SectionTitle icon={<Zap className="size-4 text-primary" />}>
               Mi checklist · {currentName}
             </SectionTitle>
-            <div className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            <div className="text-sm tabular-nums text-muted-foreground">
               {myDone}/{myTotal} completadas · {myTasks.length} pendientes
             </div>
             {myTasks.length === 0 ? (
@@ -319,7 +305,7 @@ export function MisionPage({
         {/* BLOQUEOS ACTIVOS */}
         {blockedActive.length > 0 && (
           <section className="flex flex-col gap-3">
-            <SectionTitle icon={<Lock className="h-3.5 w-3.5 text-red-300" />}>
+            <SectionTitle icon={<Lock className="size-4 text-destructive" />}>
               Bloqueos activos
             </SectionTitle>
             <div className="flex flex-col gap-2">
@@ -335,7 +321,7 @@ export function MisionPage({
             </div>
           </section>
         )}
-      </div>
+      </PageContainer>
 
       <TaskDetailSheet
         task={activeTask}
@@ -359,25 +345,19 @@ export function MisionPage({
 function Stat({
   label,
   value,
-  accent,
   warn,
 }: {
   label: string
   value: string
-  accent?: boolean
   warn?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        {label}
-      </span>
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="truncate text-sm text-muted-foreground">{label}</span>
       <span
         className={cn(
-          "font-mono text-3xl font-medium leading-none md:text-4xl",
-          accent && "text-foreground",
-          warn && "text-orange-300",
-          !accent && !warn && "text-foreground"
+          "text-3xl leading-none font-semibold tabular-nums md:text-4xl",
+          warn ? "text-warn" : "text-foreground"
         )}
       >
         {value}
@@ -386,11 +366,13 @@ function Stat({
   )
 }
 
+/* La barra de progreso va en el verde de marca. Antes iba en blanco roto
+ * (bg-foreground), que es el acento del brandkit anterior. */
 function ProgressBar({ percent }: { percent: number }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <div
-        className="h-full bg-foreground transition-all"
+        className="h-full bg-primary transition-all"
         style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
       />
     </div>
@@ -405,7 +387,7 @@ function SectionTitle({
   icon?: React.ReactNode
 }) {
   return (
-    <h2 className="flex items-center gap-2 font-heading text-sm font-medium uppercase tracking-[0.15em] text-foreground">
+    <h2 className="flex items-center gap-2 font-heading text-[17px] font-semibold text-foreground">
       {icon}
       {children}
     </h2>
@@ -414,7 +396,7 @@ function SectionTitle({
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-card/40 p-6 text-center text-xs text-muted-foreground">
+    <div className="flex min-h-[120px] items-center justify-center rounded-lg border border-dashed border-border bg-card px-6 py-6 text-center text-[15px] text-muted-foreground">
       {children}
     </div>
   )
@@ -441,35 +423,27 @@ function TaskRow({
     <button
       type="button"
       onClick={onClick}
-      className="group flex min-h-[64px] items-center gap-3 rounded-md border border-border bg-card p-3 text-left transition hover:border-foreground/40 active:scale-[0.99] md:p-4"
+      className="group flex min-h-16 items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition active:bg-muted md:p-4 md:hover:border-foreground/40"
     >
       {task.isInProgress && (
-        <span className="size-2 shrink-0 animate-pulse rounded-full bg-cyan-300" />
+        <span className="size-2 shrink-0 animate-pulse rounded-full bg-primary" />
       )}
 
       <Avatar className="size-9 shrink-0 border border-border bg-muted">
-        <AvatarFallback className="bg-transparent font-mono text-[10px] uppercase">
+        <AvatarFallback className="bg-transparent text-sm font-semibold">
           {ASSIGNEE_INITIALS[task.assignee]}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-start gap-2">
-          <span className="line-clamp-2 text-sm font-medium text-foreground">
-            {task.title}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-          <Badge
-            variant="outline"
-            className={cn("h-5 border", PRIORITY_COLORS[task.priority])}
-          >
+        <span className="line-clamp-2 text-[15px] font-medium text-foreground">
+          {task.title}
+        </span>
+        <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+          <Badge variant="outline" className={cn("h-5 border", PRIORITY_COLORS[task.priority])}>
             {task.priority}
           </Badge>
-          <Badge
-            variant="outline"
-            className={cn("h-5 border", STATUS_COLORS[task.status])}
-          >
+          <Badge variant="outline" className={cn("h-5 border", STATUS_COLORS[task.status])}>
             {STATUS_LABELS[task.status]}
           </Badge>
           {task.launchBlock && (
@@ -478,19 +452,14 @@ function TaskRow({
             </Badge>
           )}
           {task.dueDate && (
-            <span
-              className={cn(
-                "flex items-center gap-1",
-                overdue && "text-orange-300"
-              )}
-            >
+            <span className={cn("flex items-center gap-1 tabular-nums", overdue && "text-warn")}>
               <Calendar className="size-3" />
               {formatDateShort(task.dueDate)}
               {overdue && " · atrasada"}
             </span>
           )}
           {pendingDeps.length > 0 && (
-            <span className="flex items-center gap-1 text-red-300">
+            <span className="flex items-center gap-1 tabular-nums text-destructive">
               <Lock className="size-3" />
               {pendingDeps.length} dep
             </span>
@@ -498,210 +467,7 @@ function TaskRow({
         </div>
       </div>
 
-      <ArrowRight className="size-4 shrink-0 text-muted-foreground/60 group-hover:text-foreground" />
-    </button>
-  )
-}
-
-function TaskDetailSheet({
-  task,
-  taskById,
-  open,
-  onOpenChange,
-  onSelectTask,
-  onChangeStatus,
-  onToggleInProgress,
-}: {
-  task: MisionTask | null
-  taskById: Map<string, MisionTask>
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSelectTask: (id: string) => void
-  onChangeStatus: (id: string, status: GTDStatus) => Promise<void>
-  onToggleInProgress: (id: string, value: boolean) => Promise<void>
-}) {
-  if (!task) return null
-
-  const dependencies = task.dependsOn
-    .map((id) => taskById.get(id))
-    .filter((t): t is MisionTask => !!t)
-
-  const unblocks = Array.from(taskById.values()).filter((t) =>
-    t.dependsOn.includes(task.id)
-  )
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="max-h-[90dvh] overflow-y-auto bg-card pb-safe md:max-h-[85dvh]"
-      >
-        <SheetHeader className="text-left">
-          <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
-            {task.launchBlock && <span>Bloque {task.launchBlock}</span>}
-            <span>·</span>
-            <span>{ASSIGNEE_LABELS[task.assignee]}</span>
-          </div>
-          <SheetTitle className="font-heading text-lg font-medium leading-tight">
-            {task.title}
-          </SheetTitle>
-          {task.description && (
-            <SheetDescription className="text-sm leading-relaxed text-muted-foreground">
-              {task.description}
-            </SheetDescription>
-          )}
-        </SheetHeader>
-
-        <div className="flex flex-col gap-4 px-4 pb-6 md:px-6">
-          <div className="flex flex-wrap gap-2">
-            <Badge
-              variant="outline"
-              className={cn("border", PRIORITY_COLORS[task.priority])}
-            >
-              prioridad: {task.priority}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={cn("border", STATUS_COLORS[task.status])}
-            >
-              {STATUS_LABELS[task.status]}
-            </Badge>
-            {task.dueDate && (
-              <Badge variant="outline" className="border-border">
-                <Calendar className="mr-1 size-3" />
-                {formatDateShort(task.dueDate)}
-              </Badge>
-            )}
-            {task.isInProgress && (
-              <Badge variant="outline" className="border-cyan-500/40 text-cyan-300">
-                en curso
-              </Badge>
-            )}
-          </div>
-
-          <Separator />
-
-          <div className="flex flex-col gap-2">
-            <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              Cambiar estado
-            </span>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-              <ActionButton
-                icon={<Zap className="size-4" />}
-                label="En curso"
-                active={task.isInProgress}
-                onClick={() => onToggleInProgress(task.id, !task.isInProgress)}
-              />
-              <ActionButton
-                icon={<Clock className="size-4" />}
-                label="Bloquear"
-                active={task.status === "waiting"}
-                onClick={() => onChangeStatus(task.id, "waiting")}
-              />
-              <ActionButton
-                icon={<CheckCircle2 className="size-4" />}
-                label="Completar"
-                active={task.status === "done"}
-                onClick={() => onChangeStatus(task.id, "done")}
-              />
-              <ActionButton
-                icon={<ArrowRight className="size-4" />}
-                label="Pendiente"
-                active={task.status === "next" && !task.isInProgress}
-                onClick={() => onChangeStatus(task.id, "next")}
-              />
-            </div>
-          </div>
-
-          {dependencies.length > 0 && (
-            <>
-              <Separator />
-              <div className="flex flex-col gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                  Depende de
-                </span>
-                {dependencies.map((dep) => (
-                  <DependencyRow
-                    key={dep.id}
-                    task={dep}
-                    onClick={() => onSelectTask(dep.id)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-
-          {unblocks.length > 0 && (
-            <>
-              <Separator />
-              <div className="flex flex-col gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                  Al completar, desbloquea
-                </span>
-                {unblocks.map((dep) => (
-                  <DependencyRow
-                    key={dep.id}
-                    task={dep}
-                    onClick={() => onSelectTask(dep.id)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-function ActionButton({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={onClick}
-      className={cn(
-        "min-h-[44px] justify-start gap-2 border-border text-xs",
-        active && "border-foreground bg-foreground text-background hover:bg-foreground/90"
-      )}
-    >
-      {icon}
-      {label}
-    </Button>
-  )
-}
-
-function DependencyRow({ task, onClick }: { task: MisionTask; onClick: () => void }) {
-  const done = task.status === "done"
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-[44px] items-center gap-3 rounded-md border border-border bg-muted/30 p-2 text-left transition hover:border-foreground/40"
-    >
-      {done ? (
-        <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
-      ) : task.status === "waiting" ? (
-        <AlertTriangle className="size-4 shrink-0 text-red-300" />
-      ) : (
-        <Lock className="size-4 shrink-0 text-muted-foreground" />
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="line-clamp-1 text-xs font-medium">{task.title}</div>
-        <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          {ASSIGNEE_LABELS[task.assignee]} · {STATUS_LABELS[task.status]}
-        </div>
-      </div>
+      <ArrowRight className="size-4 shrink-0 text-muted-foreground" />
     </button>
   )
 }
