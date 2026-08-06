@@ -1,15 +1,16 @@
-import { ShellHeader } from "@/features/shell/components/shell-header"
+import { PageContainer } from "@/components/ui/page-container"
 import { TagsPage } from "@/features/tags/components/tags-page"
 
 export const dynamic = "force-dynamic"
 
+/**
+ * El scroll y el hueco de la barra inferior de movil los pone el layout del CRM,
+ * en un solo sitio. Aqui solo van los margenes estandar del OS (<PageContainer>).
+ */
 export default function CrmTagsRoute() {
   return (
-    <div className="flex h-full min-h-mobile-content flex-col md:min-h-0">
-      <ShellHeader title="Tags" />
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 pb-mobile-nav md:p-6">
-        <TagsPage />
-      </div>
-    </div>
+    <PageContainer>
+      <TagsPage />
+    </PageContainer>
   )
 }

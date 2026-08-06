@@ -53,7 +53,7 @@ Salidas (estados terminales o ramas):
 2. `pipeline_stages` del pipeline que lo usa, con su `sort_order` y corriendo los siguientes.
 3. `STAGE_RANK` en `stage-guard.ts` (si no, cae por la rama de "stage desconocido" y permite degradar).
 4. El mapa `STAGE_LABELS` de `/api/admin/contacts/[id]` (notificaciones de movimiento manual).
-5. Los colores del badge en `contactos-page.tsx`.
+5. `STAGE_TONE` **y** `STAGE_ORDER` en `src/features/crm/lib/brand.ts` (cómo se pinta el chip y en qué sitio del funnel se ordena). Antes esto vivía suelto en `contactos-page.tsx`.
 6. Este SOP.
 
 **Decisión Marco 2026-06-15 (revisión):** se eliminan `conversacion` y `comento_no_follow` porque:
@@ -80,10 +80,23 @@ El setter habla con los leads desde Instagram nativo (no toca el OS para mover s
 El OS recoge transiciones automáticas: `lead` → `agendado` (al reservar) y `agendado` → `alumno` (al registrar venta) o `no_show` (cron).
 
 ## Reglas de UX del CRM
-- **No hay ShellHeader en /crm/contactos ni /crm/pipeline** — el layout del CRM ya pinta el título "CRM" + las 2 sub-pestañas
+- **No hay ShellHeader en ninguna pantalla del CRM** — el título lo pinta la barra superior global (`<TopBar>`, SOP [47](47-reglas-ui-contraste-legibilidad.md)) y el layout del CRM pinta las 3 sub-pestañas
 - **No hay toggle list/kanban interno** — cada sub-tab es su propia URL
 - **El pipeline SIEMPRE muestra todas las columnas** aunque no haya contactos en ellas (el funnel siempre visible)
 - **Layout/ancho fijo** con `<PageContainer>` para evitar shift entre sub-tabs
+- **El scroll del CRM vive en UN solo sitio**: el hueco de contenido de `src/app/(main)/crm/layout.tsx`. Las páginas hijas no crean su propio scroll vertical ni recortan
+- **Diseño: brandkit oficial**, con los valores explícitos de `src/features/crm/lib/brand.ts` (los tokens del OS no son el brandkit, ver SOP 47)
+
+## La lista y el kanban NO manejan la misma lista de stages
+
+Es la trampa que más veces ha roto esta pantalla, y por eso está aparte:
+
+| Vista | Qué stages usa | Por qué |
+|---|---|---|
+| **Pipeline** (kanban) | los del pipeline ACTIVO | son literalmente sus columnas |
+| **Contactos** (lista) | la UNIÓN de los de TODOS los pipelines, ordenada por `STAGE_ORDER` | la lista mezcla contactos de todos los pipelines a la vez |
+
+Usar los del pipeline activo también en la lista deja la pantalla coja de dos maneras a la vez, y ninguna avisa: el desplegable de Stage no ofrece stages que sí existen en la lista, y los contactos de esos stages salen **sin etiqueta**, porque el nombre del stage se busca en una lista donde no está.
 
 ## Cómo llega alguien a /contactos
 Hay 5 fuentes por las que un contacto aparece:
@@ -189,4 +202,23 @@ Si una métrica no cuadra: revisar `contact_journey_events` para ese contacto. L
 - **Toggle Lista/Kanban interno duplicaba navegación**: las URLs `/crm/contactos` y `/crm/pipeline` ya son la fuente de verdad. El toggle interno se eliminó.
 - **Pipeline mostraba "Sin contactos" cuando estaba vacío**: ahora SIEMPRE renderiza las columnas del funnel (vacías o llenas). El kanban es navegación, no contenido.
 - **Doble scroll horizontal en /crm/pipeline**: el kanban tiene 8 columnas de 288px = 2400px. Si el padre `<PageContainer>` está en `max-w-7xl` (1280px), el navegador genera scroll horizontal DEL CONTAINER + el propio kanban con `overflow-x-auto` = 2 scrolls. **Fix**: en vista kanban usar `<PageContainer wide>` (max-w-full) y quitar el truco `-mx-4 px-4` del kanban. Regla: el componente con `overflow-x-auto` debe ser el ÚNICO con scroll horizontal en su jerarquía.
+- **La pantalla se quedaba pegada: no se podía bajar en /crm/contactos (2026-08-06)**. Lo reportó Marco: *"la pantalla se queda pegada, no puedo hacer scroll"*. El hueco de contenido de `src/app/(main)/crm/layout.tsx` llevaba `overflow-hidden`. Con 30 contactos la lista mide 2307px y la ventana daba 799px: **1508px de contactos recortados y sin barra de scroll**. El contenedor de fuera (el de `(main)/layout.tsx`) sí tiene `overflow-y-auto`, pero nunca llegaba a desbordar porque el de dentro ya había cortado el contenido, así que tampoco aparecía ahí. **Fix**: ese hueco pasa a `overflow-y-auto` y es el ÚNICO scroll vertical del CRM. El kanban, que sí necesita ocupar el alto exacto, pide `h-full` en vez de recortar desde arriba (además se le quitó el `h-[calc(100vh-9rem)]`, una altura adivinada a ojo que no cuadraba con el hueco real). **Regla dura: la caja que RECORTA y la caja que DEJA BAJAR no pueden ser la misma.** Si una pantalla necesita altura fija, se la pide al hueco; no se recorta el hueco.
+- **El filtro "Owner" no filtraba nada nunca (2026-08-06)**. El desplegable saca sus opciones de `contacts[].owner_assignee`, pero el `select` del `GET /api/admin/contacts` no devolvía esa columna. Resultado: el desplegable salía siempre con una sola opción ("todos") y el filtro no podía coincidir con nada. **Es exactamente el mismo fallo que `pipeline_id` el 2026-07-07**, en el mismo endpoint, un mes después: la regla estaba escrita y aun así se repitió. **Fix**: `owner_assignee` añadido al `select`. Refuerzo de la regla: *si el front filtra u ordena por un campo, el endpoint DEBE devolverlo*, y al añadir un filtro nuevo se comprueba abriendo el desplegable, no leyendo el código.
+- **"Nuevo contacto" fallaba siempre (2026-08-06)**. El `POST /api/admin/contacts` creaba con `stage: "new"` cuando no se mandaba stage, y `new` **no está** en `contacts_stage_check`, así que la base rechazaba el alta entera. El valor venía de la época inglesa del pipeline y sobrevivió a los tres renombrados. **Fix**: el default pasa a `lead`, que es el que dice este SOP. **Regla derivada: un valor por defecto de un campo con CHECK se comprueba contra el CHECK vigente, no contra lo que ponía antes.**
+- **Contactos sin etiqueta de stage y filtro incompleto (2026-08-06)**: ver la sección "La lista y el kanban NO manejan la misma lista de stages" más arriba.
 - **Kanban SIEMPRE vacío en cualquier pipeline (2026-07-07)**: la vista pipeline filtra los contactos por `pipeline_id === activePipelineId`, pero el `GET /api/admin/contacts` NO devolvía `pipeline_id` en su `select`. Resultado: `c.pipeline_id` llegaba `undefined`, el filtro descartaba a TODOS los contactos y el kanban salía "0 contactos / VACÍO" aunque en BD estuvieran bien asignados (la vista LISTA sí los mostraba porque no filtra por pipeline). Lo detectó Marco: un lead del webinar (Vanessa) estaba en el pipeline `webinar` en BD pero no aparecía en el kanban. **Fix**: añadir `pipeline_id` al `select` del GET (`src/app/api/admin/contacts/route.ts`). Regla dura: si el front filtra por un campo, el endpoint DEBE devolver ese campo.
+
+## Cambios versionados
+
+### 2026-08-06: pantalla del CRM arreglada y rehecha con el brandkit
+Marco: *"la pantalla se queda pegada, no puedo hacer scroll... y quiero que todo esté funcional y con el diseño nuevo de branding"*.
+
+**Cuatro fallos, los cuatro mudos** (ni error de consola, ni fallo de tipos, ni build roto), documentados arriba en "Bugs evitados": el scroll recortado, el filtro Owner que no podía filtrar, "Nuevo contacto" que la base rechazaba siempre, y la lista usando los stages de un solo pipeline.
+
+**Reglas nuevas que dejan:**
+- La caja que recorta y la caja que deja bajar no pueden ser la misma (detalle en SOP [47](47-reglas-ui-contraste-legibilidad.md)).
+- La lista usa la unión de stages de TODOS los pipelines; el kanban, los del suyo.
+- Un valor por defecto de un campo con CHECK se comprueba contra el CHECK vigente.
+- Al añadir un filtro, se comprueba abriendo el desplegable, no leyendo el código.
+
+**Diseño:** las 3 pestañas, la ficha del contacto y el alta pasan al brandkit oficial, con los valores en `src/features/crm/lib/brand.ts`. El color de los stages deja de ser un neón por columna y pasa a significar algo (gris que avanza, verde en la venta, ámbar en el aviso, apagado en perdido).

@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, Plus, ChevronRight, LayoutGrid, List, X } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
+import { Search, Plus, ChevronRight, X, Phone, Mail } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 import { ContactDrawer } from "./contact-drawer"
 import { ContactCreateModal } from "./contact-create-modal"
 import { PipelinesKanban } from "./pipelines-kanban"
@@ -14,6 +14,7 @@ import { PipelineSelector } from "@/features/pipelines/components/pipeline-selec
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
 import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
 import { SaleStagePrompt } from "@/features/sales/components/sale-stage-prompt"
+import { BTN_PRIMARY, FIELD, stageTone, stageRank } from "@/features/crm/lib/brand"
 import { cn } from "@/lib/utils"
 
 type SalePrefill = React.ComponentProps<typeof RegistrarVentaModal>["prefill"]
@@ -25,10 +26,12 @@ type ContactRow = {
   phone: string | null
   instagram_username: string | null
   stage: string | null
+  pipeline_id: string | null
   products: string[]
   total_revenue: number
   total_cash_collected: number
   source: string | null
+  owner_assignee: string | null
   tags: string[] | null
   last_call_at: string | null
   created_at: string
@@ -37,6 +40,8 @@ type ContactRow = {
 // Fallback solo si la BD no tiene pipelines (deberia siempre haberlos tras seed).
 // Los stages REALES se leen del pipeline activo via usePipelines().
 const FALLBACK_STAGES = [{ value: "lead", label: "Lead" }]
+
+const eur = (n: number) => `${Math.round(n).toLocaleString("es-ES")} EUR`
 
 export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
   const [contacts, setContacts] = useState<ContactRow[]>([])
@@ -52,7 +57,9 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [hasCallFilter, setHasCallFilter] = useState<"all" | "yes" | "no">("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
-  const [view, setView] = useState<"list" | "kanban">(initialView)
+  // La vista la fija la URL (/crm/contactos = lista, /crm/pipeline = kanban).
+  // No hay conmutador interno: cada sub-pestana es su propia direccion (SOP producto/13).
+  const view = initialView
   // Flujo "mover a Alumno": popup ahora/mas tarde + modal de venta prefilled.
   const [salePromptContact, setSalePromptContact] = useState<ContactRow | null>(null)
   const [saleModalPrefill, setSaleModalPrefill] = useState<SalePrefill>(undefined)
@@ -60,9 +67,56 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const { pipelines } = usePipelines()
   const { activeId, setActiveId } = useActivePipelineId(pipelines)
   const activePipeline = pipelines.find((p) => p.id === activeId) ?? null
+
+  // Stages del pipeline ACTIVO: son las columnas del kanban.
   const PIPELINE_STAGES = activePipeline
-    ? activePipeline.stages.map((s) => ({ value: s.key, label: s.name }))
+    ? [...activePipeline.stages]
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((s) => ({ value: s.key, label: s.name }))
     : FALLBACK_STAGES
+
+  /**
+   * Stages de TODOS los pipelines, sin repetir y en orden de funnel.
+   *
+   * La LISTA no es de un pipeline: enseña los contactos de todos a la vez. Usar ahi los
+   * stages de uno solo dejaba la pantalla coja de dos maneras (visto el 2026-08-06 con el
+   * pipeline "General" activo, que no tiene columna Lead):
+   *   - el desplegable de Stage no ofrecia "Lead", el stage con MAS contactos
+   *   - las fichas de esos contactos salian SIN su etiqueta de stage, porque el nombre
+   *     del stage se buscaba en una lista donde no estaba
+   */
+  const ALL_STAGES = useMemo(() => {
+    const porClave = new Map<string, string>()
+    for (const p of pipelines) {
+      for (const s of p.stages) {
+        if (!porClave.has(s.key)) porClave.set(s.key, s.name)
+      }
+    }
+    return Array.from(porClave, ([value, label]) => ({ value, label }))
+      .sort((a, b) => stageRank(a.value) - stageRank(b.value))
+  }, [pipelines])
+
+  // Lo que manda en cada vista: el kanban pinta SU pipeline, la lista los conoce todos.
+  const STAGES_VISIBLES =
+    view === "kanban" ? PIPELINE_STAGES : (ALL_STAGES.length > 0 ? ALL_STAGES : PIPELINE_STAGES)
+
+  /**
+   * Pipelines con sus columnas, para la ficha del contacto. La ficha usa las columnas
+   * del pipeline AL QUE PERTENECE ese contacto, no las del kanban que se este mirando:
+   * asi el desplegable de stage nunca ofrece uno que ahi no existe.
+   */
+  const pipelinesParaFicha = useMemo(
+    () =>
+      pipelines.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        stages: [...p.stages]
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((s) => ({ key: s.key, name: s.name })),
+      })),
+    [pipelines]
+  )
 
   // Opciones únicas derivadas de los contactos cargados (para los dropdowns de filtro)
   const filterOptions = useMemo(() => {
@@ -71,8 +125,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     const products = new Set<string>()
     for (const c of contacts) {
       if (c.source) origins.add(c.source)
-      const ownerStr = (c as ContactRow & { owner_assignee?: string | null }).owner_assignee
-      if (ownerStr) owners.add(ownerStr)
+      if (c.owner_assignee) owners.add(c.owner_assignee)
       ;(c.products ?? []).forEach((p) => products.add(p))
     }
     return {
@@ -149,7 +202,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     // Marco 2026-06-20: el PipelineSelector NO existe en vista lista, asi que aplicar este filtro
     // ahi hacia desaparecer contactos sin explicacion visible (bug). Fix: scoped a kanban.
     if (view === "kanban" && activeId) {
-      out = out.filter((c) => (c as ContactRow & { pipeline_id?: string | null }).pipeline_id === activeId)
+      out = out.filter((c) => c.pipeline_id === activeId)
     }
     if (search) {
       const q = search.toLowerCase()
@@ -169,13 +222,13 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     // pipelineFilter del dropdown de la barra de filtros se mantiene como filtro adicional
     // (por si Marco quiere ver contactos de otro pipeline diferente al activo en una vista mezclada).
     if (pipelineFilter !== "all") {
-      out = out.filter((c) => (c as ContactRow & { pipeline_id?: string | null }).pipeline_id === pipelineFilter)
+      out = out.filter((c) => c.pipeline_id === pipelineFilter)
     }
     if (originFilter !== "all") {
       out = out.filter((c) => c.source === originFilter)
     }
     if (ownerFilter !== "all") {
-      out = out.filter((c) => (c as ContactRow & { owner_assignee?: string | null }).owner_assignee === ownerFilter)
+      out = out.filter((c) => c.owner_assignee === ownerFilter)
     }
     if (productFilter !== "all") {
       out = out.filter((c) => (c.products ?? []).includes(productFilter))
@@ -216,32 +269,29 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   // Toolbar adaptado a la pestaña. Cada pestaña respeta su ecosistema:
   // - Contactos (list): set completo de filtros para buscar/filtrar por lo que sea.
   // - Pipeline (kanban): selector de pipeline + filtros del pipeline activo.
-  const filterSelectClass = "h-8 rounded-sm border border-border bg-background px-2 text-xs"
   const Toolbar = (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {/* Fila 1: búsqueda + acción principal */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <div className="relative min-w-[220px] flex-1 md:max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7C818A]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar nombre, email, teléfono, Instagram…"
-            className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
+            placeholder="Buscar nombre, email, teléfono, Instagram"
+            aria-label="Buscar contactos"
+            className={cn(FIELD, "w-full pl-10")}
           />
         </div>
         {view === "kanban" && (
           <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
         )}
-        <div className="flex-1" />
-        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        <div className="hidden flex-1 md:block" />
+        <span className="text-[14px] text-[#A6AAB2]">
           {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
         </span>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
-        >
-          <Plus className="h-3 w-3" /> Nuevo
+        <button onClick={() => setCreating(true)} className={BTN_PRIMARY}>
+          <Plus className="h-4 w-4" /> Nuevo contacto
         </button>
       </div>
 
@@ -250,62 +300,69 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
         <div className="flex flex-wrap items-center gap-2">
           <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
 
-          <select value={pipelineFilter} onChange={(e) => setPipelineFilter(e.target.value)} className={filterSelectClass}>
-            <option value="all">Pipeline · todos</option>
+          <FilterSelect value={pipelineFilter} onChange={setPipelineFilter} label="Filtrar por pipeline">
+            <option value="all">Pipeline: todos</option>
             {pipelines.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className={filterSelectClass}>
-            <option value="all">Stage · todos</option>
-            {PIPELINE_STAGES.map((s) => (
+          <FilterSelect value={stageFilter} onChange={setStageFilter} label="Filtrar por stage">
+            <option value="all">Stage: todos</option>
+            {STAGES_VISIBLES.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select value={originFilter} onChange={(e) => setOriginFilter(e.target.value)} className={filterSelectClass}>
-            <option value="all">Origen · todos</option>
+          <FilterSelect value={originFilter} onChange={setOriginFilter} label="Filtrar por origen">
+            <option value="all">Origen: todos</option>
             {filterOptions.origins.map((o) => (
               <option key={o} value={o}>{o}</option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className={filterSelectClass}>
-            <option value="all">Owner · todos</option>
+          <FilterSelect value={ownerFilter} onChange={setOwnerFilter} label="Filtrar por responsable">
+            <option value="all">Responsable: todos</option>
             {filterOptions.owners.map((o) => (
               <option key={o} value={o}>{o}</option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select value={productFilter} onChange={(e) => setProductFilter(e.target.value)} className={filterSelectClass}>
-            <option value="all">Producto · todos</option>
+          <FilterSelect value={productFilter} onChange={setProductFilter} label="Filtrar por producto">
+            <option value="all">Producto: todos</option>
             {filterOptions.products.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <select value={dateRange} onChange={(e) => setDateRange(e.target.value as typeof dateRange)} className={filterSelectClass}>
-            <option value="all">Fecha · cualquiera</option>
+          <FilterSelect
+            value={dateRange}
+            onChange={(v) => setDateRange(v as typeof dateRange)}
+            label="Filtrar por fecha de entrada"
+          >
+            <option value="all">Fecha: cualquiera</option>
             <option value="7d">Últimos 7 días</option>
             <option value="30d">Últimos 30 días</option>
             <option value="90d">Últimos 90 días</option>
-          </select>
+          </FilterSelect>
 
-          <select value={hasCallFilter} onChange={(e) => setHasCallFilter(e.target.value as typeof hasCallFilter)} className={filterSelectClass}>
-            <option value="all">Llamada · cualquiera</option>
+          <FilterSelect
+            value={hasCallFilter}
+            onChange={(v) => setHasCallFilter(v as typeof hasCallFilter)}
+            label="Filtrar por llamada"
+          >
+            <option value="all">Llamada: cualquiera</option>
             <option value="yes">Con llamada</option>
             <option value="no">Sin llamada</option>
-          </select>
+          </FilterSelect>
 
           {activeFiltersCount > 0 && (
             <button
               onClick={clearAllFilters}
-              className="inline-flex items-center gap-1 h-8 rounded-sm border border-border bg-background px-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-              title="Limpiar todos los filtros"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[4px] border border-[rgba(245,246,247,0.1)] px-3 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
             >
-              <X className="h-3 w-3" />
-              <span>Limpiar ({activeFiltersCount})</span>
+              <X className="h-4 w-4" />
+              Quitar filtros ({activeFiltersCount})
             </button>
           )}
         </div>
@@ -313,177 +370,8 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     </div>
   )
 
-  // KANBAN: layout columnar fijo - toolbar ARRIBA fijo + kanban con scroll H solo
-  // h-[calc(100vh-...)] fuerza altura visible sin que el wrapper main scrollee verticalmente.
-  // En este modo no queremos scroll vertical de la pagina entera, solo de cada columna.
-  if (view === "kanban") {
-    return (
-      <>
-        <div className="flex h-[calc(100vh-9rem)] md:h-[calc(100vh-9rem)] min-h-0 min-w-0 flex-col">
-          {/* Toolbar fijo arriba */}
-          <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-3">
-            {Toolbar}
-          </div>
-          {/* KPIs del pipeline activo (suma sobre los contactos visibles, respeta filtros). */}
-          <div className="shrink-0 border-b border-border bg-background px-4 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
-            {(() => {
-              const totalRev = filtered.reduce((acc, c) => acc + (Number(c.total_revenue) || 0), 0)
-              const totalCash = filtered.reduce((acc, c) => acc + (Number(c.total_cash_collected) || 0), 0)
-              const alumnos = filtered.filter((c) => c.stage === "alumno").length
-              const fmt = (n: number) => n.toLocaleString("es-ES", { maximumFractionDigits: 0 })
-              const pipelineLabel = activePipeline?.name ?? "Pipeline"
-              return (
-                <>
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                    {pipelineLabel}
-                  </div>
-                  <Kpi label="Contactos" value={fmt(filtered.length)} />
-                  <Kpi label="Alumnos" value={fmt(alumnos)} accent="green" />
-                  <Kpi label="Facturacion total" value={`${fmt(totalRev)} EUR`} accent="green" />
-                  <Kpi label="Cash collected" value={`${fmt(totalCash)} EUR`} accent="cyan" />
-                </>
-              )
-            })()}
-          </div>
-          {/* Kanban: scroll H aislado en este area. Padding va al CONTENIDO interior
-              (no al contenedor scrollable) para que ambos extremos respeten margen
-              incluso cuando el usuario scrollea hasta el final. */}
-          <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-hidden py-4">
-            {loading ? (
-              <div className="text-center py-12 text-sm text-muted-foreground">Cargando…</div>
-            ) : (
-              <PipelinesKanban
-                contacts={filtered}
-                stages={PIPELINE_STAGES}
-                onUpdateStage={updateStage}
-                onSelect={setSelectedId}
-                tagsByContact={tagsByContact}
-              />
-            )}
-          </div>
-        </div>
-
-        {selectedId && (
-          <ContactDrawer
-            contactId={selectedId}
-            onClose={() => setSelectedId(null)}
-            onUpdate={() => load()}
-            stages={PIPELINE_STAGES}
-            pipelines={pipelines.map((p) => ({
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              stages: [...p.stages]
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((s) => ({ key: s.key, name: s.name })),
-            }))}
-          />
-        )}
-        {creating && <ContactCreateModal onClose={() => setCreating(false)} onCreated={() => { setCreating(false); load() }} />}
-        {salePromptContact && (
-          <SaleStagePrompt
-            contactName={salePromptContact.full_name}
-            onNow={handleSaleNow}
-            onLater={handleSaleLater}
-            onClose={() => setSalePromptContact(null)}
-          />
-        )}
-        {saleModalPrefill && (
-          <RegistrarVentaModal
-            prefill={saleModalPrefill}
-            onClose={() => setSaleModalPrefill(undefined)}
-            onRegistered={() => load()}
-          />
-        )}
-      </>
-    )
-  }
-
-  // LISTA: layout normal con PageContainer
-  return (
+  const overlays = (
     <>
-      <PageContainer>
-        {Toolbar}
-
-        {/* Vista lista */}
-        {loading ? (
-          <div className="text-center py-12 text-sm text-muted-foreground">Cargando…</div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted-foreground rounded-md border border-dashed border-border">
-            {search || stageFilter !== "all" ? "Sin resultados con esos filtros." : "Aún no hay contactos."}
-          </div>
-        ) : (
-          <div className="rounded-md border border-border divide-y divide-border overflow-hidden">
-            {filtered.map((c) => {
-              const stage = PIPELINE_STAGES.find((s) => s.value === c.stage)
-              const contactTags = tagsByContact.get(c.id) ?? []
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedId(c.id)}
-                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-card/40 text-left transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="h-7 w-7 rounded-full bg-secondary flex items-center justify-center text-[10px] font-mono uppercase shrink-0">
-                      {c.full_name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm truncate">{c.full_name}</div>
-                      <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
-                        <span className="truncate">{c.email}</span>
-                        {c.phone && <span className="truncate">{c.phone}</span>}
-                      </div>
-                      {contactTags.length > 0 && (
-                        <div className="mt-1">
-                          <TagChips tags={contactTags} max={4} size="xs" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="hidden md:flex items-center gap-4 text-[10px] font-mono uppercase tracking-wider text-muted-foreground shrink-0">
-                    {c.products?.length > 0 && (
-                      <span>{c.products.length} producto{c.products.length === 1 ? "" : "s"}</span>
-                    )}
-                    {c.total_revenue > 0 && (
-                      <span className="text-green-400">
-                        {c.total_revenue.toLocaleString("es-ES", { maximumFractionDigits: 0 })}€
-                      </span>
-                    )}
-                  </div>
-
-                  {stage && (
-                    <span className={cn(
-                      "shrink-0 text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-sm border",
-                      stage.value === "alumno" && "border-green-500/40 text-green-400",
-                      stage.value === "perdido" && "border-red-500/40 text-red-400",
-                      stage.value === "no_show" && "border-red-500/40 text-red-400",
-                      stage.value === "seguimiento" && "border-violet-500/40 text-violet-400",
-                      stage.value === "agendado" && "border-amber-500/40 text-amber-400",
-                      stage.value === "lead_cualificado" && "border-[#4ADE80]/40 text-[#4ADE80]",
-                      stage.value === "lead" && "border-cyan-500/40 text-cyan-400"
-                    )}>
-                      {stage.label}
-                    </span>
-                  )}
-
-                  <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </PageContainer>
-
-      {selectedId && (
-        <ContactDrawer
-          contactId={selectedId}
-          onClose={() => setSelectedId(null)}
-          onUpdate={() => load()}
-          stages={PIPELINE_STAGES}
-        />
-      )}
-
       {creating && (
         <ContactCreateModal
           onClose={() => setCreating(false)}
@@ -511,19 +399,241 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
       )}
     </>
   )
+
+  // KANBAN: ocupa EXACTO el hueco que le da el layout del CRM (`h-full`), asi el scroll
+  // vertical de la pagina no se activa y cada columna scrollea por dentro.
+  // Antes usaba `h-[calc(100vh-9rem)]`, una altura adivinada a ojo desde la ventana que
+  // no cuadraba con el hueco real.
+  if (view === "kanban") {
+    return (
+      <>
+        <div className="flex h-full min-h-0 min-w-0 flex-col bg-[#0F0F12]">
+          {/* Toolbar fijo arriba */}
+          <div className="shrink-0 border-b border-[rgba(245,246,247,0.1)] px-4 py-3 md:px-6">
+            {Toolbar}
+          </div>
+          {/* Resumen del pipeline activo (suma sobre lo visible, respeta filtros). */}
+          <div className="shrink-0 border-b border-[rgba(245,246,247,0.1)] px-4 py-2.5 md:px-6">
+            {(() => {
+              const totalRev = filtered.reduce((acc, c) => acc + (Number(c.total_revenue) || 0), 0)
+              const totalCash = filtered.reduce((acc, c) => acc + (Number(c.total_cash_collected) || 0), 0)
+              const alumnos = filtered.filter((c) => c.stage === "alumno").length
+              return (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <span className="text-[13px] font-semibold text-[#7C818A]">
+                    {activePipeline?.name ?? "Pipeline"}
+                  </span>
+                  <Kpi label="Contactos" value={String(filtered.length)} />
+                  <Kpi label="Alumnos" value={String(alumnos)} accent />
+                  <Kpi label="Facturado" value={eur(totalRev)} accent />
+                  <Kpi label="Cobrado" value={eur(totalCash)} />
+                </div>
+              )
+            })()}
+          </div>
+          {/* Kanban: el scroll horizontal vive AQUI y solo aqui. El padding va al contenido
+              interior para que ambos extremos respeten margen al llegar al final. */}
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-auto overflow-y-hidden py-4">
+            {loading ? (
+              <LoadingScreen fullscreen={false} className="h-full" />
+            ) : (
+              <PipelinesKanban
+                contacts={filtered}
+                stages={PIPELINE_STAGES}
+                onUpdateStage={updateStage}
+                onSelect={setSelectedId}
+                tagsByContact={tagsByContact}
+              />
+            )}
+          </div>
+        </div>
+
+        {selectedId && (
+          <ContactDrawer
+            contactId={selectedId}
+            onClose={() => setSelectedId(null)}
+            onUpdate={() => load()}
+            stages={STAGES_VISIBLES}
+            pipelines={pipelinesParaFicha}
+          />
+        )}
+        {overlays}
+      </>
+    )
+  }
+
+  // LISTA
+  return (
+    <>
+      <PageContainer>
+        {Toolbar}
+
+        {loading ? (
+          <LoadingScreen fullscreen={false} className="py-20" />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            filtrando={activeFiltersCount > 0 || search.length > 0}
+            onClear={clearAllFilters}
+            onCreate={() => setCreating(true)}
+          />
+        ) : (
+          <ul className="divide-y divide-[rgba(245,246,247,0.1)] overflow-hidden rounded-[8px] border border-[rgba(245,246,247,0.1)] bg-[#131318]">
+            {filtered.map((c) => {
+              const stage = STAGES_VISIBLES.find((s) => s.value === c.stage)
+              const tone = stageTone(c.stage)
+              const contactTags = tagsByContact.get(c.id) ?? []
+              return (
+                <li key={c.id}>
+                  <button
+                    onClick={() => setSelectedId(c.id)}
+                    className="flex min-h-[56px] w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-[#16161B] md:px-4"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(245,246,247,0.1)] bg-[#16161B] text-[13px] font-semibold text-[#A6AAB2]">
+                      {c.full_name?.charAt(0).toUpperCase() || "?"}
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-semibold text-[#F5F6F7]">
+                        {c.full_name}
+                      </span>
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] text-[#7C818A]">
+                        <span className="inline-flex min-w-0 items-center gap-1">
+                          <Mail className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{c.email}</span>
+                        </span>
+                        {c.phone && (
+                          <span className="inline-flex items-center gap-1">
+                            <Phone className="h-3.5 w-3.5 shrink-0" />
+                            {c.phone}
+                          </span>
+                        )}
+                      </span>
+                      {contactTags.length > 0 && (
+                        <span className="mt-1.5 block">
+                          <TagChips tags={contactTags} max={4} size="xs" />
+                        </span>
+                      )}
+                    </span>
+
+                    {c.total_revenue > 0 && (
+                      <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#4ADE80]">
+                        {eur(c.total_revenue)}
+                      </span>
+                    )}
+
+                    {c.products?.length > 0 && (
+                      <span className="hidden shrink-0 text-[13px] text-[#7C818A] lg:inline">
+                        {c.products.length} producto{c.products.length === 1 ? "" : "s"}
+                      </span>
+                    )}
+
+                    {stage && (
+                      <span
+                        className={cn(
+                          "hidden shrink-0 rounded-[3px] border px-2 py-1 text-[12px] font-semibold sm:inline-block",
+                          tone.chip
+                        )}
+                      >
+                        {stage.label}
+                      </span>
+                    )}
+
+                    <ChevronRight className="h-4 w-4 shrink-0 text-[#7C818A]" />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </PageContainer>
+
+      {selectedId && (
+        <ContactDrawer
+          contactId={selectedId}
+          onClose={() => setSelectedId(null)}
+          onUpdate={() => load()}
+          stages={STAGES_VISIBLES}
+          pipelines={pipelinesParaFicha}
+        />
+      )}
+      {overlays}
+    </>
+  )
+}
+
+/** Desplegable de filtro. 44px de alto: zona tactil minima del brandkit. */
+function FilterSelect({
+  value,
+  onChange,
+  label,
+  children,
+}: {
+  value: string
+  onChange: (v: string) => void
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label={label}
+      className={cn(FIELD, "max-w-full cursor-pointer pr-8")}
+    >
+      {children}
+    </select>
+  )
+}
+
+/** Cifra + su etiqueta al lado. El verde marca lo que es una venta. */
+function Kpi({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+  return (
+    <div className="flex shrink-0 items-baseline gap-2">
+      <span
+        className={cn(
+          "text-[16px] font-bold tabular-nums",
+          accent ? "text-[#4ADE80]" : "text-[#F5F6F7]"
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-[13px] text-[#7C818A]">{label}</span>
+    </div>
+  )
 }
 
 /**
- * KPI compacto para la cabecera del kanban. Valor + label en una linea.
- * Accent controla el color del valor (default foreground).
+ * Estado vacio con su salida DENTRO: si no hay nada por los filtros, el boton los quita;
+ * si de verdad no hay contactos, el boton crea el primero.
  */
-function Kpi({ label, value, accent }: { label: string; value: string; accent?: "green" | "cyan" }) {
-  const color =
-    accent === "green" ? "text-green-400" : accent === "cyan" ? "text-cyan-400" : "text-foreground"
+function EmptyState({
+  filtrando,
+  onClear,
+  onCreate,
+}: {
+  filtrando: boolean
+  onClear: () => void
+  onCreate: () => void
+}) {
   return (
-    <div className="flex items-baseline gap-1.5 shrink-0">
-      <span className={cn("text-sm font-semibold tabular-nums", color)}>{value}</span>
-      <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</span>
+    <div className="flex flex-col items-center gap-4 rounded-[8px] border border-dashed border-[rgba(245,246,247,0.1)] px-6 py-16 text-center">
+      <p className="text-[15px] text-[#A6AAB2]">
+        {filtrando
+          ? "Ningún contacto coincide con esos filtros."
+          : "Todavía no hay contactos."}
+      </p>
+      {filtrando ? (
+        <button
+          onClick={onClear}
+          className="inline-flex min-h-[44px] items-center gap-2 rounded-[4px] border border-[rgba(245,246,247,0.1)] px-4 text-[14px] font-semibold text-[#F5F6F7] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B]"
+        >
+          <X className="h-4 w-4" /> Quitar filtros
+        </button>
+      ) : (
+        <button onClick={onCreate} className={BTN_PRIMARY}>
+          <Plus className="h-4 w-4" /> Crear el primer contacto
+        </button>
+      )}
     </div>
   )
 }

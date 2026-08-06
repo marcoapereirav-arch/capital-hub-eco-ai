@@ -35,9 +35,15 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(500, Math.max(1, parseInt(params.get("limit") ?? "200", 10)))
 
   const admin = getAdminClient()
+  // `owner_assignee` es OBLIGATORIO aqui: la lista de contactos tiene un filtro "Owner"
+  // que saca sus opciones de este campo. Al no devolverlo, el desplegable salia siempre
+  // vacio y el filtro no podia coincidir con nada (2026-08-06). Es el mismo fallo que ya
+  // paso con `pipeline_id` el 2026-07-07 y que dejaba el kanban vacio.
+  // Regla dura del SOP producto/13: si el front filtra por un campo, el endpoint DEBE
+  // devolver ese campo.
   let query = admin
     .from("contacts")
-    .select("id, full_name, email, phone, instagram_username, stage, pipeline_id, products, total_revenue, total_cash_collected, source, tags, last_call_at, created_at")
+    .select("id, full_name, email, phone, instagram_username, stage, pipeline_id, products, total_revenue, total_cash_collected, source, owner_assignee, tags, last_call_at, created_at")
     .order("created_at", { ascending: false })
     .limit(limit)
   if (stage) query = query.eq("stage", stage)
@@ -66,7 +72,10 @@ export async function POST(req: NextRequest) {
       email: data.email.toLowerCase().trim(),
       phone: data.phone?.trim() ?? null,
       company: data.company?.trim() ?? null,
-      stage: data.stage ?? "new",
+      // `lead` es el stage por defecto al crear (SOP producto/13). Antes ponia "new",
+      // que NO esta en la lista de stages validos que acepta la base de datos, asi que
+      // crear un contacto a mano fallaba SIEMPRE con un error de restriccion.
+      stage: data.stage ?? "lead",
       source: data.source ?? "manual",
       tags: data.tags ?? [],
       notes: data.notes ?? null,
