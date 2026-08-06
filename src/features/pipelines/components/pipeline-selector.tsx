@@ -1,14 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Layers, Settings } from "lucide-react"
+import { Settings } from "lucide-react"
 import type { Pipeline } from "../types/pipeline"
 import { PipelinesManagerDrawer } from "./pipelines-manager-drawer"
+import { FIELD } from "@/features/crm/lib/brand"
 import { cn } from "@/lib/utils"
 
 /**
- * Selector compacto del pipeline activo + boton para abrir el gestor de pipelines
- * en un drawer SIN salir del entorno. Reemplaza la pestana 'Pipelines' separada.
+ * Elige que pipeline se ve en el kanban, y abre su configuracion en un panel lateral
+ * SIN salir de la pantalla.
  */
 export function PipelineSelector({
   pipelines,
@@ -27,29 +28,29 @@ export function PipelineSelector({
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div className={cn("inline-flex items-center gap-1", className)}>
-      <Layers className="h-3 w-3 text-muted-foreground" />
+    <div className={cn("inline-flex items-center gap-2", className)}>
       {pipelines.length === 0 ? (
-        <span className="text-[10px] font-mono text-muted-foreground">Sin pipelines</span>
+        <span className="text-[14px] text-[#A6AAB2]">Sin pipelines</span>
       ) : (
         <select
           value={activeId ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          className="h-8 rounded-sm border border-border bg-background px-2 text-xs"
+          aria-label="Pipeline que se está viendo"
+          className={cn(FIELD, "cursor-pointer pr-8")}
         >
           {pipelines.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name}{p.isDefault ? " · default" : ""}
+              {p.name}{p.isDefault ? " (por defecto)" : ""}
             </option>
           ))}
         </select>
       )}
       <button
         onClick={() => setDrawerOpen(true)}
-        className="h-8 inline-flex items-center gap-1 rounded-sm border border-border bg-background px-2 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
-        title="Configurar pipelines y stages"
+        className="inline-flex min-h-[44px] items-center gap-2 rounded-[4px] border border-[rgba(245,246,247,0.1)] px-3 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
+        title="Configurar pipelines y sus columnas"
       >
-        <Settings className="h-3 w-3" />
+        <Settings className="h-4 w-4" />
         <span className="hidden md:inline">Configurar</span>
       </button>
 

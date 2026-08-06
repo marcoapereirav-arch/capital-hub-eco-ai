@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { Euro } from "lucide-react"
 import { TagChips } from "@/features/tags/components/tag-chips"
+import { stageTone } from "@/features/crm/lib/brand"
 
 type Contact = {
   id: string
@@ -16,15 +16,6 @@ type Contact = {
 }
 
 type Stage = { value: string; label: string }
-
-const STAGE_COLORS: Record<string, string> = {
-  lead: "border-cyan-500/40",
-  agendado: "border-amber-500/40",
-  alumno: "border-green-500/40",
-  seguimiento: "border-violet-500/40",
-  no_show: "border-orange-500/40",
-  perdido: "border-red-500/40",
-}
 
 export function PipelinesKanban({
   contacts,
@@ -56,14 +47,14 @@ export function PipelinesKanban({
 
   return (
     // El scroll horizontal lo maneja el contenedor padre (ContactosPage en modo kanban).
-    // Padding LATERAL en el contenido. El padding-right del flex container NO funciona
-    // bien con overflow-x-auto en algunos navegadores, asi que anadimos un SPACER
-    // explicito al final.
-    <div className="flex gap-3 h-full pb-1 pl-4 md:pl-6">
+    // Padding LATERAL en el contenido: el padding-right del contenedor con overflow-x-auto
+    // no se respeta al final del scroll en algunos navegadores, de ahi el spacer del final.
+    <div className="flex h-full gap-3 pb-1 pl-4 md:pl-6">
       {stages.map((s) => {
         const list = grouped.get(s.value) ?? []
         const totalRev = list.reduce((acc, c) => acc + (c.total_revenue ?? 0), 0)
         const isOver = overStage === s.value
+        const tone = stageTone(s.value)
         return (
           <div
             key={s.value}
@@ -77,24 +68,40 @@ export function PipelinesKanban({
               setDragging(null)
             }}
             className={cn(
-              "shrink-0 w-72 h-full rounded-md border bg-card/40 p-2 transition-colors flex flex-col",
-              STAGE_COLORS[s.value] ?? "border-border",
-              isOver && "bg-card/70 ring-2 ring-foreground/30"
+              "flex h-full w-72 shrink-0 flex-col overflow-hidden rounded-[8px] border bg-[#131318] transition-colors",
+              isOver
+                ? "border-[#24462F] bg-[#101710]"
+                : "border-[rgba(245,246,247,0.1)]"
             )}
           >
-            <div className="flex items-center justify-between px-1.5 shrink-0 mb-2">
-              <div className="text-xs font-mono uppercase tracking-wider text-foreground">{s.label}</div>
-              <div className="text-[10px] font-mono text-muted-foreground">
-                {list.length}{totalRev > 0 && <span className="text-green-400 ml-2">{Math.round(totalRev)}€</span>}
-              </div>
+            {/* Linea de color del stage. Es lo unico que distingue una columna de otra:
+                gris que se aclara segun avanza el funnel, VERDE en la venta, ambar en el
+                aviso. Antes cada columna llevaba un neon distinto (cian, violeta, naranja),
+                que no significaba nada y no esta en el brandkit. */}
+            <div
+              aria-hidden
+              className="h-[3px] w-full shrink-0"
+              style={{ backgroundColor: tone.rule }}
+            />
+
+            <div className="flex shrink-0 items-center justify-between gap-2 px-3 py-2.5">
+              <span className="truncate text-[14px] font-semibold text-[#F5F6F7]">{s.label}</span>
+              <span className="flex shrink-0 items-baseline gap-2">
+                <span className="text-[13px] tabular-nums text-[#7C818A]">{list.length}</span>
+                {totalRev > 0 && (
+                  <span className="text-[13px] font-semibold tabular-nums text-[#4ADE80]">
+                    {Math.round(totalRev).toLocaleString("es-ES")} EUR
+                  </span>
+                )}
+              </span>
             </div>
 
-            {/* Lista de cards con SCROLL VERTICAL propio. */}
-            <div className="space-y-1.5 flex-1 min-h-0 overflow-y-auto pr-0.5">
+            {/* Lista de fichas con SCROLL VERTICAL propio. */}
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain px-2 pb-2">
               {list.length === 0 ? (
-                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 px-1.5 py-2">
-                  vacío
-                </div>
+                <p className="px-1.5 py-3 text-[13px] text-[#7C818A]">
+                  {isOver ? "Suelta aquí" : "Sin contactos"}
+                </p>
               ) : (
                 list.map((c) => (
                   <div
@@ -107,32 +114,44 @@ export function PipelinesKanban({
                     }}
                     onDragEnd={() => { setDragging(null); setOverStage(null) }}
                     onClick={() => onSelect(c.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault()
+                        onSelect(c.id)
+                      }
+                    }}
                     className={cn(
-                      "cursor-grab active:cursor-grabbing rounded-sm border border-border bg-card p-2 text-sm shadow-sm hover:border-foreground/40 transition-colors",
+                      "cursor-grab rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] p-2.5",
+                      "transition-colors hover:border-[rgba(245,246,247,0.2)] active:cursor-grabbing",
+                      "focus:outline-none focus-visible:border-[#24462F] focus-visible:ring-1 focus-visible:ring-[rgba(34,197,94,0.45)]",
                       dragging === c.id && "opacity-50"
                     )}
                   >
-                    <div className="font-medium truncate">{c.full_name}</div>
-                    <div className="text-[10px] font-mono text-muted-foreground truncate">{c.email}</div>
+                    <p className="truncate text-[14px] font-semibold text-[#F5F6F7]">{c.full_name}</p>
+                    <p className="truncate text-[13px] text-[#7C818A]">{c.email}</p>
                     {tagsByContact && (tagsByContact.get(c.id)?.length ?? 0) > 0 && (
-                      <div className="mt-1">
+                      <div className="mt-1.5">
                         <TagChips tags={tagsByContact.get(c.id) ?? []} max={3} size="xs" />
                       </div>
                     )}
                     {c.products.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="mt-1.5 flex flex-wrap gap-1">
                         {c.products.map((p) => (
-                          <span key={p} className="text-[9px] font-mono uppercase border border-border px-1 py-0.5 rounded-sm">
+                          <span
+                            key={p}
+                            className="rounded-[3px] border border-[rgba(245,246,247,0.1)] px-1.5 py-0.5 text-[12px] text-[#A6AAB2]"
+                          >
                             {p}
                           </span>
                         ))}
                       </div>
                     )}
                     {c.total_revenue > 0 && (
-                      <div className="text-[10px] font-mono text-green-400 mt-1 flex items-center gap-0.5">
-                        <Euro className="h-2.5 w-2.5" />
-                        {c.total_revenue.toLocaleString("es-ES", { maximumFractionDigits: 0 })}
-                      </div>
+                      <p className="mt-1.5 text-[13px] font-semibold tabular-nums text-[#4ADE80]">
+                        {Math.round(c.total_revenue).toLocaleString("es-ES")} EUR
+                      </p>
                     )}
                   </div>
                 ))
@@ -141,11 +160,10 @@ export function PipelinesKanban({
           </div>
         )
       })}
-      {/* Spacer: garantiza margen derecho cuando se scrollea al final del kanban.
-          Sin esto, la ultima columna toca el borde derecho del viewport (en flex
-          + overflow-x-auto el padding-right del contenedor NO se respeta en el
-          extremo del scroll). */}
-      <div aria-hidden className="shrink-0 w-4 md:w-8" />
+      {/* Spacer: garantiza margen derecho al scrollear hasta el final del kanban. Sin esto
+          la ultima columna toca el borde (en flex + overflow-x-auto el padding-right del
+          contenedor NO se respeta en el extremo del scroll). */}
+      <div aria-hidden className="w-4 shrink-0 md:w-8" />
     </div>
   )
 }

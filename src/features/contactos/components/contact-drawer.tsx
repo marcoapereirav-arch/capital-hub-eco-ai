@@ -1,11 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { X, Mail, Phone, Calendar, Euro, Tag, MessageSquare, Save, Trash2, ShoppingBag } from "lucide-react"
+import {
+  X, Mail, Phone, Calendar, MessageSquare, Save, Trash2, ShoppingBag,
+  AtSign, RotateCw, ArrowLeft,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ContactTagsPanel } from "@/features/tags/components/contact-tags-panel"
 import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
 import { SaleStagePrompt } from "@/features/sales/components/sale-stage-prompt"
+import { LoadingScreen } from "@/components/ui/loading-screen"
+import { BTN_PRIMARY, FIELD, FONT } from "@/features/crm/lib/brand"
 
 type ContactDetail = {
   id: string
@@ -58,6 +63,15 @@ type Stage = { value: string; label: string }
 
 const PRODUCT_OPTIONS = ["IA Integrator", "Media Buyer Digital", "Comercial Closing"]
 
+/** Accion rapida de la cabecera: borde fino, 44px de alto. */
+const QUICK =
+  "inline-flex min-h-[44px] items-center gap-1.5 rounded-[4px] border border-[rgba(245,246,247,0.1)] px-3 " +
+  "text-[14px] font-semibold text-[#A6AAB2] transition-colors " +
+  "hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
+
+/** Etiqueta de campo. */
+const LABEL = "mb-1.5 block text-[13px] font-semibold text-[#A6AAB2]"
+
 export function ContactDrawer({
   contactId,
   onClose,
@@ -83,6 +97,7 @@ export function ContactDrawer({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState<Partial<ContactDetail>>({})
+  const [aviso, setAviso] = useState<string | null>(null)
   // Flujo "mover a Alumno" desde la ficha: popup ahora/mas tarde + modal de venta.
   const [salePrompt, setSalePrompt] = useState(false)
   const [saleModalOpen, setSaleModalOpen] = useState(false)
@@ -99,6 +114,13 @@ export function ContactDrawer({
       })
       .finally(() => setLoading(false))
   }, [contactId])
+
+  // Cerrar con Escape: la ficha tapa la pantalla, tiene que haber salida sin ratón.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose() }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [onClose])
 
   async function save(patch: Partial<ContactDetail> & { sale_pending?: boolean }) {
     setSaving(true)
@@ -140,36 +162,65 @@ export function ContactDrawer({
     onClose()
   }
 
+  const stageOptions = (() => {
+    const currentPipeline = pipelines?.find((p) => p.id === contact?.pipeline_id)
+    return currentPipeline
+      ? currentPipeline.stages.map((s) => ({ value: s.key, label: s.name }))
+      : stages
+  })()
+
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <button onClick={onClose} className="flex-1 bg-black/40 backdrop-blur-[2px]" aria-label="Cerrar" />
-      <div className="w-full max-w-2xl bg-background border-l border-border overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex" style={{ fontFamily: FONT }}>
+      <button onClick={onClose} className="flex-1 bg-black/60" aria-label="Cerrar la ficha" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ficha del contacto"
+        className="w-full max-w-2xl overflow-y-auto overscroll-contain border-l border-[rgba(245,246,247,0.1)] bg-[#0F0F12]"
+      >
         {loading || !contact ? (
-          <div className="p-6 text-sm text-muted-foreground">Cargando ficha…</div>
+          <LoadingScreen fullscreen={false} className="py-24" />
         ) : (
           <>
-            {/* Header */}
-            <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center text-sm font-mono uppercase shrink-0">
-                {contact.full_name.charAt(0)}
+            {/* Cabecera. Lleva SIEMPRE una salida visible con texto, arriba a la izquierda. */}
+            <div className="sticky top-0 z-10 border-b border-[rgba(245,246,247,0.1)] bg-[#0F0F12]">
+              <div className="flex items-center gap-2 px-4 pt-3">
+                <button
+                  onClick={onClose}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[4px] px-2 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#F5F6F7]"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Volver
+                </button>
+                <div className="flex-1" />
+                <button
+                  onClick={onClose}
+                  aria-label="Cerrar"
+                  className="flex h-9 w-9 items-center justify-center rounded-[4px] text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#F5F6F7]"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-base font-semibold truncate">{contact.full_name}</h2>
-                <div className="text-[10px] font-mono text-muted-foreground truncate">{contact.email}</div>
+              <div className="flex items-center gap-3 px-4 pb-3 pt-1">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(245,246,247,0.1)] bg-[#16161B] text-[15px] font-semibold text-[#A6AAB2]">
+                  {contact.full_name.charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-[19px] font-bold tracking-tight text-[#F5F6F7]">
+                    {contact.full_name}
+                  </h2>
+                  <p className="truncate text-[14px] text-[#7C818A]">{contact.email}</p>
+                </div>
               </div>
-              <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
-            {/* Quick actions header */}
-            <div className="px-4 py-3 border-b border-border flex items-center gap-2 flex-wrap">
-              <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card">
-                <Mail className="h-3 w-3" /> Email
+            {/* Acciones rapidas */}
+            <div className="flex flex-wrap items-center gap-2 border-b border-[rgba(245,246,247,0.1)] px-4 py-3">
+              <a href={`mailto:${contact.email}`} className={QUICK}>
+                <Mail className="h-4 w-4" /> Email
               </a>
               {contact.phone && (
-                <a href={`tel:${contact.phone}`} className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card">
-                  <Phone className="h-3 w-3" /> Llamar
+                <a href={`tel:${contact.phone}`} className={QUICK}>
+                  <Phone className="h-4 w-4" /> Llamar
                 </a>
               )}
               {contact.manychat_subscriber_id && (
@@ -177,32 +228,32 @@ export function ContactDrawer({
                   href={`https://manychat.com/inbox/${contact.manychat_subscriber_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card"
-                  title="Abrir conversación en panel ManyChat (opcional)"
+                  className={QUICK}
+                  title="Abrir la conversación en ManyChat"
                 >
-                  <MessageSquare className="h-3 w-3" /> ManyChat
+                  <MessageSquare className="h-4 w-4" /> ManyChat
                 </a>
               )}
               {contact.instagram_username && (
                 <a
-                  href={`https://instagram.com/${contact.instagram_username.replace(/^@/, '')}`}
+                  href={`https://instagram.com/${contact.instagram_username.replace(/^@/, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card"
-                  title="Abrir perfil de Instagram"
+                  className={QUICK}
+                  title="Abrir el perfil de Instagram"
                 >
-                  <MessageSquare className="h-3 w-3" /> IG
+                  <AtSign className="h-4 w-4" /> Instagram
                 </a>
               )}
-              {/* Selector PIPELINE: mover contacto a otro pipeline. El server resetea el stage
-                  al primer stage del nuevo pipeline si el actual no existe alli. */}
+
+              {/* Pipeline: el servidor recoloca el stage si el actual no existe en el destino. */}
               {pipelines && pipelines.length > 0 && (
                 <select
                   value={contact.pipeline_id ?? ""}
                   onChange={(e) => save({ pipeline_id: e.target.value || null })}
                   disabled={saving}
-                  className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border bg-background px-2 py-1"
-                  title="Pipeline al que pertenece este contacto"
+                  aria-label="Pipeline del contacto"
+                  className={cn(FIELD, "cursor-pointer pr-8")}
                 >
                   <option value="">Sin pipeline</option>
                   {pipelines.map((p) => (
@@ -210,7 +261,7 @@ export function ContactDrawer({
                   ))}
                 </select>
               )}
-              {/* Selector STAGE: usa los stages del pipeline actual del contacto (no los del kanban activo). */}
+
               <select
                 value={contact.stage ?? ""}
                 onChange={(e) => {
@@ -220,63 +271,74 @@ export function ContactDrawer({
                   save({ stage: v })
                 }}
                 disabled={saving}
-                className="text-[10px] font-mono uppercase tracking-wider rounded-sm border border-border bg-background px-2 py-1"
-                title="Stage actual dentro del pipeline"
+                aria-label="Stage dentro del pipeline"
+                className={cn(FIELD, "cursor-pointer pr-8")}
               >
-                {(() => {
-                  const currentPipeline = pipelines?.find((p) => p.id === contact.pipeline_id)
-                  const stageOpts = currentPipeline
-                    ? currentPipeline.stages.map((s) => ({ value: s.key, label: s.name }))
-                    : stages
-                  return stageOpts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)
-                })()}
+                {stageOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
+
               <button
                 onClick={() => setSaleModalOpen(true)}
-                className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider border border-green-500/40 text-green-400 px-2 py-1 rounded-sm hover:bg-green-500/10 transition-colors"
+                className={BTN_PRIMARY}
                 title="Registrar la venta y dar acceso a la App"
               >
-                <ShoppingBag className="h-3 w-3" /> Registrar venta
+                <ShoppingBag className="h-4 w-4" /> Registrar venta
               </button>
-              <div className="flex-1" />
+
+              <div className="hidden flex-1 md:block" />
+
               {(contact.stage === "won" || contact.stage === "alumno") && (
                 <button
                   onClick={async () => {
                     const res = await fetch(`/api/admin/contacts/${contact.id}/resend-invite`, { method: "POST" })
                     const data = await res.json()
-                    alert(res.ok
-                      ? `Magic link reenviado a ${data.sent_to}`
-                      : (data.error ?? "No se pudo reenviar"),
-                    )
+                    setAviso(res.ok
+                      ? `Acceso reenviado a ${data.sent_to}`
+                      : (data.error ?? "No se pudo reenviar. Comprueba que el contacto tenga email y vuelve a intentarlo."))
                   }}
-                  className="text-[10px] font-mono uppercase tracking-wider border border-border px-2 py-1 rounded-sm hover:bg-card hover:border-foreground/40 transition-colors"
-                  title="Reenviar magic link de acceso a la App"
+                  className={QUICK}
+                  title="Reenviar el enlace de acceso a la App"
                 >
-                  ↻ Reenviar acceso
+                  <RotateCw className="h-4 w-4" /> Reenviar acceso
                 </button>
               )}
-              <button onClick={deleteContact} className="text-muted-foreground hover:text-red-400">
-                <Trash2 className="h-3.5 w-3.5" />
+              <button
+                onClick={deleteContact}
+                aria-label="Eliminar contacto"
+                className="flex h-11 w-11 items-center justify-center rounded-[4px] text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#E5B567]"
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Tags */}
+            {aviso && (
+              <div className="flex items-start justify-between gap-3 border-b border-[rgba(245,246,247,0.1)] bg-[#101710] px-4 py-2.5">
+                <p className="text-[14px] text-[#4ADE80]">{aviso}</p>
+                <button onClick={() => setAviso(null)} aria-label="Cerrar aviso" className="text-[#4ADE80]">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
             <ContactTagsPanel contactId={contact.id} />
 
-            {/* Tabs */}
-            <div className="flex items-center gap-1 border-b border-border px-4">
+            {/* Pestanas de la ficha */}
+            <div className="flex items-center gap-1 overflow-x-auto border-b border-[rgba(245,246,247,0.1)] px-4">
               {([
                 ["datos", "Datos"],
-                ["productos", "Productos + ventas"],
-                ["journey", `Journey (${events.length + bookings.length})`],
+                ["productos", "Productos y ventas"],
+                ["journey", `Historial (${events.length + bookings.length})`],
                 ["notas", "Notas"],
               ] as const).map(([k, label]) => (
                 <button
                   key={k}
                   onClick={() => setTab(k)}
+                  aria-current={tab === k ? "true" : undefined}
                   className={cn(
-                    "px-3 py-2 text-xs transition-colors border-b-2 -mb-px",
-                    tab === k ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                    "-mb-px shrink-0 border-b-2 px-3 py-3 text-[14px] font-semibold transition-colors",
+                    tab === k
+                      ? "border-[#22C55E] text-[#F5F6F7]"
+                      : "border-transparent text-[#A6AAB2] hover:text-[#F5F6F7]"
                   )}
                 >
                   {label}
@@ -284,51 +346,41 @@ export function ContactDrawer({
               ))}
             </div>
 
-            {/* DATOS TAB */}
             {tab === "datos" && (
-              <div className="p-4 space-y-3">
+              <div className="space-y-3.5 p-4">
                 <DataField label="Nombre completo" value={draft.full_name ?? contact.full_name} onChange={(v) => setDraft({ ...draft, full_name: v })} />
-                <DataField label="Email" value={draft.email ?? contact.email} onChange={(v) => setDraft({ ...draft, email: v })} type="email" />
-                <DataField label="Teléfono" value={draft.phone ?? contact.phone ?? ""} onChange={(v) => setDraft({ ...draft, phone: v })} type="tel" />
-                <DataField label="Instagram (@usuario)" value={draft.instagram_username ?? contact.instagram_username ?? ""} onChange={(v) => setDraft({ ...draft, instagram_username: v.replace(/^@/, "") })} placeholder="ej. juan_lopez (sin @)" />
+                <DataField label="Email" type="email" value={draft.email ?? contact.email} onChange={(v) => setDraft({ ...draft, email: v })} />
+                <DataField label="Teléfono" type="tel" value={draft.phone ?? contact.phone ?? ""} onChange={(v) => setDraft({ ...draft, phone: v })} />
+                <DataField label="Instagram" value={draft.instagram_username ?? contact.instagram_username ?? ""} onChange={(v) => setDraft({ ...draft, instagram_username: v.replace(/^@/, "") })} placeholder="juan_lopez (sin arroba)" />
                 <DataField label="Empresa" value={draft.company ?? contact.company ?? ""} onChange={(v) => setDraft({ ...draft, company: v })} />
-                <DataField label="Origen" value={draft.source ?? contact.source ?? ""} onChange={(v) => setDraft({ ...draft, source: v })} placeholder="organic, ads, referral, manychat…" />
-                <DataField label="Asignado a" value={draft.owner_assignee ?? contact.owner_assignee ?? ""} onChange={(v) => setDraft({ ...draft, owner_assignee: v })} placeholder="adrian, nagai, marco…" />
-
-                {/* ManyChat subscriber ID (solo lectura, lo setea el webhook) */}
-                {contact.manychat_subscriber_id && (
-                  <div className="text-[10px] font-mono text-muted-foreground border-t border-border pt-3">
-                    ManyChat subscriber ID: <code className="text-foreground">{contact.manychat_subscriber_id}</code>
-                  </div>
-                )}
+                <DataField label="Origen" value={draft.source ?? contact.source ?? ""} onChange={(v) => setDraft({ ...draft, source: v })} placeholder="organic, ads, referral, manychat" />
+                <DataField label="Responsable" value={draft.owner_assignee ?? contact.owner_assignee ?? ""} onChange={(v) => setDraft({ ...draft, owner_assignee: v })} placeholder="adrian, nagai, marco" />
 
                 {Object.keys(draft).length > 0 && (
-                  <div className="flex items-center gap-2 pt-3">
-                    <button
-                      onClick={() => save(draft)}
-                      disabled={saving}
-                      className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30"
-                    >
-                      <Save className="h-3 w-3" /> Guardar cambios
+                  <div className="flex items-center gap-2 pt-1">
+                    <button onClick={() => save(draft)} disabled={saving} className={BTN_PRIMARY}>
+                      <Save className="h-4 w-4" /> Guardar cambios
                     </button>
-                    <button onClick={() => setDraft({})} className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    <button
+                      onClick={() => setDraft({})}
+                      className="inline-flex min-h-[44px] items-center rounded-[4px] px-3 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#F5F6F7]"
+                    >
                       Descartar
                     </button>
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-border text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                  <div>Creado: {new Date(contact.created_at).toLocaleString("es-ES")}</div>
-                  <div>Actualizado: {new Date(contact.updated_at).toLocaleString("es-ES")}</div>
+                <div className="space-y-1 border-t border-[rgba(245,246,247,0.1)] pt-4 text-[13px] text-[#7C818A]">
+                  <p>Entró el {new Date(contact.created_at).toLocaleString("es-ES")}</p>
+                  <p>Última actualización el {new Date(contact.updated_at).toLocaleString("es-ES")}</p>
                 </div>
               </div>
             )}
 
-            {/* PRODUCTOS TAB */}
             {tab === "productos" && (
-              <div className="p-4 space-y-4">
+              <div className="space-y-6 p-4">
                 <section>
-                  <h3 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-2">Productos comprados</h3>
+                  <h3 className="mb-2.5 text-[15px] font-bold text-[#F5F6F7]">Productos comprados</h3>
                   <div className="flex flex-wrap gap-2">
                     {PRODUCT_OPTIONS.map((p) => {
                       const has = contact.products.includes(p)
@@ -339,54 +391,61 @@ export function ContactDrawer({
                             const next = has ? contact.products.filter((x) => x !== p) : [...contact.products, p]
                             save({ products: next })
                           }}
+                          aria-pressed={has}
                           className={cn(
-                            "rounded-sm border px-2.5 py-1 text-xs transition-all",
-                            has ? "border-green-500/40 bg-green-500/10 text-green-400" : "border-border text-muted-foreground hover:border-border"
+                            "inline-flex min-h-[44px] items-center rounded-[4px] border px-3 text-[14px] font-semibold transition-colors",
+                            has
+                              ? "border-[#24462F] bg-[#101710] text-[#4ADE80]"
+                              : "border-[rgba(245,246,247,0.1)] text-[#A6AAB2] hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
                           )}
                         >
-                          {has ? "✓ " : "+ "}{p}
+                          {p}
                         </button>
                       )
                     })}
                   </div>
                 </section>
 
-                <section className="space-y-2">
-                  <h3 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Cifras</h3>
-                  <NumberField label="Facturación total (€)" value={contact.total_revenue} onSave={(v) => save({ total_revenue: v })} />
-                  <NumberField label="Cash collected total (€)" value={contact.total_cash_collected} onSave={(v) => save({ total_cash_collected: v })} />
+                <section className="space-y-3">
+                  <h3 className="text-[15px] font-bold text-[#F5F6F7]">Cifras</h3>
+                  <NumberField label="Facturación total (EUR)" value={contact.total_revenue} onSave={(v) => save({ total_revenue: v })} />
+                  <NumberField label="Cobrado hasta hoy (EUR)" value={contact.total_cash_collected} onSave={(v) => save({ total_cash_collected: v })} />
                 </section>
               </div>
             )}
 
-            {/* JOURNEY TAB */}
             {tab === "journey" && (
-              <div className="p-4 space-y-3">
-                <h3 className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Timeline</h3>
+              <div className="space-y-3 p-4">
                 {bookings.length === 0 && events.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">Sin eventos todavía.</p>
+                  <p className="rounded-[8px] border border-dashed border-[rgba(245,246,247,0.1)] px-4 py-10 text-center text-[15px] text-[#A6AAB2]">
+                    Todavía no ha pasado nada con este contacto.
+                  </p>
                 ) : (
                   <ul className="space-y-2">
                     {bookings.map((b) => (
-                      <li key={`b-${b.id}`} className="flex items-start gap-2 rounded-sm border border-border px-3 py-2">
-                        <Calendar className="h-3.5 w-3.5 text-cyan-400 mt-0.5 shrink-0" />
-                        <div className="flex-1 text-sm">
-                          <div>Llamada {b.status === "cancelled" ? "(cancelada)" : ""}</div>
-                          <div className="text-[10px] font-mono text-muted-foreground">
+                      <li key={`b-${b.id}`} className="flex items-start gap-2.5 rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#131318] px-3 py-2.5">
+                        <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-[#4ADE80]" />
+                        <div className="flex-1">
+                          <p className="text-[14px] text-[#F5F6F7]">
+                            Llamada{b.status === "cancelled" ? " (cancelada)" : ""}
+                          </p>
+                          <p className="text-[13px] text-[#7C818A]">
                             {new Date(b.start_at).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                          </div>
+                          </p>
                         </div>
                       </li>
                     ))}
                     {events.map((e) => (
-                      <li key={e.id} className="flex items-start gap-2 rounded-sm border border-border px-3 py-2">
-                        <span className="h-2 w-2 rounded-full bg-muted-foreground/40 mt-1.5 shrink-0" />
-                        <div className="flex-1 text-sm">
-                          <div>{e.title}</div>
-                          {e.description && <div className="text-xs text-muted-foreground whitespace-pre-wrap mt-0.5">{e.description}</div>}
-                          <div className="text-[10px] font-mono text-muted-foreground mt-1">
+                      <li key={e.id} className="flex items-start gap-2.5 rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#131318] px-3 py-2.5">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7C818A]" />
+                        <div className="flex-1">
+                          <p className="text-[14px] text-[#F5F6F7]">{e.title}</p>
+                          {e.description && (
+                            <p className="mt-0.5 whitespace-pre-wrap text-[14px] text-[#A6AAB2]">{e.description}</p>
+                          )}
+                          <p className="mt-1 text-[13px] text-[#7C818A]">
                             {new Date(e.created_at).toLocaleString("es-ES")}
-                          </div>
+                          </p>
                         </div>
                       </li>
                     ))}
@@ -395,7 +454,6 @@ export function ContactDrawer({
               </div>
             )}
 
-            {/* NOTAS TAB */}
             {tab === "notas" && (
               <NotesTab notes={contact.notes ?? ""} onSave={(v) => save({ notes: v })} onAdd={addNote} />
             )}
@@ -448,16 +506,16 @@ function DataField({
   placeholder?: string
 }) {
   return (
-    <div>
-      <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">{label}</label>
+    <label className="block">
+      <span className={LABEL}>{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm font-mono"
+        className={cn(FIELD, "w-full")}
       />
-    </div>
+    </label>
   )
 }
 
@@ -466,20 +524,19 @@ function NumberField({ label, value, onSave }: { label: string; value: number; o
   useEffect(() => { setDraft(String(value)) }, [value])
   const changed = parseFloat(draft || "0") !== value
   return (
-    <div className="flex items-center gap-2">
-      <label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground w-40">{label}</label>
-      <input
-        type="number"
-        step="0.01"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        className="flex-1 rounded-sm border border-border bg-background px-2 py-1 text-sm font-mono"
-      />
+    <div className="flex flex-wrap items-end gap-2">
+      <label className="min-w-[200px] flex-1">
+        <span className={LABEL}>{label}</span>
+        <input
+          type="number"
+          step="0.01"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          className={cn(FIELD, "w-full tabular-nums")}
+        />
+      </label>
       {changed && (
-        <button
-          onClick={() => onSave(parseFloat(draft || "0"))}
-          className="rounded-sm bg-foreground text-background px-2 py-1 text-[10px] font-mono uppercase tracking-wider"
-        >
+        <button onClick={() => onSave(parseFloat(draft || "0"))} className={BTN_PRIMARY}>
           Guardar
         </button>
       )}
@@ -491,41 +548,42 @@ function NotesTab({ notes, onSave, onAdd }: { notes: string; onSave: (v: string)
   const [main, setMain] = useState(notes)
   const [quick, setQuick] = useState("")
   useEffect(() => { setMain(notes) }, [notes])
+  const textarea =
+    "w-full resize-none rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] px-3 py-2.5 " +
+    "text-[14px] text-[#F5F6F7] placeholder:text-[#7C818A] transition-colors " +
+    "focus:border-[#24462F] focus:outline-none focus:ring-1 focus:ring-[rgba(34,197,94,0.45)]"
+
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-6 p-4">
       <section>
-        <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Notas generales</label>
-        <textarea
-          value={main}
-          onChange={(e) => setMain(e.target.value)}
-          rows={6}
-          className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm font-mono resize-none"
-        />
+        <label className="block">
+          <span className={LABEL}>Notas generales</span>
+          <textarea value={main} onChange={(e) => setMain(e.target.value)} rows={6} className={textarea} />
+        </label>
         {main !== notes && (
-          <button
-            onClick={() => onSave(main)}
-            className="mt-2 inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1 text-[10px] font-mono uppercase tracking-wider"
-          >
-            <Save className="h-3 w-3" /> Guardar nota general
+          <button onClick={() => onSave(main)} className={cn(BTN_PRIMARY, "mt-2.5")}>
+            <Save className="h-4 w-4" /> Guardar nota general
           </button>
         )}
       </section>
 
       <section>
-        <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">Añadir nota al journey</label>
-        <textarea
-          value={quick}
-          onChange={(e) => setQuick(e.target.value)}
-          placeholder="Ej: Le interesa el plan anual pero quiere pensarlo. Llamar viernes 14h."
-          rows={3}
-          className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-sm resize-none"
-        />
+        <label className="block">
+          <span className={LABEL}>Añadir al historial</span>
+          <textarea
+            value={quick}
+            onChange={(e) => setQuick(e.target.value)}
+            placeholder="Le interesa el plan anual pero quiere pensarlo. Llamar el viernes a las 14h."
+            rows={3}
+            className={textarea}
+          />
+        </label>
         <button
           onClick={() => { onAdd(quick); setQuick("") }}
           disabled={!quick.trim()}
-          className="mt-2 inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1 text-[10px] font-mono uppercase tracking-wider disabled:opacity-30"
+          className={cn(BTN_PRIMARY, "mt-2.5")}
         >
-          <MessageSquare className="h-3 w-3" /> Añadir al journey
+          <MessageSquare className="h-4 w-4" /> Añadir al historial
         </button>
       </section>
     </div>

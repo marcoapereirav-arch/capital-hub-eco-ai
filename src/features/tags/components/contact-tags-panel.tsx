@@ -1,14 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, X, Tag as TagIcon, Loader2 } from "lucide-react"
+import { Plus, X, Loader2 } from "lucide-react"
 import { tagsService } from "../services/tags-service"
 import { TAG_COLOR_PALETTE, type Tag } from "../types/tag"
+import { FIELD } from "@/features/crm/lib/brand"
 import { cn } from "@/lib/utils"
 
 /**
- * Panel de tags para un contacto. Muestra los tags asignados y permite anadir/quitar.
- * Si el tag no existe, lo crea inline.
+ * Etiquetas de un contacto dentro de su ficha: las que tiene, quitar y anadir.
+ * Si se escribe un nombre que no existe, la crea al vuelo.
  */
 export function ContactTagsPanel({ contactId }: { contactId: string }) {
   const [assignedTags, setAssignedTags] = useState<Tag[]>([])
@@ -16,6 +17,7 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
   const [loading, setLoading] = useState(true)
   const [picking, setPicking] = useState(false)
   const [search, setSearch] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => { load() }, [contactId])
 
@@ -41,6 +43,7 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
       await tagsService.assignToContact(contactId, tag.id)
     } catch {
       setAssignedTags((prev) => prev.filter((t) => t.id !== tag.id))
+      setError("No se pudo añadir la etiqueta. Inténtalo otra vez.")
     }
   }
 
@@ -50,12 +53,14 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
       await tagsService.removeFromContact(contactId, tag.id)
     } catch {
       setAssignedTags((prev) => [...prev, tag])
+      setError("No se pudo quitar la etiqueta. Inténtalo otra vez.")
     }
   }
 
   async function createAndAssign() {
     const name = search.trim()
     if (!name) return
+    setError(null)
     try {
       const newTag = await tagsService.create({
         name,
@@ -64,7 +69,7 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
       setAllTags((prev) => [...prev, newTag].sort((a, b) => a.name.localeCompare(b.name)))
       await assign(newTag)
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error creando tag")
+      setError(e instanceof Error ? e.message : "No se pudo crear la etiqueta.")
     }
   }
 
@@ -76,18 +81,13 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
   const exactMatch = allTags.some((t) => t.name.toLowerCase() === search.toLowerCase())
 
   return (
-    <div className="px-4 py-3 border-b border-border">
-      <div className="flex items-center gap-2 mb-2">
-        <TagIcon className="h-3 w-3 text-muted-foreground" />
-        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-          Tags
-        </span>
-      </div>
+    <div className="border-b border-[rgba(245,246,247,0.1)] px-4 py-3">
+      <p className="mb-2 text-[13px] font-semibold text-[#A6AAB2]">Etiquetas</p>
 
       {loading ? (
-        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+        <Loader2 className="h-4 w-4 animate-spin text-[#7C818A]" />
       ) : (
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex flex-wrap items-center gap-1.5">
           {assignedTags.map((tag) => (
             <TagChip key={tag.id} tag={tag} onRemove={() => remove(tag)} />
           ))}
@@ -95,9 +95,9 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
           {!picking ? (
             <button
               onClick={() => setPicking(true)}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-sm text-[10px] font-mono uppercase tracking-wider border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-foreground/50 transition-colors"
+              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-[3px] border border-dashed border-[rgba(245,246,247,0.2)] px-2.5 text-[13px] font-semibold text-[#A6AAB2] transition-colors hover:border-[#24462F] hover:text-[#4ADE80]"
             >
-              <Plus className="h-3 w-3" /> Añadir tag
+              <Plus className="h-3.5 w-3.5" /> Añadir etiqueta
             </button>
           ) : (
             <div className="relative">
@@ -106,8 +106,9 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onBlur={() => setTimeout(() => setPicking(false), 200)}
-                placeholder="Buscar o crear…"
-                className="h-7 rounded-sm border border-border bg-background px-2 text-xs w-40"
+                placeholder="Buscar o crear"
+                aria-label="Buscar o crear etiqueta"
+                className={cn(FIELD, "h-10 w-48")}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Escape") setPicking(false)
@@ -115,27 +116,24 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
                 }}
               />
               {(filtered.length > 0 || (search.trim() && !exactMatch)) && (
-                <div className="absolute top-full mt-1 left-0 z-10 bg-card border border-border rounded-sm shadow-lg min-w-[180px] max-h-48 overflow-y-auto">
+                <div className="absolute left-0 top-full z-20 mt-1 max-h-52 min-w-[200px] overflow-y-auto overscroll-contain rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] shadow-[0_18px_40px_-16px_rgba(0,0,0,0.85)]">
                   {filtered.slice(0, 10).map((tag) => (
                     <button
                       key={tag.id}
                       onMouseDown={() => assign(tag)}
-                      className="w-full text-left px-2 py-1.5 hover:bg-secondary/50 flex items-center gap-2"
+                      className="flex min-h-[40px] w-full items-center gap-2 px-3 text-left text-[14px] text-[#F5F6F7] transition-colors hover:bg-[#131318]"
                     >
-                      <span
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <span className="text-xs">{tag.name}</span>
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
+                      <span className="truncate">{tag.name}</span>
                     </button>
                   ))}
                   {search.trim() && !exactMatch && (
                     <button
                       onMouseDown={createAndAssign}
-                      className="w-full text-left px-2 py-1.5 hover:bg-secondary/50 border-t border-border text-xs text-muted-foreground"
+                      className="flex min-h-[40px] w-full items-center gap-1.5 border-t border-[rgba(245,246,247,0.1)] px-3 text-left text-[14px] text-[#4ADE80] transition-colors hover:bg-[#131318]"
                     >
-                      <Plus className="inline h-3 w-3 mr-1" />
-                      Crear "{search.trim()}"
+                      <Plus className="h-3.5 w-3.5" />
+                      Crear {search.trim()}
                     </button>
                   )}
                 </div>
@@ -144,6 +142,8 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
           )}
         </div>
       )}
+
+      {error && <p className="mt-2 text-[13px] text-[#E5B567]">{error}</p>}
     </div>
   )
 }
@@ -151,22 +151,20 @@ export function ContactTagsPanel({ contactId }: { contactId: string }) {
 function TagChip({ tag, onRemove }: { tag: Tag; onRemove: () => void }) {
   return (
     <span
-      className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-medium border",
-      )}
+      className="inline-flex min-h-[36px] items-center gap-1.5 rounded-[3px] border px-2.5 text-[13px] font-medium"
       style={{
-        backgroundColor: `${tag.color}22`,
+        backgroundColor: `${tag.color}1f`,
         color: tag.color,
-        borderColor: `${tag.color}55`,
+        borderColor: `${tag.color}4d`,
       }}
     >
       {tag.name}
       <button
         onClick={onRemove}
-        className="hover:opacity-70"
-        aria-label={`Quitar tag ${tag.name}`}
+        className="transition-opacity hover:opacity-70"
+        aria-label={`Quitar la etiqueta ${tag.name}`}
       >
-        <X className="h-2.5 w-2.5" />
+        <X className="h-3.5 w-3.5" />
       </button>
     </span>
   )

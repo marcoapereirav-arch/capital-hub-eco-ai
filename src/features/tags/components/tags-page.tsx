@@ -4,8 +4,17 @@ import { useEffect, useState } from "react"
 import { Plus, Pencil, Trash2, Tag as TagIcon, Loader2, X, Check } from "lucide-react"
 import { tagsService } from "../services/tags-service"
 import { TAG_COLOR_PALETTE, type Tag } from "../types/tag"
+import { LoadingScreen } from "@/components/ui/loading-screen"
+import { BTN_PRIMARY, FIELD, FONT } from "@/features/crm/lib/brand"
 import { cn } from "@/lib/utils"
 
+/**
+ * Etiquetas del CRM. Diseno del brandkit oficial.
+ *
+ * El COLOR de cada etiqueta lo elige el usuario y es un dato, no decoracion: por eso
+ * sigue saliendo tal cual lo guardo. Lo que va en brandkit es todo lo de alrededor
+ * (fondos, bordes, botones, tipografia).
+ */
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,58 +39,54 @@ export function TagsPage() {
     : tags
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 pb-24">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold flex items-center gap-2">
-            <TagIcon className="h-4 w-4 text-muted-foreground" />
-            Tags · {tags.length}
+          <h1 className="flex items-center gap-2 text-[20px] font-bold tracking-tight text-[#F5F6F7]">
+            <TagIcon className="h-5 w-5 text-[#4ADE80]" />
+            Etiquetas
+            <span className="text-[#7C818A]">{tags.length}</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="mt-1 text-[14px] text-[#A6AAB2]">
             Etiquetas reutilizables para segmentar contactos y disparar automatizaciones.
           </p>
         </div>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-1 rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90"
-        >
-          <Plus className="h-3 w-3" /> Nuevo tag
+        <button onClick={() => setCreating(true)} className={BTN_PRIMARY}>
+          <Plus className="h-4 w-4" /> Nueva etiqueta
         </button>
       </div>
 
-      {/* Buscador */}
-      <div className="relative">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar tag por nombre…"
-          className="w-full h-9 rounded-sm border border-border bg-background px-3 text-sm"
-        />
-      </div>
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar etiqueta por nombre"
+        aria-label="Buscar etiqueta"
+        className={cn(FIELD, "w-full max-w-md")}
+      />
 
-      {/* Lista */}
       {loading ? (
-        <div className="flex items-center justify-center py-12 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-        </div>
+        <LoadingScreen fullscreen={false} className="py-20" />
       ) : filtered.length === 0 ? (
-        <div className="border border-dashed border-border rounded-md p-8 text-center">
-          <TagIcon className="h-8 w-8 mx-auto mb-3 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">
-            {search ? "Sin tags que coincidan" : "No hay tags todavia. Crea el primero."}
+        <div className="flex flex-col items-center gap-4 rounded-[8px] border border-dashed border-[rgba(245,246,247,0.1)] px-6 py-16 text-center">
+          <p className="text-[15px] text-[#A6AAB2]">
+            {search ? "Ninguna etiqueta coincide con esa búsqueda." : "Todavía no hay etiquetas."}
           </p>
+          {!search && (
+            <button onClick={() => setCreating(true)} className={BTN_PRIMARY}>
+              <Plus className="h-4 w-4" /> Crear la primera
+            </button>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((tag) => (
             <TagCard
               key={tag.id}
               tag={tag}
               onEdit={() => setEditing(tag)}
               onDelete={async () => {
-                if (!confirm(`¿Borrar tag "${tag.name}"? Se quitara de todos los contactos que lo tengan.`)) return
+                if (!confirm(`¿Borrar la etiqueta "${tag.name}"? Se quitará de todos los contactos que la tengan.`)) return
                 await tagsService.delete(tag.id)
                 load()
               }}
@@ -90,7 +95,6 @@ export function TagsPage() {
         </div>
       )}
 
-      {/* Modales crear / editar */}
       {(creating || editing) && (
         <TagEditor
           tag={editing}
@@ -104,26 +108,35 @@ export function TagsPage() {
 
 function TagCard({ tag, onEdit, onDelete }: { tag: Tag; onEdit: () => void; onDelete: () => void }) {
   return (
-    <div className="bg-card/30 border border-border rounded-md p-4 group hover:border-foreground/30 transition-colors">
-      <div className="flex items-start justify-between gap-2 mb-2">
+    <div className="rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#131318] p-4 transition-colors hover:border-[rgba(245,246,247,0.2)]">
+      <div className="flex items-start justify-between gap-2">
         <span
-          className="inline-flex items-center gap-1.5 px-2 py-1 rounded-sm text-xs font-medium"
+          className="inline-flex items-center gap-1.5 rounded-[3px] px-2 py-1 text-[13px] font-semibold"
           style={{ backgroundColor: `${tag.color}22`, color: tag.color, border: `1px solid ${tag.color}55` }}
         >
           <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
           {tag.name}
         </span>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-secondary">
-            <Pencil className="h-3 w-3" />
+        {/* Visibles siempre: un boton que solo aparece al pasar el cursor no existe en movil. */}
+        <div className="flex shrink-0 gap-1">
+          <button
+            onClick={onEdit}
+            aria-label={`Editar la etiqueta ${tag.name}`}
+            className="flex h-9 w-9 items-center justify-center rounded-[4px] text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#F5F6F7]"
+          >
+            <Pencil className="h-4 w-4" />
           </button>
-          <button onClick={onDelete} className="p-1 rounded-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10">
-            <Trash2 className="h-3 w-3" />
+          <button
+            onClick={onDelete}
+            aria-label={`Borrar la etiqueta ${tag.name}`}
+            className="flex h-9 w-9 items-center justify-center rounded-[4px] text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#E5B567]"
+          >
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
       {tag.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{tag.description}</p>
+        <p className="mt-2.5 line-clamp-2 text-[14px] text-[#A6AAB2]">{tag.description}</p>
       )}
     </div>
   )
@@ -138,7 +151,7 @@ function TagEditor({ tag, onClose, onSaved }: { tag: Tag | null; onClose: () => 
 
   async function save() {
     if (!name.trim()) {
-      setError("El nombre es obligatorio")
+      setError("Ponle un nombre a la etiqueta para poder guardarla.")
       return
     }
     setSaving(true)
@@ -151,29 +164,41 @@ function TagEditor({ tag, onClose, onSaved }: { tag: Tag | null; onClose: () => 
       }
       onSaved()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al guardar")
+      setError(e instanceof Error ? e.message : "No se pudo guardar. Inténtalo otra vez.")
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      onClick={onClose}
+      style={{ fontFamily: FONT }}
+    >
       <div
-        className="bg-card border border-border rounded-md p-6 w-full max-w-md space-y-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={tag ? "Editar etiqueta" : "Nueva etiqueta"}
+        className="w-full max-w-md space-y-4 rounded-[8px] border border-[rgba(245,246,247,0.1)] bg-[#131318] p-6 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">{tag ? "Editar tag" : "Nuevo tag"}</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <h2 className="text-[17px] font-bold tracking-tight text-[#F5F6F7]">
+            {tag ? "Editar etiqueta" : "Nueva etiqueta"}
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex h-9 w-9 items-center justify-center rounded-[4px] text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#F5F6F7]"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Preview */}
-        <div className="flex items-center justify-center py-3 border border-border rounded-sm bg-background/50">
+        <div className="flex items-center justify-center rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] py-4">
           <span
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-sm font-medium"
+            className="inline-flex items-center gap-1.5 rounded-[3px] px-3 py-1.5 text-[14px] font-semibold"
             style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}55` }}
           >
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -181,79 +206,77 @@ function TagEditor({ tag, onClose, onSaved }: { tag: Tag | null; onClose: () => 
           </span>
         </div>
 
-        {/* Nombre */}
-        <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Nombre</label>
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-semibold text-[#A6AAB2]">Nombre</span>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="ej. vip, pago_fallido, alumno_evergreen"
-            className="w-full mt-1 h-9 rounded-sm border border-border bg-background px-3 text-sm"
+            placeholder="vip, pago_fallido, alumno_evergreen"
+            className={cn(FIELD, "w-full")}
             autoFocus
           />
-        </div>
+        </label>
 
-        {/* Color */}
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Color</label>
-          <div className="grid grid-cols-6 gap-2 mt-2">
+          <span className="mb-2 block text-[13px] font-semibold text-[#A6AAB2]">Color</span>
+          <div className="grid grid-cols-6 gap-2">
             {TAG_COLOR_PALETTE.map((c) => (
               <button
                 key={c.value}
                 type="button"
                 onClick={() => setColor(c.value)}
+                aria-label={c.label}
+                aria-pressed={color === c.value}
                 className={cn(
-                  "h-8 rounded-sm border-2 transition-all flex items-center justify-center",
-                  color === c.value ? "border-foreground scale-110" : "border-transparent hover:scale-105",
+                  "flex h-10 items-center justify-center rounded-[4px] border-2 transition-transform",
+                  color === c.value
+                    ? "scale-105 border-[#F5F6F7]"
+                    : "border-transparent hover:scale-105"
                 )}
                 style={{ backgroundColor: c.value }}
-                title={c.label}
               >
-                {color === c.value && <Check className="h-3 w-3 text-white" />}
+                {color === c.value && <Check className="h-4 w-4 text-white" />}
               </button>
             ))}
           </div>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-[10px] text-muted-foreground">Custom hex:</span>
+          <label className="mt-2.5 flex items-center gap-2">
+            <span className="text-[13px] text-[#7C818A]">Otro color</span>
             <input
               type="text"
               value={color}
               onChange={(e) => setColor(e.target.value)}
-              className="h-7 rounded-sm border border-border bg-background px-2 text-xs font-mono w-24"
+              aria-label="Color en hexadecimal"
+              className={cn(FIELD, "h-10 w-28")}
             />
-          </div>
+          </label>
         </div>
 
-        {/* Descripcion */}
-        <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Descripción</label>
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-semibold text-[#A6AAB2]">
+            Descripción <span className="font-normal text-[#7C818A]">(opcional)</span>
+          </span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="(opcional) Cuándo se usa este tag…"
+            placeholder="Cuándo se usa esta etiqueta"
             rows={2}
-            className="w-full mt-1 rounded-sm border border-border bg-background px-3 py-2 text-sm resize-none"
+            className="w-full resize-none rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] px-3 py-2.5 text-[14px] text-[#F5F6F7] placeholder:text-[#7C818A] transition-colors focus:border-[#24462F] focus:outline-none focus:ring-1 focus:ring-[rgba(34,197,94,0.45)]"
           />
-        </div>
+        </label>
 
-        {error && <div className="text-xs text-red-400">{error}</div>}
+        {error && <p className="text-[14px] text-[#E5B567]">{error}</p>}
 
-        {/* Botones */}
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex justify-end gap-2 pt-1">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider border border-border rounded-sm hover:bg-secondary"
+            className="inline-flex min-h-[44px] items-center rounded-[4px] border border-[rgba(245,246,247,0.1)] px-4 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
           >
             Cancelar
           </button>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-mono uppercase tracking-wider bg-foreground text-background rounded-sm hover:opacity-90 disabled:opacity-50"
-          >
-            {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-            {tag ? "Guardar" : "Crear tag"}
+          <button onClick={save} disabled={saving} className={BTN_PRIMARY}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {tag ? "Guardar cambios" : "Crear etiqueta"}
           </button>
         </div>
       </div>

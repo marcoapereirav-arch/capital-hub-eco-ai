@@ -6,7 +6,8 @@ import type { Tag } from "../types/tag"
 import { cn } from "@/lib/utils"
 
 /**
- * Boton de filtro multi-tag. Compacto.
+ * Filtro por etiquetas (se pueden marcar varias). Un contacto pasa el filtro si tiene
+ * AL MENOS UNA de las marcadas.
  */
 export function TagFilterButton({
   allTags,
@@ -27,8 +28,15 @@ export function TagFilterButton({
         setOpen(false)
       }
     }
+    function onEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false)
+    }
     document.addEventListener("mousedown", onClickOutside)
-    return () => document.removeEventListener("mousedown", onClickOutside)
+    document.addEventListener("keydown", onEscape)
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside)
+      document.removeEventListener("keydown", onEscape)
+    }
   }, [open])
 
   function toggle(id: string) {
@@ -38,38 +46,47 @@ export function TagFilterButton({
     onChange(next)
   }
 
+  const activo = selected.size > 0
+
   return (
     <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
+      <div
         className={cn(
-          "h-8 inline-flex items-center gap-1 rounded-sm border bg-background px-2 text-xs transition-colors",
-          selected.size > 0
-            ? "border-foreground/40 text-foreground"
-            : "border-border text-muted-foreground hover:text-foreground",
+          "inline-flex min-h-[44px] items-center rounded-[4px] border transition-colors",
+          activo
+            ? "border-[#24462F] bg-[#101710] text-[#4ADE80]"
+            : "border-[rgba(245,246,247,0.1)] bg-[#16161B] text-[#A6AAB2] hover:text-[#F5F6F7]"
         )}
       >
-        <TagIcon className="h-3 w-3" />
-        Tags
-        {selected.size > 0 && (
-          <span className="font-mono tabular-nums">· {selected.size}</span>
-        )}
-        {selected.size > 0 && (
-          <span
-            className="ml-1 hover:opacity-70"
-            onClick={(e) => { e.stopPropagation(); onChange(new Set()) }}
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-haspopup="true"
+          className="inline-flex min-h-[44px] items-center gap-2 px-3 text-[14px] font-semibold"
+        >
+          <TagIcon className="h-4 w-4" />
+          Etiquetas
+          {activo && <span className="tabular-nums">({selected.size})</span>}
+        </button>
+        {activo && (
+          // Boton propio, no un <span> con onClick dentro de otro boton: eso era HTML
+          // invalido y no se podia usar con el teclado.
+          <button
+            onClick={() => onChange(new Set())}
+            aria-label="Quitar el filtro de etiquetas"
+            className="flex h-11 w-9 items-center justify-center rounded-r-[4px] transition-colors hover:bg-[#16161B]"
           >
-            <X className="h-3 w-3" />
-          </span>
+            <X className="h-4 w-4" />
+          </button>
         )}
-      </button>
+      </div>
 
       {open && (
-        <div className="absolute top-full mt-1 left-0 z-20 bg-card border border-border rounded-sm shadow-lg min-w-[220px] max-h-72 overflow-y-auto">
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 min-w-[240px] overflow-y-auto overscroll-contain rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] shadow-[0_18px_40px_-16px_rgba(0,0,0,0.85)]">
           {allTags.length === 0 ? (
-            <div className="px-3 py-3 text-[11px] text-muted-foreground">
-              Sin tags todavía. Crea desde /crm/tags.
-            </div>
+            <p className="px-3 py-3 text-[14px] text-[#A6AAB2]">
+              Todavía no hay etiquetas. Se crean en la pestaña Etiquetas.
+            </p>
           ) : (
             allTags.map((tag) => {
               const isSelected = selected.has(tag.id)
@@ -77,18 +94,21 @@ export function TagFilterButton({
                 <button
                   key={tag.id}
                   onClick={() => toggle(tag.id)}
-                  className="w-full text-left px-3 py-1.5 hover:bg-secondary flex items-center gap-2 text-xs"
+                  aria-pressed={isSelected}
+                  className="flex min-h-[44px] w-full items-center gap-2.5 px-3 text-left text-[14px] text-[#F5F6F7] transition-colors hover:bg-[#131318]"
                 >
                   <span
                     className={cn(
-                      "h-3.5 w-3.5 rounded-sm border flex items-center justify-center shrink-0",
-                      isSelected ? "border-foreground bg-foreground/10" : "border-border",
+                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border",
+                      isSelected
+                        ? "border-[#22C55E] bg-[#22C55E]"
+                        : "border-[rgba(245,246,247,0.2)]"
                     )}
                   >
-                    {isSelected && <Check className="h-2.5 w-2.5 text-foreground" />}
+                    {isSelected && <Check className="h-3 w-3 text-[#08130C]" />}
                   </span>
                   <span
-                    className="h-2 w-2 rounded-full shrink-0"
+                    className="h-2 w-2 shrink-0 rounded-full"
                     style={{ backgroundColor: tag.color }}
                   />
                   <span className="truncate">{tag.name}</span>
@@ -96,10 +116,10 @@ export function TagFilterButton({
               )
             })
           )}
-          {selected.size > 0 && (
-            <div className="border-t border-border px-3 py-1.5 text-[10px] text-muted-foreground">
-              <span className="font-mono">Lógica:</span> coincide cualquier (OR)
-            </div>
+          {activo && (
+            <p className="border-t border-[rgba(245,246,247,0.1)] px-3 py-2 text-[13px] text-[#7C818A]">
+              Se muestran los contactos que tengan alguna de las marcadas.
+            </p>
           )}
         </div>
       )}

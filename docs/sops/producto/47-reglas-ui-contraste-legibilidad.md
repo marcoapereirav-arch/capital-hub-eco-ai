@@ -159,7 +159,96 @@ verdad pone los valores explícitos (`#22C55E`, `#4ADE80`, `#0F0F12`, `#131318`,
 **No se tocan los tokens globales sin encargo:** cambiarlos repinta el OS entero de golpe.
 Es un trabajo aparte, y lo decide Marco.
 
+## Scroll: la caja que RECORTA y la caja que DEJA BAJAR no pueden ser la misma
+
+Clase de bug nueva, encontrada el 2026-08-06 en el CRM y con pinta de poder repetirse en
+cualquier pantalla que monte su propio armazón de alto completo.
+
+**Síntoma:** la pantalla "se queda pegada". El contenido continúa por debajo del borde pero
+no hay barra de scroll y la rueda no mueve nada.
+
+**Por qué:** el OS ya tiene UN contenedor con scroll vertical, en `(main)/layout.tsx`. Si una
+sección monta dentro su propio armazón (`flex h-full flex-col` + cabecera fija + hueco de
+contenido) y a ese hueco le pone `overflow-hidden`, pasan las dos cosas a la vez:
+
+1. el hueco recorta el contenido que sobra, y
+2. como lo recorta, el contenedor de fuera **nunca llega a desbordar**, así que tampoco
+   saca su barra.
+
+El contenido desaparece sin que nada falle: no hay error de consola, ni aviso de tipos, ni
+build roto. En el CRM eran 1508px de contactos invisibles.
+
+**Reglas:**
+
+- El hueco de contenido de una sección lleva `overflow-y-auto`, nunca `overflow-hidden`.
+- Una sección tiene **un solo** scroll vertical. Si una vista concreta necesita ocupar el
+  alto exacto sin scroll de página (un kanban con columnas que scrollean por dentro),
+  **pide `h-full` al hueco**; no recorta el hueco para todas las demás vistas.
+- **Prohibido adivinar la altura con `h-[calc(100vh-Xrem)]`.** Ese número sale de contar a
+  ojo las barras de arriba y deja de cuadrar en cuanto una cambia de alto o aparece un
+  banner. `h-full` la hereda del hueco real.
+- La barra inferior de móvil se reserva con `pb-mobile-nav` **en el contenedor con scroll**,
+  una sola vez, no en cada página hija.
+- **Cómo se comprueba** (mirarlo no basta, la pantalla parece normal): en el navegador,
+  buscar los contenedores con `overflow-y` scrollable y comparar `scrollHeight` con
+  `clientHeight`. Si el contenido desborda y ninguno puede bajar, está roto.
+
+## El botón flotante de "Registrar venta" se come el pie de TODAS las pantallas
+
+El widget de Registrar venta es `fixed` abajo a la derecha y flota por encima de todo el OS.
+Ocupa los **últimos 72px** de la ventana (48px de alto + 24px de separación). Cualquier cosa
+que quede al final de una página (un paginador, la última fila de una tabla, un botón de
+guardar) **queda debajo de él y no se puede pulsar**.
+
+- Toda pantalla con contenido que llegue al fondo reserva ese hueco: `pb-28 md:pb-28` en su
+  `<PageContainer>`.
+- **La variante `md:` NO sobra.** `PageContainer` ya trae `md:py-6`, y a partir de 768px eso
+  gana a un `pb-28` suelto. `tailwind-merge` tampoco lo arregla, porque una clase con `md:`
+  y otra sin él **no se consideran en conflicto**: las deja las dos y decide la cascada.
+  Pasó el 2026-08-06: la clase estaba puesta en el HTML y el padding real seguía siendo
+  24px. **Comprobar siempre el valor calculado, no que la clase esté escrita.**
+- **Cómo se comprueba** que algo del pie es pulsable de verdad: `document.elementFromPoint()`
+  en el centro del botón tiene que devolver ese botón. Que se vea no basta: puede estar
+  debajo de una capa transparente.
+
+## Aplicar el brandkit a una pantalla del OS (referencia: el CRM)
+
+El CRM (`/crm`, las 3 pestañas) se rehizo con el brandkit oficial el 2026-08-06 y sirve de
+patrón para las siguientes. Lo que se hizo:
+
+- Los valores del brandkit viven en **un módulo por sección**
+  (`src/features/crm/lib/brand.ts`): colores, clases de tarjeta, campo y botones, y el tono
+  de cada stage. Nada de repetir hex por los componentes.
+- **Los tokens del OS NO se tocan** (siguen siendo la trampa de la sección anterior): se
+  escriben los valores explícitos y `fontFamily: var(--font-inter-tight)`.
+- Fuera del CRM: mono en mayúsculas espaciadas, textos de 9-10px, esquinas rectas, acento
+  blanco y los neones por stage (cian, violeta, naranja). El acento es **el verde**, y ahora
+  además significa algo: gris que se aclara según avanza el funnel, verde en la venta, ámbar
+  en el aviso (`no_show`), apagado en `perdido`.
+
+**Trampa de Tailwind que costó un rato:** las clases se escriben **literales**. Tailwind lee
+el código como texto y solo genera las clases que ve escritas enteras, así que un
+`border-[${color}]` montado en tiempo de ejecución **no existe en el CSS** y el elemento sale
+sin estilo, sin ningún error. Los colores calculados van por `style`, nunca por `className`.
+
+Deuda de layout resuelta de paso (quitadas de `DEUDA_CONOCIDA` en `scripts/check-layout.mjs`,
+y prohibido volver a meterlas): `crm/tags/page.tsx` y `crm-tabs-header.tsx`.
+
 ## Cambios versionados
+
+- **2026-08-06** (v6): clase de bug nueva documentada, **"la caja que recorta y la caja que
+  deja bajar no pueden ser la misma"**, tras quedarse pegada la pantalla del CRM (1508px de
+  contactos recortados sin barra de scroll, ningún error en ningún sitio). Añadida la
+  sección de cómo aplicar el brandkit a una pantalla del OS, con el patrón del módulo
+  `lib/brand.ts` por sección y la trampa de las clases de Tailwind montadas con plantilla.
+  Resuelta deuda de layout de 2 pantallas. Disparador: Marco, *"la pantalla se queda pegada,
+  no puedo hacer scroll... y quiero que todo esté funcional y con el diseño nuevo"*.
+
+- **2026-08-06** (v7): documentado que el **botón flotante de Registrar venta se come los
+  últimos 72px de cualquier pantalla**, con el hueco que hay que reservar (`pb-28 md:pb-28`)
+  y la trampa de que la variante `md:` es obligatoria porque `PageContainer` trae `md:py-6`
+  y `tailwind-merge` no considera en conflicto una clase con `md:` y otra sin él. Detonante:
+  el paginador nuevo de Contactos quedaba debajo del botón y no se podía pulsar.
 
 - **2026-07-31** (v5): candado automático de márgenes (`scripts/check-layout.mjs` en
   `predev` + `prebuild`) tras repetirse el bug por cuarta vez. Documentada la deuda de 12
