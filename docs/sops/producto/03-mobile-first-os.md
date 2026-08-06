@@ -128,7 +128,54 @@ Hook: `useIsMobile()` en [src/hooks/use-mobile.ts](../../src/hooks/use-mobile.ts
 
 ---
 
+## El marco común: las 7 piezas que salen en TODAS las pantallas
+
+Arregladas el 2026-08-02. Salen en las 35 pantallas a la vez, así que se tocan aquí y
+nunca pantalla por pantalla. **Si algo del marco se ve mal, se arregla en estos archivos.**
+
+| # | Qué se veía mal | Dónde se arregló | Qué se hizo |
+|---|---|---|---|
+| 1 | El título se aplastaba contra el notch del iPhone | `shell/components/mobile-header.tsx` | El alto **incluye** la franja de arriba: `h-[calc(3.5rem+env(safe-area-inset-top))]`. Antes era `h-14` fijo **con `pt-safe` por dentro**, así que al título le quedaban 9 puntos |
+| 2 | Con el teclado abierto no se llegaba al botón de guardar | `app/layout.tsx` | `interactiveWidget: 'resizes-content'` en el `viewport`. Sin eso la página no se encoge al abrir el teclado |
+| 3 | El menú "Más" se cortaba por arriba y no se llegaba al final | `components/ui/sheet.tsx` | El lado inferior lleva `max-h-[85dvh]` + `overflow-y-auto` + `pb-safe`. Antes era `h-auto` sin tope ni desplazamiento |
+| 4 | El aviso de actualización tapaba el menú entero | `sales/registrar-venta-widget`, `UpdateNotifier`, `PushNotificationPrompt` | Los tres suben por encima de la barra: `bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-6`. Antes los tres estaban en `bottom-4 right-4`, o sea **dentro** de la barra |
+| 5 | La última fila de cada lista quedaba debajo del menú | `components/ui/page-container.tsx` | Reserva el hueco de la barra. **Escrito explícito** (`pb-[calc(...)] md:pb-6`), NO con la clase `pb-mobile-nav`: esa pone el relleno a **cero** en escritorio y se come el margen inferior de la pantalla grande |
+| 6 | Botones y campos más pequeños que un dedo; el iPhone hacía zoom al escribir | `components/ui/{button,input,textarea}.tsx` | 44 puntos en teléfono y medida compacta desde `md:`. El área de texto pasa a `text-base md:text-sm`: por debajo de 16 puntos iOS se acerca solo |
+| 7 | La barra de abajo salía corrida, con hueco a la derecha | `shell/components/mobile-bottom-nav.tsx` | `flex` con `flex-1` en cada botón, en vez de `grid-cols-5` fijas con 4 botones (o 3, según el rol) |
+
+**Ninguno de los siete lo detecta un comprobador automático que solo mire desbordamiento**:
+las 30 pantallas daban cero deslizamiento lateral y aun así el teléfono se veía mal. Se
+encontraron leyendo el código y mirando las capturas.
+
+**Lo que un navegador sin pantalla NO puede ver**, y por tanto se comprueba a mano en un
+iPhone antes de dar algo por terminado:
+
+- La franja del notch: en Chromium sin cabeza `env(safe-area-inset-*)` vale **cero**, así
+  que la pieza 1 sale limpia aunque esté rota.
+- El teclado abierto: no existe, así que la pieza 2 tampoco se puede medir.
+- El teléfono girado, si no se pide expresamente.
+
+---
+
 ## Cambios versionados
+
+### 2026-08-02 — El marco común arreglado, y la ley operativa en una skill
+Encargo de Marco: *"que TODO el saas se adapte al móvil porque en el teléfono está TODO
+roto, no encaja nada. SIEMPRE mobile first"*. Arregladas las **7 piezas del marco común**
+(tabla de arriba). Medición previa sobre las 30 pantallas internas a 375px: **cero
+deslizamiento lateral en todas**, o sea que el problema no era el desbordamiento, sino 234
+zonas táctiles por debajo de 44 puntos, 1535 textos por debajo de 14 y 619 señales de
+diseño viejo.
+
+Nace la skill **`os-movil-primero`**, que es la ley operativa de cómo se construye una
+pantalla, y el candado `scripts/check-brandkit.mjs`, que impide volver a escribir diseño
+viejo. Detalle en [`producto/47`](47-reglas-ui-contraste-legibilidad.md) y en el PRP-009.
+
+**Aprendizaje del medidor:** la primera versión contaba como "tapados por la barra" los
+botones **de la propia barra**, y daba 131 falsos. Un medidor tiene que excluir todo lo que
+vive dentro de un elemento fijo. Además recortaba las listas a 8 y luego contaba el
+recorte: los totales salían planos y parecía que todas las pantallas estaban igual de mal.
+**Se cuenta antes de recortar la muestra.**
 
 ### 2026-05-01 — Creación
 SOP creada al iniciar el rediseño Mobile Native OS (proyecto `p_mobile_native_os`).
