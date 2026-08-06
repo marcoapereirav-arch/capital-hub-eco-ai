@@ -39,7 +39,12 @@ export function PageContainer({
         // pantallas; antes estaba escrito a mano en 12 sitios sueltos.
         // NO se usa la clase `pb-mobile-nav`: esa pone el relleno a CERO en
         // escritorio y se comeria el margen inferior de la pantalla grande.
-        "pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:pb-6",
+        //
+        // La cuenta en telefono: 3.5rem de la barra de abajo + la franja de
+        // gestos + 3.5rem del boton verde flotante + 1rem de aire. Sin la parte
+        // del boton, este tapa la ultima fila de cada pantalla: se comprobo en
+        // Webs (tapaba el lapiz de editar) y en el Dashboard (tapaba las cifras).
+        "pb-[calc(7rem+env(safe-area-inset-bottom)+1rem)] md:pb-6",
         wide ? "max-w-full" : narrow ? "max-w-4xl" : "max-w-7xl",
         className
       )}

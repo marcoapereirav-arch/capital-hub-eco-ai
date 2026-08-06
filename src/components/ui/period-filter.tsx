@@ -147,7 +147,7 @@ export function PeriodFilter({
   const popover = open && mounted && popoverPos ? (
     <div
       style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
-      className="w-64 overflow-hidden rounded-xl border border-white/10 bg-[#16161a] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)]"
+      className="w-[min(16rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-lg"
     >
       <div className="p-1.5">
         {PRESETS.map((p) => {
@@ -158,7 +158,7 @@ export function PeriodFilter({
               onClick={() => selectPreset(p.value)}
               className={cn(
                 "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[13px] transition-colors",
-                active ? "bg-white/[0.06] text-neutral-50" : "text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-100",
+                active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
               )}
             >
               <span>{p.label}</span>
@@ -168,32 +168,32 @@ export function PeriodFilter({
         })}
       </div>
 
-      <div className="space-y-2.5 border-t border-white/10 px-3.5 py-3.5">
-        <div className="text-[10px] uppercase text-neutral-500">Personalizado</div>
+      <div className="space-y-2.5 border-t border-border px-3.5 py-3.5">
+        <div className="text-sm font-semibold text-muted-foreground">Personalizado</div>
         <div className="grid grid-cols-2 gap-2">
           <label className="space-y-1">
-            <span className="block text-[10px] text-neutral-500">Desde</span>
+            <span className="block text-sm text-muted-foreground">Desde</span>
             <input
               type="date"
               value={customFrom}
               onChange={(e) => setCustomFrom(e.target.value)}
-              className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 text-[12px] text-neutral-200 outline-none focus:border-white/25"
+              className="h-11 md:h-8 w-full rounded-lg border border-border bg-card px-2 text-base md:text-sm text-foreground outline-none focus:border-ring"
             />
           </label>
           <label className="space-y-1">
-            <span className="block text-[10px] text-neutral-500">Hasta</span>
+            <span className="block text-sm text-muted-foreground">Hasta</span>
             <input
               type="date"
               value={customTo}
               onChange={(e) => setCustomTo(e.target.value)}
-              className="h-8 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 text-[12px] text-neutral-200 outline-none focus:border-white/25"
+              className="h-11 md:h-8 w-full rounded-lg border border-border bg-card px-2 text-base md:text-sm text-foreground outline-none focus:border-ring"
             />
           </label>
         </div>
         <button
           onClick={applyCustom}
           disabled={!customFrom || !customTo || customFrom > customTo}
-          className="h-8 w-full rounded-lg bg-brand text-[12px] font-semibold text-[#06210f] transition-opacity hover:opacity-90 disabled:opacity-30"
+          className="h-11 md:h-8 w-full rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-30"
         >
           Aplicar rango
         </button>
@@ -206,11 +206,11 @@ export function PeriodFilter({
       <button
         ref={buttonRef}
         onClick={() => setOpen((s) => !s)}
-        className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[12px] text-neutral-200 transition-colors hover:border-white/20 hover:bg-white/[0.05]"
+        className="inline-flex h-11 md:h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-muted"
       >
-        <Calendar className="h-3.5 w-3.5 text-neutral-500" />
+        <Calendar className="h-4 w-4 text-muted-foreground" />
         <span className="font-medium">{currentLabel}</span>
-        <ChevronDown className={cn("h-3.5 w-3.5 text-neutral-500 transition-transform", open && "rotate-180")} />
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
 
       {popover && createPortal(popover, document.body)}

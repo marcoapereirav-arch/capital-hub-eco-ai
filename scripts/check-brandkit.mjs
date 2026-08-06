@@ -205,9 +205,22 @@ const PREFIJOS = '((?:[^\\s"\'`{}:]+:)*)'
 const RESPONSIVE = new Set(["sm", "md", "lg", "xl", "2xl"])
 
 /** true si la cadena de prefijos apunta a pantalla ancha: ahi el telefono no lo ve. */
+// Devuelve el nombre de la etiqueta JSX a la que pertenece una clase encontrada
+// en la linea `i`, posicion `col`. Mira hacia atras hasta 6 lineas buscando la
+// ultima apertura `<Algo` que no se haya cerrado todavia.
+function etiquetaDuena(lineas, i, col) {
+  const trozos = []
+  for (let k = Math.max(0, i - 6); k < i; k++) trozos.push(lineas[k])
+  trozos.push(lineas[i].slice(0, col))
+  const texto = trozos.join("\n")
+  const aperturas = [...texto.matchAll(/<\/?([A-Za-z][\w.]*)/g)]
+  if (!aperturas.length) return ""
+  return aperturas[aperturas.length - 1][1]
+}
+
 function esDeEscritorio(prefijos) {
   if (!prefijos) return false
-  return prefijos.split(":").some((p) => RESPONSIVE.has(p))
+  return prefijos.split(":").some((p) => RESPONSIVE.has(p) || p === "file")
 }
 
 /** Une la linea con sus vecinas. Un className partido por el formateador, o un cn() con
@@ -670,7 +683,7 @@ const REGLAS = [
     familia: "estructura",
     patron: new RegExp(BORDE + PREFIJOS + "text-(?:xs|sm)(?![\\w-])", "g"),
     ventana: 2,
-    filtro: (m, ctx) => !esDeEscritorio(m[1]) && CAMPO.test(ctx.ventana),
+    filtro: (m, ctx) => !esDeEscritorio(m[1]) && /^(?:input|Input|textarea|Textarea)$/.test(ctx.duena),
     arreglo: [
       "Por debajo de 16 puntos, el iPhone se acerca solo al tocar el campo, y despues la",
       "pantalla se queda torcida.",
@@ -909,6 +922,10 @@ function senalesDe(codigoCrudo, rel) {
           datoDeProducto: ctxArchivo.datoDeProducto,
           linea,
           ventana: regla.ventana === undefined ? linea : ventanaDe(lineas, i, regla.ventana),
+          // A que etiqueta pertenece de verdad esta clase. Se busca hacia atras
+          // la ultima etiqueta ABIERTA antes del match. Sin esto, la etiqueta
+          // "Desde" que va justo encima de un campo se confundia con el campo.
+          duena: etiquetaDuena(lineas, i, m.index),
         }
         if (regla.filtro && !regla.filtro(m, ctx)) continue
         encontradas.push({

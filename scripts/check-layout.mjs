@@ -26,18 +26,13 @@ const ROOT = process.cwd()
 const SCAN = ["src/app", "src/features"]
 
 const DEUDA_CONOCIDA = new Set([
-  "src/app/(main)/crm/tags/page.tsx",
   "src/app/(main)/dashboard/page.tsx",
-  "src/app/(main)/instagram/page.tsx",
   "src/app/(main)/integrations/page.tsx",
   "src/app/(main)/invitaciones/page.tsx",
-  "src/app/(main)/manychat/page.tsx",
   "src/app/(main)/mision/page.tsx",
   "src/features/board/components/board-page.tsx",
-  "src/features/content-intel/components/content-intel-page.tsx",
   "src/features/crm/components/crm-page.tsx",
   "src/features/crm/components/crm-tabs-header.tsx",
-  "src/features/webs/components/webs-page.tsx",
 ])
 
 /** Quita comentarios para no confundir una mención en la documentación con JSX real. */

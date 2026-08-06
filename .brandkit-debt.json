@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-06",
-  "total": 1983,
+  "total": 1925,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -189,9 +189,6 @@
       "alto-atado-a-la-ventana": {
         "min-h-screen": 1
       },
-      "campo-con-letra-chica": {
-        "text-sm": 1
-      },
       "acento-blanco": {
         "background: '#FFFFFF": 1
       }
@@ -250,14 +247,6 @@
         "group-data-[size=sm]/avatar:text-xs": 1
       }
     },
-    "src/components/ui/badge.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-xs": 1
-      }
-    },
     "src/components/ui/button.tsx": {
       "texto-por-debajo-del-minimo": {
         "text-xs": 1,
@@ -291,28 +280,8 @@
       }
     },
     "src/components/ui/period-filter.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "color-a-mano": {
-        "#16161a": 1,
-        "#06210f": 1
-      },
       "texto-por-debajo-del-minimo": {
-        "text-[13px]": 1,
-        "text-[10px]": 3,
-        "text-[12px]": 4
-      },
-      "color-prohibido": {
-        "text-neutral-50": 1,
-        "text-neutral-400": 1,
-        "text-neutral-100": 1,
-        "text-neutral-500": 5,
-        "text-neutral-200": 3
-      },
-      "control-pequeno": {
-        "h-8": 1,
-        "h-9": 1
+        "text-[13px]": 1
       }
     },
     "src/components/ui/scroll-area.tsx": {
@@ -327,9 +296,6 @@
       }
     },
     "src/components/ui/tabs.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
       "esquina-recta": {
         "rounded-none": 1
       },
@@ -472,17 +438,11 @@
       }
     },
     "src/features/dashboard/components/date-filter.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
       "texto-por-debajo-del-minimo": {
-        "text-xs": 5
+        "text-xs": 3
       },
       "control-pequeno": {
-        "h-8": 3
-      },
-      "campo-con-letra-chica": {
-        "text-xs": 1
+        "h-8": 2
       }
     },
     "src/features/dashboard/components/funnel-cards.tsx": {
@@ -1629,25 +1589,6 @@
         "text-foreground/90": 1
       }
     },
-    "src/features/sales/components/registrar-venta-widget.tsx": {
-      "color-prohibido": {
-        "from-green-500": 1,
-        "to-green-600": 1,
-        "border-green-400": 1
-      },
-      "degradado-de-color": {
-        "bg-gradient-to-": 1
-      },
-      "fuente-mono": {
-        "font-mono": 1
-      },
-      "mayusculas-separadas": {
-        "uppercase + tracking ancho": 1
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-xs": 1
-      }
-    },
     "src/features/sales/components/sale-stage-prompt.tsx": {
       "pantalla-solo-para-monitor": {
         "archivo sin instrucciones de telefono": 1
@@ -1747,19 +1688,8 @@
       }
     },
     "src/features/team/components/accept-invite-page.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "color-a-mano": {
-        "#0F0F12": 5,
-        "#16161B": 1,
-        "#2A2D34": 4
-      },
       "alto-atado-a-la-ventana": {
         "min-h-screen": 2
-      },
-      "verde-viejo": {
-        "#37CA37": 4
       },
       "texto-por-debajo-del-minimo": {
         "text-xs": 3,
@@ -1800,7 +1730,6 @@
         "100vh": 2
       },
       "control-pequeno": {
-        "h-7": 1,
         "h-6": 1,
         "h-8": 3
       },
@@ -1884,11 +1813,8 @@
       }
     },
     "src/features/webs/components/meeting-url-card.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
       "texto-por-debajo-del-minimo": {
-        "text-xs": 3,
+        "text-xs": 2,
         "text-[10px]": 4
       },
       "color-prohibido": {
@@ -1901,7 +1827,7 @@
         "text-red-400": 1
       },
       "fuente-mono": {
-        "font-mono": 6
+        "font-mono": 5
       },
       "mayusculas-separadas": {
         "uppercase + tracking ancho": 3
