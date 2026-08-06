@@ -45,7 +45,7 @@ export function PushNotificationPrompt({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-sm border border-border bg-card p-4 shadow-lg space-y-3">
+    <div className="fixed right-4 z-50 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+5rem)] md:bottom-6 md:right-6 w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-4 shadow-lg space-y-3">
       <p className="text-sm font-medium text-foreground">Activar notificaciones?</p>
       <p className="text-xs text-muted-foreground">
         Recibe avisos de leads, agendas y ventas aunque no tengas la app abierta.

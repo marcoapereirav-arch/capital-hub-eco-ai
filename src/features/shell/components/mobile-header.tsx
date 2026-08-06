@@ -29,9 +29,12 @@ export function MobileHeader({ userEmail, userName }: MobileHeaderProps) {
   const initials = deriveInitials(displayName)
   const title = deriveSectionTitle(pathname)
 
+  // El alto INCLUYE la franja del notch. Antes era h-14 fijo con pt-safe por
+  // dentro, asi que en un iPhone con notch al titulo le quedaban 9 puntos y se
+  // desbordaba encima de la pagina.
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card/95 px-4 pt-safe backdrop-blur-md md:hidden">
-      <h1 className="font-heading text-sm font-semibold uppercase tracking-[0.15em] text-foreground">
+    <header className="sticky top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center justify-between border-b border-border bg-card/95 px-4 pt-safe backdrop-blur-md md:hidden">
+      <h1 className="truncate pr-3 font-heading text-base font-extrabold text-foreground">
         {title}
       </h1>
       {/* Derecha: campana + avatar (perfil), alineados con la línea del header. */}
@@ -42,8 +45,8 @@ export function MobileHeader({ userEmail, userName }: MobileHeaderProps) {
           className="tap-target flex items-center justify-center"
           aria-label="Perfil"
         >
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-secondary text-[11px] font-mono font-semibold text-secondary-foreground">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-secondary text-sm font-semibold text-secondary-foreground">
               {initials}
             </AvatarFallback>
           </Avatar>

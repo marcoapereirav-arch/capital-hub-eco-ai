@@ -18,7 +18,7 @@ export function RegistrarVentaWidget() {
         onClick={() => setOpen(true)}
         title="Registrar venta (Ctrl+K, V)"
         className={cn(
-          "fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40",
+          "fixed right-4 z-40 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-6 md:right-6",
           "inline-flex items-center gap-2 rounded-full",
           "bg-gradient-to-br from-green-500 to-green-600",
           "text-black font-mono uppercase tracking-wider text-xs font-bold",

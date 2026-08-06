@@ -28,6 +28,13 @@ export function PageContainer({
     <div
       className={cn(
         "mx-auto w-full px-4 py-4 md:px-6 md:py-6 space-y-4",
+        // Reserva el sitio de la barra de abajo del telefono. Sin esto, la
+        // ultima tarjeta o el ultimo boton de cada pantalla quedan tapados por
+        // el menu y no se pueden tocar. Va aqui una sola vez y vale para las 35
+        // pantallas; antes estaba escrito a mano en 12 sitios sueltos.
+        // NO se usa la clase `pb-mobile-nav`: esa pone el relleno a CERO en
+        // escritorio y se comeria el margen inferior de la pantalla grande.
+        "pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:pb-6",
         wide ? "max-w-full" : narrow ? "max-w-4xl" : "max-w-7xl",
         className
       )}

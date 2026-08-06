@@ -36,6 +36,11 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: rgb(var(--brand) / <alpha-value>);
+  /* Ambar de AVISO del brandkit. Solo para avisar de algo que pide atencion
+     ("lleva 3 dias sin gastar"), nunca como color de adorno. El error sigue
+     siendo rojo (`destructive`) y el acento sigue siendo verde. */
+  --color-warn: #E5B567;
+  --color-warn-foreground: #1A1408;
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);

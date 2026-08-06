@@ -49,6 +49,10 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
+  // Al abrir el teclado, la pagina se encoge en vez de quedarse igual. Sin esto,
+  // todo lo anclado abajo (el boton de guardar, la barra de acciones) queda
+  // tapado por el teclado y no se puede pulsar.
+  interactiveWidget: 'resizes-content',
 }
 
 export default function RootLayout({
