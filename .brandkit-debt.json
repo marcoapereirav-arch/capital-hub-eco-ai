@@ -9,8 +9,8 @@
     "NO se edita a mano. Cuando un archivo mejora, el candado lo aprieta solo. Si partes o",
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
-  "generado": "2026-08-06",
-  "total": 1924,
+  "generado": "2026-08-07",
+  "total": 1908,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -1604,22 +1604,11 @@
       }
     },
     "src/features/shell/components/app-sidebar.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
       "mayusculas-separadas": {
-        "uppercase + tracking ancho": 3
+        "uppercase + tracking ancho": 1
       },
       "texto-por-debajo-del-minimo": {
-        "text-xs": 1,
-        "text-[10px]": 2,
-        "text-[9px]": 2
-      },
-      "fuente-mono": {
-        "font-mono": 4
-      },
-      "token-diluido": {
-        "text-muted-foreground/60": 1
+        "text-xs": 1
       }
     },
     "src/features/shell/components/mobile-bottom-nav.tsx": {
@@ -1637,14 +1626,7 @@
       }
     },
     "src/features/shell/components/user-menu.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "fuente-mono": {
-        "font-mono": 1
-      },
       "texto-por-debajo-del-minimo": {
-        "text-[10px]": 2,
         "text-xs": 2
       }
     },

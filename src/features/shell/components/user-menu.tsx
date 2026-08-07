@@ -57,13 +57,13 @@ export function UserMenu({ email, name, role }: UserMenuProps) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="h-10">
               <Avatar className="h-6 w-6">
-                <AvatarFallback className="bg-secondary text-[10px] font-mono font-semibold text-secondary-foreground">
+                <AvatarFallback className="bg-secondary text-xs font-semibold text-secondary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-xs leading-tight">
                 <span className="font-medium text-foreground">{displayName}</span>
-                <span className="text-muted-foreground text-[10px] capitalize">{roleLabel}</span>
+                <span className="text-muted-foreground text-sm md:text-xs capitalize">{roleLabel}</span>
               </div>
               <ChevronsUpDown className="ml-auto h-4 w-4 text-muted-foreground" />
             </SidebarMenuButton>
@@ -76,7 +76,7 @@ export function UserMenu({ email, name, role }: UserMenuProps) {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-medium text-foreground">{displayName}</p>
-                <p className="text-xs text-muted-foreground">{email}</p>
+                <p className="text-sm md:text-xs text-muted-foreground">{email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

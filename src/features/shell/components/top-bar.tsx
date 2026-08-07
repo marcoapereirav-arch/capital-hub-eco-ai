@@ -26,7 +26,7 @@ export function TopBar() {
     <header className="hidden h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-4 md:flex">
       <div className="flex min-w-0 items-center gap-3">
         <SidebarTrigger className="-ml-1 h-7 w-7 text-muted-foreground hover:text-foreground" />
-        <h1 className="truncate font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+        <h1 className="truncate font-heading text-base font-extrabold text-foreground">
           {title}
         </h1>
       </div>

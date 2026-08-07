@@ -29,16 +29,18 @@ Si la diferencia es estructural → dividir en `xxx-mobile.tsx` + `xxx-desktop.t
 ### 1. Bottom tab bar (estilo iOS)
 - Barra fija en la parte inferior con **4 destinos principales** + 1 botón "Más".
 - Altura visible: 56px. Padding inferior con `env(safe-area-inset-bottom)`.
-- Iconos `lucide-react` 22-24px + label 11px en `font-mono` uppercase.
+- El ancho se reparte con `flex` + `flex-1`, **no** con `grid-cols-N` fijas: el número de destinos cambia según el rol.
+- Iconos `lucide-react` 22-24px + etiqueta a 14px (`text-sm`) en texto normal. **Nada de `font-mono` ni de mayúsculas espaciadas**: es diseño viejo.
 - Estado activo: foreground full, indicador 2px arriba.
 - En desktop: **oculta** (`md:hidden`).
 
 Destinos: **Dashboard · Tareas · Board · Knowledge · Más**.
 "Más" abre un `Sheet` desde abajo con: CRM, Webs, Content Intel, Integraciones, perfil, logout.
 
-### 2. Top header móvil (56px)
+### 2. Top header móvil (56px + la franja del notch)
 - Sticky top, fondo `card` con borde inferior 1px.
-- Título de la sección a la izquierda en `font-heading` uppercase tracking 0.15em.
+- **El alto INCLUYE la franja de arriba**: `h-[calc(3.5rem+env(safe-area-inset-top))]` con `pt-safe`. Poner `h-14` y `pt-safe` a la vez deja al título 9 puntos y lo aplasta contra el notch.
+- Título de la sección a la izquierda en `font-heading`, peso 800, texto normal (nada de mayúsculas espaciadas).
 - Avatar usuario a la derecha (tap → user menu en sheet).
 - **Sin** `SidebarTrigger` en móvil (el sidebar no existe).
 
@@ -53,6 +55,11 @@ padding-right: env(safe-area-inset-right);
 ```
 
 Equivalente Tailwind con utilidades del proyecto: `pt-safe`, `pb-safe`, `px-safe`.
+
+**OJO, trampa ya sufrida:** esas son clases sueltas de `globals.css`, **no** utilidades de
+Tailwind, así que **no admiten variante delante**. `data-[side=bottom]:pb-safe` NO se genera
+y falla en silencio. Cuando haga falta una variante, se escribe el valor:
+`data-[side=bottom]:pb-[calc(1rem+env(safe-area-inset-bottom))]`.
 
 Y en `viewport`: `viewportFit: "cover"` (en `layout.tsx`).
 
@@ -101,8 +108,8 @@ Hook: `useIsMobile()` en [src/hooks/use-mobile.ts](../../src/hooks/use-mobile.ts
 // Mostrar solo en desktop
 <div className="hidden md:block">…</div>
 
-// Header sticky móvil con safe-area
-<header className="sticky top-0 z-40 h-14 pt-safe bg-card border-b border-border md:hidden">
+// Header sticky móvil con safe-area (el alto INCLUYE el notch)
+<header className="sticky top-0 z-40 h-[calc(3.5rem+env(safe-area-inset-top))] pt-safe bg-card border-b border-border md:hidden">
 
 // Bottom tab bar fijo con safe-area
 <nav className="fixed bottom-0 left-0 right-0 z-40 pb-safe bg-card border-t border-border md:hidden">
@@ -122,7 +129,9 @@ Hook: `useIsMobile()` en [src/hooks/use-mobile.ts](../../src/hooks/use-mobile.ts
 - ❌ Tablas con scroll horizontal como solución móvil.
 - ❌ Modales `dialog` centrados en móvil — usar `Sheet side="bottom"`.
 - ❌ `100vh` sin fallback `dvh`.
-- ❌ Reducir tipografías por debajo de 14px en cuerpo, 16px en inputs.
+- ❌ Reducir tipografías por debajo de 14px en cuerpo, 16px en inputs. **El zoom con los dedos está desactivado en la app** (`userScalable: false`), así que quien no lo lea no tiene forma de agrandarlo.
+- ❌ `font-mono`, mayúsculas espaciadas, esquinas rectas o de burbuja, colores escritos a mano. Lo bloquea `scripts/check-brandkit.mjs`.
+- ❌ Dejar un botón flotante encima del contenido sin reservarle su hueco: tapa la última fila de la pantalla.
 - ❌ Esconder el bottom tab bar al hacer scroll (genera mareo de descubrimiento).
 - ❌ Diseñar primero desktop y "después" adaptar a móvil.
 
@@ -158,6 +167,44 @@ iPhone antes de dar algo por terminado:
 ---
 
 ## Cambios versionados
+
+### 2026-08-03 — Barrido completo: las 30 pantallas internas, medidas una por una
+
+Encargo de Marco: *"TODO interno en el OS para empezar, cada seccion, cada pestana, cada
+accion debe de estar arreglada, que NI se te ocurra pasarte algo por alto"*.
+
+**Resultado medido a 375 puntos de ancho, con la version de produccion y sesion real:**
+
+| Medida | Antes | Despues |
+|---|---|---|
+| Pantallas sin ningun fallo | 0 de 30 | **28 de 30** |
+| Botones mas pequenos que un dedo (44px) | 234 | **1** |
+| Textos por debajo de 14px | 1535 | **1** |
+| Senales de diseno viejo | 619 | **0** |
+| Elementos tapados por la barra de abajo | 11 | **0** |
+| Pantallas con deslizamiento lateral | 0 | **0** |
+
+**Las dos excepciones que quedan, y por que son legitimas:**
+
+- `/calendario`: el enlace `/agenda` mide 19px de alto. Es **texto dentro de una frase**
+  ("URL publica para reservar: /agenda"), no un boton. Estirarlo a 44 romperia el parrafo.
+- `/board`: el lienzo de la mision se arrastra, asi que su contenido vive fuera de la
+  pantalla **a proposito**. Es su forma de funcionar.
+
+**Como se hizo:** cinco oleadas en paralelo (Operaciones, Contactos, Marketing, Webs, Casa),
+cada una con un agente que barre, otro que revisa con ojos nuevos y un tercero que remata.
+121 archivos. Los revisores encontraron 3 fallos en el marco comun que el barrido no podia
+ver, incluido uno introducido en el propio arreglo del marco.
+
+**Arreglos de raiz que valieron por decenas de pantallas cada uno:**
+
+| Arreglo | A cuantas pantallas llego |
+|---|---|
+| El boton flotante de registrar venta (fuente mono, mayusculas espaciadas, verdes crudos, y **tapaba la ultima fila**) | 30 |
+| El filtro de periodo (36px de alto, paleta escrita a mano) | 4 |
+| Las etiquetas del kit (12px de letra, esquina de burbuja) | muchas |
+| Las pestanas del kit (43px, uno por debajo del minimo) | todas las que llevan pestanas |
+| `PageContainer` reservando el hueco de la barra Y del boton flotante | 35 |
 
 ### 2026-08-02 — El marco común arreglado, y la ley operativa en una skill
 Encargo de Marco: *"que TODO el saas se adapte al móvil porque en el teléfono está TODO
