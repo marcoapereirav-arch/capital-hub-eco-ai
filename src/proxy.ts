@@ -8,7 +8,7 @@ import { updateSession } from '@/lib/supabase/proxy'
  *
  * 1. HOST-BASED ROUTING (Marco 2026-07-02):
  *    En ch.capitalhubapp.com solo se sirven rutas explicitamente marcadas
- *    como publicas (tabla webs/lead_magnets hostname='ch' + fallback
+ *    como publicas (tabla webs hostname='ch' + fallback
  *    hardcoded). Cualquier ruta del OS bajo ch. devuelve 404.
  *    Se ejecuta ANTES del CORS/session porque tiene prioridad de
  *    aislamiento del OS. En os. y hosts dev/preview no aplica.
@@ -67,23 +67,16 @@ async function fetchChPublicSlugs(): Promise<Set<string>> {
 
   const slugs = new Set<string>()
   try {
-    const [websRes, lmRes] = await Promise.all([
-      fetch(
-        `${supabaseUrl}/rest/v1/webs?select=slug&hostname=eq.ch&status=eq.published`,
-        { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, cache: 'no-store' }
-      ),
-      fetch(
-        `${supabaseUrl}/rest/v1/lead_magnets?select=slug&hostname=eq.ch&active=eq.true`,
-        { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, cache: 'no-store' }
-      ),
-    ])
+    // Los lead magnets se retiraron del OS el 2026-08-07 (Marco: no se estaban
+    // usando). Ya no se consultan ni se dejan pasar: la ruta /lm/<slug> no existe,
+    // asi que dejarlos aqui solo serviria para mandar a nadie a un 404.
+    const websRes = await fetch(
+      `${supabaseUrl}/rest/v1/webs?select=slug&hostname=eq.ch&status=eq.published`,
+      { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, cache: 'no-store' }
+    )
     if (websRes.ok) {
       const rows = (await websRes.json()) as { slug: string }[]
       for (const r of rows) if (r.slug) slugs.add(r.slug)
-    }
-    if (lmRes.ok) {
-      const rows = (await lmRes.json()) as { slug: string }[]
-      for (const r of rows) if (r.slug) slugs.add(`lm/${r.slug}`)
     }
   } catch {
     return CH_FALLBACK_SLUGS

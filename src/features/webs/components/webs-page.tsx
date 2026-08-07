@@ -14,7 +14,6 @@ interface WebsPageProps {
 /**
  * /webs — gestión de funnels.
  * Decisión Marco 2026-06-19: eliminado el tab "Lead Magnets" duplicado.
- * Lead Magnets viven en su propia ruta `/webs/lead-magnets` (link en nav).
  */
 export function WebsPage({ webs, publicBaseUrl }: WebsPageProps) {
   const funnels = webs.filter((w) => w.type === "funnel")

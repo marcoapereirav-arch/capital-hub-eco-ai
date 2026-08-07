@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1928,
+  "total": 1899,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -550,24 +550,6 @@
         "text-muted-foreground/60": 1
       }
     },
-    "src/features/dashboard/components/lead-magnets-mini-funnel.tsx": {
-      "color-prohibido": {
-        "border-purple-500": 1,
-        "bg-purple-500": 1,
-        "text-purple-300": 2
-      },
-      "fuente-mono": {
-        "font-mono": 2
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-[10px]": 3
-      },
-      "token-diluido": {
-        "text-muted-foreground/70": 1,
-        "text-muted-foreground/60": 1,
-        "text-muted-foreground/30": 1
-      }
-    },
     "src/features/dashboard/components/lead-sources.tsx": {
       "texto-por-debajo-del-minimo": {
         "text-xs": 2,
@@ -936,31 +918,6 @@
     "src/features/knowledge/components/brain/SettingsPanel.tsx": {
       "color-a-mano": {
         "#22C55E": 1
-      }
-    },
-    "src/features/lead-magnets/components/lm-delivery.tsx": {
-      "sparkles": {
-        "Sparkles": 2
-      },
-      "fuente-mono": {
-        "font-mono": 4
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-[10px]": 4
-      },
-      "token-diluido": {
-        "text-muted-foreground/70": 2,
-        "text-muted-foreground/50": 1
-      }
-    },
-    "src/features/lead-magnets/components/lm-invalid.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "color-prohibido": {
-        "border-amber-500": 1,
-        "bg-amber-500": 1,
-        "text-amber-400": 1
       }
     },
     "src/features/notifications/components/NotificationsPanel.tsx": {
