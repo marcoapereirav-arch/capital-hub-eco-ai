@@ -20,21 +20,112 @@
  */
 
 import { execFileSync, spawn } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
-/* ── donde vive la web ──────────────────────────────────────────────────
- * Se lee del propio proyecto, no se escribe aqui: este archivo es el MISMO
- * en NVISION y en la plantilla madre.
+/* ── donde vive la web · SE DESCUBRE SOLO ───────────────────────────────
+ * Este archivo es el MISMO en cualquier proyecto, asi que la direccion de la
+ * web NO se escribe aqui: se busca, en este orden, y el primero que aparezca
+ * gana.
  *
- *   package.json  ->  "nvision": { "web": "https://app.tu-dominio.com" }
+ *   1. PUBLICAR_DOMINIO            (para forzarlo puntualmente)
+ *   2. package.json -> nvision.web (si alguien lo puso a mano)
+ *   3. NEXT_PUBLIC_APP_URL / NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_BASE_URL /
+ *      NEXT_PUBLIC_VERCEL_URL, mirando el entorno Y los `.env*` del proyecto
+ *
+ * Un proyecto Next.js real YA tiene su direccion en alguna de esas variables:
+ * la usa para los enlaces de los correos, el sitemap y los metadatos. Pedirle
+ * al dueño que la escriba OTRA VEZ en un cajon `nvision` es pedirle que
+ * configure a mano algo que el proyecto ya sabe. Por eso se descubre.
  *
  * Sin dominio, publica igual y avisa de que no puede comprobar que llego.  */
 const paquete = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'))
-const DOMINIO = (process.env.PUBLICAR_DOMINIO || paquete.nvision?.web || '').replace(/\/$/, '')
-const RUTA_VERSION = '/api/version' // devuelve { version: <sha corto> }
+
+const CLAVES_WEB = [
+  'NEXT_PUBLIC_APP_URL',
+  'NEXT_PUBLIC_SITE_URL',
+  'NEXT_PUBLIC_BASE_URL',
+  'NEXT_PUBLIC_VERCEL_URL',
+]
+
+/** Busca una de las CLAVES_WEB en los `.env*` del proyecto. No imprime nada de
+ *  lo que lee: solo devuelve la direccion, que no es un secreto. */
+function webEnLosEnv(raiz) {
+  for (const archivo of ['.env.production.local', '.env.production', '.env.local', '.env']) {
+    const ruta = join(raiz, archivo)
+    if (!existsSync(ruta)) continue
+    let texto
+    try {
+      texto = readFileSync(ruta, 'utf8')
+    } catch {
+      continue
+    }
+    for (const clave of CLAVES_WEB) {
+      const m = texto.match(new RegExp(`^\\s*(?:export\\s+)?${clave}\\s*=\\s*(.+)$`, 'm'))
+      if (!m) continue
+      const valor = m[1]
+        .trim()
+        .replace(/\s+#.*$/, '')
+        .replace(/^["']|["']$/g, '')
+        .trim()
+      if (valor) return valor
+    }
+  }
+  return ''
+}
+
+/** Ultimo recurso: la direccion que el propio Next.js usa para sus metadatos.
+ *  En App Router siempre esta en el layout raiz:
+ *
+ *      metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://…')
+ *
+ *  Muchos proyectos no declaran la variable en ningun `.env` y viven del valor
+ *  por defecto que hay ahi escrito. Si es la direccion buena para los metadatos
+ *  y el sitemap, es la direccion buena para comprobar que la publicacion llego. */
+function webEnElLayout(raiz) {
+  for (const p of ['src/app/layout.tsx', 'app/layout.tsx', 'src/app/layout.ts', 'app/layout.ts']) {
+    const ruta = join(raiz, p)
+    if (!existsSync(ruta)) continue
+    let texto
+    try {
+      texto = readFileSync(ruta, 'utf8')
+    } catch {
+      continue
+    }
+    const m = texto.match(/metadataBase\s*:\s*new URL\(([\s\S]{0,300}?)\)/)
+    if (!m) continue
+    const url = m[1].match(/["'`](https?:\/\/[^"'`]+)["'`]/)
+    if (url) return url[1]
+  }
+  return ''
+}
+
+/** Una direccion suelta puede venir sin `https://` (asi la da Vercel). */
+const conEsquema = (d) => (d && !/^https?:\/\//i.test(d) ? `https://${d}` : d)
+
+const DOMINIO = conEsquema(
+  (
+    process.env.PUBLICAR_DOMINIO ||
+    paquete.nvision?.web ||
+    CLAVES_WEB.map((k) => process.env[k]).find(Boolean) ||
+    webEnLosEnv(process.cwd()) ||
+    webEnElLayout(process.cwd()) ||
+    ''
+  ).trim()
+).replace(/\/$/, '')
+
+const RUTA_VERSION = '/api/version' // devuelve el sha corto del commit servido
 const RUTA_VIVA = paquete.nvision?.rutaViva || '/login' // ruta publica que debe dar 200
 const ESPERA_MAX_MS = 10 * 60 * 1000
+
+/** El sha que sirve la web. Cada proyecto nombra ese campo a su manera, asi que
+ *  se aceptan los nombres habituales en vez de exigir uno. Exigir `version` a
+ *  secas dejaba a un proyecto con `{ sha }` esperando los 10 minutos enteros
+ *  para acabar diciendo que fallo, cuando en realidad habia publicado bien. */
+const shaServido = (j) =>
+  typeof j !== 'object' || j === null
+    ? null
+    : j.version ?? j.sha ?? j.commit ?? j.gitSha ?? j.commitSha ?? null
 
 /* ── la puerta ──────────────────────────────────────────────────────────
  * Lo que tiene que pasar ANTES de subir. Cada proyecto la define en su
@@ -299,9 +390,10 @@ const sha = git(['rev-parse', '--short=7', 'HEAD'], principal)
 /* ── 6 · esperar a que la web sirva ESE commit ──────────────────────── */
 if (!DOMINIO) {
   console.log(`\n${C.verde}✓ Subido.${C.fin} ${sha} ya esta en GitHub y el despliegue esta en marcha.`)
-  console.log(`\n  ${C.rojo}No puedo comprobar que llegue a la web:${C.fin} este proyecto no dice cual es.`)
-  console.log('  Ponlo en package.json y la proxima vez lo compruebo solo:\n')
-  console.log(`      "nvision": { "web": "https://app.tu-dominio.com" }\n`)
+  console.log(`\n  ${C.rojo}No puedo comprobar que llegue a la web:${C.fin} no encuentro su direccion.`)
+  console.log(`  He mirado el entorno y los .env buscando: ${CLAVES_WEB.join(', ')}.`)
+  console.log('  Pon una de esas en tu .env.local y la proxima vez lo compruebo solo:\n')
+  console.log(`      NEXT_PUBLIC_APP_URL=https://app.tu-dominio.com\n`)
   console.log(`  Tardo:    ${duracion()}\n`)
   process.exit(0)
 }
@@ -320,8 +412,10 @@ while (Date.now() < limite) {
     })
     if (r.ok) {
       const j = await r.json()
-      servido = j.version
-      if (servido === sha) {
+      const s = shaServido(j)
+      if (s) servido = String(s)
+      // Se comparan los 7 primeros: un proyecto puede devolver el sha entero.
+      if (servido && servido.slice(0, 7) === sha.slice(0, 7)) {
         llego = true
         break
       }
