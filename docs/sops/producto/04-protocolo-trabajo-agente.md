@@ -9,23 +9,32 @@ Estas son las **3 reglas operativas que rigen cómo trabajo yo (el agente Claude
 
 ---
 
-## REGLA #1 — Auto-sync del board EN CADA TURNO
+## REGLA #1 — Auto-sync de la lista EN CADA TURNO
 
-El board (BD `public.tasks` en Supabase) es la fuente de verdad de qué se está haciendo, qué está pendiente y qué está hecho. **Antes de cerrar cualquier respuesta** que implique trabajo de código, decisión, o avance:
+La lista de Operaciones (BD `public.tasks`, pantalla `/operaciones`) es la fuente de verdad
+de qué está pendiente y qué está hecho. **Antes de cerrar cualquier respuesta** que implique
+trabajo de código, decisión o avance:
 
-1. Si la tarea ejecutada en el turno **no existía** en `tasks` → la creo (con `id` legible tipo `t_<scope>_<n>_<slug>`, `assignee='ai'` si la ejecuto yo, `para_id` apuntando a un proyecto/área PARA, `depends_on` si toca).
-2. Si la tarea **existía y arranco** → `is_in_progress=true`.
-3. Si la tarea **existía y termino** → `status='done'`, `is_in_progress=false`, `completed_at=now()`.
-4. Si descubro **subtareas nuevas** durante el turno → las creo con su `depends_on` apuntando a la tarea padre.
+1. Si la tarea del turno **no existía** → la creo, con su prioridad y su responsable.
+2. Si **la termino** → `status='hecha'` (la fecha de completado la sella el sistema solo).
+3. Si deja de tener sentido pero no quiero perderla → `status='archivada'`.
+4. Si ya no sirve para nada → la elimino. No se dejan tareas zombi.
 
-**Why:** Sin esto el board queda desincronizado y Marco pierde visibilidad real del estado. Pasó antes — quedaba sólo "lo que recordaba el chat".
+**Why:** Sin esto la lista queda desincronizada y Marco pierde visibilidad real del estado.
+Pasó antes — quedaba sólo "lo que recordaba el chat".
 
 **How to apply:**
-- Statuses válidos: `inbox | next | waiting | someday | done`.
-- Priorities válidas: `urgent | high | normal | low`.
-- Assignees válidos: `marco | adrian | equipo | ai`. Si la tarea la ejecuto yo (código, migración, UI, knowledge, APIs) → `'ai'`. Si requiere acción humana en dashboards externos → humano.
-- Tabla `para_items` para proyectos/áreas/recursos. Cada task lleva `para_id`.
-- Constraint `tasks_assignee_check` ya incluye `'ai'` desde `a019c12`.
+- Estados válidos: `pendiente | hecha | archivada`. **No hay más.**
+- Prioridades válidas: `P1 | P2 | P3`. P1 lo primero, P2 normal, P3 cuando haya hueco.
+- `assignee_id` es el **uuid de un perfil real del OS** (`public.profiles`), o `null`.
+  No hay `'ai'` ni `'equipo'`: si la ejecuto yo, va sin responsable o a nombre de quien la
+  tenga que revisar.
+- **No hay proyectos, áreas, focos, fechas límite, dependencias ni subtareas.** Si una tarea
+  es demasiado grande, se parte en varias tareas sueltas. Ver SOP `producto/01`.
+
+> Esta regla se reescribió el 2026-08-07, cuando el sistema GTD + PARA se sustituyó por una
+> lista de un solo nivel. Lo de antes (board, `para_items`, `depends_on`, `is_in_progress`)
+> ya no existe en la base de datos.
 
 ---
 
@@ -123,22 +132,26 @@ Extensión universal de la REGLA #4. Aplica a **CUALQUIER información**, no sol
 
 ---
 
-## REGLA #6 — El sistema de tareas del OS SIEMPRE en LIVE
+## REGLA #6 — La lista del OS SIEMPRE en LIVE
 
-El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **sincronizado y visible en vivo en TODO momento**. Insertar en BD no es suficiente; el usuario tiene que VERLO actualizado sin tocar nada.
+La lista de Operaciones (`public.tasks`) debe estar **sincronizada y visible en vivo en TODO
+momento**. Insertar en BD no es suficiente; el usuario tiene que VERLO actualizado sin tocar
+nada.
 
-- Si añado/modifico tareas en BD durante un turno: el componente de tareas del OS debe refrescar automáticamente (sin F5 manual).
-- Si el orden del plan cambia (display_order): debe verse reflejado al instante en `/projects`, `/operaciones/overview`, `/dashboard`, y CUALQUIER vista que liste proyectos.
-- Si una vista no respeta el orden definido: es bug del producto, se arregla en ese mismo turno.
-- Cada lista de proyectos/tareas del OS debe ordenarse por `display_order ASC` como default (con opciones de re-ordenar adicionales).
+- Si añado o cambio tareas en BD durante un turno, `/operaciones` lo enseña sin F5.
+- Si una vista no lo refleja, es bug del producto y se arregla en ese mismo turno.
+- El orden por defecto es **por prioridad** (P1 → P2 → P3) y, dentro de cada una, lo más
+  reciente primero.
 
 **Why:**
-- 2026-06-12: Marco no veía los bloques que yo añadí en BD. Asumía que estaba en chat pero no en producto. Me dijo: "El OS SIEMPRE SIEMPRE debe estar actualizado, IN LIVE SIEMPRE."
+- 2026-06-12: Marco no veía los bloques que yo añadí en BD. Asumía que estaba en chat pero
+  no en producto. Me dijo: "El OS SIEMPRE SIEMPRE debe estar actualizado, IN LIVE SIEMPRE."
 
 **How to apply:**
-- Cada componente que liste proyectos/tareas: query con `ORDER BY display_order ASC NULLS LAST, name`.
-- Cada componente: `useEffect` con poll cada 15-30s O subscribe a Supabase Realtime de las tablas.
-- Si añado un proyecto/tarea via API: el front debe re-fetcharlo en máximo 30s sin acción del usuario.
+- La pantalla está suscrita a Supabase Realtime sobre `tasks` (INSERT, UPDATE y DELETE), así
+  que un cambio se ve en todas las pantallas abiertas en menos de un segundo.
+- Nada de `display_order` ni de reordenar a mano: eso murió con el sistema viejo. El orden
+  sale de la prioridad y de la fecha.
 
 ---
 

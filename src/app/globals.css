@@ -29,7 +29,11 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-brand: rgb(var(--brand) / <alpha-value>);
+  /* `<alpha-value>` es sintaxis de Tailwind v3 y este proyecto va por la v4: alli NO se
+     sustituye, el color sale invalido y `bg-brand` pintaba TRANSPARENTE. Verificado en el
+     navegador el 2026-08-07 (getComputedStyle daba rgba(0,0,0,0)). En la v4 la opacidad
+     se resuelve sola con color-mix, asi que `bg-brand/10` sigue funcionando. */
+  --color-brand: rgb(var(--brand));
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);

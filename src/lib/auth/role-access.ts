@@ -93,7 +93,6 @@ const ALL_NAV_HREFS = [
   "/manychat",
   "/invitaciones",
   "/integrations",
-  "/mision",
 ].sort((a, b) => b.length - a.length)
 
 /**
