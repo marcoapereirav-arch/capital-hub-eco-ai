@@ -86,14 +86,14 @@ export function DateFilter({ currentPreset, currentStart, currentEnd }: DateFilt
             type="date"
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
-            className="h-8 w-auto text-xs bg-transparent border-border"
+            className="h-11 md:h-8 w-auto text-base md:text-xs bg-transparent border-border"
           />
           <span className="text-xs text-muted-foreground">a</span>
           <Input
             type="date"
             value={customEnd}
             onChange={(e) => setCustomEnd(e.target.value)}
-            className="h-8 w-auto text-xs bg-transparent border-border"
+            className="h-11 md:h-8 w-auto text-base md:text-xs bg-transparent border-border"
           />
           <Button
             size="sm"

@@ -19,10 +19,13 @@ const TYPE_ICONS = {
   other: Globe,
 }
 
+/* Verde = publicado, ambar = pendiente de publicar, gris = archivado. Los tres
+   salen del tema: antes eran green-500 / yellow-500 / zinc-500 de Tailwind, que
+   son otros tres colores distintos a los de la marca. */
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
-  published: "bg-green-500/10 text-green-400 border-green-500/30",
-  archived: "bg-zinc-500/10 text-zinc-400 border-zinc-500/30",
+  draft: "border-warn/40 bg-warn/10 text-warn",
+  published: "border-primary/40 bg-primary/10 text-primary",
+  archived: "border-border bg-muted text-muted-foreground",
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -119,29 +122,32 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
   }
 
   return (
-    <article className="flex flex-col gap-4 rounded-sm border border-border bg-card p-5 transition-colors hover:border-foreground/30">
+    <article className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 transition-colors md:p-5">
       {/* Header — SOLO LECTURA */}
       <header className="flex items-start gap-3">
-        <div className="rounded-sm border border-border bg-secondary p-2">
+        <div className="rounded-lg border border-border bg-secondary p-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 flex-1 font-heading text-sm font-semibold leading-snug text-foreground line-clamp-2">
+            <h3 className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-foreground line-clamp-2">
               {webName}
             </h3>
             <span
               className={cn(
-                "shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide",
+                "shrink-0 rounded-sm border px-2 py-0.5 text-sm font-semibold",
                 STATUS_STYLES[status],
               )}
             >
               {STATUS_LABEL[status] ?? status}
             </span>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <p className="font-mono text-[11px] text-foreground/70">/{slug}</p>
-            <span className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground/60">
+          {/* Estas dos etiquetas iban a 10 y 11 puntos con el token rebajado: en
+              un telefono a plena luz no se leian. Ahora van a 14 con el token
+              entero, que es el minimo legible con el zoom desactivado. */}
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="text-sm text-foreground">/{slug}</p>
+            <span className="text-sm text-muted-foreground">
               {hostname === "ch" ? "ch. público" : "os. interno"}
             </span>
           </div>
@@ -150,10 +156,10 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
 
       {/* Medición Meta — interruptor propio, aparte de Draft/Published.
           Publicado no obliga a medir: el acceso al OS está publicado y no manda nada. */}
-      <div className="flex items-center justify-between gap-3 rounded-sm border border-border bg-secondary/30 px-3 py-2">
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/30 px-3 py-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-foreground">Medición Meta</p>
-          <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+          <p className="text-sm font-medium text-foreground">Medición Meta</p>
+          <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
             {tracking
               ? "Manda los eventos a Facebook Ads"
               : "No manda nada, aunque esté publicado"}
@@ -166,19 +172,28 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
           aria-label="Medición Meta"
           disabled={savingTracking}
           onClick={toggleTracking}
-          className={cn(
-            "relative h-6 w-11 shrink-0 rounded-full border transition-colors disabled:opacity-50",
-            tracking
-              ? "border-[#22C55E]/50 bg-[#22C55E]"
-              : "border-border bg-secondary",
-          )}
+          className="flex h-11 w-12 shrink-0 items-center justify-center disabled:opacity-50 md:h-8"
         >
+          {/* El carril es DECORACION (aria-hidden): quien lleva el estado es el
+              boton. Asi la zona que se toca mide 44 puntos aunque el interruptor
+              se dibuje mas fino. */}
           <span
+            aria-hidden
             className={cn(
-              "absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-white transition-all",
-              tracking ? "left-[24px]" : "left-[3px]",
+              "relative block h-7 w-12 rounded-full border transition-colors",
+              tracking ? "border-primary/50 bg-primary" : "border-border bg-secondary",
             )}
-          />
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full transition-all",
+                tracking
+                  ? "left-[26px] bg-primary-foreground"
+                  : "left-[3px] bg-muted-foreground",
+              )}
+            />
+          </span>
         </button>
       </div>
 
@@ -191,7 +206,7 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
 
       {/* Steps — SOLO LECTURA (solo copiar / abrir) */}
       <div className="space-y-1.5">
-        <p className="font-mono text-[10px] uppercase tracking-wide text-muted-foreground/60">
+        <p className="text-sm font-semibold text-muted-foreground">
           {steps.length} {steps.length === 1 ? "step" : "steps"}
         </p>
         <ul className="space-y-1.5">
@@ -201,32 +216,34 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
             return (
               <li
                 key={step.id}
-                className="space-y-1.5 rounded-sm border border-border bg-secondary/30 px-2.5 py-2"
+                className="space-y-1.5 rounded-lg border border-border bg-secondary/30 px-2.5 py-2"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                     {step.name}
                   </span>
+                  {/* 44 puntos en telefono: antes eran iconos de 12 con relleno de
+                      4, o sea 20 puntos, donde no acierta ningun dedo. */}
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
                       onClick={() => copyToClipboard(url, step.id)}
-                      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors active:bg-secondary md:h-8 md:w-8 md:hover:bg-secondary md:hover:text-foreground"
                       title="Copiar link"
                     >
-                      {isCopied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
+                      {isCopied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
                     </button>
                     <button
                       type="button"
                       onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
-                      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors active:bg-secondary md:h-8 md:w-8 md:hover:bg-secondary md:hover:text-foreground"
                       title="Abrir landing"
                     >
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <p className="truncate rounded-sm border border-border bg-background/40 px-2 py-1 font-mono text-[10px] text-foreground/70">
+                <p className="truncate rounded-sm border border-border bg-background/40 px-2 py-1 text-sm text-foreground">
                   {url.replace(/^https?:\/\//, "")}
                 </p>
               </li>
@@ -238,22 +255,19 @@ export function WebCard({ web, publicBaseUrl }: WebCardProps) {
       {/* Footer actions */}
       <footer className="flex items-center gap-2 border-t border-border pt-3">
         <Button
-          size="sm"
           variant="secondary"
-          className="flex-1 font-mono text-xs"
+          className="flex-1"
           onClick={() => window.open(urlForStep(entryStep?.slug), "_blank", "noopener,noreferrer")}
         >
-          <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+          <ExternalLink className="mr-1.5 h-4 w-4" />
           Abrir funnel
         </Button>
         <Button
-          size="sm"
           variant="secondary"
-          className="font-mono text-xs"
           onClick={() => setShowEdit(true)}
           title="Editar todo el funnel: nombre, path, pasos y links"
         >
-          <Pencil className="mr-1.5 h-3.5 w-3.5" />
+          <Pencil className="mr-1.5 h-4 w-4" />
           Editar
         </Button>
       </footer>

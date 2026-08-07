@@ -79,7 +79,7 @@ export function UpdateNotifier() {
   return (
     <div
       role="status"
-      className="fixed bottom-4 right-4 z-[100] w-[360px] max-w-[calc(100vw-2rem)] rounded-md border border-border bg-card p-4 shadow-xl"
+      className="fixed right-4 z-[100] bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-6 md:right-6 w-[min(360px,calc(100vw-2rem))] rounded-xl border border-border bg-card p-4 shadow-xl"
     >
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/15 text-green-400">

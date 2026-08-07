@@ -34,10 +34,10 @@ export function ConnectForm({ definition, onDone }: ConnectFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-4">
-      <p className="text-sm text-muted-foreground">{definition.description}</p>
+      <p className="text-[15px] text-muted-foreground">{definition.description}</p>
       {definition.credentialFields.map(field => (
         <div key={field.key} className="space-y-1.5">
-          <label htmlFor={`cred_${field.key}`} className="text-sm font-medium">
+          <label htmlFor={`cred_${field.key}`} className="block text-sm font-medium text-muted-foreground">
             {field.label}
             {field.required && <span className="text-destructive"> *</span>}
           </label>
@@ -47,23 +47,30 @@ export function ConnectForm({ definition, onDone }: ConnectFormProps) {
             type={field.type === 'password' ? 'password' : 'text'}
             placeholder={field.placeholder}
             required={field.required}
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
           {field.helpText && (
-            <p className="text-xs text-muted-foreground">{field.helpText}</p>
+            <p className="text-sm text-muted-foreground">{field.helpText}</p>
           )}
         </div>
       ))}
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex items-center justify-between pt-2">
+      {error && <p className="text-[15px] text-destructive">{error}</p>}
+      {/* La accion principal queda pegada abajo dentro del contenedor que se
+          desplaza (sticky, no fixed): con el teclado abierto el boton sigue a
+          la vista. En el monitor vuelve a la fila junto al enlace de docs. */}
+      <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-border bg-popover px-4 pt-3 pb-safe-4 md:static md:mx-0 md:flex-row md:items-center md:justify-between md:border-0 md:bg-transparent md:p-0 md:pt-2">
         <a
           href={definition.docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+          className="inline-flex h-11 items-center text-sm text-muted-foreground underline-offset-4 hover:underline md:h-8"
         >
           Docs de {definition.displayName}
         </a>
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="w-full md:w-auto">
           {loading ? 'Conectando...' : 'Conectar'}
         </Button>
       </div>

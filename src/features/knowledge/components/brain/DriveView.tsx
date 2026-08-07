@@ -13,32 +13,46 @@ import {
   useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 import { folderTotalCount, findFolderWithPath } from './brain-data'
 import type { BrainDoc, BrainFolder, BrainQuadrant, View } from './types'
 
-/* ─── Estilos compartidos brandkit ───────────────────────────────────────── */
+/* ─── Estilos compartidos, todos con tokens del tema ─────────────────────── */
 const CARD =
-  'group relative flex flex-col gap-2 rounded-[14px] border border-[rgba(244,244,250,0.22)] bg-[#1E1E1E] p-4 text-left shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)] transition-colors hover:border-[#4ADE80]/35'
+  'group relative flex flex-col gap-2 rounded-lg border border-border bg-card p-4 text-left shadow-lg transition-colors md:hover:border-primary/40'
 const ROW =
-  'group relative flex w-full items-center gap-3 rounded-[14px] border border-[rgba(244,244,250,0.22)] bg-[#1E1E1E] px-4 py-3 text-left shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)] transition-colors hover:border-[#4ADE80]/35'
-const PILL = 'shrink-0 rounded-full border border-[rgba(244,244,250,0.22)] px-2 py-0.5 text-[10px] text-neutral-100/50'
+  'group relative flex w-full items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left shadow-lg transition-colors md:hover:border-primary/40'
+const PILL = 'shrink-0 rounded-sm border border-border px-2 py-0.5 text-sm text-muted-foreground'
 
 const Dot = ({ c, big }: { c: string; big?: boolean }) => (
-  <span className={`inline-block shrink-0 rounded-full ${big ? 'h-3 w-3' : 'h-2 w-2'}`} style={{ background: c }} />
+  <span aria-hidden className={`inline-block shrink-0 rounded-full ${big ? 'h-3 w-3' : 'h-2 w-2'}`} style={{ background: c }} />
 )
-const Diamond = ({ c }: { c: string }) => <span className="inline-block h-2.5 w-2.5 shrink-0 rotate-45" style={{ background: c }} />
+const Diamond = ({ c }: { c: string }) => (
+  <span aria-hidden className="inline-block h-2.5 w-2.5 shrink-0 rotate-45" style={{ background: c }} />
+)
 
-/* Icono de grip (handle de drag) — visible siempre, este es EL ÚNICO punto
-   que activa el drag&drop. El resto del card es libre para clicks/links. */
+/* Icono de grip (handle de drag). SOLO en escritorio: en un telefono el arrastre
+   pelea con el dedo que hace scroll, y para mover algo esta "Mover a…" en el menu. */
 function GripIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-neutral-100/30 group-hover:text-neutral-100/60 transition-colors">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="text-muted-foreground transition-colors group-hover:text-foreground">
       <circle cx="9" cy="6" r="1.4" />
       <circle cx="15" cy="6" r="1.4" />
       <circle cx="9" cy="12" r="1.4" />
       <circle cx="15" cy="12" r="1.4" />
       <circle cx="9" cy="18" r="1.4" />
       <circle cx="15" cy="18" r="1.4" />
+    </svg>
+  )
+}
+
+function IconoTresPuntos() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <circle cx="5" cy="12" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="19" cy="12" r="1.6" />
     </svg>
   )
 }
@@ -54,7 +68,14 @@ interface DropQuadrantRootData { kind: 'quadrant-root'; quadrant: string }
 interface DropBreadcrumbData { kind: 'breadcrumb'; folderId: string | null; quadrant: string }
 type DropData = DropFolderData | DropQuadrantRootData | DropBreadcrumbData
 
-/* ─── Menú de acciones (...) — SIEMPRE VISIBLE + viewport-clamped ──────── */
+type Accion = { texto: string; hacer: () => void; peligro?: boolean }
+
+/* ─── Menú de acciones (…) ───────────────────────────────────────────────
+ * Dos presentaciones del MISMO contenido, elegidas con clases y no con
+ * JavaScript (useIsMobile miente en el primer pintado):
+ *   - telefono: hoja inferior, con filas de 48 puntos.
+ *   - escritorio: el menu flotante de siempre, sujeto al borde de la ventana.
+ * ---------------------------------------------------------------------- */
 
 function ActionsMenu({
   onRename,
@@ -65,6 +86,70 @@ function ActionsMenu({
   onMoveTo?: () => void
   onDelete?: () => void
 }) {
+  const acciones: Accion[] = []
+  if (onRename) acciones.push({ texto: 'Renombrar', hacer: onRename })
+  if (onMoveTo) acciones.push({ texto: 'Mover a…', hacer: onMoveTo })
+  if (onDelete) acciones.push({ texto: 'Eliminar', hacer: onDelete, peligro: true })
+
+  return (
+    <>
+      <div className="md:hidden">
+        <MenuHoja acciones={acciones} />
+      </div>
+      <div className="hidden md:block">
+        <MenuFlotante acciones={acciones} />
+      </div>
+    </>
+  )
+}
+
+function MenuHoja({ acciones }: { acciones: Accion[] }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          setOpen(true)
+        }}
+        className="absolute top-1 right-1 inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground active:bg-muted"
+        aria-label="Acciones"
+      >
+        <IconoTresPuntos />
+      </button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" aria-describedby={undefined} className="rounded-t-xl">
+          <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border" />
+          <SheetHeader>
+            <SheetTitle className="text-[17px] font-semibold">Acciones</SheetTitle>
+          </SheetHeader>
+          <div className="pb-safe-4">
+            {acciones.map((a) => (
+              <button
+                key={a.texto}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setOpen(false)
+                  a.hacer()
+                }}
+                className={cn(
+                  'flex h-12 w-full items-center px-4 text-left text-[15px] active:bg-muted',
+                  a.peligro ? 'text-destructive' : 'text-foreground',
+                )}
+              >
+                {a.texto}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
+
+function MenuFlotante({ acciones }: { acciones: Accion[] }) {
   const [open, setOpen] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
@@ -114,74 +199,49 @@ function ActionsMenu({
     <>
       <button
         ref={btnRef}
-        onPointerDown={(e) => {
-          // Evitar que dnd-kit/card capturen el pointerdown
-          e.stopPropagation()
-        }}
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation()
           e.preventDefault()
           setOpen((v) => !v)
         }}
-        className="absolute top-1.5 right-1.5 w-8 h-8 inline-flex items-center justify-center rounded text-neutral-100/55 hover:text-[#4ADE80] hover:bg-white/5 transition-colors"
+        className="absolute top-1.5 right-1.5 inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
         aria-label="Acciones"
         data-nv-actions-menu="true"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+        <IconoTresPuntos />
       </button>
       {open && pos && (
         <div
           data-nv-actions-menu="true"
-          className="fixed z-[100] min-w-[180px] rounded-lg border border-[#4ADE80]/30 bg-[#1E1E1E] py-1 shadow-2xl"
+          className="fixed z-[100] md:min-w-[180px] rounded-lg border border-border bg-popover py-1 shadow-lg"
           style={{ left: pos.left, top: pos.top }}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          {onRename && (
+          {acciones.map((a) => (
             <button
+              key={a.texto}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation()
                 setOpen(false)
-                onRename()
+                a.hacer()
               }}
-              className="block w-full text-left px-3 py-2 text-[11px] uppercase tracking-widest text-neutral-100/80 hover:bg-white/5 hover:text-[#4ADE80]"
+              className={cn(
+                'block w-full px-3 py-2 text-left text-sm hover:bg-muted',
+                a.peligro ? 'text-destructive hover:bg-destructive/10' : 'text-foreground hover:text-primary',
+              )}
             >
-              Renombrar
+              {a.texto}
             </button>
-          )}
-          {onMoveTo && (
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                setOpen(false)
-                onMoveTo()
-              }}
-              className="block w-full text-left px-3 py-2 text-[11px] uppercase tracking-widest text-neutral-100/80 hover:bg-white/5 hover:text-[#4ADE80]"
-            >
-              Mover a…
-            </button>
-          )}
-          {onDelete && (
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                setOpen(false)
-                onDelete()
-              }}
-              className="block w-full text-left px-3 py-2 text-[11px] uppercase tracking-widest text-red-300/85 hover:bg-red-500/10 hover:text-red-300"
-            >
-              Eliminar
-            </button>
-          )}
+          ))}
         </div>
       )}
     </>
   )
 }
 
-/* ─── Drag handle (icono grip) — el ÚNICO que activa el drag ─────────────── */
+/* ─── Drag handle (icono grip) — el ÚNICO que activa el drag, solo escritorio ── */
 
 function DragHandle({
   listeners,
@@ -207,7 +267,7 @@ function DragHandle({
         e.stopPropagation()
         e.preventDefault()
       }}
-      className="shrink-0 w-6 h-6 inline-flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+      className="hidden h-6 w-6 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing md:inline-flex"
       aria-label="Arrastrar para mover"
       tabIndex={-1}
     >
@@ -251,7 +311,12 @@ function FolderCard({
         dropRef(el)
         dragRef(el)
       }}
-      className={`${CARD} ${isOver ? 'border-[#4ADE80]/70 ring-2 ring-[#4ADE80]/40' : ''} ${isDragging ? 'opacity-40' : ''} cursor-pointer`}
+      className={cn(
+        CARD,
+        'min-h-14 cursor-pointer',
+        isOver && 'border-primary ring-2 ring-primary/40',
+        isDragging && 'opacity-40',
+      )}
       onClick={(e) => {
         // Si el click viene de un button (grip, menú), ignorar
         if ((e.target as HTMLElement).closest('button')) return
@@ -259,10 +324,12 @@ function FolderCard({
         onOpen()
       }}
     >
-      <div className="flex items-center gap-2.5">
+      {/* El hueco del boton de los tres puntos se reserva en la FILA entera, no en el
+          titulo: el boton flota en la esquina y quien queda debajo es el contador. */}
+      <div className="flex items-center gap-2.5 pr-12 md:pr-8">
         <DragHandle listeners={listeners} attributes={attributes} setActivatorNodeRef={setActivatorNodeRef} />
         <Dot c={color} />
-        <h3 className="flex-1 truncate text-sm text-neutral-100 pr-8">{folder.name}</h3>
+        <h3 className="min-w-0 flex-1 truncate text-[15px] text-foreground">{folder.name}</h3>
         <span className={PILL}>{count}</span>
       </div>
       <ActionsMenu onRename={onRename} onMoveTo={onMoveTo} onDelete={onDelete} />
@@ -293,10 +360,7 @@ function DocRow({
   })
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`${ROW} ${isDragging ? 'opacity-40' : ''}`}
-    >
+    <div ref={setNodeRef} className={cn(ROW, 'min-h-14', isDragging && 'opacity-40')}>
       <DragHandle listeners={listeners} attributes={attributes} setActivatorNodeRef={setActivatorNodeRef} />
       <Diamond c={color} />
       <Link
@@ -310,9 +374,9 @@ function DocRow({
           e.preventDefault()
           onOpen()
         }}
-        className="flex-1 min-w-0 pr-8"
+        className="min-w-0 flex-1 pr-12 md:pr-8"
       >
-        <span className="truncate text-sm text-neutral-100/85 block">{doc.title}</span>
+        <span className="block truncate text-[15px] text-foreground">{doc.title}</span>
       </Link>
       <ActionsMenu onMoveTo={onMoveTo} onDelete={onDelete} />
     </div>
@@ -342,9 +406,11 @@ function BreadcrumbSegment({
       ref={setNodeRef}
       onClick={onClick}
       disabled={isCurrent}
-      className={`text-[11px] uppercase tracking-widest font-body transition-colors px-2 py-1 rounded ${
-        isCurrent ? 'text-[#4ADE80] cursor-default' : 'text-[#4ADE80]/70 hover:text-[#4ADE80]'
-      } ${isOver ? 'bg-[#4ADE80]/15 ring-1 ring-[#4ADE80]/40' : ''}`}
+      className={cn(
+        'h-11 rounded-lg px-2 text-sm font-medium transition-colors md:h-8',
+        isCurrent ? 'cursor-default text-primary' : 'text-primary md:hover:bg-muted',
+        isOver && 'bg-primary/15 ring-1 ring-primary/40',
+      )}
     >
       {label}
     </button>
@@ -367,11 +433,11 @@ function Breadcrumb({
   quadrantKey?: string
 }) {
   return (
-    <div className="mb-5 flex items-center flex-wrap gap-1">
+    <div className="mb-5 flex flex-wrap items-center gap-1">
       <BreadcrumbSegment label="Cerebro" onClick={onGoOverview} />
       {quadrantLabel && quadrantKey && (
         <>
-          <span className="text-neutral-100/30">/</span>
+          <span className="text-muted-foreground">/</span>
           <BreadcrumbSegment
             label={quadrantLabel}
             onClick={onGoQuadrant}
@@ -383,7 +449,7 @@ function Breadcrumb({
         const isCurrent = i === path.length - 1
         return (
           <span key={f.id} className="flex items-center gap-1">
-            <span className="text-neutral-100/30">/</span>
+            <span className="text-muted-foreground">/</span>
             <BreadcrumbSegment
               label={f.name}
               isCurrent={isCurrent}
@@ -477,8 +543,8 @@ export function DriveView({
   if (view.level === 'overview') {
     return (
       <DndContext sensors={sensors} onDragStart={(e) => setDragPreview(e.active.data.current as DragData)} onDragEnd={handleDragEnd}>
-        <div className="mx-auto max-w-4xl px-4 py-6 md:px-6">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-6">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {data.map((q) => (
               <QuadrantCard
                 key={q.key}
@@ -499,7 +565,7 @@ export function DriveView({
     if (!q) return null
     return (
       <DndContext sensors={sensors} onDragStart={(e) => setDragPreview(e.active.data.current as DragData)} onDragEnd={handleDragEnd}>
-        <div className="mx-auto max-w-4xl px-4 py-6 md:px-6">
+        <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-6">
           <Breadcrumb
             quadrantLabel={q.label}
             quadrantKey={q.key}
@@ -536,7 +602,7 @@ export function DriveView({
   const currentFolder = path[path.length - 1]
   return (
     <DndContext sensors={sensors} onDragStart={(e) => setDragPreview(e.active.data.current as DragData)} onDragEnd={handleDragEnd}>
-      <div className="mx-auto max-w-4xl px-4 py-6 md:px-6">
+      <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-6">
         <Breadcrumb
           quadrantLabel={q.label}
           quadrantKey={q.key}
@@ -585,14 +651,14 @@ function QuadrantCard({ quadrant, onOpen }: { quadrant: BrainQuadrant; onOpen: (
     <button
       ref={setNodeRef}
       onClick={onOpen}
-      className={`${CARD} ${isOver ? 'border-[#4ADE80]/70 ring-2 ring-[#4ADE80]/40' : ''}`}
+      className={cn(CARD, 'min-h-14', isOver && 'border-primary ring-2 ring-primary/40')}
     >
       <div className="flex items-center gap-2.5">
         <Dot c={quadrant.color} big />
-        <h2 className="flex-1 truncate font-display text-lg text-neutral-100">{quadrant.label}</h2>
+        <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">{quadrant.label}</h2>
         <span className={PILL}>{count}</span>
       </div>
-      <p className="text-[12px] leading-snug text-neutral-100/45">{quadrant.blurb}</p>
+      <p className="text-sm leading-snug text-muted-foreground">{quadrant.blurb}</p>
     </button>
   )
 }
@@ -629,9 +695,9 @@ function FolderContents({
       {onCreateFolder && (
         <button
           onClick={() => onCreateFolder(quadrant, currentFolderId)}
-          className="mb-4 inline-flex items-center gap-2 text-[11px] uppercase tracking-widest text-[#4ADE80]/80 hover:text-[#4ADE80] border border-[#4ADE80]/25 hover:border-[#4ADE80]/50 rounded-lg px-3 py-2 transition-colors"
+          className="mb-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-primary/30 px-3 text-[15px] font-medium text-primary transition-colors md:h-9 md:w-auto md:hover:border-primary"
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
           Nueva carpeta aquí
@@ -639,7 +705,7 @@ function FolderContents({
       )}
 
       {folders.length > 0 && (
-        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           {folders.map((sub) => (
             <FolderCard
               key={sub.id}
@@ -676,7 +742,9 @@ function FolderContents({
           })}
         </ul>
       ) : folders.length === 0 ? (
-        <p className="text-sm italic text-neutral-100/40">Carpeta vacía. Crea una subcarpeta o arrastra documentos aquí desde el icono ⋮⋮.</p>
+        <p className="text-[15px] text-muted-foreground">
+          Carpeta vacía. Crea una subcarpeta o arrastra documentos aquí desde el icono ⋮⋮.
+        </p>
       ) : null}
     </>
   )
@@ -686,16 +754,16 @@ function renderDragPreview(d: DragData | null) {
   if (!d) return null
   if (d.kind === 'doc') {
     return (
-      <div className="rounded-[14px] border border-[#4ADE80]/60 bg-[#1E1E1E] px-4 py-3 shadow-2xl flex items-center gap-3 max-w-[300px]">
+      <div className="flex max-w-[300px] items-center gap-3 rounded-lg border border-primary/60 bg-popover px-4 py-3 shadow-lg">
         <Diamond c={d.color} />
-        <span className="truncate text-sm text-neutral-100/90">{d.title}</span>
+        <span className="truncate text-[15px] text-foreground">{d.title}</span>
       </div>
     )
   }
   return (
-    <div className="rounded-[14px] border border-[#4ADE80]/60 bg-[#1E1E1E] px-4 py-3 shadow-2xl flex items-center gap-3 max-w-[300px]">
+    <div className="flex max-w-[300px] items-center gap-3 rounded-lg border border-primary/60 bg-popover px-4 py-3 shadow-lg">
       <Dot c={d.color} />
-      <span className="truncate text-sm text-neutral-100">{d.name}</span>
+      <span className="truncate text-[15px] text-foreground">{d.name}</span>
     </div>
   )
 }

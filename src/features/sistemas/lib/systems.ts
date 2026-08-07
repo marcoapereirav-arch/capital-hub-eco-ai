@@ -8,6 +8,10 @@ import { Radio, Crosshair, type LucideIcon } from "lucide-react"
  *
  * Para añadir un sistema nuevo: se agrega una entrada aquí y su board en
  * /sistemas/[slug]/page.tsx (map por slug). Nada más.
+ *
+ * OJO: aquí NO se guarda ningún color. Antes cada entrada llevaba un `accent` con el
+ * verde escrito a mano, y ese hexadecimal no escucha al tema: el dia que cambie la
+ * marca, estas tarjetas se quedan con el verde viejo. El color sale del token.
  */
 export type SistemaStatus = "activo" | "en-curso" | "proximo"
 
@@ -20,8 +24,6 @@ export interface SistemaCard {
   meta: string
   status: SistemaStatus
   icon: LucideIcon
-  /** Color de acento (hex). Verde = foco activo. */
-  accent: string
 }
 
 export const STATUS_META: Record<SistemaStatus, { label: string }> = {
@@ -38,7 +40,6 @@ export const SISTEMAS: SistemaCard[] = [
     meta: "Publicidad · píxel y API de conversiones",
     status: "activo",
     icon: Crosshair,
-    accent: "#22C55E",
   },
   {
     slug: "webinar",
@@ -47,7 +48,6 @@ export const SISTEMAS: SistemaCard[] = [
     meta: "Captación · webinar en directo",
     status: "activo",
     icon: Radio,
-    accent: "#22C55E",
   },
 ]
 

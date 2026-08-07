@@ -4,15 +4,21 @@
 
 /*
  * Capital Hub OS — Design System
- * Fuente de verdad: /docs/Brandkit_Capital_Hub.html
- * Paleta: Monochrome Matte (sin gradientes)
+ * Fuente de verdad: el brandkit vivo, /brandkit (src/app/brandkit/version-two.tsx)
+ * Reglas escritas: docs/sops/marketing/brand/01-brandkit-oficial.md
+ * Paleta: carbon + verde de marca. Sin gradientes, sin otros colores.
  */
 
 @theme inline {
-  /* Apple-first stack: en macOS/iOS renderiza SF Pro Display/Text nativo,
-     fuera de Apple cae en Inter (cargado vía next/font) o system fallbacks. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-heading: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  /* Inter Tight es la UNICA familia de la marca (brandkit, seccion Tipografia).
+     Va primero la variable que crea next/font, que apunta a la fuente REALMENTE
+     descargada; los nombres de detras son solo red de seguridad si fallara.
+     Antes esta lista empezaba por -apple-system, asi que en un Mac nunca se
+     llegaba a Inter Tight y todo el OS renderizaba con la fuente de Apple. */
+  --font-sans: var(--font-inter-tight), "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: var(--font-inter-tight), "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  /* La mono sigue viva porque ~779 sitios del OS la usan todavia. El brandkit
+     dice que no deberia usarse: retirarla es un trabajo aparte, no de tokens. */
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
 
   --color-background: var(--background);
@@ -30,6 +36,15 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-brand: rgb(var(--brand) / <alpha-value>);
+  /* Ambar de AVISO del brandkit. Solo para avisar de algo que pide atencion
+     ("lleva 3 dias sin gastar"), nunca como color de adorno. El error sigue
+     siendo rojo (`destructive`) y el acento sigue siendo verde.
+     Va apuntando a una variable de verdad, como el resto de tokens: este bloque
+     es `inline`, o sea que mete el valor dentro de la clase pero NO publica la
+     variable. Escrito a pelo aqui, `text-warn` funcionaba pero `var(--warn)` no
+     resolvia, y el board pintaba su aviso SIN COLOR y sin dar ningun error. */
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -76,6 +91,8 @@
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
+    --warn: #B07D1F;
+    --warn-foreground: #FFFFFF;
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
@@ -114,9 +131,13 @@
     --popover: oklch(0.205 0.004 265);
     --popover-foreground: oklch(0.97 0.001 250);
 
-    /* PRIMARY ACCENT: #FFFFFF Blanco Puro (5%) */
-    --primary: oklch(1 0 0);
-    --primary-foreground: oklch(0.113 0.005 265);
+    /* ACCION PRINCIPAL: verde de marca #22C55E con tinta #08130C encima.
+       Antes era blanco puro. El brandkit marca el boton blanco como senal del
+       diseno ANTIGUO: "El acento es VERDE #22C55E, con tinta #08130C encima".
+       La tinta NO es decorativa: texto blanco sobre este verde da 2.11:1 y
+       falla; la tinta da 8.31:1 (AAA). */
+    --primary: #22C55E;
+    --primary-foreground: #08130C;
 
     /* SECONDARY: #2A2D34 Gris Grafito (25%) */
     --secondary: oklch(0.24 0.012 260);
@@ -127,35 +148,52 @@
     --muted: oklch(0.24 0.012 260);
     --muted-foreground: oklch(0.62 0.015 255);
 
-    /* ACCENT: #2A2D34 */
-    --accent: oklch(0.24 0.012 260);
-    --accent-foreground: oklch(0.97 0.001 250);
+    /* ACENTO DE MARCA: verde #22C55E. Antes valia gris grafito #2A2D34, asi que
+       quien escribia `bg-accent` creyendo poner la marca pintaba gris.
+       OJO al anadir un componente nuevo de shadcn: sus plantillas usan
+       `accent` como fondo suave de raton encima (hover), no como color de
+       marca. En este proyecto `accent` ES la marca. Para ese gris suave se usa
+       `muted`. Si copias una plantilla de shadcn, cambia accent por muted. */
+    --accent: #22C55E;
+    --accent-foreground: #08130C;
 
     /* DESTRUCTIVE */
     --destructive: oklch(0.704 0.191 22.216);
+
+    /* AVISO: ambar del brandkit. Ni error (eso es rojo) ni acento (eso es verde). */
+    --warn: #E5B567;
+    --warn-foreground: #1A1408;
 
     /* BORDERS: subidos de 0.24 a 0.275 para que los bordes de cajas/inputs se
        VEAN — incluso cuando un componente los diluye. Regla: no bajar de aquí. */
     --border: oklch(0.275 0.012 260);
     --input: oklch(0.275 0.012 260);
-    --ring: oklch(0.55 0.015 255);
+    /* Anillo de foco (lo que rodea al campo donde estas escribiendo): verde de
+       marca en vez de gris, para que se vea de verdad al navegar con teclado. */
+    --ring: #22C55E;
 
-    /* CHARTS: escala monocromatica */
-    --chart-1: oklch(1 0 0);
+    /* GRAFICOS: la serie 1 es el verde de marca; el resto, escala de grises.
+       Hoy ningun grafico del OS usa estos tokens (pintan sus colores a mano),
+       asi que este cambio no repinta nada: deja el token correcto para el que
+       venga. */
+    --chart-1: #22C55E;
     --chart-2: oklch(0.705 0.014 255);
     --chart-3: oklch(0.52 0.015 255);
     --chart-4: oklch(0.33 0.008 265);
     --chart-5: oklch(0.24 0.012 260);
 
-    /* SIDEBAR */
+    /* SIDEBAR (menu de la izquierda) */
     --sidebar: oklch(0.113 0.005 265);
     --sidebar-foreground: oklch(0.97 0.001 250);
-    --sidebar-primary: oklch(1 0 0);
-    --sidebar-primary-foreground: oklch(0.113 0.005 265);
+    --sidebar-primary: #22C55E;
+    --sidebar-primary-foreground: #08130C;
+    /* `sidebar-accent` NO es el acento de marca: es el gris suave que se pinta
+       detras de una opcion del menu al pasar el raton o cuando esta abierta.
+       Se queda gris a proposito: si fuera verde, el menu entero seria verde. */
     --sidebar-accent: oklch(0.24 0.012 260);
     --sidebar-accent-foreground: oklch(0.97 0.001 250);
     --sidebar-border: oklch(0.275 0.012 260);
-    --sidebar-ring: oklch(0.55 0.015 255);
+    --sidebar-ring: #22C55E;
   }
 
   * {

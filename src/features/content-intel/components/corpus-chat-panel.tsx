@@ -8,7 +8,6 @@ import {
   Loader2,
   Trash2,
   Filter,
-  Sparkles,
   Bot,
   User as UserIcon,
   X,
@@ -27,7 +26,20 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 import { extractApiError } from '../lib/extract-api-error'
+
+// Hoja inferior en telefono y cajon por la derecha en monitor, con el lado fijo:
+// decidirlo con JavaScript pinta primero el diseno equivocado y luego salta.
+const HOJA_LATERAL = cn(
+  'gap-0 rounded-t-xl p-0',
+  'md:inset-y-0 md:right-0 md:left-auto md:h-dvh md:w-full md:max-w-xl md:rounded-l-xl md:border-l',
+  'md:data-[side=bottom]:max-h-none md:data-[side=bottom]:overflow-y-auto md:data-[side=bottom]:pb-0',
+)
+
+// Desplegable nativo con los 44 puntos del dedo y los colores del tema.
+const SELECT_CLASS =
+  'h-11 w-full rounded-lg border border-input bg-transparent px-3 text-base text-foreground md:h-8 md:text-sm'
 
 interface AccountRow {
   id: string
@@ -128,6 +140,8 @@ export function CorpusChatPanel({
 
   // Modal "Nuevo chat"
   const [newChatOpen, setNewChatOpen] = useState(false)
+  // En telefono la lista de chats vive en una hoja inferior: una cosa a la vez.
+  const [listaAbierta, setListaAbierta] = useState(false)
   const [newFilters, setNewFilters] = useState<Filters>({
     min_views: 100000,
     from_date: daysAgoISO(30),
@@ -479,10 +493,104 @@ export function CorpusChatPanel({
     [accounts],
   )
 
+  const listaChats = (
+    <div className="flex flex-col gap-1 overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b border-border px-3 py-2 text-sm font-semibold tabular-nums text-muted-foreground">
+        Tus chats ({chats.length})
+      </div>
+      {loadingList ? (
+        <div className="flex items-center justify-center p-6 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+        </div>
+      ) : chats.length === 0 ? (
+        <div className="flex min-h-[120px] flex-col items-center justify-center gap-1 p-4 text-center text-[15px] text-muted-foreground">
+          <MessageSquare className="h-5 w-5" />
+          <span>No tienes chats todavía</span>
+        </div>
+      ) : (
+        <ScrollArea className="max-h-[50dvh] md:max-h-[calc(100dvh-340px)]">
+          <div className="flex flex-col">
+            {chats.map((c) => {
+              const isActive = activeChat?.id === c.id
+              return (
+                <div
+                  key={c.id}
+                  className={cn(
+                    'group flex items-start gap-2 border-b border-border px-3 py-2.5 transition last:border-b-0',
+                    isActive ? 'bg-muted/40' : 'cursor-pointer md:hover:bg-muted/20',
+                  )}
+                  onClick={() => {
+                    if (!isActive) openChat(c.id)
+                    setListaAbierta(false)
+                  }}
+                >
+                  <button className="flex min-h-11 flex-1 flex-col justify-center gap-1 text-left">
+                    <span className="line-clamp-2 text-[15px] font-medium text-foreground md:text-sm">
+                      {c.title}
+                    </span>
+                    <span className="text-sm tabular-nums text-muted-foreground">
+                      {describeFiltersShort(c.filters)} ·{' '}
+                      {c.total_videos_in_context} vids
+                    </span>
+                    <span className="text-sm tabular-nums text-muted-foreground">
+                      {new Date(c.updated_at).toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </button>
+                  {/* En un telefono no hay raton: si la accion solo aparece al
+                      pasar por encima, no existe. Aqui siempre se ve. */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void deleteChat(c.id)
+                    }}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground opacity-100 transition-opacity active:bg-destructive/10 md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100 md:hover:bg-destructive/10 md:hover:text-destructive"
+                    title="Archivar"
+                    aria-label="Archivar"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </ScrollArea>
+      )}
+    </div>
+  )
+
   return (
-    <div className="grid h-[calc(100vh-220px)] grid-cols-[280px_1fr] gap-4">
-      {/* SIDEBAR — Lista de chats */}
-      <aside className="flex flex-col gap-3 overflow-hidden">
+    // TELEFONO: una cosa a la vez. La lista de chats vive en una hoja inferior y
+    // la conversacion ocupa el ancho entero. MONITOR: las dos columnas.
+    <div className="flex flex-col gap-3 md:grid md:h-[calc(100dvh-220px)] md:grid-cols-[280px_1fr] md:gap-4">
+      <div className="flex gap-2 md:hidden">
+        <Button onClick={() => setNewChatOpen(true)} className="flex-1 gap-2" variant="default">
+          <Plus className="h-4 w-4" />
+          Nuevo chat
+        </Button>
+        <button
+          onClick={() => setListaAbierta(true)}
+          className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-border px-4 text-[15px] text-foreground active:bg-muted"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Chats <span className="tabular-nums">({chats.length})</span>
+        </button>
+      </div>
+
+      <Sheet open={listaAbierta} onOpenChange={setListaAbierta}>
+        <SheetContent side="bottom" className="rounded-t-xl">
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border" />
+          <SheetTitle className="px-4 pt-2 text-[17px] font-semibold">Tus chats</SheetTitle>
+          <div className="px-4 pb-safe-4">{listaChats}</div>
+        </SheetContent>
+      </Sheet>
+
+      {/* SIDEBAR — Lista de chats (monitor) */}
+      <aside className="hidden flex-col gap-3 overflow-hidden md:flex">
         <Button
           onClick={() => setNewChatOpen(true)}
           className="gap-2"
@@ -492,72 +600,11 @@ export function CorpusChatPanel({
           Nuevo chat
         </Button>
 
-        <div className="flex flex-col gap-1 overflow-hidden rounded-lg border border-border bg-card">
-          <div className="border-b border-border px-3 py-2 text-xs font-medium text-muted-foreground">
-            Tus chats ({chats.length})
-          </div>
-          {loadingList ? (
-            <div className="flex items-center justify-center p-6 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          ) : chats.length === 0 ? (
-            <div className="flex flex-col items-center gap-1 p-4 text-center text-xs text-muted-foreground">
-              <MessageSquare className="h-5 w-5 opacity-50" />
-              <span>No tienes chats todavía</span>
-            </div>
-          ) : (
-            <ScrollArea className="max-h-[calc(100vh-340px)]">
-              <div className="flex flex-col">
-                {chats.map((c) => {
-                  const isActive = activeChat?.id === c.id
-                  return (
-                    <div
-                      key={c.id}
-                      className={`group flex items-start gap-2 border-b border-border px-3 py-2.5 transition last:border-b-0 ${
-                        isActive
-                          ? 'bg-muted/40'
-                          : 'hover:bg-muted/20 cursor-pointer'
-                      }`}
-                      onClick={() => !isActive && openChat(c.id)}
-                    >
-                      <button className="flex flex-1 flex-col gap-1 text-left">
-                        <span className="line-clamp-2 text-xs font-medium text-foreground">
-                          {c.title}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {describeFiltersShort(c.filters)} ·{' '}
-                          {c.total_videos_in_context} vids
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(c.updated_at).toLocaleString('es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          void deleteChat(c.id)
-                        }}
-                        className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-                        title="Archivar"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </ScrollArea>
-          )}
-        </div>
+        {listaChats}
       </aside>
 
       {/* MAIN — Chat */}
-      <main className="flex flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <main className="flex min-h-[60dvh] flex-col overflow-hidden rounded-xl border border-border bg-card md:min-h-0">
         {error && (
           <div className="border-b border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
             {error}
@@ -565,12 +612,12 @@ export function CorpusChatPanel({
         )}
 
         {!activeChat && !loadingChat && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-            <Sparkles className="h-8 w-8 text-muted-foreground/50" />
-            <h4 className="font-heading text-lg font-medium text-foreground">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+            <MessageSquare className="h-8 w-8 text-muted-foreground" />
+            <h4 className="font-heading text-[17px] font-semibold text-foreground">
               Chat con tu corpus
             </h4>
-            <p className="max-w-md text-sm text-muted-foreground">
+            <p className="max-w-md text-[15px] text-muted-foreground">
               Crea un chat nuevo eligiendo filtros del corpus. El modelo verá
               los transcripts reales de los videos filtrados y mantendrá el
               contexto durante toda la conversación.
@@ -591,23 +638,22 @@ export function CorpusChatPanel({
         {activeChat && !loadingChat && (
           <>
             {/* Header del chat */}
-            <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3">
-              <div className="flex flex-col gap-0.5 overflow-hidden">
-                <h3 className="line-clamp-1 text-sm font-medium text-foreground">
+            <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3 md:px-5">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <h3 className="line-clamp-1 text-[15px] font-medium text-foreground">
                   {activeChat.title}
                 </h3>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="truncate text-sm tabular-nums text-muted-foreground">
                   {describeFiltersShort(activeChat.filters)} ·{' '}
                   {activeChat.total_videos_in_context} videos en contexto
                 </p>
               </div>
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={openEditFilters}
-                className="gap-1.5 text-xs"
+                className="shrink-0 gap-1.5"
               >
-                <Filter className="h-3.5 w-3.5" />
+                <Filter className="h-4 w-4" />
                 Filtros
               </Button>
             </div>
@@ -615,11 +661,11 @@ export function CorpusChatPanel({
             {/* Mensajes */}
             <div
               ref={scrollRef}
-              className="flex-1 overflow-y-auto px-5 py-4"
+              className="no-overscroll flex-1 overflow-y-auto px-4 py-4 md:px-5"
             >
               <div className="mx-auto flex max-w-3xl flex-col gap-5">
                 {activeChat.messages.length === 0 && !streaming && (
-                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border bg-muted/20 p-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border bg-muted/20 p-4 text-[15px] text-muted-foreground">
                     <p>
                       Chat creado con {activeChat.total_videos_in_context}{' '}
                       videos en contexto. Pregunta lo que quieras: pídele
@@ -657,7 +703,9 @@ export function CorpusChatPanel({
             </div>
 
             {/* Input */}
-            <div className="border-t border-border bg-background p-3">
+            {/* sticky, no fixed: lo que se desplaza es el area de mensajes, y
+                fixed se queda pegado a la ventana, que es lo que tapa el teclado. */}
+            <div className="sticky bottom-0 border-t border-border bg-background p-3">
               <div className="mx-auto flex max-w-3xl items-end gap-2">
                 <Textarea
                   value={draft}
@@ -665,7 +713,8 @@ export function CorpusChatPanel({
                   maxLength={8000}
                   placeholder="Pregunta lo que sea sobre el corpus filtrado…"
                   rows={2}
-                  className="resize-none text-sm"
+                  enterKeyHint="send"
+                  className="resize-none"
                   disabled={streaming}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -677,8 +726,8 @@ export function CorpusChatPanel({
                 <Button
                   onClick={() => void sendMessage(draft)}
                   disabled={streaming || draft.trim().length === 0}
-                  size="default"
-                  className="gap-1.5"
+                  size="icon"
+                  aria-label="Enviar"
                 >
                   {streaming ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -694,14 +743,15 @@ export function CorpusChatPanel({
 
       {/* MODAL Nuevo chat */}
       <Sheet open={newChatOpen} onOpenChange={(v) => !creating && setNewChatOpen(v)}>
-        <SheetContent side="right" className="flex w-full max-w-xl flex-col gap-0 p-0 sm:max-w-xl">
-          <SheetHeader className="border-b border-border px-6 py-4">
-            <SheetTitle className="text-base">Nuevo chat con el corpus</SheetTitle>
-            <SheetDescription className="text-xs">
+        <SheetContent side="bottom" className={HOJA_LATERAL}>
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+          <SheetHeader className="border-b border-border px-4 py-4 md:px-6">
+            <SheetTitle className="text-[17px] font-semibold">Nuevo chat con el corpus</SheetTitle>
+            <SheetDescription className="text-sm">
               Define qué subset del corpus quieres tener en contexto durante toda la conversación.
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="px-4 py-4 md:px-6">
             <FiltersEditor
               filters={newFilters}
               setFilters={setNewFilters}
@@ -713,16 +763,15 @@ export function CorpusChatPanel({
               setTotalLimit={setNewTotalLimit}
             />
             <div className="mt-6 flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Primer mensaje (opcional)
                 </label>
                 <span
-                  className={`text-[10px] tabular-nums ${
-                    newInitialBrief.length > 7500
-                      ? 'text-destructive'
-                      : 'text-muted-foreground'
-                  }`}
+                  className={cn(
+                    'text-sm tabular-nums',
+                    newInitialBrief.length > 7500 ? 'text-destructive' : 'text-muted-foreground',
+                  )}
                 >
                   {newInitialBrief.length}/8000
                 </span>
@@ -736,22 +785,23 @@ export function CorpusChatPanel({
                 placeholder="Ej: dame 5 ángulos virales en base a los patrones del corpus, calibrados a Andrés."
                 rows={4}
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Si pones algo aquí, se envía como primer mensaje en cuanto el
                 chat esté listo. Si lo dejas vacío, creas el chat y mandas
                 mensajes después.
               </p>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 border-t border-border bg-card/30 px-6 py-3">
+          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-border bg-popover px-4 pt-3 pb-safe-4 md:flex-row md:items-center md:justify-end md:px-6 md:pb-3">
             <Button
               variant="ghost"
+              className="w-full md:w-auto"
               onClick={() => setNewChatOpen(false)}
               disabled={creating}
             >
               Cancelar
             </Button>
-            <Button onClick={createNewChat} disabled={creating} className="gap-2">
+            <Button onClick={createNewChat} disabled={creating} className="w-full gap-2 md:w-auto">
               {creating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -773,15 +823,16 @@ export function CorpusChatPanel({
         open={editFiltersOpen}
         onOpenChange={(v) => !editingFilters && setEditFiltersOpen(v)}
       >
-        <SheetContent side="right" className="flex w-full max-w-xl flex-col gap-0 p-0 sm:max-w-xl">
-          <SheetHeader className="border-b border-border px-6 py-4">
-            <SheetTitle className="text-base">Cambiar filtros del chat</SheetTitle>
-            <SheetDescription className="text-xs">
+        <SheetContent side="bottom" className={HOJA_LATERAL}>
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+          <SheetHeader className="border-b border-border px-4 py-4 md:px-6">
+            <SheetTitle className="text-[17px] font-semibold">Cambiar filtros del chat</SheetTitle>
+            <SheetDescription className="text-sm">
               Re-selecciona videos. El historial del chat se mantiene, pero a
               partir del siguiente mensaje el modelo verá los nuevos videos.
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="px-4 py-4 md:px-6">
             <FiltersEditor
               filters={editFilters}
               setFilters={setEditFilters}
@@ -793,15 +844,16 @@ export function CorpusChatPanel({
               setTotalLimit={setEditTotalLimit}
             />
           </div>
-          <div className="flex items-center justify-end gap-2 border-t border-border bg-card/30 px-6 py-3">
+          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-border bg-popover px-4 pt-3 pb-safe-4 md:flex-row md:items-center md:justify-end md:px-6 md:pb-3">
             <Button
               variant="ghost"
+              className="w-full md:w-auto"
               onClick={() => setEditFiltersOpen(false)}
               disabled={editingFilters}
             >
               Cancelar
             </Button>
-            <Button onClick={applyEditFilters} disabled={editingFilters} className="gap-2">
+            <Button onClick={applyEditFilters} disabled={editingFilters} className="w-full gap-2 md:w-auto">
               {editingFilters ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -829,23 +881,26 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className="flex gap-3">
       <div
-        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+        className={cn(
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+          // Verde de marca con tinta oscura encima: el blanco sobre verde da
+          // 2.11 de contraste y no se lee.
           isUser
-            ? 'bg-foreground text-background'
-            : 'border border-border bg-muted text-foreground'
-        }`}
+            ? 'bg-primary text-primary-foreground'
+            : 'border border-border bg-muted text-foreground',
+        )}
       >
         {isUser ? (
-          <UserIcon className="h-3.5 w-3.5" />
+          <UserIcon className="h-4 w-4" />
         ) : (
-          <Bot className="h-3.5 w-3.5" />
+          <Bot className="h-4 w-4" />
         )}
       </div>
-      <div className="flex-1 overflow-hidden">
-        <div className="text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="text-sm text-muted-foreground">
           {isUser ? 'Tú' : 'Corpus'}
         </div>
-        <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+        <div className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground">
           {message.content}
         </div>
       </div>
@@ -917,20 +972,21 @@ function FiltersEditor({
       <div className="flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-3">
         <button
           onClick={() => setAccountsOpen((v) => !v)}
-          className="flex items-center justify-between text-left"
+          aria-expanded={accountsOpen}
+          className="flex min-h-11 items-center justify-between gap-2 text-left"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[15px] font-semibold text-muted-foreground">
               Cuentas
             </span>
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="h-auto py-0.5 text-sm">
               {selectedAccountIds.size > 0
                 ? `${selectedAccountIds.size} seleccionadas`
                 : 'todas'}
             </Badge>
           </div>
           <ChevronDown
-            className={`h-4 w-4 text-muted-foreground transition ${accountsOpen ? '' : '-rotate-90'}`}
+            className={cn('h-4 w-4 shrink-0 text-muted-foreground transition', !accountsOpen && '-rotate-90')}
           />
         </button>
         {accountsOpen && (
@@ -938,19 +994,19 @@ function FiltersEditor({
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => selectAllRole('style')}
-                className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
               >
                 todas style
               </button>
               <button
                 onClick={() => selectAllRole('niche')}
-                className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
               >
                 todas niche
               </button>
               <button
                 onClick={() => setSelectedAccountIds(new Set())}
-                className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
               >
                 limpiar
               </button>
@@ -962,7 +1018,7 @@ function FiltersEditor({
             ].map(({ label, items }) =>
               items.length === 0 ? null : (
                 <div key={label} className="flex flex-col gap-1">
-                  <span className="text-[10px] font-mono uppercase text-muted-foreground/70">
+                  <span className="text-sm font-semibold text-muted-foreground">
                     {label}
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -972,11 +1028,13 @@ function FiltersEditor({
                         <button
                           key={a.id}
                           onClick={() => toggleAccount(a.id)}
-                          className={`rounded-full px-2 py-0.5 text-[11px] transition ${
+                          aria-pressed={sel}
+                          className={cn(
+                            'h-11 rounded-lg border px-3 text-sm transition md:h-8',
                             sel
-                              ? 'bg-foreground text-background'
-                              : 'border border-border text-foreground hover:bg-muted/50'
-                          }`}
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-border text-foreground active:bg-muted/50',
+                          )}
                         >
                           @{a.handle}
                         </button>
@@ -992,7 +1050,7 @@ function FiltersEditor({
 
       {/* Periodo */}
       <div className="flex flex-col gap-2">
-        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <label className="text-[15px] font-semibold text-muted-foreground">
           Periodo
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -1007,12 +1065,12 @@ function FiltersEditor({
             <button
               key={opt.label}
               onClick={() => setDays(opt.d)}
-              className={`rounded-md border border-border px-2.5 py-1 text-xs ${
-                currentDays === opt.d ||
-                (opt.d === null && !filters.from_date)
-                  ? 'bg-foreground text-background'
-                  : 'text-foreground hover:bg-muted/50'
-              }`}
+              className={cn(
+                'h-11 rounded-lg border border-border px-3 text-sm md:h-8',
+                currentDays === opt.d || (opt.d === null && !filters.from_date)
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'text-foreground active:bg-muted/50',
+              )}
             >
               {opt.label}
             </button>
@@ -1022,7 +1080,7 @@ function FiltersEditor({
 
       {/* Min views */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <label className="text-[15px] font-semibold text-muted-foreground">
           Views mínimos
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -1042,12 +1100,12 @@ function FiltersEditor({
                   min_views: opt.v === 0 ? undefined : opt.v,
                 })
               }
-              className={`rounded-md border border-border px-2.5 py-1 text-xs ${
-                (opt.v === 0 && !filters.min_views) ||
-                filters.min_views === opt.v
-                  ? 'bg-foreground text-background'
-                  : 'text-foreground hover:bg-muted/50'
-              }`}
+              className={cn(
+                'h-11 rounded-lg border border-border px-3 text-sm md:h-8',
+                (opt.v === 0 && !filters.min_views) || filters.min_views === opt.v
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'text-foreground active:bg-muted/50',
+              )}
             >
               {opt.label}
             </button>
@@ -1056,9 +1114,9 @@ function FiltersEditor({
       </div>
 
       {/* Orden + total_limit */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="text-[15px] font-semibold text-muted-foreground">
             Orden
           </label>
           <select
@@ -1069,7 +1127,7 @@ function FiltersEditor({
                 order_by: e.target.value as Filters['order_by'],
               })
             }
-            className="h-9 rounded-md border border-input bg-transparent px-2 text-xs"
+            className={SELECT_CLASS}
           >
             <option value="engagement_rate">Engagement</option>
             <option value="views">Views</option>
@@ -1079,16 +1137,16 @@ function FiltersEditor({
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="text-[15px] font-semibold text-muted-foreground">
             Max videos
           </label>
           <Input
             type="number"
+            inputMode="numeric"
             min={3}
             max={50}
             value={totalLimit}
             onChange={(e) => setTotalLimit(parseInt(e.target.value, 10) || 20)}
-            className="h-9"
           />
         </div>
       </div>

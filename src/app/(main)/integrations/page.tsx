@@ -1,4 +1,4 @@
-import { ShellHeader } from '@/features/shell/components/shell-header'
+import { PageContainer } from '@/components/ui/page-container'
 import { PlatformCard } from '@/features/integrations/components/platform-card'
 import { platformList, platformDefinitions } from '@/features/integrations/adapters'
 import { getConnections } from '@/features/integrations/services/orchestrator'
@@ -13,13 +13,13 @@ export default async function IntegrationsPage() {
 
   return (
     <>
-      <ShellHeader title="Integraciones" />
-      <div className="flex flex-col gap-5 p-4 pb-mobile-nav md:gap-6 md:p-6">
-        <div className="space-y-1">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Conecta las APIs de las plataformas que alimentan el dashboard.
-          </h2>
-        </div>
+      {/* El relleno, el ancho y el hueco de la barra de abajo los pone
+          <PageContainer>: antes esta pantalla los escribia a mano y se
+          desalineaba con el resto del OS. */}
+      <PageContainer>
+        <h2 className="text-[15px] font-medium text-muted-foreground">
+          Conecta las APIs de las plataformas que alimentan el dashboard.
+        </h2>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
           {platformList.map(platform => (
             <PlatformCard
@@ -29,7 +29,7 @@ export default async function IntegrationsPage() {
             />
           ))}
         </div>
-      </div>
+      </PageContainer>
     </>
   )
 }

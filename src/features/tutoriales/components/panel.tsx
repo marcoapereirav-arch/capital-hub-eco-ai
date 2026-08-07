@@ -1,62 +1,55 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { X, AlertTriangle, Folder, Home, ChevronRight } from "lucide-react"
+import { useState } from "react"
+import { AlertTriangle, Folder, Home, ChevronRight } from "lucide-react"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import type { Carpeta } from "../types"
 
-/** Marco propio para todos los paneles: mismo aspecto, hoja inferior en movil. */
+/**
+ * Marco propio para todos los paneles: hoja inferior en telefono, cajon por la
+ * derecha en escritorio. El lado va FIJO (`side="bottom"`) y el escritorio se
+ * resuelve con clases `md:`, nunca con JavaScript: `useIsMobile()` devuelve
+ * false hasta que monta, asi que decidirlo en JS pinta primero el diseno
+ * equivocado y luego salta.
+ *
+ * Antes era una ventana a mano con `fixed inset-0`: al escribir, el teclado del
+ * telefono tapaba el campo y el boton de guardar.
+ */
 function Marco({
   titulo, pie, onCerrar, children,
 }: { titulo: string; pie?: string; onCerrar: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const alPulsar = (e: KeyboardEvent) => e.key === "Escape" && onCerrar()
-    window.addEventListener("keydown", alPulsar)
-    const previo = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    return () => {
-      window.removeEventListener("keydown", alPulsar)
-      document.body.style.overflow = previo
-    }
-  }, [onCerrar])
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#0F0F12]/90 backdrop-blur-sm sm:items-center sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-label={titulo}
-      onClick={onCerrar}
+    <Sheet
+      open
+      onOpenChange={(abierto) => {
+        if (!abierto) onCerrar()
+      }}
     >
-      <div
-        className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-lg border border-[#2A2D34] bg-[#15161A] sm:rounded-lg"
-        onClick={(e) => e.stopPropagation()}
+      <SheetContent
+        side="bottom"
+        // Sin pie no hay descripcion que pintar, y hay que decirselo a la ventana:
+        // si no, avisa por consola de que le falta. No se inventa texto nuevo.
+        {...(pie ? {} : { "aria-describedby": undefined })}
+        className={cn(
+          "rounded-t-xl",
+          // Se repite la condicion del lado porque las clases del kit (`data-[side=bottom]:...`)
+          // pesan mas que un `md:` suelto; sin repetirla el cajon sale por la izquierda.
+          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-md md:border-l md:pb-0",
+        )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#2A2D34] p-5">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-white">{titulo}</h2>
-            {pie ? <p className="mt-0.5 truncate text-xs text-white/50">{pie}</p> : null}
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            aria-label="Cerrar"
-            className="rounded-lg border border-white/10 p-1.5 text-white/60 transition hover:text-white"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="space-y-4 p-5">{children}</div>
-      </div>
-    </div>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <SheetTitle className="text-[17px] font-semibold">{titulo}</SheetTitle>
+          {pie ? <SheetDescription className="truncate">{pie}</SheetDescription> : null}
+        </SheetHeader>
+        <div className="space-y-4 px-4 pb-safe-4">{children}</div>
+      </SheetContent>
+    </Sheet>
   )
 }
-
-const INPUT =
-  "w-full rounded-lg border border-[#2A2D34] bg-[#0F0F12] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#22C55E]/60 focus:outline-none"
-const VERDE =
-  "flex-1 rounded-lg bg-[#22C55E] px-4 py-2.5 text-sm font-semibold text-[#0F0F12] transition hover:bg-[#4ADE80] disabled:cursor-not-allowed disabled:opacity-35"
-const GRIS =
-  "flex-1 rounded-lg border border-[#2A2D34] px-4 py-2.5 text-sm font-medium text-white/70 transition hover:text-white"
 
 /** Crear una carpeta, o renombrar una que ya existe. */
 export function PanelNombre({
@@ -87,23 +80,30 @@ export function PanelNombre({
   return (
     <Marco titulo={titulo} pie={pie} onCerrar={onCerrar}>
       <div>
-        <label htmlFor="nombre-panel" className="mb-1.5 block text-xs font-medium text-white/70">{etiqueta}</label>
-        <input
+        <label htmlFor="nombre-panel" className="mb-1.5 block text-[15px] font-medium text-muted-foreground">
+          {etiqueta}
+        </label>
+        <Input
           id="nombre-panel"
           autoFocus
           value={valor}
           onChange={(e) => { setValor(e.target.value); setError(null) }}
           onKeyDown={(e) => e.key === "Enter" && guardar()}
+          enterKeyHint="done"
           placeholder="Closers"
-          className={INPUT}
+          className="bg-background"
         />
       </div>
-      {error ? <p className="text-xs text-red-300">{error}</p> : null}
+      {error ? (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
       <div className="flex gap-2">
-        <button type="button" onClick={onCerrar} className={GRIS}>Cancelar</button>
-        <button type="button" onClick={guardar} disabled={!valor.trim() || guardando} className={VERDE}>
+        <Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>
+        <Button onClick={guardar} disabled={!valor.trim() || guardando} className="flex-1">
           {guardando ? "Guardando…" : accion}
-        </button>
+        </Button>
       </div>
     </Marco>
   )
@@ -146,16 +146,16 @@ export function PanelMover({
 
   return (
     <Marco titulo={titulo} pie="Elige dónde quieres ponerlo" onCerrar={onCerrar}>
-      <div className="max-h-72 space-y-1 overflow-y-auto">
+      <div className="max-h-72 space-y-1 overflow-y-auto no-overscroll">
         <button
           type="button"
           disabled={actual === null || moviendo}
           onClick={() => mover(null)}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-white transition hover:bg-white/5 disabled:opacity-35 disabled:hover:bg-transparent"
+          className="flex min-h-12 w-full items-center gap-2 rounded-lg px-3 text-left text-[15px] text-foreground transition-colors active:bg-muted disabled:opacity-40"
         >
-          <Home className="h-4 w-4 shrink-0 text-[#4ADE80]" />
+          <Home className="h-4 w-4 shrink-0 text-primary" />
           Tutoriales (principal)
-          {actual === null ? <span className="ml-auto text-xs text-white/40">Está aquí</span> : null}
+          {actual === null ? <span className="ml-auto text-sm text-muted-foreground">Está aquí</span> : null}
         </button>
 
         {filas.map(({ carpeta, nivel }) => {
@@ -168,19 +168,23 @@ export function PanelMover({
               disabled={vetada || esActual || moviendo}
               onClick={() => mover(carpeta.id)}
               style={{ paddingLeft: `${12 + nivel * 18}px` }}
-              className="flex w-full items-center gap-2 rounded-lg py-2.5 pr-3 text-left text-sm text-white transition hover:bg-white/5 disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex min-h-12 w-full items-center gap-2 rounded-lg pr-3 text-left text-[15px] text-foreground transition-colors active:bg-muted disabled:opacity-40"
             >
-              {nivel > 0 ? <ChevronRight className="h-3 w-3 shrink-0 text-white/25" /> : null}
-              <Folder className="h-4 w-4 shrink-0 text-[#4ADE80]" />
+              {nivel > 0 ? <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
+              <Folder className="h-4 w-4 shrink-0 text-primary" />
               <span className="truncate">{carpeta.nombre}</span>
-              {esActual ? <span className="ml-auto shrink-0 text-xs text-white/40">Está aquí</span> : null}
-              {vetada && !esActual ? <span className="ml-auto shrink-0 text-xs text-white/40">No se puede</span> : null}
+              {esActual ? <span className="ml-auto shrink-0 text-sm text-muted-foreground">Está aquí</span> : null}
+              {vetada && !esActual ? <span className="ml-auto shrink-0 text-sm text-muted-foreground">No se puede</span> : null}
             </button>
           )
         })}
       </div>
-      {error ? <p className="text-xs text-red-300">{error}</p> : null}
-      <button type="button" onClick={onCerrar} className={`${GRIS} w-full`}>Cancelar</button>
+      {error ? (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+      <Button variant="secondary" onClick={onCerrar} className="w-full">Cancelar</Button>
     </Marco>
   )
 }
@@ -225,9 +229,9 @@ export function PanelBorrar({
 
   return (
     <Marco titulo={tieneCosas ? "Borrar la carpeta y todo lo de dentro" : "Borrar"} onCerrar={onCerrar}>
-      <div className="flex items-start gap-2.5 rounded-lg border border-red-500/30 bg-red-500/[0.06] p-3">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
-        <p className="text-xs leading-relaxed text-red-200">
+      <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+        <p className="text-sm leading-relaxed text-destructive">
           {tieneCosas
             ? `Dentro de "${nombre}" hay ${listas}. Se borra todo, incluidos los vídeos subidos. No se puede recuperar.`
             : `Vas a borrar "${nombre}". No se puede recuperar.`}
@@ -236,32 +240,32 @@ export function PanelBorrar({
 
       {tieneCosas ? (
         <div>
-          <label htmlFor="confirmar" className="mb-1.5 block text-xs font-medium text-white/70">
+          <label htmlFor="confirmar" className="mb-1.5 block text-[15px] font-medium text-muted-foreground">
             Escribe el nombre de la carpeta para confirmar
           </label>
-          <input
+          <Input
             id="confirmar"
             autoFocus
             value={escrito}
             onChange={(e) => setEscrito(e.target.value)}
+            enterKeyHint="done"
             placeholder={nombre}
-            className={INPUT}
+            className="bg-background"
           />
         </div>
       ) : null}
 
-      {error ? <p className="text-xs text-red-300">{error}</p> : null}
+      {error ? (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       <div className="flex gap-2">
-        <button type="button" onClick={onCerrar} className={GRIS}>Cancelar</button>
-        <button
-          type="button"
-          onClick={borrar}
-          disabled={!puede}
-          className="flex-1 rounded-lg bg-red-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-35"
-        >
+        <Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>
+        <Button variant="destructive" onClick={borrar} disabled={!puede} className="flex-1">
           {borrando ? "Borrando…" : tieneCosas ? "Borrar todo" : "Borrar"}
-        </button>
+        </Button>
       </div>
     </Marco>
   )

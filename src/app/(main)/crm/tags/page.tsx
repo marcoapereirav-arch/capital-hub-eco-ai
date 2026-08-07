@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic"
 /**
  * El scroll y el hueco de la barra inferior de movil los pone el layout del CRM,
  * en un solo sitio. Aqui solo van los margenes estandar del OS (<PageContainer>).
+ * Antes esta pagina montaba su propio contenedor con `pb-mobile-nav` a mano y se
+ * salia de los margenes del shell.
  */
 export default function CrmTagsRoute() {
   // `pb-28 md:pb-28`: hueco para que el boton flotante de "Registrar venta" no tape la

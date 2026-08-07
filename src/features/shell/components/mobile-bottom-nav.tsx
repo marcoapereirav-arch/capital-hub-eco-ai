@@ -62,7 +62,10 @@ export function MobileBottomNav({
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 pb-safe backdrop-blur-md md:hidden">
-        <ul className="grid grid-cols-5">
+        {/* Reparto a partes iguales entre los que DE VERDAD se pintan. Antes
+            eran 5 columnas fijas con 4 botones (o 3, segun el rol): la barra
+            salia corrida a la izquierda con un hueco vacio a la derecha. */}
+        <ul className="flex">
           {navPrimary.filter((item) => canAccessRoute(userRole, item.href)).map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/")
@@ -71,7 +74,7 @@ export function MobileBottomNav({
                 <Link
                   href={item.href}
                   className={cn(
-                    "tap-target relative flex h-14 flex-col items-center justify-center gap-0.5 transition-colors",
+                    "tap-target relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
                     isActive
                       ? "text-foreground"
                       : "text-muted-foreground active:text-foreground"
@@ -84,7 +87,7 @@ export function MobileBottomNav({
                     />
                   )}
                   <item.icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
-                  <span className="font-mono text-[10px] uppercase tracking-wider">
+                  <span className="text-sm font-semibold leading-none">
                     {item.title}
                   </span>
                 </Link>
@@ -96,7 +99,7 @@ export function MobileBottomNav({
               type="button"
               onClick={() => setMoreOpen(true)}
               className={cn(
-                "tap-target relative flex h-14 flex-col items-center justify-center gap-0.5 transition-colors",
+                "tap-target relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
                 isSecondaryActive || moreOpen
                   ? "text-foreground"
                   : "text-muted-foreground active:text-foreground"
@@ -110,7 +113,7 @@ export function MobileBottomNav({
                 />
               )}
               <MoreHorizontal className="h-[22px] w-[22px]" strokeWidth={1.75} />
-              <span className="font-mono text-[10px] uppercase tracking-wider">
+              <span className="text-sm font-semibold leading-none">
                 Más
               </span>
             </button>
@@ -121,13 +124,13 @@ export function MobileBottomNav({
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent
           side="bottom"
-          className="rounded-t-2xl border-border bg-popover pb-safe"
+          className="rounded-t-xl border-border bg-popover pb-safe"
           showCloseButton={false}
         >
           <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border" />
 
           <SheetHeader className="px-4 pt-3">
-            <SheetTitle className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
+            <SheetTitle className="text-base font-extrabold text-foreground">
               Más
             </SheetTitle>
           </SheetHeader>
@@ -160,7 +163,7 @@ export function MobileBottomNav({
           <div className="px-4 pb-4">
             <div className="mb-3 flex items-center gap-3 rounded-md bg-secondary px-3 py-3">
               <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-secondary text-xs font-mono font-semibold text-secondary-foreground">
+                <AvatarFallback className="bg-secondary text-xs font-semibold text-secondary-foreground">
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -168,7 +171,7 @@ export function MobileBottomNav({
                 <span className="text-sm font-medium text-foreground">{displayName}</span>
                 <span className="text-xs text-muted-foreground">{userEmail}</span>
               </div>
-              <span className="rounded-sm bg-card px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="rounded-lg bg-card px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                 {roleLabel}
               </span>
             </div>

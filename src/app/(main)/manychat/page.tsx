@@ -1,4 +1,4 @@
-import { ShellHeader } from '@/features/shell/components/shell-header'
+import { PageContainer } from '@/components/ui/page-container'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   getOverview,
@@ -29,22 +29,25 @@ export default async function ManychatPage() {
 
   return (
     <>
-      <ShellHeader title="ManyChat" />
-      <div className="flex flex-col gap-6 p-6">
+      {/* PageContainer pone los margenes del shell y reserva el sitio de la
+          barra de abajo del telefono. Antes esta pantalla usaba un p-6 suelto. */}
+      <PageContainer className="space-y-6">
         <div className="space-y-1">
-          <h2 className="text-sm text-muted-foreground">
+          <h2 className="text-[15px] text-muted-foreground">
             DMs de Instagram, suscriptores, tags y eventos en tiempo real.
           </h2>
         </div>
 
         <Tabs defaultValue="overview" className="flex flex-col gap-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="subscribers">
+          {/* Tira deslizable a 44 puntos de alto: cuatro pestanas no caben en 375
+              puntos, asi que la ultima asoma para que se vea que hay mas. */}
+          <TabsList className="h-[50px]! w-full max-w-full justify-start gap-1 overflow-x-auto md:h-8! md:w-fit">
+            <TabsTrigger value="overview" className="flex-none px-3 text-[15px] md:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="subscribers" className="flex-none px-3 text-[15px] md:text-sm">
               Suscriptores ({overview.totalSubscribers})
             </TabsTrigger>
-            <TabsTrigger value="inbox">Inbox</TabsTrigger>
-            <TabsTrigger value="tags">Tags & Fields</TabsTrigger>
+            <TabsTrigger value="inbox" className="flex-none px-3 text-[15px] md:text-sm">Inbox</TabsTrigger>
+            <TabsTrigger value="tags" className="flex-none px-3 text-[15px] md:text-sm">Tags &amp; Fields</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -67,7 +70,7 @@ export default async function ManychatPage() {
             <TagsPanel tags={tags} customFields={customFields} />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
     </>
   )
 }

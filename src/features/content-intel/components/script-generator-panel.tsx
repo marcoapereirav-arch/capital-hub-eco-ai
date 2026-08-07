@@ -5,6 +5,7 @@ import { Video, Share2, Trash2, FileText, Loader2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { SCRIPT_STATUS_LABELS } from '../types/script'
 import type { ScriptRow, ScriptStatus } from '../types/script'
 import { ScriptChatPanel } from './script-chat-panel'
@@ -167,7 +168,7 @@ export function ScriptGeneratorPanel() {
           <h3 className="font-heading text-2xl font-medium tracking-tight text-foreground">
             Mis guiones
           </h3>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
             Almacén de drafts. Genera nuevos desde el formulario.
           </p>
         </div>
@@ -179,14 +180,14 @@ export function ScriptGeneratorPanel() {
             setError(null)
           }}
           variant="outline"
-          size="sm"
-          className="w-full text-xs"
+          className="w-full"
         >
-          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          <Plus className="mr-1.5 h-4 w-4" />
           Nuevo guion
         </Button>
 
-        <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
+        {/* Tira deslizable: cuatro filtros no caben en 375 puntos sin encogerse */}
+        <div className="-mx-4 flex snap-x gap-1 overflow-x-auto px-4 md:mx-0 md:rounded-lg md:border md:border-border md:bg-card md:p-1 md:px-1">
           {(['pendientes', 'grabados', 'publicados', 'todos'] as const).map((f) => (
             <button
               key={f}
@@ -194,53 +195,51 @@ export function ScriptGeneratorPanel() {
                 setHistoryFilter(f)
                 setSelectedIds(new Set())
               }}
-              className={`flex-1 rounded-md px-2 py-1.5 text-xs transition-colors ${
+              className={cn(
+                'h-11 shrink-0 snap-start rounded-lg px-3 text-[15px] whitespace-nowrap transition-colors md:h-8 md:flex-1 md:text-sm',
                 historyFilter === f
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  ? 'bg-primary font-semibold text-primary-foreground'
+                  : 'bg-card text-muted-foreground md:bg-transparent md:hover:text-foreground',
+              )}
             >
               {f}
-              <span className="ml-1 opacity-60">({counts[f]})</span>
+              <span className="ml-1 tabular-nums">({counts[f]})</span>
             </button>
           ))}
         </div>
 
         {selectedIds.size > 0 && (
           <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm tabular-nums text-muted-foreground">
               {selectedIds.size} seleccionado{selectedIds.size !== 1 ? 's' : ''}
             </p>
             <div className="flex gap-1.5">
               <Button
-                size="sm"
                 variant="default"
-                className="flex-1 text-xs"
+                className="flex-1"
                 onClick={() => handleBulkMark('recorded')}
                 disabled={bulking}
               >
-                <Video className="mr-1 h-3 w-3" />
+                <Video className="mr-1 h-4 w-4" />
                 Grabados
               </Button>
               <Button
-                size="sm"
                 variant="ghost"
-                className="flex-1 text-xs"
+                className="flex-1"
                 onClick={() => handleBulkMark('published')}
                 disabled={bulking}
               >
-                <Share2 className="mr-1 h-3 w-3" />
+                <Share2 className="mr-1 h-4 w-4" />
                 Publicados
               </Button>
             </div>
             <Button
-              size="sm"
               variant="ghost"
-              className="text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={handleBulkDelete}
               disabled={bulking}
             >
-              <Trash2 className="mr-1 h-3 w-3" />
+              <Trash2 className="mr-1 h-4 w-4" />
               Eliminar {selectedIds.size}
             </Button>
           </div>
@@ -252,9 +251,10 @@ export function ScriptGeneratorPanel() {
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
           ) : filteredHistory.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 p-6 text-center">
+            <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 p-6 text-center">
               <FileText className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
+              <h4 className="text-[17px] font-semibold text-foreground">Nada por aquí</h4>
+              <p className="max-w-[38ch] text-[15px] text-muted-foreground">
                 {historyFilter === 'pendientes'
                   ? 'Sin pendientes. Genera tu primer guion desde Studio.'
                   : `Sin ${historyFilter}.`}
@@ -273,34 +273,39 @@ export function ScriptGeneratorPanel() {
               return (
                 <div
                   key={s.id}
-                  className={`flex items-start gap-2 border-b border-border p-3 transition-colors last:border-b-0 ${
-                    isActive ? 'bg-muted/30' : 'hover:bg-muted/20'
-                  }`}
+                  className={cn(
+                    'flex items-start gap-2 border-b border-border p-3 transition-colors last:border-b-0',
+                    isActive ? 'bg-muted/30' : 'md:hover:bg-muted/20',
+                  )}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleSelect(s.id)}
-                    className="mt-1 h-3.5 w-3.5 shrink-0 cursor-pointer accent-foreground"
-                    aria-label="Seleccionar"
-                  />
+                  {/* La zona que se toca mide 44 puntos aunque el dibujo de la
+                      casilla siga siendo pequeno: es el minimo del dedo. */}
+                  <label className="flex h-11 w-11 shrink-0 items-center justify-center md:h-8 md:w-8">
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelect(s.id)}
+                      className="h-5 w-5 cursor-pointer accent-primary md:h-4 md:w-4"
+                      aria-label="Seleccionar"
+                    />
+                  </label>
                   <button
                     onClick={() => openScript(s)}
-                    className="flex flex-1 flex-col gap-0.5 text-left"
+                    className="flex min-h-11 flex-1 flex-col justify-center gap-0.5 text-left"
                   >
-                    <span className="line-clamp-1 text-sm text-foreground">{s.brief}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="line-clamp-2 text-[15px] text-foreground md:line-clamp-1">{s.brief}</span>
+                    <span className="text-sm tabular-nums text-muted-foreground">
                       {dateStr} {timeStr} · {SCRIPT_STATUS_LABELS[s.status as ScriptStatus]} ·{' '}
                       {s.platform}
                     </span>
                   </button>
                   <button
                     onClick={() => handleDelete(s.id)}
-                    className="mt-0.5 shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors active:bg-destructive/10 md:h-8 md:w-8 md:hover:bg-destructive/10 md:hover:text-destructive"
                     aria-label="Eliminar guion"
                     title="Eliminar guion"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               )
@@ -329,24 +334,28 @@ export function ScriptGeneratorPanel() {
 
         {script && (
           <>
-            <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                  <p className="line-clamp-1 text-sm font-medium text-foreground">
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:p-5">
+              <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <p className="line-clamp-2 text-[15px] font-medium text-foreground md:line-clamp-1">
                     {script.brief}
                   </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px]">
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <Badge variant="outline" className="h-auto py-0.5 text-sm">
                       {SCRIPT_STATUS_LABELS[script.status as ScriptStatus]}
                     </Badge>
                     <span>{script.platform}</span>
-                    <span>·</span>
-                    <span>{script.duration_target_s ?? '—'}s</span>
+                    <span aria-hidden>·</span>
+                    <span className="tabular-nums">{script.duration_target_s ?? '—'}s</span>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5">
+                {/* Dos acciones a la vista en telefono; las demas debajo.
+                    El orden es el de siempre (Guardar, Grabado, Publicado,
+                    Eliminar) porque Guardar solo salva el texto y Grabado CAMBIA
+                    el estado del guion: si se intercambian, el gesto aprendido
+                    marca guiones como grabados creyendo que los guarda. */}
+                <div className="grid grid-cols-2 gap-1.5 md:flex md:flex-wrap md:items-center">
                   <Button
-                    size="sm"
                     variant="ghost"
                     onClick={() => handleSaveEdit()}
                     disabled={saving}
@@ -354,30 +363,27 @@ export function ScriptGeneratorPanel() {
                     Guardar
                   </Button>
                   <Button
-                    size="sm"
                     variant="default"
                     onClick={() => handleSaveEdit('recorded')}
                     disabled={saving}
                   >
-                    <Video className="mr-1 h-3.5 w-3.5" />
+                    <Video className="mr-1 h-4 w-4" />
                     Grabado
                   </Button>
                   <Button
-                    size="sm"
                     variant="ghost"
                     onClick={() => handleSaveEdit('published')}
                     disabled={saving}
                   >
-                    <Share2 className="mr-1 h-3.5 w-3.5" />
+                    <Share2 className="mr-1 h-4 w-4" />
                     Publicado
                   </Button>
                   <Button
-                    size="sm"
                     variant="ghost"
                     onClick={() => handleDelete(script.id)}
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    <Trash2 className="mr-1 h-4 w-4" />
                     Eliminar
                   </Button>
                 </div>
@@ -385,12 +391,12 @@ export function ScriptGeneratorPanel() {
 
               <Textarea
                 rows={18}
-                className="font-mono text-sm leading-relaxed"
+                className="leading-relaxed"
                 value={editable}
                 onChange={(e) => setEditable(e.target.value)}
               />
 
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm tabular-nums text-muted-foreground">
                 Tokens: {script.tokens_used ?? '—'} · Coste: $
                 {script.cost_usd?.toFixed(4) ?? '0.0000'} · Modelo: {script.model ?? '—'}
               </p>

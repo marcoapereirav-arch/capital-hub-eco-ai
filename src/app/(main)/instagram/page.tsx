@@ -1,4 +1,4 @@
-import { ShellHeader } from '@/features/shell/components/shell-header'
+import { PageContainer } from '@/components/ui/page-container'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getOverview } from '@/features/instagram/services/queries'
 import { listScheduled } from '@/features/instagram/services/calendar'
@@ -15,10 +15,11 @@ export default async function InstagramPage() {
 
   return (
     <>
-      <ShellHeader title="Instagram" />
-      <div className="flex flex-col gap-6 p-6">
+      {/* PageContainer pone los margenes del shell y reserva el sitio de la
+          barra de abajo del telefono. Antes esta pantalla usaba un p-6 suelto. */}
+      <PageContainer className="space-y-6">
         <div className="space-y-1">
-          <h2 className="text-sm text-muted-foreground">
+          <h2 className="text-[15px] text-muted-foreground">
             {overview.account
               ? `Cuenta: @${overview.account.handle} • ${overview.account.video_count} posts cacheados`
               : 'Sin cuenta IG configurada como propia.'}
@@ -26,9 +27,12 @@ export default async function InstagramPage() {
         </div>
 
         <Tabs defaultValue="overview" className="flex flex-col gap-6">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="calendar">Calendario ({scheduled.length})</TabsTrigger>
+          {/* 44 puntos de alto en telefono (el alto del dedo), compacta en monitor */}
+          <TabsList className="h-[50px]! w-full max-w-full justify-start gap-1 overflow-x-auto md:h-8! md:w-fit">
+            <TabsTrigger value="overview" className="flex-none px-3 text-[15px] md:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="calendar" className="flex-none px-3 text-[15px] md:text-sm">
+              Calendario ({scheduled.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -39,7 +43,7 @@ export default async function InstagramPage() {
             <CalendarView posts={scheduled} />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
     </>
   )
 }

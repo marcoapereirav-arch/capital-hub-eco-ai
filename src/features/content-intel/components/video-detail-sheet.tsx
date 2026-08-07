@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Eye, Heart, MessageSquare, ExternalLink, Sparkles } from 'lucide-react'
+import { Loader2, Eye, Heart, MessageSquare, ExternalLink, Wand2 } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { cn } from '@/lib/utils'
 import { useContentIntelStore } from '../store/content-intel-store'
 import { useVideo } from '../hooks/use-videos'
 
@@ -79,199 +79,206 @@ export function VideoDetailSheet({ onRefresh }: { onRefresh: () => Promise<void>
   const hasAnalysis = Boolean(video?.analysis)
 
   return (
+    // Hoja inferior en telefono, cajon por la derecha en monitor. El lado se fija
+    // con clases: decidirlo con JavaScript pinta primero el diseno equivocado.
     <Sheet open={isOpen} onOpenChange={(o) => !o && handleClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
+      <SheetContent
+        side="bottom"
+        className={cn(
+          'rounded-t-xl',
+          'md:inset-y-0 md:right-0 md:left-auto md:h-dvh md:w-full md:max-w-2xl md:rounded-l-xl md:border-l',
+          'md:data-[side=bottom]:max-h-none md:data-[side=bottom]:pb-0',
+        )}
+      >
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
         <SheetHeader className="shrink-0 border-b border-border pb-4">
           <SheetTitle className="font-heading text-lg font-medium tracking-tight">
             Detalle del video
           </SheetTitle>
-          <SheetDescription className="text-xs">
+          <SheetDescription className="text-sm">
             Metadata, transcript y análisis.
           </SheetDescription>
         </SheetHeader>
 
         {!video && loading && (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-1 items-center justify-center py-10">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         )}
 
         {video && (
-          <ScrollArea className="flex-1 px-0">
-            <div className="flex flex-col gap-4 p-1">
-              {video.thumbnail_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={video.thumbnail_url}
-                  alt=""
-                  className="w-full rounded border border-border bg-muted object-cover aspect-video"
-                />
-              )}
+          <div className="flex flex-col gap-4 px-4 pb-4">
+            {video.thumbnail_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={video.thumbnail_url}
+                alt=""
+                className="aspect-video w-full rounded-lg border border-border bg-muted object-cover"
+              />
+            )}
 
-              <div className="flex items-center gap-4 font-mono text-xs">
-                <span className="flex items-center gap-1.5">
-                  <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                  {formatNumber(video.views)}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Heart className="h-3.5 w-3.5 text-muted-foreground" />
-                  {formatNumber(video.likes)}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                  {formatNumber(video.comments)}
-                </span>
-                {video.duration_s != null && (
-                  <span className="text-muted-foreground">{video.duration_s}s</span>
-                )}
-                <a
-                  href={video.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  Ver en IG <ExternalLink className="h-3 w-3" />
-                </a>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm tabular-nums">
+              <span className="flex items-center gap-1.5">
+                <Eye className="h-4 w-4 text-muted-foreground" />
+                {formatNumber(video.views)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Heart className="h-4 w-4 text-muted-foreground" />
+                {formatNumber(video.likes)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                {formatNumber(video.comments)}
+              </span>
+              {video.duration_s != null && (
+                <span className="text-muted-foreground">{video.duration_s}s</span>
+              )}
+              <a
+                href={video.url}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-auto inline-flex h-11 items-center gap-1 text-[15px] text-muted-foreground md:h-auto md:text-sm md:hover:text-foreground"
+              >
+                Ver en IG <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+
+            {video.caption && (
+              <div className="rounded-lg border border-border bg-card p-3">
+                <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
+                  Caption
+                </p>
+                <p className="text-[15px] whitespace-pre-wrap text-foreground">
+                  {video.caption}
+                </p>
               </div>
+            )}
 
-              {video.caption && (
-                <div className="rounded border border-border bg-card p-3">
-                  <p className="text-xs text-muted-foreground mb-1.5">
-                    Caption
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm text-foreground">
-                    {video.caption}
-                  </p>
-                </div>
-              )}
+            <Separator />
 
-              <Separator />
-
-              {/* Transcript */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">
-                    Transcript
-                  </h3>
-                  {hasTranscript ? (
-                    <Badge variant="outline" className="font-mono text-[9px]">
-                      {video.transcript_language?.toUpperCase() ?? '??'}
-                    </Badge>
-                  ) : (
-                    <Button size="sm" onClick={runTranscribe} disabled={transcribing}>
-                      {transcribing ? (
-                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                      ) : null}
-                      Transcribir
-                    </Button>
-                  )}
-                </div>
+            {/* Transcript */}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-[15px] font-medium text-foreground">
+                  Transcript
+                </h3>
                 {hasTranscript ? (
-                  <div className="rounded border border-border bg-card p-3 max-h-80 overflow-auto">
-                    <p className="whitespace-pre-wrap text-sm text-foreground">
-                      {video.transcript}
-                    </p>
-                  </div>
-                ) : video.transcript === '[NO_SPEECH]' ? (
-                  <p className="font-mono text-xs text-muted-foreground">
-                    Video sin audio hablado — solo música o visuales.
-                  </p>
+                  <Badge variant="outline" className="h-auto py-0.5 text-sm">
+                    {video.transcript_language?.toUpperCase() ?? '??'}
+                  </Badge>
                 ) : (
-                  <p className="font-mono text-xs text-muted-foreground">
-                    Todavía no hay transcript. Usa el botón para generarlo.
-                  </p>
+                  <Button onClick={runTranscribe} disabled={transcribing}>
+                    {transcribing ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Transcribir
+                  </Button>
                 )}
               </div>
-
-              <Separator />
-
-              {/* Analysis */}
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-foreground">
-                    Análisis
-                  </h3>
-                  {hasTranscript && (
-                    <Button
-                      size="sm"
-                      variant={hasAnalysis ? 'ghost' : 'default'}
-                      onClick={runAnalyze}
-                      disabled={analyzing}
-                    >
-                      {analyzing ? (
-                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Sparkles className="mr-1 h-3.5 w-3.5" />
-                      )}
-                      {hasAnalysis ? 'Re-analizar' : 'Analizar'}
-                    </Button>
-                  )}
-                </div>
-
-                {video.analysis ? (
-                  <div className="flex flex-col gap-3 rounded border border-border bg-card p-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Hook
-                      </p>
-                      <p className="text-sm text-foreground">{video.analysis.hook}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        CTA
-                      </p>
-                      <p className="text-sm text-foreground">
-                        <span className="font-mono text-xs">{video.analysis.cta_type}</span>
-                        {video.analysis.cta_detail && (
-                          <> · {video.analysis.cta_detail}</>
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Pilares
-                      </p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {video.analysis.pillars.map((p) => (
-                          <Badge key={p} variant="outline" className="font-mono text-[10px]">
-                            {p}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Hipótesis de viralidad
-                      </p>
-                      <p className="text-sm text-foreground">
-                        {video.analysis.virality_hypothesis}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Señales de intención (comentarios)
-                      </p>
-                      <p className="font-mono text-sm text-foreground">
-                        {video.analysis.intent_signals_count} / 100
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {hasTranscript
-                      ? 'Sin analizar. Usa el botón para extraer hook + CTA + pilares.'
-                      : 'Transcribe primero para poder analizar.'}
+              {hasTranscript ? (
+                <div className="max-h-80 overflow-auto rounded-lg border border-border bg-card p-3">
+                  <p className="text-[15px] whitespace-pre-wrap text-foreground">
+                    {video.transcript}
                   </p>
-                )}
-              </div>
-
-              {actionError && (
-                <div className="rounded border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                  {actionError}
                 </div>
+              ) : video.transcript === '[NO_SPEECH]' ? (
+                <p className="text-sm text-muted-foreground">
+                  Video sin audio hablado — solo música o visuales.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Todavía no hay transcript. Usa el botón para generarlo.
+                </p>
               )}
             </div>
-          </ScrollArea>
+
+            <Separator />
+
+            {/* Analysis */}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-[15px] font-medium text-foreground">
+                  Análisis
+                </h3>
+                {hasTranscript && (
+                  <Button
+                    variant={hasAnalysis ? 'ghost' : 'default'}
+                    onClick={runAnalyze}
+                    disabled={analyzing}
+                  >
+                    {analyzing ? (
+                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="mr-1 h-4 w-4" />
+                    )}
+                    {hasAnalysis ? 'Re-analizar' : 'Analizar'}
+                  </Button>
+                )}
+              </div>
+
+              {video.analysis ? (
+                <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      Hook
+                    </p>
+                    <p className="text-[15px] text-foreground">{video.analysis.hook}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      CTA
+                    </p>
+                    <p className="text-[15px] text-foreground">
+                      {video.analysis.cta_type}
+                      {video.analysis.cta_detail && (
+                        <> · {video.analysis.cta_detail}</>
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      Pilares
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {video.analysis.pillars.map((p) => (
+                        <Badge key={p} variant="outline" className="h-auto py-0.5 text-sm">
+                          {p}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      Hipótesis de viralidad
+                    </p>
+                    <p className="text-[15px] text-foreground">
+                      {video.analysis.virality_hypothesis}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      Señales de intención (comentarios)
+                    </p>
+                    <p className="text-[15px] tabular-nums text-foreground">
+                      {video.analysis.intent_signals_count} / 100
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {hasTranscript
+                    ? 'Sin analizar. Usa el botón para extraer hook + CTA + pilares.'
+                    : 'Transcribe primero para poder analizar.'}
+                </p>
+              )}
+            </div>
+
+            {actionError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {actionError}
+              </div>
+            )}
+          </div>
         )}
       </SheetContent>
     </Sheet>

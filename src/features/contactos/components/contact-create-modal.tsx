@@ -1,10 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { X, Loader2 } from "lucide-react"
-import { BTN_PRIMARY, FIELD, FONT } from "@/features/crm/lib/brand"
-import { cn } from "@/lib/utils"
+import { Loader2 } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
+/**
+ * Alta de contacto.
+ *
+ * En telefono es una hoja inferior, no una ventana centrada: una ventana centrada
+ * la tapa el teclado en cuanto se toca el primer campo, y el boton de crear queda
+ * fuera de alcance. El lado se fija en "bottom" y el ordenador se ajusta con
+ * clases md:, nunca con JavaScript.
+ *
+ * El boton de cerrar no se escribe aqui: <SheetContent> ya pinta el suyo arriba a
+ * la derecha, y ademas cierra con Escape y tocando fuera de la hoja.
+ */
 export function ContactCreateModal({
   onClose,
   onCreated,
@@ -51,75 +61,69 @@ export function ContactCreateModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
-      style={{ fontFamily: FONT }}
-    >
-      <form
-        role="dialog"
-        aria-modal="true"
-        aria-label="Nuevo contacto"
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-4 rounded-[8px] border border-[rgba(245,246,247,0.1)] bg-[#131318] p-6 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]"
+    <Sheet open onOpenChange={(o) => { if (!o) onClose() }}>
+      <SheetContent
+        side="bottom"
+        className={
+          "max-h-[85dvh] w-full gap-0 overflow-y-auto rounded-t-xl pb-safe-4 " +
+          // El `!` es obligatorio: la base de sheet.tsx pinta el lado inferior con
+          // `data-[side=bottom]:...`, que compila como `.clase[data-side=bottom]` y
+          // pesa mas que `md:left-auto`. Sin el, el cajon del ordenador sale pegado
+          // al borde izquierdo y con la altura de una hoja de telefono.
+          "md:inset-y-0! md:right-0! md:left-auto! md:h-full! md:max-h-none! md:w-[28rem] md:max-w-[28rem] md:rounded-l-xl md:border-l md:pb-4"
+        }
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-bold tracking-tight text-[#F5F6F7]">Nuevo contacto</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="flex h-9 w-9 items-center justify-center rounded-[4px] text-[#A6AAB2] transition-colors hover:bg-[#16161B] hover:text-[#F5F6F7]"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader className="px-4">
+          <SheetTitle className="text-[17px] font-semibold">Nuevo contacto</SheetTitle>
+        </SheetHeader>
 
-        <Field label="Nombre completo" required value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} />
-        <Field label="Email" required type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-        <Field label="Teléfono" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-        <Field label="Empresa" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
-        <Field
-          label="Origen"
-          value={form.source}
-          onChange={(v) => setForm({ ...form, source: v })}
-          placeholder="manual, organic, ads, referral"
-        />
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-3 px-4 pb-2">
+            <Campo label="Nombre completo" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required autoComplete="name" />
+            <Campo label="Email" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
+            <Campo label="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+            <Campo label="Empresa" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
+            <Campo label="Origen" value={form.source} onChange={(v) => setForm({ ...form, source: v })} placeholder="manual, organic, ads, referral" />
 
-        <p className="text-[13px] text-[#7C818A]">Entra al pipeline como Lead.</p>
+            <p className="text-sm text-muted-foreground">Entra al pipeline como Lead.</p>
 
-        {error && <p className="text-[14px] text-[#E5B567]">{error}</p>}
+            {error && <p className="text-[15px] text-destructive">{error}</p>}
+          </div>
 
-        <div className="flex items-center justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex min-h-[44px] items-center rounded-[4px] border border-[rgba(245,246,247,0.1)] px-4 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={creating || !form.full_name || !form.email}
-            className={BTN_PRIMARY}
-          >
-            {creating && <Loader2 className="h-4 w-4 animate-spin" />}
-            {creating ? "Creando" : "Crear contacto"}
-          </button>
-        </div>
-      </form>
-    </div>
+          {/* Sticky, no fixed: el desplazamiento lo hace la hoja. */}
+          <div className="sticky bottom-0 z-10 flex gap-2 border-t border-border bg-popover px-4 pt-3 pb-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-11 flex-1 rounded-lg border border-border text-[15px] text-foreground md:h-9 md:flex-none md:px-4 md:text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={creating || !form.full_name || !form.email}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:flex-none md:px-4 md:text-sm"
+            >
+              {creating && <Loader2 className="h-4 w-4 animate-spin" />}
+              {creating ? "Creando" : "Crear contacto"}
+            </button>
+          </div>
+        </form>
+      </SheetContent>
+    </Sheet>
   )
 }
 
-function Field({
+function Campo({
   label,
   value,
   onChange,
   type = "text",
   required,
   placeholder,
+  inputMode,
+  autoComplete,
 }: {
   label: string
   value: string
@@ -127,21 +131,40 @@ function Field({
   type?: string
   required?: boolean
   placeholder?: string
+  inputMode?: React.ComponentProps<"input">["inputMode"]
+  autoComplete?: string
 }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-[13px] font-semibold text-[#A6AAB2]">
-        {label}
-        {!required && <span className="font-normal text-[#7C818A]"> (opcional)</span>}
-      </span>
+    <label className="flex flex-col gap-1.5">
+      <Etiqueta opcional={!required}>{label}</Etiqueta>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className={cn(FIELD, "w-full")}
+        inputMode={inputMode}
+        autoComplete={autoComplete}
+        enterKeyHint="next"
+        className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
       />
     </label>
+  )
+}
+
+/**
+ * Etiqueta de un campo. Va en su propio componente a proposito: escrita pegada
+ * al <input> el candado la confunde con la letra DEL campo (mira dos lineas
+ * arriba y dos abajo) y bloquea el guardado. Aqui la clase no toca ningun campo.
+ *
+ * Lo que no es obligatorio lo dice la propia etiqueta, no un asterisco: un "*"
+ * suelto no significa nada para quien nunca ha rellenado un formulario tecnico.
+ */
+function Etiqueta({ children, opcional }: { children: React.ReactNode; opcional?: boolean }) {
+  return (
+    <span className="text-sm font-medium text-muted-foreground">
+      {children}
+      {opcional && <span className="font-normal"> (opcional)</span>}
+    </span>
   )
 }

@@ -17,7 +17,14 @@ import {
 import "@xyflow/react/dist/style.css"
 import { BookOpen, HelpCircle, SlidersHorizontal, RotateCcw, Zap, Plus, Minus, Maximize } from "lucide-react"
 import Link from "next/link"
-import { ShellHeader } from "@/features/shell/components/shell-header"
+import { LoadingScreen } from "@/components/ui/loading-screen"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 import { boardService } from "../services/board-service"
 import { buildLayout } from "../services/layout"
 import { loadPositions, savePosition, loadFilters, saveFilters } from "../services/board-persist"
@@ -53,6 +60,14 @@ const ALL_STATUS: StatusKey[] = ["next", "waiting", "someday", "done", "inbox"]
 const ALL_ASSIGNEE: AssigneeKey[] = ["marco", "adrian", "equipo", "ai"]
 const ALL_PRIORITY: PriorityKey[] = ["urgent", "high", "normal", "low"]
 
+// Boton de la barra de arriba: 44 puntos en telefono, compacto en monitor.
+const BOTON_BARRA =
+  "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-secondary px-3 text-[15px] whitespace-nowrap active:bg-secondary/70 md:h-8 md:px-2.5 md:text-sm md:hover:bg-secondary/70"
+
+// Casilla de filtro: la fila entera mide 44 puntos para que se acierte con el dedo.
+const FILA_CASILLA =
+  "flex min-h-11 cursor-pointer items-center gap-2 text-[15px] md:min-h-0 md:text-sm"
+
 function emptyFilters(projects: string[]): Filters {
   return {
     status: new Set(ALL_STATUS),
@@ -75,9 +90,9 @@ export function BoardPage() {
 function BoardControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
   const cls =
-    "flex h-8 w-8 items-center justify-center rounded-sm border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary"
+    "flex size-11 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-sm transition-colors active:bg-secondary md:size-8 md:hover:bg-secondary"
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-border bg-card/95 backdrop-blur p-1.5 shadow-lg">
+    <div className="flex flex-col gap-1 rounded-lg border border-border bg-card/95 p-1.5 shadow-lg backdrop-blur">
       <button onClick={() => zoomIn({ duration: 200 })} className={cls} title="Acercar zoom">
         <Plus className="h-4 w-4" />
       </button>
@@ -119,7 +134,13 @@ function BoardPageInner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedTask, setSelectedTask] = useState<TaskWithDeps | null>(null)
+  // Telefono y monitor llevan estados SEPARADOS a proposito. La capa de fondo de
+  // la hoja inferior se monta en sheet.tsx y no admite clases, asi que un solo
+  // estado compartido la levantaba tambien en monitor: el board quedaba borroso,
+  // Radix bloqueaba el raton y solo se salia con Escape.
+  const [leyendaHoja, setLeyendaHoja] = useState(false)
   const [showLegend, setShowLegend] = useState(false)
+  const [filtrosHoja, setFiltrosHoja] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
 
   const projectIds = useMemo(
@@ -275,183 +296,219 @@ function BoardPageInner() {
     setFilters(emptyFilters(projectIds))
   }
 
+  // El contenido de los filtros se escribe UNA vez y se pinta en la hoja del
+  // telefono y en el panel del monitor. Nada se decide con JavaScript.
+  const contenidoFiltros = (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div>
+        <p className="mb-1.5 text-sm font-semibold text-muted-foreground">Status</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-0">
+          {ALL_STATUS.map((s) => (
+            <label key={s} className={FILA_CASILLA}>
+              <input
+                type="checkbox"
+                checked={filters.status.has(s)}
+                onChange={() => setFilters({ ...filters, status: toggleSet(filters.status, s) })}
+                className="h-5 w-5 shrink-0 accent-primary md:h-4 md:w-4"
+              />
+              <span className="capitalize">{s}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1.5 text-sm font-semibold text-muted-foreground">Assignee</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-0">
+          {ALL_ASSIGNEE.map((a) => (
+            <label key={a} className={FILA_CASILLA}>
+              <input
+                type="checkbox"
+                checked={filters.assignee.has(a)}
+                onChange={() => setFilters({ ...filters, assignee: toggleSet(filters.assignee, a) })}
+                className="h-5 w-5 shrink-0 accent-primary md:h-4 md:w-4"
+              />
+              <span className="capitalize">{a}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1.5 text-sm font-semibold text-muted-foreground">Prioridad</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-0">
+          {ALL_PRIORITY.map((p) => (
+            <label key={p} className={FILA_CASILLA}>
+              <input
+                type="checkbox"
+                checked={filters.priority.has(p)}
+                onChange={() => setFilters({ ...filters, priority: toggleSet(filters.priority, p) })}
+                className="h-5 w-5 shrink-0 accent-primary md:h-4 md:w-4"
+              />
+              <span className="capitalize">{p}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-1.5 text-sm font-semibold text-muted-foreground">Otros</p>
+        <div className="flex flex-col">
+          <label className={FILA_CASILLA}>
+            <input
+              type="checkbox"
+              checked={filters.onlyInProgress}
+              onChange={(e) => setFilters({ ...filters, onlyInProgress: e.target.checked })}
+              className="h-5 w-5 shrink-0 accent-primary md:h-4 md:w-4"
+            />
+            <span>Solo en vivo</span>
+          </label>
+          <label className={FILA_CASILLA}>
+            <input
+              type="checkbox"
+              checked={filters.onlyWithDate}
+              onChange={(e) => setFilters({ ...filters, onlyWithDate: e.target.checked })}
+              className="h-5 w-5 shrink-0 accent-primary md:h-4 md:w-4"
+            />
+            <span>Solo con fecha</span>
+          </label>
+          <button
+            onClick={resetFilters}
+            className="mt-1 inline-flex h-11 items-center gap-1.5 self-start rounded-lg px-1 text-[15px] text-muted-foreground active:bg-secondary md:h-8 md:text-sm md:hover:text-foreground"
+          >
+            <RotateCcw className="h-4 w-4 shrink-0" />
+            Reset
+          </button>
+        </div>
+      </div>
+
+      {projectIds.length > 0 && (
+        <div className="md:col-span-4">
+          <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
+            Proyectos / Áreas
+          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-0">
+            {paraItems
+              .filter((p) => p.type === "project" || p.type === "area")
+              .map((p) => (
+                <label key={p.id} className={FILA_CASILLA}>
+                  <input
+                    type="checkbox"
+                    checked={filters.projects.has(p.id)}
+                    onChange={() => setFilters({ ...filters, projects: toggleSet(filters.projects, p.id) })}
+                    className="h-5 w-5 shrink-0 accent-primary md:h-4 md:w-4"
+                  />
+                  <span>{p.name}</span>
+                </label>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <>
-      <ShellHeader title="Board" />
-      <div className="relative flex h-mobile-content flex-col md:h-[calc(100vh-3.5rem)]">
+      <div className="relative flex h-full min-h-0 flex-col">
         {/* Top bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-card/40 px-3 py-2 md:gap-3 md:px-4 md:py-2.5">
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-xs">
-            <span className="font-mono text-muted-foreground">
-              <span className="text-foreground font-semibold">{stats.total}</span> tareas
-            </span>
-            <span className="font-mono text-muted-foreground">
-              <span className="text-blue-400 font-semibold">{stats.next}</span> next
-            </span>
-            <span className="font-mono text-muted-foreground">
-              <span className="text-amber-400 font-semibold">{stats.waiting}</span> waiting
-            </span>
-            <span className="font-mono text-muted-foreground">
-              <span className="text-green-400 font-semibold">{stats.done}</span> done ({stats.pct}%)
-            </span>
-            {stats.live > 0 && (
-              <span className="flex items-center gap-1 font-mono text-cyan-400">
-                <Zap className="h-3 w-3 animate-pulse" />
-                <span className="font-semibold">{stats.live}</span> en vivo
+        <div className="shrink-0 border-b border-border bg-card/40 px-safe">
+          <div className="flex flex-col gap-2 px-3 py-2 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-3 md:px-4 md:py-2.5">
+            {/* Stats. En telefono la fila se desliza dentro de su caja: cinco
+                cifras seguidas no caben en 375 puntos. */}
+            <div className="-mx-3 flex gap-4 overflow-x-auto px-3 text-sm md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+              <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+                <span className="font-semibold tabular-nums text-foreground">{stats.total}</span> tareas
               </span>
-            )}
-          </div>
+              <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+                <span className="font-semibold tabular-nums text-foreground">{stats.next}</span> next
+              </span>
+              <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+                <span className="font-semibold tabular-nums text-warn">{stats.waiting}</span> waiting
+              </span>
+              <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+                <span className="font-semibold tabular-nums text-primary">{stats.done}</span> done ({stats.pct}%)
+              </span>
+              {stats.live > 0 && (
+                <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-primary">
+                  <Zap className="h-3.5 w-3.5 animate-pulse" />
+                  <span className="font-semibold tabular-nums">{stats.live}</span> en vivo
+                </span>
+              )}
+            </div>
 
-          {/* Botones acción */}
-          <div className="flex items-center gap-2">
-            <Link
-              href="/knowledge"
-              className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/70"
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              Knowledge
-            </Link>
-            <button
-              onClick={() => setShowLegend(true)}
-              className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1 text-xs hover:bg-secondary/70"
-            >
-              <HelpCircle className="h-3.5 w-3.5" />
-              Leyenda
-            </button>
-            <button
-              onClick={() => setShowFilters((v) => !v)}
-              className={`flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs ${
-                showFilters
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-secondary hover:bg-secondary/70"
-              }`}
-            >
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Filtros
-            </button>
+            {/* Botones accion. Leyenda y Filtros van duplicados a proposito: el
+                boton del telefono abre la hoja inferior y el del monitor abre el
+                panel de escritorio. Cada uno mueve SU estado, asi la hoja no se
+                monta nunca por encima de 768 puntos. */}
+            <div className="flex gap-2">
+              <Link href="/knowledge" className={cn(BOTON_BARRA, "flex-1 md:flex-none")}>
+                <BookOpen className="h-4 w-4 shrink-0" />
+                Knowledge
+              </Link>
+
+              <button
+                onClick={() => setLeyendaHoja(true)}
+                className={cn(BOTON_BARRA, "flex-1 md:hidden")}
+              >
+                <HelpCircle className="h-4 w-4 shrink-0" />
+                Leyenda
+              </button>
+              <button
+                onClick={() => setShowLegend(true)}
+                className={cn(BOTON_BARRA, "hidden md:inline-flex")}
+              >
+                <HelpCircle className="h-4 w-4 shrink-0" />
+                Leyenda
+              </button>
+
+              <button
+                onClick={() => setFiltrosHoja(true)}
+                className={cn(BOTON_BARRA, "flex-1 md:hidden")}
+              >
+                <SlidersHorizontal className="h-4 w-4 shrink-0" />
+                Filtros
+              </button>
+              <button
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  BOTON_BARRA,
+                  "hidden md:inline-flex",
+                  showFilters && "border-primary bg-primary text-primary-foreground"
+                )}
+              >
+                <SlidersHorizontal className="h-4 w-4 shrink-0" />
+                Filtros
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Panel filtros desplegable */}
+        {/* TELEFONO: los filtros viven en una hoja inferior. Solo la abre el boton
+            `md:hidden`, asi que en monitor no llega a montarse. */}
+        <Sheet open={filtrosHoja} onOpenChange={setFiltrosHoja}>
+          <SheetContent side="bottom" className="rounded-t-xl pb-safe-4">
+            <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border" />
+            <SheetHeader className="px-4 pb-0">
+              <SheetTitle className="text-[17px] font-semibold">Filtros</SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-4">{contenidoFiltros}</div>
+          </SheetContent>
+        </Sheet>
+
+        {/* ESCRITORIO: panel desplegable debajo de la barra */}
         {showFilters && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-border bg-card/30 px-4 py-3 text-xs">
-            <div>
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Status</p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
-                {ALL_STATUS.map((s) => (
-                  <label key={s} className="flex cursor-pointer items-center gap-1.5">
-                    <input
-                      type="checkbox"
-                      checked={filters.status.has(s)}
-                      onChange={() => setFilters({ ...filters, status: toggleSet(filters.status, s) })}
-                      className="h-3 w-3"
-                    />
-                    <span className="capitalize">{s}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Assignee</p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
-                {ALL_ASSIGNEE.map((a) => (
-                  <label key={a} className="flex cursor-pointer items-center gap-1.5">
-                    <input
-                      type="checkbox"
-                      checked={filters.assignee.has(a)}
-                      onChange={() => setFilters({ ...filters, assignee: toggleSet(filters.assignee, a) })}
-                      className="h-3 w-3"
-                    />
-                    <span className="capitalize">{a}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Prioridad</p>
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
-                {ALL_PRIORITY.map((p) => (
-                  <label key={p} className="flex cursor-pointer items-center gap-1.5">
-                    <input
-                      type="checkbox"
-                      checked={filters.priority.has(p)}
-                      onChange={() => setFilters({ ...filters, priority: toggleSet(filters.priority, p) })}
-                      className="h-3 w-3"
-                    />
-                    <span className="capitalize">{p}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">Otros</p>
-              <div className="flex flex-col gap-1.5">
-                <label className="flex cursor-pointer items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={filters.onlyInProgress}
-                    onChange={(e) => setFilters({ ...filters, onlyInProgress: e.target.checked })}
-                    className="h-3 w-3"
-                  />
-                  <span>Solo en vivo (⚡)</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-1.5">
-                  <input
-                    type="checkbox"
-                    checked={filters.onlyWithDate}
-                    onChange={(e) => setFilters({ ...filters, onlyWithDate: e.target.checked })}
-                    className="h-3 w-3"
-                  />
-                  <span>Solo con fecha (📅)</span>
-                </label>
-                <button
-                  onClick={resetFilters}
-                  className="mt-1 flex items-center gap-1.5 self-start text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Reset
-                </button>
-              </div>
-            </div>
-
-            {projectIds.length > 0 && (
-              <div className="col-span-2 md:col-span-4">
-                <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Proyectos / Áreas
-                </p>
-                <div className="flex flex-wrap gap-x-3 gap-y-1">
-                  {paraItems
-                    .filter((p) => p.type === "project" || p.type === "area")
-                    .map((p) => (
-                      <label key={p.id} className="flex cursor-pointer items-center gap-1.5">
-                        <input
-                          type="checkbox"
-                          checked={filters.projects.has(p.id)}
-                          onChange={() => setFilters({ ...filters, projects: toggleSet(filters.projects, p.id) })}
-                          className="h-3 w-3"
-                        />
-                        <span>{p.name}</span>
-                      </label>
-                    ))}
-                </div>
-              </div>
-            )}
+          <div className="hidden shrink-0 border-b border-border bg-card/30 px-4 py-3 md:block">
+            {contenidoFiltros}
           </div>
         )}
 
         {/* Canvas */}
-        <div className="flex-1 relative">
+        <div className="relative flex-1">
           {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10">
-              <p className="font-mono text-sm text-muted-foreground">Cargando red...</p>
-            </div>
+            <LoadingScreen fullscreen={false} className="absolute inset-0 z-10" />
           )}
           {error && (
-            <div className="absolute inset-x-4 top-4 rounded-sm border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive z-10">
+            <div className="absolute inset-x-4 top-4 z-10 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-[15px] text-destructive">
               {error}
             </div>
           )}
@@ -468,7 +525,9 @@ function BoardPageInner() {
             nodesDraggable
           >
             <AutoFitOnMount />
-            <Background gap={20} size={1} color="#2a2d34" />
+            {/* Los puntos del fondo leen el token del borde en vez de llevar el
+                gris grabado a mano. */}
+            <Background gap={20} size={1} color="var(--border)" />
             <Panel position="top-left" className="!m-2">
               <PriorityQueue tasks={tasks} onSelectTask={setSelectedTask} />
             </Panel>
@@ -478,26 +537,31 @@ function BoardPageInner() {
             <MiniMap
               className="!bg-card !border-border hidden md:block"
               nodeColor={(n) => {
-                if (n.type === "mission") return "#fbbf24"
+                if (n.type === "mission") return "var(--primary)"
                 if (n.type === "project") return (n.data as { color: string }).color
                 const data = n.data as { projectColor: string; task: TaskWithDeps }
-                if (!data.task) return "#6b7280"
-                if (data.task.isInProgress) return "#06b6d4"
+                if (!data.task) return "var(--muted-foreground)"
+                if (data.task.isInProgress) return "var(--primary)"
                 switch (data.task.status) {
-                  case "done": return "#16a34a"
-                  case "next": return "#2563eb"
-                  case "waiting": return "#ca8a04"
-                  case "someday": return "#71717a"
-                  default: return "#52525b"
+                  case "done": return "var(--primary)"
+                  case "next": return "var(--foreground)"
+                  case "waiting": return "var(--muted-foreground)"
+                  case "someday": return "var(--border)"
+                  default: return "var(--secondary)"
                 }
               }}
-              maskColor="rgba(15, 15, 18, 0.7)"
+              maskColor="color-mix(in srgb, var(--background) 70%, transparent)"
             />
           </ReactFlow>
         </div>
 
         {/* Modales y drawers */}
-        <LegendModal open={showLegend} onClose={() => setShowLegend(false)} />
+        <LegendModal
+          hojaAbierta={leyendaHoja}
+          onCerrarHoja={() => setLeyendaHoja(false)}
+          panelAbierto={showLegend}
+          onCerrarPanel={() => setShowLegend(false)}
+        />
         <TaskDrawer task={selectedTask} onClose={() => setSelectedTask(null)} />
       </div>
     </>

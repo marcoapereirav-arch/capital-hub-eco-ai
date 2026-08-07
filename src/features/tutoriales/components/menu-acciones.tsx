@@ -2,7 +2,9 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { MoreVertical, Pencil, FolderInput, Trash2 } from "lucide-react"
+import { MoreVertical, Pencil, FolderInput, Trash2, type LucideIcon } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 
 type Props = {
   etiqueta: string
@@ -11,19 +13,91 @@ type Props = {
   onBorrar: () => void
 }
 
+type Opcion = { texto: string; icono: LucideIcon; accion: () => void; peligro: boolean }
+
 const ANCHO = 176
-const ALTO_APROX = 132
+const ALTO_APROX = 156
 
 /**
  * Renombrar, mover y borrar.
  *
- * El menu se pinta FUERA de la tarjeta (en el body) y con posicion fija.
- * Antes colgaba dentro de la tarjeta, y como la tarjeta recorta lo que se sale
- * (`overflow-hidden`, necesario para que la portada respete las esquinas), el
- * menu salia cortado. Sacarlo del recorte es la unica forma de que se vea
- * entero sin renunciar a las esquinas redondeadas.
+ * Dos presentaciones del MISMO contenido, elegidas con clases y nunca con
+ * JavaScript: en telefono una hoja inferior (un desplegable flotante no se
+ * acierta con el dedo y se sale por el borde), y en escritorio el menu de
+ * siempre, que se pinta FUERA de la tarjeta (en el body) con posicion fija
+ * porque la tarjeta recorta lo que se sale.
  */
 export function MenuAcciones({ etiqueta, onRenombrar, onMover, onBorrar }: Props) {
+  const opciones: Opcion[] = [
+    { texto: "Renombrar", icono: Pencil, accion: onRenombrar, peligro: false },
+    { texto: "Mover a", icono: FolderInput, accion: onMover, peligro: false },
+    { texto: "Borrar", icono: Trash2, accion: onBorrar, peligro: true },
+  ]
+
+  return (
+    <>
+      <div className="md:hidden">
+        <MenuHoja etiqueta={etiqueta} opciones={opciones} />
+      </div>
+      <div className="hidden md:block">
+        <MenuFlotante etiqueta={etiqueta} opciones={opciones} />
+      </div>
+    </>
+  )
+}
+
+function MenuHoja({ etiqueta, opciones }: { etiqueta: string; opciones: Opcion[] }) {
+  const [abierto, setAbierto] = useState(false)
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          setAbierto(true)
+        }}
+        // El menu no puede heredar el doble clic de la tarjeta: si no, abrir el
+        // menu abriria tambien la carpeta.
+        onDoubleClick={(e) => e.stopPropagation()}
+        aria-label={`Opciones de ${etiqueta}`}
+        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors active:bg-muted"
+      >
+        <MoreVertical className="h-5 w-5" />
+      </button>
+
+      <Sheet open={abierto} onOpenChange={setAbierto}>
+        <SheetContent side="bottom" aria-describedby={undefined} className="rounded-t-xl">
+          <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border" />
+          <SheetHeader>
+            <SheetTitle className="text-[17px] font-semibold">Opciones</SheetTitle>
+          </SheetHeader>
+          <div className="pb-safe-4">
+            {opciones.map(({ texto, icono: Icono, accion, peligro }) => (
+              <button
+                key={texto}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setAbierto(false)
+                  accion()
+                }}
+                className={cn(
+                  "flex h-12 w-full items-center gap-3 px-4 text-left text-[15px] transition-colors active:bg-muted",
+                  peligro ? "text-destructive" : "text-foreground",
+                )}
+              >
+                <Icono className="h-4 w-4 shrink-0" />
+                {texto}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
+
+function MenuFlotante({ etiqueta, opciones }: { etiqueta: string; opciones: Opcion[] }) {
   const [abierto, setAbierto] = useState(false)
   const [sitio, setSitio] = useState<{ top: number; left: number } | null>(null)
   const boton = useRef<HTMLButtonElement>(null)
@@ -70,12 +144,6 @@ export function MenuAcciones({ etiqueta, onRenombrar, onMover, onBorrar }: Props
     }
   }, [abierto])
 
-  const opciones = [
-    { texto: "Renombrar", icono: Pencil, accion: onRenombrar, peligro: false },
-    { texto: "Mover a", icono: FolderInput, accion: onMover, peligro: false },
-    { texto: "Borrar", icono: Trash2, accion: onBorrar, peligro: true },
-  ]
-
   return (
     <>
       <button
@@ -85,12 +153,10 @@ export function MenuAcciones({ etiqueta, onRenombrar, onMover, onBorrar }: Props
           e.stopPropagation()
           setAbierto((v) => !v)
         }}
-        // El menu no puede heredar el doble clic de la tarjeta: si no, abrir el
-        // menu abriria tambien la carpeta.
         onDoubleClick={(e) => e.stopPropagation()}
         aria-label={`Opciones de ${etiqueta}`}
         aria-expanded={abierto}
-        className="shrink-0 rounded-lg p-2 text-white/40 transition hover:bg-white/5 hover:text-white"
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
@@ -100,7 +166,7 @@ export function MenuAcciones({ etiqueta, onRenombrar, onMover, onBorrar }: Props
             <div
               ref={menu}
               style={{ position: "fixed", top: sitio.top, left: sitio.left, width: ANCHO }}
-              className="z-[60] overflow-hidden rounded-lg border border-[#2A2D34] bg-[#15161A] py-1 shadow-xl"
+              className="z-[60] overflow-hidden rounded-lg border border-border bg-popover py-1 shadow-lg"
             >
               {opciones.map(({ texto, icono: Icono, accion, peligro }) => (
                 <button
@@ -111,9 +177,12 @@ export function MenuAcciones({ etiqueta, onRenombrar, onMover, onBorrar }: Props
                     setAbierto(false)
                     accion()
                   }}
-                  className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition ${
-                    peligro ? "text-red-400 hover:bg-red-500/10" : "text-white/80 hover:bg-white/5 hover:text-white"
-                  }`}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors",
+                    peligro
+                      ? "text-destructive hover:bg-destructive/10"
+                      : "text-foreground hover:bg-muted",
+                  )}
                 >
                   <Icono className="h-3.5 w-3.5 shrink-0" />
                   {texto}

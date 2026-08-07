@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, FolderKanban, Plus, CheckCircle2, AlertTriangle } from "lucide-react"
+import { ArrowLeft, FolderKanban, CheckCircle2, AlertTriangle, X } from "lucide-react"
+import { PageContainer } from "@/components/ui/page-container"
 import { useTaskStore } from "@/features/tasks/store/task-store"
 import type { ParaItem } from "@/features/tasks/types/task"
 import { ROOT_AREAS } from "@/features/tasks/types/task"
@@ -75,7 +76,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
 
   if (loading && !initialized) {
     return (
-      <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+      <div className="flex h-full items-center justify-center px-6 text-[15px] text-muted-foreground">
         Cargando área…
       </div>
     )
@@ -83,12 +84,15 @@ export function AreaDetail({ areaId }: { areaId: string }) {
 
   if (!area && !rootMeta) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-amber-400" />
-          <p className="text-sm">Área no encontrada en BD.</p>
-          <Link href="/areas" className="text-xs font-mono uppercase tracking-wider text-muted-foreground underline mt-2 inline-block">
-            ← Volver a áreas
+      <div className="flex h-full items-center justify-center px-6">
+        <div className="max-w-md text-center">
+          <AlertTriangle className="mx-auto mb-2 h-6 w-6 text-warn" />
+          <p className="text-[15px]">Área no encontrada en BD.</p>
+          <Link
+            href="/areas"
+            className="mt-2 inline-flex h-11 items-center gap-1.5 text-[15px] text-muted-foreground underline"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" /> Volver a áreas
           </Link>
         </div>
       </div>
@@ -96,64 +100,70 @@ export function AreaDetail({ areaId }: { areaId: string }) {
   }
 
   return (
-    <div className="h-full overflow-auto p-4 md:p-6">
-      <div className="mx-auto max-w-5xl space-y-6">
-        {/* Header */}
+    <div className="h-full overflow-auto no-overscroll">
+      <PageContainer className="max-w-5xl space-y-6">
+        {/* Header. La salida siempre visible y a 44 puntos: en telefono no se
+            depende del boton atras del navegador. */}
         <div>
           <Link
             href="/areas"
-            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            className="-ml-1 inline-flex h-11 items-center gap-1.5 rounded-lg px-1 text-[15px] text-muted-foreground active:bg-muted md:h-8 md:text-sm md:hover:text-foreground"
           >
-            <ArrowLeft className="h-3 w-3" /> Áreas
+            <ArrowLeft className="h-4 w-4 shrink-0" /> Áreas
           </Link>
-          <h1 className="text-2xl font-semibold mt-2">{areaName}</h1>
-          <p className="text-xs text-muted-foreground mt-1 font-mono uppercase tracking-wider">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">{areaName}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {projects.length} proyecto{projects.length === 1 ? "" : "s"} · {directTasks.filter((t) => t.status !== "done").length} task{directTasks.filter((t) => t.status !== "done").length === 1 ? "" : "s"} abiertas en el área
           </p>
         </div>
 
         {/* Proyectos dentro del área */}
         <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold flex items-center gap-2">
-              <FolderKanban className="h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold md:text-sm">
+              <FolderKanban className="h-4 w-4 shrink-0 text-muted-foreground" />
               Proyectos
             </h2>
             <button
               onClick={() => setShowAssign((v) => !v)}
-              className="text-[10px] font-mono uppercase tracking-wider border border-border rounded-sm px-2 py-1 hover:bg-card"
+              className="h-11 shrink-0 rounded-lg border border-border px-3 text-[15px] text-foreground active:bg-muted md:h-8 md:text-sm md:hover:bg-muted"
             >
               {showAssign ? "Cerrar" : "+ Asignar / crear"}
             </button>
           </div>
 
           {projects.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic">
+            <p className="text-[15px] text-muted-foreground">
               Ningún proyecto en esta área todavía.
             </p>
           ) : (
-            <ul className="space-y-1.5">
+            <ul className="divide-y divide-border rounded-lg border border-border">
               {projects.map((p) => {
                 const tcount = tasks.filter((t) => t.paraId === p.id).length
                 const open = tasks.filter((t) => t.paraId === p.id && t.status !== "done").length
                 return (
-                  <li key={p.id} className="flex items-center justify-between rounded-sm border border-border px-3 py-2 hover:bg-card/40">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <li key={p.id} className="flex min-h-[56px] items-center gap-2 px-3 py-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       {p.status === "completed" && (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-400 shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                       )}
-                      <Link href={`/projects/${p.id}`} className="text-sm hover:underline truncate">
+                      <Link
+                        href={`/projects/${p.id}`}
+                        className="min-w-0 flex-1 truncate text-[15px] md:text-sm md:hover:underline"
+                      >
                         {p.name}
                       </Link>
                     </div>
-                    <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                      <span>{open} / {tcount}</span>
+                    <div className="flex shrink-0 items-center gap-1 text-sm text-muted-foreground">
+                      <span className="tabular-nums">{open} / {tcount}</span>
+                      {/* La accion de quitar es visible siempre y mide 44: en telefono
+                          no hay raton que la descubra. */}
                       <button
                         onClick={() => handleUnassign(p)}
-                        className="hover:text-foreground"
+                        className="inline-flex h-11 items-center gap-1 rounded-lg px-2 active:bg-muted md:h-8 md:hover:text-foreground"
                         title="Quitar de esta área"
                       >
-                        × quitar
+                        <X className="h-4 w-4 shrink-0" /> quitar
                       </button>
                     </div>
                   </li>
@@ -164,24 +174,27 @@ export function AreaDetail({ areaId }: { areaId: string }) {
 
           {/* Panel asignar/crear */}
           {showAssign && (
-            <div className="rounded-md border border-border p-3 space-y-3 bg-card/30">
-              {/* Crear nuevo */}
-              <div>
-                <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">
+            <div className="space-y-4 rounded-xl border border-border bg-card p-3">
+              {/* Crear nuevo. Una sola columna, etiqueta encima y campo a 44 puntos
+                  con letra de 16: por debajo el iPhone se acerca solo al escribir. */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="nuevo-proyecto" className="text-sm font-medium text-muted-foreground">
                   Crear proyecto nuevo en esta área
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 md:flex-row">
                   <input
+                    id="nuevo-proyecto"
                     value={newProjectName}
                     onChange={(e) => setNewProjectName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter") handleCreateProject() }}
                     placeholder="Nombre del proyecto"
-                    className="flex-1 rounded-sm border border-border bg-background px-2 py-1.5 text-xs"
+                    enterKeyHint="done"
+                    className="h-11 w-full rounded-lg border border-border bg-background px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:flex-1 md:text-sm"
                   />
                   <button
                     onClick={handleCreateProject}
                     disabled={!newProjectName.trim() || creating}
-                    className="rounded-sm bg-foreground text-background px-3 py-1.5 text-xs font-mono uppercase tracking-wider hover:opacity-90 disabled:opacity-30"
+                    className="h-11 w-full shrink-0 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:w-auto md:text-sm"
                   >
                     {creating ? "…" : "Crear"}
                   </button>
@@ -190,17 +203,17 @@ export function AreaDetail({ areaId }: { areaId: string }) {
 
               {/* Asignar huérfano */}
               {orphanProjects.length > 0 && (
-                <div>
-                  <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium text-muted-foreground">
                     Asignar proyecto huérfano
-                  </label>
-                  <ul className="space-y-1">
+                  </span>
+                  <ul className="divide-y divide-border">
                     {orphanProjects.map((p) => (
-                      <li key={p.id} className="flex items-center justify-between text-xs">
-                        <span className="truncate">{p.name}</span>
+                      <li key={p.id} className="flex min-h-[56px] items-center justify-between gap-2 py-1">
+                        <span className="min-w-0 flex-1 truncate text-[15px] md:text-sm">{p.name}</span>
                         <button
                           onClick={() => handleAssign(p)}
-                          className="text-[10px] font-mono uppercase tracking-wider border border-border rounded-sm px-2 py-0.5 hover:bg-foreground hover:text-background shrink-0"
+                          className="h-11 shrink-0 rounded-lg border border-border px-3 text-[15px] text-foreground active:bg-muted md:h-8 md:text-sm md:hover:bg-muted"
                         >
                           + Asignar
                         </button>
@@ -216,24 +229,25 @@ export function AreaDetail({ areaId }: { areaId: string }) {
         {/* Tasks directas del área (sin proyecto) */}
         {directTasks.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold">Tareas directas del área (sin proyecto)</h2>
-            <ul className="space-y-1.5">
+            <h2 className="text-[15px] font-semibold md:text-sm">Tareas directas del área (sin proyecto)</h2>
+            <ul className="divide-y divide-border rounded-lg border border-border">
               {directTasks.map((t) => (
                 <li key={t.id} className={cn(
-                  "flex items-center justify-between rounded-sm border border-border px-3 py-2",
+                  "flex min-h-[56px] flex-col gap-1 px-3 py-2 md:flex-row md:items-center md:justify-between md:gap-3",
                   t.status === "done" && "opacity-50"
                 )}>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
                     <span className={cn(
-                      "h-1.5 w-1.5 rounded-full shrink-0",
-                      t.priority === "urgent" && "bg-red-400",
-                      t.priority === "high" && "bg-orange-400",
-                      t.priority === "normal" && "bg-blue-400",
-                      t.priority === "low" && "bg-muted-foreground/40"
+                      "h-1.5 w-1.5 shrink-0 rounded-full",
+                      t.priority === "urgent" && "bg-destructive",
+                      t.priority === "high" && "bg-warn",
+                      t.priority === "normal" && "bg-primary",
+                      t.priority === "low" && "bg-muted-foreground"
                     )} />
-                    <span className="text-sm truncate">{t.title}</span>
+                    <span className="min-w-0 flex-1 truncate text-[15px] md:text-sm">{t.title}</span>
                   </div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  {/* `capitalize` deja "Next · Marco" sin tocar el valor del dato. */}
+                  <div className="shrink-0 pl-3.5 text-sm text-muted-foreground capitalize md:pl-0">
                     {t.status} · {t.assignee}
                   </div>
                 </li>
@@ -241,7 +255,7 @@ export function AreaDetail({ areaId }: { areaId: string }) {
             </ul>
           </section>
         )}
-      </div>
+      </PageContainer>
     </div>
   )
 }

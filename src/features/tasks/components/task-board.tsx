@@ -18,6 +18,7 @@ import { useState } from "react"
 import { Inbox, Zap, Clock, Bookmark } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { useTaskStore } from "../store/task-store"
 import { TaskCard } from "./task-card"
 import type { GTDStatus, Task } from "../types/task"
@@ -63,18 +64,18 @@ function DroppableColumn({
   return (
     <div
       ref={setNodeRef}
-      className="flex w-[280px] shrink-0 flex-col"
+      className="flex shrink-0 flex-col md:w-[280px]"
     >
       {/* Column header */}
-      <div className="flex items-center gap-2 px-1 py-2 mb-3">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+      <div className="mb-3 flex items-center gap-2 px-1 py-2">
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold text-muted-foreground">
           {label}
         </span>
         {tasks.length > 0 && (
           <Badge
             variant="secondary"
-            className="font-mono text-[9px] px-1.5 py-0 h-4 min-w-[18px] justify-center"
+            className="h-5 min-w-[20px] justify-center px-1.5 text-sm tabular-nums"
           >
             {tasks.length}
           </Badge>
@@ -84,15 +85,17 @@ function DroppableColumn({
       {/* Tasks */}
       <ScrollArea className="flex-1">
         <div
-          className={`space-y-2.5 min-h-[80px] rounded-sm p-1 transition-colors ${
-            isOver ? "bg-accent/20 ring-1 ring-foreground/10" : ""
-          }`}
+          className={cn(
+            "min-h-[80px] space-y-2.5 rounded-lg p-1 transition-colors",
+            isOver && "bg-muted/20 ring-1 ring-primary/30"
+          )}
         >
           {tasks.length === 0 ? (
-            <div className={`flex items-center justify-center rounded-sm border border-dashed p-10 transition-colors ${
-              isOver ? "border-foreground/30 bg-accent/10" : "border-border"
-            }`}>
-              <span className="text-xs text-muted-foreground/30">
+            <div className={cn(
+              "flex items-center justify-center rounded-lg border border-dashed p-10 transition-colors",
+              isOver ? "border-primary/40 bg-muted/10" : "border-border"
+            )}>
+              <span className="text-sm text-muted-foreground">
                 {isOver ? "Soltar aqui" : "Sin tareas"}
               </span>
             </div>
@@ -116,6 +119,9 @@ export function TaskBoard() {
   const filteredTasks = getFilteredTasks()
 
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  // En telefono se ve UNA columna a la vez. Cuatro columnas de 280 puntos en una
+  // pantalla de 375 dejaban ver columna y media y el resto se arrastraba de lado.
+  const [columnaActiva, setColumnaActiva] = useState<GTDStatus>(BOARD_COLUMNS[0].status)
   const dndId = useId()
 
   const sensors = useSensors(
@@ -152,36 +158,81 @@ export function TaskBoard() {
     [moveTask]
   )
 
+  const tareasDeColumnaActiva = filteredTasks.filter((t) => t.status === columnaActiva)
+
   return (
-    <DndContext
-      id={dndId}
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-4 h-full pb-4">
-        {BOARD_COLUMNS.map((column) => {
-          const columnTasks = filteredTasks.filter((t) => t.status === column.status)
-          return (
-            <DroppableColumn
-              key={column.status}
-              status={column.status}
-              label={column.label}
-              icon={column.icon}
-              tasks={columnTasks}
-            />
-          )
-        })}
+    <>
+      {/* ================= TELEFONO: una columna a la vez =================
+          Arrastrar con el dedo pelea con el desplazamiento, asi que aqui una
+          tarjeta se mueve desde su hoja de acciones ("Mover a"), no arrastrando. */}
+      <div className="md:hidden">
+        <div className="-mx-3 flex snap-x gap-1 overflow-x-auto px-3 pb-2">
+          {BOARD_COLUMNS.map((column) => {
+            const count = filteredTasks.filter((t) => t.status === column.status).length
+            const activa = columnaActiva === column.status
+            return (
+              <button
+                key={column.status}
+                type="button"
+                onClick={() => setColumnaActiva(column.status)}
+                className={cn(
+                  "inline-flex h-11 shrink-0 snap-start items-center gap-1.5 rounded-lg px-3 text-[15px] whitespace-nowrap",
+                  activa
+                    ? "bg-primary font-semibold text-primary-foreground"
+                    : "bg-card text-muted-foreground"
+                )}
+              >
+                <column.icon className="h-4 w-4 shrink-0" />
+                {column.label} <span className="tabular-nums">{count}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="space-y-2.5">
+          {tareasDeColumnaActiva.length === 0 ? (
+            <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border px-6 py-10 text-center">
+              <span className="text-[15px] text-muted-foreground">Sin tareas</span>
+            </div>
+          ) : (
+            tareasDeColumnaActiva.map((task) => <TaskCard key={task.id} task={task} />)
+          )}
+        </div>
       </div>
 
-      <DragOverlay>
-        {activeTask && (
-          <div className="opacity-90 rotate-2 scale-105">
-            <TaskCard task={activeTask} />
+      {/* ================= ESCRITORIO: el tablero en fila ================= */}
+      <div className="hidden h-full md:block">
+        <DndContext
+          id={dndId}
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex h-full gap-4 pb-4">
+            {BOARD_COLUMNS.map((column) => {
+              const columnTasks = filteredTasks.filter((t) => t.status === column.status)
+              return (
+                <DroppableColumn
+                  key={column.status}
+                  status={column.status}
+                  label={column.label}
+                  icon={column.icon}
+                  tasks={columnTasks}
+                />
+              )
+            })}
           </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+
+          <DragOverlay>
+            {activeTask && (
+              <div className="rotate-2 scale-105 opacity-90">
+                <TaskCard task={activeTask} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      </div>
+    </>
   )
 }
