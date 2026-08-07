@@ -343,7 +343,7 @@ function CallDrawer({
           "flex w-full min-h-0 max-w-lg flex-col overflow-hidden border border-border bg-background",
           // El alto deja fuera la zona del reloj: con `vh` la cabecera se metia
           // debajo del reloj del iPhone y la X no se podia tocar.
-          "max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] rounded-t-xl",
+          "max-h-[calc(100dvh-var(--sat)-2rem)] rounded-t-xl",
           "md:max-h-[85dvh] md:rounded-xl"
         )}
       >
@@ -363,7 +363,7 @@ function CallDrawer({
         {/* UN solo sitio que se desplaza. Antes se desplazaban el fondo y el
             detalle a la vez y se peleaban. El relleno de abajo deja libre la
             franja de gestos del telefono. */}
-        <div className="no-overscroll min-h-0 flex-1 space-y-5 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:pb-4">
+        <div className="no-overscroll min-h-0 flex-1 space-y-5 overflow-y-auto p-4 pb-[calc(1rem+var(--sab))] md:pb-4">
           {/* Status badge */}
           <div className={cn("inline-flex items-center gap-2 rounded-lg border px-3 py-2", meta.color)}>
             <span className={cn("h-2 w-2 rounded-full", meta.dot)} />

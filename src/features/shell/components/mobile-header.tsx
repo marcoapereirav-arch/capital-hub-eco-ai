@@ -39,7 +39,7 @@ export function MobileHeader({ userEmail, userName }: MobileHeaderProps) {
   // dentro, asi que en un iPhone con notch al titulo le quedaban 9 puntos y se
   // desbordaba encima de la pagina.
   return (
-    <header className="sticky top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center justify-between border-b border-border/60 bg-background px-4 pt-safe md:hidden">
+    <header className="sticky top-0 z-30 flex h-[calc(3.5rem+var(--sat))] shrink-0 items-center justify-between border-b border-border bg-popover px-4 pt-safe md:hidden">
       <h1 className="truncate pr-3 font-heading text-base font-extrabold text-foreground">
         {title}
       </h1>

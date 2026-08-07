@@ -233,7 +233,7 @@ export function WebEditModal({
           "gap-0 overflow-hidden data-[side=bottom]:overflow-y-hidden",
           // TELEFONO: hoja inferior que nunca se mete debajo del reloj. Con `vh` la
           // cabecera se colaba debajo del notch y el cerrar no se podia tocar.
-          "rounded-t-xl data-[side=bottom]:max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)]",
+          "rounded-t-xl data-[side=bottom]:max-h-[calc(100dvh-var(--sat)-2rem)]",
           // La zona segura de abajo la pone el pie, no la caja entera.
           "data-[side=bottom]:pb-0",
           // ESCRITORIO: cajon por la derecha, con las mismas clases y cero JavaScript.
@@ -495,7 +495,7 @@ export function WebEditModal({
         {/* ── Pie: fila fija de la columna, no `sticky` ni `fixed`. Con `fixed` el
             teclado del telefono lo tapa, y con `sticky` pelea con el desplazamiento
             del cuerpo. El relleno de abajo deja libre la franja de gestos. ── */}
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-[calc(0.75rem+var(--sab))] md:pb-3">
           <Button variant="secondary" onClick={() => !saving && onClose()} disabled={saving}>
             Cerrar
           </Button>

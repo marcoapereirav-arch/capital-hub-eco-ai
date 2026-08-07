@@ -49,7 +49,7 @@ export function SaleStagePrompt({
         onClick={(e) => e.stopPropagation()}
         // El alto deja fuera la zona del reloj: con `vh` la cabecera se metia debajo
         // del reloj del iPhone y la X no se podia tocar.
-        className="flex max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] w-full min-h-0 max-w-md flex-col overflow-hidden rounded-t-xl border border-border bg-background md:max-h-[85dvh] md:rounded-xl"
+        className="flex max-h-[calc(100dvh-var(--sat)-2rem)] w-full min-h-0 max-w-md flex-col overflow-hidden rounded-t-xl border border-border bg-background md:max-h-[85dvh] md:rounded-xl"
       >
         {/* Cabecera fija, con la salida SIEMPRE a la vista y a 44 puntos. */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
@@ -86,7 +86,7 @@ export function SaleStagePrompt({
         </div>
 
         {/* Pie fijo, con sitio para la franja de gestos del telefono. */}
-        <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-background p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+        <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-background p-3 pb-[calc(0.75rem+var(--sab))] md:pb-3">
           <button
             type="button"
             onClick={onNow}

@@ -223,7 +223,7 @@ export function RegistrarVentaModal({
           "flex w-full min-h-0 max-w-2xl flex-col overflow-hidden border border-border bg-background",
           // El alto deja fuera la zona del reloj: con `vh` la cabecera se metia
           // debajo del reloj del iPhone y la X no se podia tocar.
-          "max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] rounded-t-xl",
+          "max-h-[calc(100dvh-var(--sat)-2rem)] rounded-t-xl",
           "md:max-h-[85dvh] md:rounded-xl"
         )}
       >
@@ -357,7 +357,7 @@ export function RegistrarVentaModal({
         </div>
 
         {/* Pie fijo de la hoja, con sitio para la franja de gestos del telefono. */}
-        <div className="flex shrink-0 gap-2 border-t border-border bg-background p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+        <div className="flex shrink-0 gap-2 border-t border-border bg-background p-3 pb-[calc(0.75rem+var(--sab))] md:pb-3">
           <button
             type="button"
             onClick={onClose}

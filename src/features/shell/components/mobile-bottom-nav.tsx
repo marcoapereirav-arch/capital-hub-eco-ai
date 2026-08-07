@@ -61,7 +61,7 @@ export function MobileBottomNav({
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-popover pb-[var(--sab)] md:hidden">
         {/* Reparto a partes iguales entre los que DE VERDAD se pintan. Antes
             eran 5 columnas fijas con 4 botones (o 3, segun el rol): la barra
             salia corrida a la izquierda con un hueco vacio a la derecha. */}
@@ -75,16 +75,16 @@ export function MobileBottomNav({
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "tap-target flex h-[52px] flex-1 flex-col items-center justify-center gap-1 transition-colors",
+                    "tap-target flex h-[49px] flex-1 flex-col items-center justify-center gap-[3px] transition-colors",
                     isActive ? "text-primary" : "text-muted-foreground active:text-foreground"
                   )}
                 >
                   <item.icon
-                    className="h-[26px] w-[26px]"
+                    className="h-6 w-6"
                     strokeWidth={isActive ? 2.25 : 1.75}
                     aria-hidden
                   />
-                  <span className={cn("text-sm leading-none", isActive ? "font-bold" : "font-medium")}>
+                  <span className={cn("text-sm leading-none tracking-[-0.01em]", isActive ? "font-bold" : "font-medium")}>
                     {item.title}
                   </span>
                 </Link>
@@ -96,7 +96,7 @@ export function MobileBottomNav({
               type="button"
               onClick={() => setMoreOpen(true)}
               className={cn(
-                "tap-target flex h-[52px] flex-1 flex-col items-center justify-center gap-1 transition-colors",
+                "tap-target flex h-[49px] flex-1 flex-col items-center justify-center gap-[3px] transition-colors",
                 isSecondaryActive || moreOpen
                   ? "text-primary"
                   : "text-muted-foreground active:text-foreground"
@@ -104,11 +104,11 @@ export function MobileBottomNav({
               aria-label="Más opciones"
             >
               <MoreHorizontal
-                className="h-[26px] w-[26px]"
+                className="h-6 w-6"
                 strokeWidth={isSecondaryActive || moreOpen ? 2.25 : 1.75}
                 aria-hidden
               />
-              <span className={cn("text-sm leading-none", isSecondaryActive || moreOpen ? "font-bold" : "font-medium")}>
+              <span className={cn("text-sm leading-none tracking-[-0.01em]", isSecondaryActive || moreOpen ? "font-bold" : "font-medium")}>
                 Más
               </span>
             </button>

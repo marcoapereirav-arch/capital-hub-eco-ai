@@ -155,7 +155,7 @@ export function ContactDetail({ contact }: { contact: Contact }) {
       </header>
 
       {/* Contenido */}
-      <div className="no-overscroll min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:px-6 md:py-6 md:pb-6">
+      <div className="no-overscroll min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(3.5rem+var(--sab)+1rem)] md:px-6 md:py-6 md:pb-6">
         <div className="mx-auto max-w-4xl">
           {tab === "datos" && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

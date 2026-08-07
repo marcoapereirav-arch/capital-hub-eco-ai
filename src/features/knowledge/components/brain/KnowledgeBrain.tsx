@@ -187,7 +187,7 @@ export function KnowledgeBrain({
       ) : (
         // El hueco de abajo reserva el sitio de la barra del telefono: sin el, la
         // ultima carpeta queda tapada por el menu y no se puede tocar.
-        <div className="absolute inset-0 overflow-y-auto pt-32 pb-[calc(3.5rem+env(safe-area-inset-bottom)+1.5rem)] md:pt-24 md:pb-6">
+        <div className="absolute inset-0 overflow-y-auto pt-32 pb-[calc(3.5rem+var(--sab)+1.5rem)] md:pt-24 md:pb-6">
           <DriveView
             data={data}
             view={view}
@@ -207,7 +207,7 @@ export function KnowledgeBrain({
       {/* Cabecera. En telefono va apilada (titulo arriba, acciones debajo) y solo
           se ven DOS cosas: el cambio de vista y el boton "Más". En escritorio
           vuelve a la rejilla de dos columnas con la fila entera de botones. */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col gap-2 pt-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-3 md:p-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex flex-col gap-2 pt-4 pl-[max(1rem,var(--sal))] pr-[max(1rem,var(--sar))] md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-3 md:p-6">
         <div className="min-w-0">
           <p className="mb-1 inline-flex items-center gap-2 text-sm font-semibold text-primary">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
@@ -369,7 +369,7 @@ export function KnowledgeBrain({
 
       {/* Hint 3D — por encima de la barra de abajo del telefono, nunca debajo. */}
       {mode === 'brain' && (
-        <p className="pointer-events-none absolute inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] z-20 px-6 text-center text-sm text-muted-foreground md:bottom-4">
+        <p className="pointer-events-none absolute inset-x-0 bottom-[calc(3.5rem+var(--sab)+1rem)] z-20 px-6 text-center text-sm text-muted-foreground md:bottom-4">
           arrastra o 2 dedos: girar · pellizco o ⌘+scroll: zoom · 1 tap: previsualizar · 2 taps: abrir
         </p>
       )}
