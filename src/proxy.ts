@@ -16,7 +16,6 @@ import { updateSession } from '@/lib/supabase/proxy'
  * 2. CORS para rutas que la App alumno consume cross-origin:
  *    - /api/auth/*  (student-invite-accept)
  *    - /api/public/*
- *    - /api/calendar/book/*
  *    Preflight OPTIONS responde 204 inmediato con headers correctos.
  *    Para GET/POST/etc añade headers a la response.
  *
@@ -128,8 +127,7 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 function needsCors(pathname: string): boolean {
   return (
     pathname.startsWith('/api/auth/') ||
-    pathname.startsWith('/api/public/') ||
-    pathname.startsWith('/api/calendar/book')
+    pathname.startsWith('/api/public/')
   )
 }
 

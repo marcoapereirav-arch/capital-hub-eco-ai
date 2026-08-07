@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1899,
+  "total": 1877,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -1238,32 +1238,6 @@
       },
       "color-en-funcion": {
         "rgba(2": 1
-      }
-    },
-    "src/features/public-pages/funnel-mifge/agenda-page.tsx": {
-      "color-a-mano": {
-        "#0F0F12": 1,
-        "#2A2D34": 2,
-        "#18181B": 2,
-        "#9CA3AF": 2,
-        "#6B7280": 2,
-        "#D1D5DB": 1
-      },
-      "alto-atado-a-la-ventana": {
-        "min-h-screen": 1
-      },
-      "verde-viejo": {
-        "#37ca37": 3
-      },
-      "fuente-mono": {
-        "font-mono": 3
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-xs": 2,
-        "text-[10px]": 1
-      },
-      "mayusculas-separadas": {
-        "uppercase + tracking ancho": 2
       }
     },
     "src/features/public-pages/funnel-mifge/agenda-thanks-page.tsx": {
