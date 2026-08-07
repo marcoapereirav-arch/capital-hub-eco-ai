@@ -1,6 +1,6 @@
 # PRP-009: Barrido visual del OS interno (retirar el diseño viejo, móvil primero)
 
-> **Estado**: EN CURSO. Fases 0, 1 y 10 ya hechas y guardadas.
+> **Estado**: TERMINADO (2026-08-03). Resultado medido al final de este documento.
 > **Fecha**: 2026-08-02
 > **Rama**: `feature/tokens-brandkit`
 > **Proyecto**: Capital Hub OS (`src/app/(main)`)
@@ -364,3 +364,58 @@ con un mensaje que explica qué hacer.
 ---
 
 *PRP pendiente de aprobación. No se ha modificado ni una línea de código.*
+
+---
+
+## Resultado final (2026-08-03)
+
+Medido con la version de PRODUCCION y sesion real del test-agent, no en desarrollo.
+
+### En el telefono (375 puntos, las 30 pantallas internas)
+
+| Medida | Antes | Despues |
+|---|---|---|
+| Pantallas sin ningun fallo | 0 de 30 | **28 de 30** |
+| Con deslizamiento lateral | 0 | **0** |
+| Botones mas pequenos que un dedo | 234 | **1** |
+| Textos por debajo de 14px | 1535 | **1** |
+| Senales de diseno viejo | 619 | **0** |
+| Tapado por la barra de abajo | 11 | **0** |
+
+### En el monitor (1280 puntos, las 30 pantallas)
+
+Cero desbordes, cero tapados. El boton principal es el verde de marca
+`rgb(34,197,94)` con tinta `rgb(8,19,12)`, medido leyendo el pixel.
+
+### Deuda de diseno viejo en el codigo
+
+De **5347 senales en 219 archivos** a **1924 en 123**. El resto vive sobre todo en
+pantallas publicas y en el editor de video, que no entraban en este encargo.
+
+### Las dos excepciones que quedan, y por que son legitimas
+
+- `/calendario`: el enlace `/agenda` mide 19px. Es texto dentro de una frase, no un boton.
+- `/board`: el lienzo de la mision se arrastra, asi que su contenido vive fuera de la
+  pantalla a proposito.
+
+### Lo que NO se toco, y esta en el board
+
+- `t_brand_07`: las tres comprobaciones que ninguna maquina puede hacer (notch, teclado,
+  telefono girado). Van en un iPhone de verdad.
+- `t_brand_08`: la pagina publica `/agenda`, con el verde viejo `#37CA37` entero.
+- `t_brand_09`: los colores de las etapas del pipeline MIFGE.
+- La fuente mono en el resto del producto (unos 779 usos al empezar).
+
+### Fallos cometidos por el camino, y que los cierra
+
+1. **`data-[side=bottom]:pb-safe` no existe.** `pb-safe` es una clase suelta de
+   `globals.css`, no una utilidad de Tailwind, asi que no admite variante delante. Fallaba
+   en silencio. Documentado en el SOP 03.
+2. **El medidor conto 131 falsos "tapados"**, porque contaba los botones de la propia barra
+   y medía con la pagina arriba del todo. Un medidor tiene que excluir lo que vive dentro de
+   un elemento fijo, y bajar al final antes de mirar.
+3. **El medidor de contraste leia `lab()` como si fuera `rgb()`** y saco 144 fallos falsos.
+   Se convierte pintando el color en un lienzo de 1x1.
+4. **El candado marcaba el texto de al lado de un campo** como si fuera del campo. Un
+   candado con falsos positivos se acaba desactivando: ahora comprueba a que etiqueta
+   pertenece de verdad la clase.
