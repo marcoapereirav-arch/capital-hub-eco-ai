@@ -1,18 +1,23 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { TrendingUp, Eye, MousePointer, DollarSign, Users, AlertCircle, Loader2 } from "lucide-react"
+import { Eye, MousePointer, DollarSign, Users, AlertCircle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 
-const PRESETS = [
-  { value: "today", label: "Hoy" },
-  { value: "yesterday", label: "Ayer" },
-  { value: "last_7d", label: "7 días" },
-  { value: "last_14d", label: "14 días" },
-  { value: "last_30d", label: "30 días" },
-  { value: "this_month", label: "Este mes" },
-  { value: "last_month", label: "Mes pasado" },
-] as const
+/**
+ * ESTA PANTALLA NO TIENE FILTRO DE FECHAS PROPIO, A PROPÓSITO.
+ *
+ * Usa `<PeriodFilter>`, el mismo del dashboard principal, Email Marketing, Calendario y
+ * ManyChat. Antes tenía siete botones suyos (Hoy, Ayer, 7 días, 14 días...) con periodos
+ * que no coincidían con los del resto del OS: el mismo "este mes" daba números distintos
+ * según la pantalla. Regla en el SOP producto/58, con candado en `npm run check:filtros`.
+ */
+
+/** Meta quiere AAAA-MM-DD. */
+function aFecha(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
 
 type Insight = {
   spend?: string
@@ -45,14 +50,15 @@ function eur(s: string | undefined): string {
 }
 
 export function AdsInsights() {
-  const [preset, setPreset] = useState<string>("last_30d")
+  const [rango, setRango] = useState<PeriodRange | null>(null)
   const [response, setResponse] = useState<ApiResponse | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (!rango) return
     let cancelled = false
     setLoading(true)
-    fetch(`/api/admin/ads/insights?preset=${preset}`)
+    fetch(`/api/admin/ads/insights?from=${aFecha(rango.from)}&to=${aFecha(rango.to)}`)
       .then((r) => r.json())
       .then((data) => {
         if (!cancelled) setResponse(data as ApiResponse)
@@ -64,7 +70,9 @@ export function AdsInsights() {
         if (!cancelled) setLoading(false)
       })
     return () => { cancelled = true }
-  }, [preset])
+    // Se depende de las fechas sueltas, no del objeto: el objeto es nuevo en cada pintado
+    // y dispararía la petición en bucle.
+  }, [rango?.from.getTime(), rango?.to.getTime()])
 
   // Los mensajes de error van en lenguaje normal y dicen QUÉ HAY QUE HACER. Antes ponía
   // "Token Meta sin permiso ads_read", que no le dice nada a quien no es técnico.
@@ -112,29 +120,16 @@ export function AdsInsights() {
 
   return (
     <div className="space-y-4">
-      {/* Filtro periodo */}
-      <div className="flex items-center gap-1 flex-wrap">
-        {PRESETS.map((p) => (
-          <button
-            key={p.value}
-            onClick={() => setPreset(p.value)}
-            className={cn(
-              "px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider rounded-sm border",
-              preset === p.value
-                ? "border-foreground/40 bg-card text-foreground"
-                : "border-border text-muted-foreground hover:text-foreground hover:bg-card/50",
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
+      {/* El filtro de fechas del OS, el mismo que en el resto de pantallas. Manda sobre
+          todo lo que hay debajo. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <PeriodFilter value={rango ?? undefined} onChange={setRango} defaultPreset="30d" />
+        {loading && (
+          <span className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Trayendo datos de Meta…
+          </span>
+        )}
       </div>
-
-      {loading && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3 w-3 animate-spin" /> Cargando insights…
-        </div>
-      )}
 
       {row && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

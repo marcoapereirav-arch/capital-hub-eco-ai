@@ -1,71 +1,78 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { getMarketingToken } from "@/lib/meta/marketing-token"
+import { pedirInsights, periodoAnterior, type RangoFechas } from "@/lib/meta/insights"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 /**
- * GET /api/admin/ads/insights?preset=last_30d
+ * GET /api/admin/ads/insights?from=AAAA-MM-DD&to=AAAA-MM-DD
  *
- * Devuelve metricas agregadas de Meta Ads (Facebook + Instagram) para el
- * ad account configurado en META_AD_ACCOUNT_ID.
+ * Los totales del periodo que se pide, más los del periodo anterior equivalente para poder
+ * decir si algo sube o baja.
  *
- * Necesita un Marketing API access token con permisos `ads_read`. Si solo
- * tenemos CAPI token (conversiones) devolveremos un error claro para que el
- * usuario sepa que tiene que generar uno especifico.
+ * Las fechas llegan SIEMPRE como rango explícito desde el filtro del OS. Antes esta ruta
+ * aceptaba los atajos de Meta (`date_preset=last_30d`) y por eso Ads tenía sus propios
+ * botones de periodo, distintos de los del resto del OS. Ver SOP producto/58.
  */
+
+const CAMPOS = [
+  "spend",
+  "impressions",
+  "reach",
+  "frequency",
+  "clicks",
+  "ctr",
+  "cpc",
+  "cpm",
+  "actions",
+  "action_values",
+]
+
+function leerRango(req: NextRequest): RangoFechas | null {
+  const from = req.nextUrl.searchParams.get("from")
+  const to = req.nextUrl.searchParams.get("to")
+  if (!from || !to) return null
+  const desde = new Date(`${from}T00:00:00`)
+  const hasta = new Date(`${to}T23:59:59`)
+  if (Number.isNaN(desde.getTime()) || Number.isNaN(hasta.getTime())) return null
+  if (desde > hasta) return null
+  return { from: desde, to: hasta }
+}
+
 export async function GET(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
+  const rango = leerRango(req)
+  if (!rango) {
+    return NextResponse.json(
+      { configured: true, error: "Faltan las fechas o están mal (se esperan from y to)" },
+      { status: 400 }
+    )
   }
 
-  const accountId = process.env.META_AD_ACCOUNT_ID
-  // La llave de lectura se busca primero donde la guarda el equipo desde Ads, Ajustes.
-  // Si no hay, cae al fichero de entorno, y en último caso a la de conversiones (que NO
-  // sirve para leer, pero deja que el mensaje de error explique exactamente qué falta).
-  const accessToken =
-    (await getMarketingToken()) ?? process.env.META_CAPI_TOKEN
-  if (!accountId || !accessToken) {
-    return NextResponse.json({
-      configured: false,
-      error: "Falta META_AD_ACCOUNT_ID o META_MARKETING_API_TOKEN en .env",
-    }, { status: 200 })
+  // El periodo actual y el anterior se piden a la vez: así la comparativa no tarda el
+  // doble ni llega a destiempo.
+  const [actual, anterior] = await Promise.all([
+    pedirInsights({ rango, campos: CAMPOS }),
+    pedirInsights({ rango: periodoAnterior(rango), campos: CAMPOS }),
+  ])
+
+  if (!actual.ok) {
+    return NextResponse.json(
+      { configured: !actual.sinPermiso, error: actual.error, sinPermiso: actual.sinPermiso },
+      { status: 200 }
+    )
   }
 
-  const preset = req.nextUrl.searchParams.get("preset") ?? "last_30d"
-  const fields = [
-    "spend",
-    "impressions",
-    "clicks",
-    "cpc",
-    "ctr",
-    "cpm",
-    "reach",
-    "frequency",
-    "actions",
-    "action_values",
-  ].join(",")
-
-  const url = `https://graph.facebook.com/v19.0/act_${accountId}/insights?date_preset=${preset}&fields=${fields}&access_token=${accessToken}`
-
-  try {
-    const res = await fetch(url, { cache: "no-store" })
-    const json = await res.json() as { data?: unknown[]; error?: { message: string; code?: number } }
-    if (json.error) {
-      return NextResponse.json({
-        configured: true,
-        error: json.error.message,
-        code: json.error.code,
-      }, { status: 200 })
-    }
-    return NextResponse.json({ configured: true, data: json.data ?? [] })
-  } catch (e) {
-    return NextResponse.json({
-      configured: true,
-      error: e instanceof Error ? e.message : "fetch failed",
-    }, { status: 200 })
-  }
+  return NextResponse.json({
+    configured: true,
+    data: actual.filas,
+    // Si el anterior falla no se rompe la pantalla: simplemente no hay comparativa.
+    anterior: anterior.ok ? anterior.filas : [],
+  })
 }
