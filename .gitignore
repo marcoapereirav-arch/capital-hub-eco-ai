@@ -113,3 +113,6 @@ ENTREGA-otro-ecosistema/
 
 # Artefactos efimeros de test/verificacion (screenshots, backups). Nunca a git.
 .test-artifacts/
+
+# Archivador: cosas sueltas que no son del producto. Nunca a git.
+/archivo/
