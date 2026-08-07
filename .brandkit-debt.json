@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1907,
+  "total": 1928,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -308,6 +308,11 @@
         "text-xs": 1
       }
     },
+    "src/features/ads/components/ads-affiliates-panel.tsx": {
+      "lista-sin-paginar": {
+        "rows.map(": 1
+      }
+    },
     "src/features/auth/components/ForgotPasswordForm.tsx": {
       "pantalla-solo-para-monitor": {
         "archivo sin instrucciones de telefono": 1
@@ -373,14 +378,44 @@
         "uppercase + tracking ancho": 3
       }
     },
+    "src/features/automatizaciones/components/automatizaciones-page.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
     "src/features/board/components/mission-node.tsx": {
       "pantalla-solo-para-monitor": {
         "archivo sin instrucciones de telefono": 1
       }
     },
+    "src/features/board/components/priority-queue.tsx": {
+      "lista-sin-paginar": {
+        "tasks.map(": 1
+      }
+    },
     "src/features/board/components/task-node.tsx": {
       "pantalla-solo-para-monitor": {
         "archivo sin instrucciones de telefono": 1
+      }
+    },
+    "src/features/content-intel/components/corpus-chat-panel.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
+    "src/features/content-intel/components/ideas-tab.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
+    "src/features/content-intel/components/script-generate-form.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
+    "src/features/content-intel/components/videos-tab.tsx": {
+      "lista-sin-paginar": {
+        "videos.map(": 1
       }
     },
     "src/features/dashboard/components/activity-feed.tsx": {
@@ -390,6 +425,9 @@
       "texto-por-debajo-del-minimo": {
         "text-xs": 2,
         "text-[10px]": 1
+      },
+      "lista-sin-paginar": {
+        "items.map(": 1
       },
       "fuente-mono": {
         "font-mono": 1
@@ -432,6 +470,11 @@
         "text-muted-foreground/70": 2,
         "text-muted-foreground/40": 1,
         "text-muted-foreground/60": 1
+      }
+    },
+    "src/features/dashboard/components/dashboard-pending-sales.tsx": {
+      "lista-sin-paginar": {
+        "ventas.map(": 1
       }
     },
     "src/features/dashboard/components/date-filter.tsx": {
@@ -580,6 +623,9 @@
       }
     },
     "src/features/email-marketing/components/email-marketing-page.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      },
       "color-a-mano": {
         "#0F0F12": 1
       },
@@ -851,6 +897,16 @@
         "rgba(3": 2
       }
     },
+    "src/features/instagram/components/ig-overview.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
+    "src/features/knowledge/components/ArchivePanel.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
     "src/features/knowledge/components/KnowledgeBrainClient.tsx": {
       "pantalla-solo-para-monitor": {
         "archivo sin instrucciones de telefono": 1
@@ -905,6 +961,16 @@
         "border-amber-500": 1,
         "bg-amber-500": 1,
         "text-amber-400": 1
+      }
+    },
+    "src/features/notifications/components/NotificationsPanel.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
+    "src/features/operaciones-dashboard/components/operaciones-dashboard.tsx": {
+      "lista-sin-paginar": {
+        "tasks.map(": 1
       }
     },
     "src/features/public-pages/funnel-lt8/agenda-thanks-page.tsx": {
@@ -1620,6 +1686,9 @@
         "text-muted-foreground/40": 1,
         "text-muted-foreground/60": 1
       },
+      "lista-sin-paginar": {
+        "items.map(": 1
+      },
       "texto-por-debajo-del-minimo": {
         "text-xs": 1
       }
@@ -1665,6 +1734,26 @@
         "uppercase + tracking ancho": 1
       }
     },
+    "src/features/sistemas/components/medicion-ads-workflow.tsx": {
+      "lista-sin-paginar": {
+        "eventos.map(": 1
+      }
+    },
+    "src/features/tasks/components/task-board.tsx": {
+      "lista-sin-paginar": {
+        "tasks.map(": 1
+      }
+    },
+    "src/features/tasks/components/task-list.tsx": {
+      "lista-sin-paginar": {
+        "tasks.map(": 2
+      }
+    },
+    "src/features/tasks/components/task-page.tsx": {
+      "lista-sin-paginar": {
+        "items.map(": 1
+      }
+    },
     "src/features/team/components/accept-invite-page.tsx": {
       "alto-atado-a-la-ventana": {
         "min-h-screen": 2
@@ -1690,6 +1779,11 @@
       },
       "acento-blanco": {
         "bg-white": 1
+      }
+    },
+    "src/features/tutoriales/components/panel.tsx": {
+      "lista-sin-paginar": {
+        "filas.map(": 1
       }
     },
     "src/features/video-edit/components/video-edit-editor.tsx": {

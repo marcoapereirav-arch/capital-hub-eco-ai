@@ -168,6 +168,33 @@ iPhone antes de dar algo por terminado:
 
 ## Cambios versionados
 
+### 2026-08-07 — Regla nueva: ninguna lista se pinta entera, maximo 20 por pagina
+
+Marco: *"siempre, siempre que vayas a hacer una lista, tiene que haber maximo 20. Esto lo
+tienes que crear en un skill o en algo para que siempre se cumpla"*.
+
+Se aplica a TODA lista del OS, sin excepcion, y da igual que hoy tenga 8 elementos.
+
+**Anclada en tres sitios, para que no dependa de que nadie se acuerde:**
+
+1. **Un componente que la cumple por construccion**: `src/components/ui/lista-paginada.tsx`.
+   El tamano de pagina **no se pasa por parametro**: es una constante del archivo, asi que
+   no se puede subir desde una pantalla. Trae ademas lo que siempre se olvida: vuelve
+   arriba al cambiar de pagina, se cae sola a la ultima si un filtro deja menos, y dice en
+   que punto estas ("Viendo 21 a 40 de 132").
+2. **La ley escrita**: seccion 2 bis de la skill `os-movil-primero`, con el patron de
+   "los ultimos 10 + ver todo" para listas que viven dentro de un panel.
+3. **El candado**: regla `lista-sin-paginar` en `scripts/check-brandkit.mjs`. Detecta un
+   `.map(` sobre datos que crecen (contactos, tareas, invitaciones, videos...) en una
+   pantalla del OS cuando el archivo no pagina por ningun lado. Probada: bloquea una lista
+   nueva sin paginar.
+
+**Al estrenar la regla salieron 21 listas sin paginar ya escritas, en 20 archivos.** Para
+poder estrenarla sin bloquear el repositorio entero se anadio al candado el modo
+`--sembrar-regla <id>`, que mete en el acta lo que ya estaba escrito **solo la primera vez**
+y se niega si esa regla ya figuraba. `--rebase` no servia: se niega a proposito cuando el
+total sube, y una regla nueva siempre lo sube.
+
 ### 2026-08-03 — Barrido completo: las 30 pantallas internas, medidas una por una
 
 Encargo de Marco: *"TODO interno en el OS para empezar, cada seccion, cada pestana, cada

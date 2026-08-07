@@ -113,6 +113,8 @@ caza con la senal `pantalla-solo-para-monitor`.
 | **375px** | El ancho al que se disena y se prueba | |
 | **0** | Deslizamiento lateral de la pagina | |
 | **2** | Acciones visibles como maximo en una barra de movil | |
+| **20** | Elementos por pagina. En TODA lista del OS, sin excepcion | `<ListaPaginada>` |
+| **10** | Elementos de una lista dentro de un panel, antes del boton "ver todo" | |
 
 Sobre el minimo de letra: **el zoom con los dedos esta desactivado en la app**
 (`userScalable: false` en `src/app/layout.tsx`, linea 49). Si escribes texto de 10px, el
@@ -122,6 +124,59 @@ Sobre los 16px del campo: `globals.css` (lineas 238 a 242) ya fuerza 16px en `in
 `textarea` y `select` por debajo de 768px. **Pero esa regla vive en la capa base y cualquier
 clase de Tailwind la pisa.** Si escribes `text-sm` en un campo, vuelves a encender el zoom
 de iOS.
+
+---
+
+## 2 bis. NINGUNA LISTA SE PINTA ENTERA. MAXIMO 20 POR PAGINA
+
+> Marco, 2026-08-07: *"siempre, siempre que vayas a hacer una lista, tiene que haber
+> maximo 20. Esto lo tienes que crear en un skill o en algo para que siempre se cumpla"*.
+
+**Se aplica a TODA lista del OS**, sin excepcion: contactos, tareas, invitaciones,
+etiquetas, videos, actividad, resultados de una busqueda, filas de una tabla. Da igual que
+hoy tenga 8 elementos: manana tendra 800 y nadie va a volver a mirarlo.
+
+### Como se cumple
+
+Se usa **`<ListaPaginada>`** (`src/components/ui/lista-paginada.tsx`). El tamano de pagina
+NO se pasa por parametro: es una constante del propio archivo. Asi el dia que cambie,
+cambia en todo el OS a la vez, que es exactamente lo que se pidio.
+
+```tsx
+import { ListaPaginada } from "@/components/ui/lista-paginada"
+
+<ListaPaginada items={contactos} claveDeFiltros={firmaDeFiltros}>
+  {(pagina) => pagina.map((c) => <FichaDeContacto key={c.id} contacto={c} />)}
+</ListaPaginada>
+```
+
+Ya trae resuelto lo que siempre se olvida:
+
+- vuelve arriba al cambiar de pagina (si no, cambias de pagina y sigues a mitad de lista)
+- si un filtro deja menos paginas de las que habia, se cae sola a la ultima en vez de
+  ensenar una pagina en blanco
+- dice en que punto estas ("Viendo 21 a 40 de 132"), porque si no el usuario no sabe si le
+  faltan dos o doscientos
+- los dos botones a 44 puntos, y en telefono se reparten el ancho
+
+### El patron de "los ultimos N + ver todo"
+
+Cuando la lista vive **dentro de un panel** (el dashboard, una ficha, una tarjeta), no se
+pagina ahi dentro: se ensenan **los ultimos 10** y un boton que abre una ventana con el
+historial completo, y **esa ventana si va de 20 en 20** con `<ListaPaginada>`.
+
+Asi esta hecha "Lo que va pasando" del dashboard
+(`src/features/dashboard/components/dashboard-activity.tsx`): 10 en el panel, ventana con
+todo de 20 en 20.
+
+### Lo que NO vale
+
+- `items.map(...)` sobre la lista entera. Es lo que hay que dejar de hacer.
+- `items.slice(0, 50)` y ya. Eso no es paginar: es esconder, y el resto no se alcanza nunca.
+- Un scroll infinito. En un panel de trabajo no se sabe nunca cuanto queda ni se puede
+  volver a un sitio concreto.
+- Subir el limite "porque en esta pantalla caben mas". El limite es del OS, no de la
+  pantalla.
 
 ---
 

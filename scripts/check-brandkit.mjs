@@ -19,6 +19,8 @@
  *   npm run check:brandkit              revisa todo src/
  *   npm run check:brandkit -- --staged  revisa solo lo que vas a guardar (lo usa el gancho)
  *   npm run check:brandkit -- --rebase  recoloca la lista de deuda (al partir o renombrar)
+ *   npm run check:brandkit -- --sembrar-regla <id>  estrena una regla NUEVA metiendo en
+ *       el acta lo que ya estaba escrito. Una sola vez por regla.
  *
  * DONDE CORRE
  *   - Gancho de guardado (.githooks/pre-commit): SIEMPRE, y solo sobre tus archivos. Es el
@@ -57,6 +59,13 @@ const ROOT = process.cwd()
 const ARGS = process.argv.slice(2)
 const MODO_STAGED = ARGS.includes("--staged")
 const MODO_REBASE = ARGS.includes("--rebase")
+/* --sembrar-regla <id>: cuando se ANADE una regla nueva, lo que ya estaba escrito antes
+ * de que existiera es deuda por definicion, no diseno viejo recien escrito. Esta bandera
+ * mete en el acta SOLO los hallazgos de esa regla, y solo si la regla no figuraba ya.
+ * Es lo unico que permite estrenar una regla sin bloquear el repositorio entero ni tener
+ * que perdonar de golpe con --rebase, que a proposito se niega cuando el total sube. */
+const IDX_SEMBRAR = ARGS.indexOf("--sembrar-regla")
+const REGLA_A_SEMBRAR = IDX_SEMBRAR === -1 ? null : ARGS[IDX_SEMBRAR + 1] ?? null
 
 const RUTA_DEUDA = join(ROOT, ".brandkit-debt.json")
 const RUTA_CACHE = join(ROOT, "node_modules/.cache/capitalhub-brandkit.json")
@@ -704,6 +713,53 @@ const REGLAS = [
     ],
   },
   {
+    id: "lista-sin-paginar",
+    titulo: "Lista pintada entera, sin limite de 20",
+    familia: "estructura",
+    // Un .map( sobre algo que se llama como una lista de datos, dentro de una pantalla del
+    // OS, y sin que el archivo pagine por ningun lado. No mira listas de opciones fijas
+    // (pestanas, colores, presets) porque esas no crecen.
+    archivo: (codigo, rel) => {
+      if (!/\.(?:tsx|jsx)$/.test(rel)) return []
+      const dentro = rel.startsWith("src/app/(main)/") || rel.startsWith("src/features/")
+      if (!dentro) return []
+      // Si ya pagina de alguna forma, no se mira mas.
+      if (/ListaPaginada|POR_PAGINA|PAGE_SIZE|paginaSegura|totalPaginas|\.range\(/.test(codigo)) return []
+      const lineas = codigo.split("\n")
+      const salida = []
+      for (let i = 0; i < lineas.length; i++) {
+        const l = lineas[i]
+        // datos que vienen del sistema y por tanto crecen sin techo
+        const m = l.match(/\b(contactos|contacts|items|filas|rows|registros|resultados|leads|tareas|tasks|invitaciones|invites|videos|mensajes|eventos|pedidos|ventas|alumnos|usuarios|miembros)\b\s*(?:\?\.)?\.map\s*\(/)
+        if (!m) continue
+        // ya viene recortado a un pocos: es el patron "los ultimos N + ver todo"
+        if (/\.slice\(\s*0\s*,\s*(?:[1-9]|1\d|20)\s*\)/.test(l)) continue
+        salida.push({ linea: i + 1, texto: m[0].trim() })
+      }
+      return salida.slice(0, 4)
+    },
+    arreglo: [
+      "Ninguna lista del OS se pinta entera. Maximo 20 por pagina, SIEMPRE.",
+      "",
+      "Marco, 2026-08-07: \"siempre, siempre que vayas a hacer una lista, tiene que haber",
+      "maximo 20\". Da igual que hoy tenga 8 elementos: manana tendra 800.",
+      "",
+      "  import { ListaPaginada } from \"@/components/ui/lista-paginada\"",
+      "",
+      "  <ListaPaginada items={contactos} claveDeFiltros={firmaDeFiltros}>",
+      "    {(pagina) => pagina.map((c) => <Ficha key={c.id} contacto={c} />)}",
+      "  </ListaPaginada>",
+      "",
+      "Ya trae el volver arriba al cambiar de pagina, el caerse a la ultima si un filtro",
+      "deja menos, y el \"Viendo 21 a 40 de 132\".",
+      "",
+      "Si la lista vive DENTRO de un panel: se ensenan los ultimos 10 con .slice(0, 10) y un",
+      "boton que abre una ventana, y esa ventana si va de 20 en 20 con <ListaPaginada>.",
+      "",
+      "Como se construye una pantalla: .claude/skills/os-movil-primero/SKILL.md, seccion 2 bis.",
+    ],
+  },
+  {
     id: "pantalla-solo-para-monitor",
     titulo: "Archivo de pantalla sin una sola instruccion de telefono",
     familia: "estructura",
@@ -1113,6 +1169,45 @@ function medirTodo() {
 }
 
 const deudaPrevia = leerDeuda()
+
+/* --sembrar-regla <id>: estrena una regla nueva metiendo en el acta lo que ya estaba
+ * escrito. Se niega si esa regla YA figuraba en el acta, que es lo que impide usarla para
+ * perdonar diseno viejo recien escrito. */
+if (REGLA_A_SEMBRAR) {
+  if (!deudaPrevia) {
+    console.error("\n  No hay acta todavia. Corre `npm run check:brandkit` una vez.\n")
+    process.exit(1)
+  }
+  const yaEstaba = Object.values(deudaPrevia.archivos ?? {}).some(
+    (porRegla) => Object.prototype.hasOwnProperty.call(porRegla, REGLA_A_SEMBRAR)
+  )
+  if (yaEstaba) {
+    console.error("\n" + ROJO + `  La regla "${REGLA_A_SEMBRAR}" YA figura en el acta.` + FIN + "\n")
+    console.error("    --sembrar-regla solo sirve para ESTRENAR una regla, una vez.")
+    console.error("    Lo que salte ahora es diseno viejo recien escrito: hay que quitarlo.\n")
+    process.exit(1)
+  }
+
+  const archivos = medirTodo()
+  guardarCache(cache)
+  const nuevo = JSON.parse(JSON.stringify(deudaPrevia.archivos ?? {}))
+  let sembradas = 0
+  let ficheros = 0
+  for (const [rel, porRegla] of Object.entries(archivos)) {
+    const hallazgos = porRegla[REGLA_A_SEMBRAR]
+    if (!hallazgos) continue
+    nuevo[rel] = nuevo[rel] ?? {}
+    nuevo[rel][REGLA_A_SEMBRAR] = hallazgos
+    ficheros++
+    for (const n of Object.values(hallazgos)) sembradas += typeof n === "number" ? n : 1
+  }
+  escribirDeuda(nuevo)
+  console.log(`\n  Regla "${REGLA_A_SEMBRAR}" estrenada.`)
+  console.log(`  Metidas en el acta ${sembradas} senales que ya estaban escritas, en ${ficheros} archivos.`)
+  console.log("  A partir de ahora, cualquier caso NUEVO de esa regla queda bloqueado.")
+  console.log("  Guarda .brandkit-debt.json en el mismo commit.\n")
+  process.exit(0)
+}
 
 /* --rebase: se vuelve a medir todo y se recoloca la lista. Permitido solo si el total del
  * repositorio NO sube. Asi, partir un archivo en dos (que es justo lo que mandan las

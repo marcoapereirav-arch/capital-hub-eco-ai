@@ -309,8 +309,12 @@ function Conector({
         <div className="absolute inset-y-1 left-0 w-px border-l border-dashed border-border" aria-hidden />
       )}
 
-      <div className="absolute inset-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 px-1">
-        <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+      {/* En telefono las dos lecturas se apilan, cada una en su linea y entera. Antes
+          compartian fila y la de la izquierda se cortaba a media palabra ("26 entraron,
+          0 ..."), que es justo lo que hace que un dibujo deje de explicarse solo.
+          A partir de md vuelven a ir enfrentadas, que ahi si caben. */}
+      <div className="absolute inset-0 flex flex-col items-start justify-center gap-0 px-1 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3">
+        <span className="min-w-0 max-w-full text-sm leading-tight text-foreground">
           {conector.texto}
           {seEnsancha ? (
             <span className="text-muted-foreground"> {"·"} vienen de contactos anteriores</span>
@@ -321,7 +325,7 @@ function Conector({
         {conector.perdida && (
           <span
             className={cn(
-              "shrink-0 text-sm tabular-nums",
+              "min-w-0 max-w-full text-sm leading-tight tabular-nums md:shrink-0",
               esPeor ? "font-semibold text-warn" : "text-muted-foreground",
             )}
           >
