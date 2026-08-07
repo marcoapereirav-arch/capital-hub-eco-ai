@@ -61,7 +61,7 @@ export function MobileBottomNav({
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background pb-[env(safe-area-inset-bottom)] md:hidden">
         {/* Reparto a partes iguales entre los que DE VERDAD se pintan. Antes
             eran 5 columnas fijas con 4 botones (o 3, segun el rol): la barra
             salia corrida a la izquierda con un hueco vacio a la derecha. */}
@@ -73,21 +73,18 @@ export function MobileBottomNav({
               <li key={item.href} className="contents">
                 <Link
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "tap-target relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
-                    isActive
-                      ? "text-foreground"
-                      : "text-muted-foreground active:text-foreground"
+                    "tap-target flex h-[52px] flex-1 flex-col items-center justify-center gap-1 transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground active:text-foreground"
                   )}
                 >
-                  {isActive && (
-                    <span
-                      aria-hidden
-                      className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 bg-foreground"
-                    />
-                  )}
-                  <item.icon className="h-[22px] w-[22px]" strokeWidth={1.75} />
-                  <span className="text-sm font-semibold leading-none">
+                  <item.icon
+                    className="h-[26px] w-[26px]"
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                    aria-hidden
+                  />
+                  <span className={cn("text-sm leading-none", isActive ? "font-bold" : "font-medium")}>
                     {item.title}
                   </span>
                 </Link>
@@ -99,21 +96,19 @@ export function MobileBottomNav({
               type="button"
               onClick={() => setMoreOpen(true)}
               className={cn(
-                "tap-target relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
+                "tap-target flex h-[52px] flex-1 flex-col items-center justify-center gap-1 transition-colors",
                 isSecondaryActive || moreOpen
-                  ? "text-foreground"
+                  ? "text-primary"
                   : "text-muted-foreground active:text-foreground"
               )}
               aria-label="Más opciones"
             >
-              {(isSecondaryActive || moreOpen) && (
-                <span
-                  aria-hidden
-                  className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 bg-foreground"
-                />
-              )}
-              <MoreHorizontal className="h-[22px] w-[22px]" strokeWidth={1.75} />
-              <span className="text-sm font-semibold leading-none">
+              <MoreHorizontal
+                className="h-[26px] w-[26px]"
+                strokeWidth={isSecondaryActive || moreOpen ? 2.25 : 1.75}
+                aria-hidden
+              />
+              <span className={cn("text-sm leading-none", isSecondaryActive || moreOpen ? "font-bold" : "font-medium")}>
                 Más
               </span>
             </button>

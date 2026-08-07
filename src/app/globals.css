@@ -224,7 +224,12 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans;
+    @apply font-sans bg-background;
+    /* El fondo va TAMBIEN en el html, no solo en el body. Si por lo que sea la
+       app no llega a cubrir la pantalla entera (la franja de gestos del iPhone,
+       un rebote, el teclado abriendose), lo que asoma por debajo es el fondo de
+       la app y no el negro del sistema. Marco veia justo eso: una banda negra
+       pegada abajo que no encajaba. */
     /* La app es SIEMPRE dark (html.dark). Declararlo a nivel de documento hace
        que el navegador renderice autofill, scrollbars y controles nativos en
        modo oscuro — sin esto, el autofill de Chrome/Safari pinta un fondo claro
