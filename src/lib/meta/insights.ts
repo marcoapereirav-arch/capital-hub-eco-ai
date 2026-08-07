@@ -55,6 +55,8 @@ export type OpcionesInsights = {
   campanas?: string[]
   /** Igual pero para conjuntos, cuando se baja un nivel. */
   conjuntos?: string[]
+  /** Desglose de Meta: por donde se muestra, por edad, por dispositivo. */
+  desglose?: "publisher_platform" | "age" | "impression_device" | "gender"
 }
 
 export type RespuestaInsights<T = Record<string, unknown>> =
@@ -88,6 +90,7 @@ export async function pedirInsights<T = Record<string, unknown>>(
     access_token: token,
   })
   if (o.porDia) params.set("time_increment", "1")
+  if (o.desglose) params.set("breakdowns", o.desglose)
 
   // El filtro de Meta admite varios valores con el operador IN, que es justo lo que hace
   // falta para marcar varias campañas a la vez. Comprobado contra la cuenta real.

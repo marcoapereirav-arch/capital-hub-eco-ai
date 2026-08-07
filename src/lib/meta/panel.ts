@@ -99,6 +99,9 @@ export type FilaConjunto = {
 /** Lo que se ha marcado con casillas. Vacio = la cuenta entera. */
 export type Seleccion = { campanas: string[]; conjuntos: string[] }
 
+/** Una linea de desglose: donde se muestra, o que edad responde. */
+export type FilaDesglose = { clave: string; gasto: number; leads: number; impresiones: number }
+
 export type DatosPanel = {
   ok: true
   totales: Record<string, number>
@@ -107,6 +110,8 @@ export type DatosPanel = {
   dias: FilaDia[]
   campanas: FilaCampana[]
   conjuntos: FilaConjunto[]
+  plataformas: FilaDesglose[]
+  edades: FilaDesglose[]
   moneda: string
 }
 
@@ -127,7 +132,15 @@ export async function getDatosPanel(
   // tambien, al marcar una desaparecerian las demas y no se podria desmarcar.
   const filtro = { campanas: sel.campanas, conjuntos: sel.conjuntos }
 
-  const [tot, ant, dia, camp, conj] = await Promise.all([
+  const desglose = (b: "publisher_platform" | "age") =>
+    pedirInsights<Record<string, unknown>>({
+      rango,
+      desglose: b,
+      campos: ["spend", "impressions", "actions"],
+      ...filtro,
+    })
+
+  const [tot, ant, dia, camp, conj, plat, edad] = await Promise.all([
     pedirInsights<Record<string, unknown>>({ rango, campos, ...filtro }),
     pedirInsights<Record<string, unknown>>({ rango: periodoAnterior(rango), campos, ...filtro }),
     // La evolución se pide a nivel de cuenta: día a día por anuncio serían cientos de filas
@@ -149,6 +162,8 @@ export async function getDatosPanel(
       campos: [...campos, "campaign_id", "campaign_name", "adset_id", "adset_name"],
       campanas: sel.campanas,
     }),
+    desglose("publisher_platform"),
+    desglose("age"),
   ])
 
   if (!tot.ok) return { ok: false, error: tot.error, sinPermiso: tot.sinPermiso }
@@ -205,8 +220,27 @@ export async function getDatosPanel(
           valores: valores(f),
         }))
       : [],
+    plataformas: leerDesglose(plat, "publisher_platform"),
+    edades: leerDesglose(edad, "age"),
     moneda: String(fila.account_currency ?? "EUR"),
   }
+}
+
+/** Deja un desglose de Meta en filas ordenadas por gasto, sin las que no gastaron nada. */
+function leerDesglose(
+  r: { ok: true; filas: Record<string, unknown>[] } | { ok: false },
+  clave: string
+): FilaDesglose[] {
+  if (!r.ok) return []
+  return r.filas
+    .map((f) => ({
+      clave: String(f[clave] ?? ""),
+      gasto: valorDe(f, "spend"),
+      leads: sumaAcciones(f, "actions", ACCIONES.lead),
+      impresiones: valorDe(f, "impressions"),
+    }))
+    .filter((x) => x.gasto > 0)
+    .sort((a, b) => b.gasto - a.gasto)
 }
 
 export { metricaPorId }
