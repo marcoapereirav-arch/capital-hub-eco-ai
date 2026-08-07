@@ -532,9 +532,66 @@ function medirPantalla(opciones) {
   }
   tapados.sort((a, b) => b.tapado - a.tapado)
 
+  /* ── Cajones que ATRAPAN el gesto y dejan la pantalla congelada ──────────
+   *
+   * Un cajon con `overflow-y: auto|scroll` y `overscroll-behavior` en `contain` o
+   * `none` NO deja pasar el gesto a la pagina. Si ademas ese cajon no tiene nada
+   * que desplazar por dentro, el dedo o la rueda encima de el no mueven NADA: la
+   * pantalla parece rota.
+   *
+   * Es un fallo MUDO. No sale error, no se sale nada de sitio y una captura de
+   * pagina completa se ve perfecta. Solo aparece al intentar desplazar encima.
+   * Paso el 2026-08-07 en Afiliados y lo encontro Marco, no la maquina.
+   *
+   * Se marca solo cuando de verdad molesta: el cajon ocupa buena parte de la
+   * pantalla Y la pagina todavia tiene contenido por debajo que alcanzar.
+   */
+  const trampas = []
+  {
+    /* Las TRES condiciones tienen que darse a la vez. Si falta una, no molesta a nadie:
+     *   1. el cajon corta el paso del gesto (overscroll contain o none)
+     *   2. el cajon NO tiene nada que desplazar por dentro
+     *   3. y por encima de el SI hay alguien que se podria estar desplazando
+     * Sin la tercera se marcaba el propio marco de la app en pantallas que caben enteras,
+     * donde no hay nada roto. Falso positivo corregido el 2026-08-07 en la misma pasada. */
+    const puedeDesplazarse = (el) => {
+      if (!el || el === document.documentElement) {
+        return document.documentElement.scrollHeight > document.documentElement.clientHeight + 4
+      }
+      const s = getComputedStyle(el)
+      return /(auto|scroll)/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 4
+    }
+
+    for (const el of document.querySelectorAll("*")) {
+      const s = getComputedStyle(el)
+      if (!/(auto|scroll)/.test(s.overflowY)) continue
+      if (!/(contain|none)/.test(s.overscrollBehaviorY || s.overscrollBehavior || "")) continue
+      if (el.scrollHeight > el.clientHeight + 4) continue // este si se desplaza: no atrapa
+
+      let ancestroSeDesplaza = false
+      for (let padre = el.parentElement; padre; padre = padre.parentElement) {
+        if (puedeDesplazarse(padre)) {
+          ancestroSeDesplaza = true
+          break
+        }
+      }
+      if (!ancestroSeDesplaza && !puedeDesplazarse(document.documentElement)) continue
+
+      const r = el.getBoundingClientRect()
+      const ocupa = (r.width * Math.min(r.height, altoPantalla)) / (anchoPantalla * altoPantalla)
+      if (r.height < 120 || ocupa < 0.15) continue
+      trampas.push({
+        etiqueta: etiquetaDe(el),
+        texto: textoDe(el),
+        porcentajeDePantalla: Math.round(ocupa * 100),
+      })
+    }
+  }
+
   return {
     anchoPantalla,
     altoPantalla,
+    trampasDeScroll: { total: trampas.length, peores: trampas.slice(0, 5) },
     paginaSeArrastra: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     conErrorDeLaApp: Boolean(document.querySelector("nextjs-portal")),
     desbordes: {
@@ -774,9 +831,14 @@ async function principal() {
         ]
         if (m.recortes.total) partes.push(`${m.recortes.total} recortados`)
         if (m.tapadosPorLaBarra.total) partes.push(`${m.tapadosPorLaBarra.total} tapados`)
+        if (m.trampasDeScroll.total) partes.push(`${m.trampasDeScroll.total} ATRAPAN EL SCROLL`)
         if (m.girado && m.girado.desbordes) partes.push(`${m.girado.desbordes} girado`)
         const cola = gris(` (${m.segundos}s)`)
-        const grave = m.desbordes.total > 0 || m.recortes.total > 0 || m.tapadosPorLaBarra.total > 0
+        const grave =
+          m.desbordes.total > 0 ||
+          m.recortes.total > 0 ||
+          m.tapadosPorLaBarra.total > 0 ||
+          m.trampasDeScroll.total > 0
         const limpio = !grave && m.tactiles.total === 0 && m.textos.total === 0
         if (limpio) linea("encaja" + cola)
         else if (grave) linea(rojo(partes.join(" . ")) + cola)
@@ -838,6 +900,10 @@ function informe({ resultados, saltadas, inaccesibles, dinamicas, BASE }) {
   const dato = (rotulo, valor) => linea("  " + (rotulo + " ").padEnd(41, ".") + " " + valor)
   dato("Pantallas medidas", resultados.length)
   dato("Pantallas que encajan enteras", pantallasQueEncajan)
+  dato(
+    "Cajones que ATRAPAN el scroll (pantalla rota)",
+    resultados.reduce((s, r) => s + (r.trampasDeScroll?.total ?? 0), 0),
+  )
   dato("Elementos que se salen de la pantalla", totalDesbordes)
   dato("Cajas que recortan sin dejar arrastrar", totalRecortes)
   dato("Cosas tapadas por la barra inferior", totalTapados)
@@ -848,8 +914,14 @@ function informe({ resultados, saltadas, inaccesibles, dinamicas, BASE }) {
   linea("")
 
   /* Ranking de pantallas, de la peor a la mejor. */
+  // Una pantalla que atrapa el scroll esta ROTA de usar, no fea: pesa mas que nada.
   const nota = (r) =>
-    r.desbordes.total * 10 + r.recortes.total * 10 + r.tapadosPorLaBarra.total * 6 + r.tactiles.total + r.textos.total / 4
+    (r.trampasDeScroll?.total ?? 0) * 40 +
+    r.desbordes.total * 10 +
+    r.recortes.total * 10 +
+    r.tapadosPorLaBarra.total * 6 +
+    r.tactiles.total +
+    r.textos.total / 4
   const orden = [...resultados].sort((a, b) => nota(b) - nota(a))
   linea("  PANTALLAS, DE LA PEOR A LA MEJOR")
   linea("")

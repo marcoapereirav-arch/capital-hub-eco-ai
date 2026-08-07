@@ -180,6 +180,64 @@ todo de 20 en 20.
 
 ---
 
+## 2 ter. UN SOLO DESPLAZAMIENTO POR PANTALLA. El fallo que congela la app
+
+> Marco, 2026-08-07: *"Esta rota la pantalla, no puedo hacer scroll... arreglalo de raiz, que
+> no es la primera vez que sucede"*.
+
+**El desplazamiento de una pantalla lo hace el marco de la app, uno solo.** Ningun bloque
+dentro de una pantalla normal tiene desplazamiento propio.
+
+### El fallo, exactamente
+
+Una caja con `overflow-y-auto` **y** `no-overscroll` (`overscroll-behavior: contain`) que **no
+tiene nada que desplazar por dentro** no se queda quieta: **bloquea a la pagina**. `contain`
+corta el paso del gesto hacia arriba, asi que el dedo o la rueda encima de esa caja no mueven
+nada. Y como esa caja suele ocupar casi toda la pantalla (una lista, una tabla), la app
+parece congelada.
+
+```
+overflow-y-auto  +  no-overscroll  +  contenido que SI cabe   =   pantalla congelada
+```
+
+### Por que se cuela una y otra vez
+
+Es un fallo **MUDO**. No hay error en consola, `tsc` y `build` en verde, nada se sale, nada
+se recorta, ninguna zona tactil es pequena. **Y la captura de pantalla completa se ve
+perfecta**, porque `fullPage` fotografia el documento entero sin desplazar nada.
+
+Solo aparece poniendo el puntero ENCIMA del contenido e intentando desplazar. Si no se hace
+esa prueba, no se ve.
+
+### Las tres reglas al escribir
+
+1. **`overflow-y-auto` dentro de una pantalla es sospechoso.** Antes de escribirlo: ¿esta caja
+   tiene alto fijo? Si no lo tiene, no lo lleva.
+2. **Alto fijo y desplazamiento van juntos.** Alto fijo sin desplazamiento recorta;
+   desplazamiento sin alto fijo atrapa. Los dos o ninguno.
+3. **`no-overscroll` solo acompana a algo que de verdad se desplaza.**
+
+En `<ListaPaginada>` esto ya esta resuelto: **no crea cajon propio por defecto**. Si la lista
+vive dentro de una ventana o una hoja de alto fijo, se pide a la vista con `propioScroll`.
+
+### La comprobacion que faltaba
+
+`npm run check:movil` mide los cajones que atrapan el gesto y marca la pantalla como **rota**,
+no como fea. Y a mano, con el puntero encima del contenido:
+
+```js
+// Poner el raton en medio del contenido, rodar, y ver si algo se movio.
+// Si da 0 y la pantalla NO cabe entera, esta atrapada.
+;(() => { let m = 0
+  for (const el of document.querySelectorAll('*'))
+    if (/(auto|scroll)/.test(getComputedStyle(el).overflowY)) m = Math.max(m, el.scrollTop)
+  return Math.max(m, window.scrollY || 0) })()
+```
+
+Detalle completo en `docs/sops/producto/62-un-solo-scroll-por-pantalla.md`.
+
+---
+
 ## 3. EL MARCO COMUN SE ARREGLA PRIMERO
 
 Antes de tocar ninguna pantalla suelta. Estas piezas salen en **las 35 pantallas a la vez**:
@@ -769,7 +827,9 @@ el boton que lo resuelve, ahi mismo, a 44 puntos; alto minimo, nunca `h-64` fijo
   con la unidad vieja el ultimo boton queda debajo de ella y no se puede tocar. Se usa
   `min-h-dvh`, `h-dvh`, y para el area util del movil ya existen `h-mobile-content` y
   `min-h-mobile-content`.
-- **Sin rebote.** El contenedor que tenga desplazamiento propio lleva `no-overscroll`.
+- **Sin rebote.** `no-overscroll` va SOLO encima de una caja que de verdad se desplaza (alto
+  fijo y contenido que no cabe). Encima de una caja que no se desplaza **congela la pantalla
+  entera**: ver la seccion 2 ter.
 - **Cero desplazamiento lateral de la pagina.** El marco de la app
   (`src/app/(main)/layout.tsx` linea 75) recorta lo que se sale, y **eso se queda asi**: es lo
   que impide que la app entera baile. La consecuencia es que cada pieza ancha (tira de
@@ -871,6 +931,14 @@ npx playwright screenshot --device="iPhone 13" http://localhost:3101/tasks despu
 Y las cuatro comprobaciones automaticas, en la consola del navegador o con `browser_evaluate`:
 
 ```js
+// 0. LA PANTALLA SE DESPLAZA CON EL PUNTERO ENCIMA DEL CONTENIDO?
+//    Se pone el raton en medio del contenido, se rueda, y se mira si algo se movio.
+//    Si da 0 y la pantalla no cabe entera, esta ATRAPADA (seccion 2 ter).
+;(() => { let m = 0
+  for (const el of document.querySelectorAll('*'))
+    if (/(auto|scroll)/.test(getComputedStyle(el).overflowY)) m = Math.max(m, el.scrollTop)
+  return Math.max(m, window.scrollY || 0) })()
+
 // 1. Se sale algo de lado?  Tiene que dar false
 document.documentElement.scrollWidth > document.documentElement.clientWidth
 
@@ -966,6 +1034,10 @@ las pantallas": eso es el marco comun.
 - Un desplegable flotante en movil en vez de hoja inferior.
 - Decidir el lado de una hoja con JavaScript (`useIsMobile`).
 - Rebajar un token de texto con `/40` o `/60`.
+- **Poner `overflow-y-auto` a una caja que no tiene alto fijo.** Si ademas lleva
+  `no-overscroll`, la pantalla se queda congelada y ninguna medida lo delata (seccion 2 ter).
+- **Dar una pantalla por hecha sin haber desplazado con el puntero ENCIMA del contenido.**
+  Una captura de pagina completa no prueba que se pueda desplazar.
 - Dar una pantalla por hecha porque `check:movil` salio verde: ese comprobador no ve el
   notch ni el teclado.
 - Redisenar de paso algo que nadie pidio. Se toca la pantalla encargada, entera, y nada mas.
@@ -980,6 +1052,7 @@ las pantallas": eso es el marco comun.
 - [ ] Radios 4px y 6px. Cero `rounded-none`, cero `rounded-2xl`.
 - [ ] Cero `Sparkles`, cero emojis, cero guion largo, espanol neutro.
 - [ ] Probada a 375, a 812x375 (girada) y a 1280, con foto de las tres.
+- [ ] **La pantalla se desplaza con el puntero ENCIMA del contenido**, no solo por el borde.
 - [ ] Cero desplazamiento lateral de la pagina (comprobacion 1 del paso 9).
 - [ ] Cero controles por debajo de 44px (comprobacion 3).
 - [ ] Cero cosas tapadas por la barra inferior (comprobacion 4).
@@ -1032,3 +1105,10 @@ notch de la seccion 3.1. La regla no es "todo lo de arriba lleva `pt-safe`": es 
 
 **9. Decidir el diseno de movil con JavaScript.** `useIsMobile()` miente en el primer pintado.
 Lo que se ve al abrir es el diseno de escritorio, y luego salta. Se decide con clases.
+
+**10. Dar a un bloque su propio desplazamiento dentro de una pantalla normal.** `ListaPaginada`
+envolvia toda lista del OS en un cajon con `overflow-y-auto` + `no-overscroll`. Como la lista
+esta paginada, ese cajon nunca tenia nada que desplazar, y `contain` **bloqueaba el gesto
+hacia la pagina**: con el raton encima de la lista la pantalla no se movia. Ni un error, ni una
+medida en rojo, y la captura perfecta. **Lo encontro Marco, no la maquina**, y no era la
+primera vez. Ver seccion 2 ter y el SOP `producto/62`.

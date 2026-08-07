@@ -220,6 +220,8 @@ export function NotificationsBell() {
             className="min-h-0 flex-1"
             nombreSingular="aviso"
             nombrePlural="avisos"
+            // Hoja de alto fijo: aqui la lista SI se desplaza por dentro.
+            propioScroll
           >
             {(pagina) =>
               pagina.map((n) => {
