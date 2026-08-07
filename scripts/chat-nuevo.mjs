@@ -69,11 +69,6 @@ if (existsSync(carpeta)) {
 // La rama nace del `dev` MAS NUEVO que haya. No se intenta mover `dev` con un
 // checkout: si otra carpeta lo tiene puesto (lo normal — la carpeta principal),
 // el checkout falla y el comando entero se caeria.
-// El freno de guardar en `dev`/`main` vive en `.githooks/`, versionado con el
-// proyecto. `core.hooksPath` es de todo el repo (lo comparten las carpetas de
-// chat), asi que basta con dejarlo puesto una vez, pero se reafirma aqui: si
-// alguien clona el proyecto de cero, el freno queda activo desde el primer chat.
-gitSilencioso('config core.hooksPath .githooks')
 gitSilencioso('fetch origin --quiet')
 let base = 'dev'
 let nota = ''

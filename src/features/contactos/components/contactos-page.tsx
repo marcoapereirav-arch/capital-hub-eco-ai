@@ -1,14 +1,21 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Search, Plus, ChevronLeft, ChevronRight, X, Phone, Mail } from "lucide-react"
+import {
+  Search,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  SlidersHorizontal,
+} from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { ContactDrawer } from "./contact-drawer"
 import { ContactCreateModal } from "./contact-create-modal"
 import { PipelinesKanban } from "./pipelines-kanban"
-import { TagFilterButton } from "@/features/tags/components/tag-filter-button"
-import { TagChips } from "@/features/tags/components/tag-chips"
+import { TagFilterList } from "@/features/tags/components/tag-filter-button"
 import { useContactTagsMap } from "@/features/tags/hooks/use-contact-tags-map"
 import { PipelineSelector } from "@/features/pipelines/components/pipeline-selector"
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
@@ -37,6 +44,15 @@ type ContactRow = {
   created_at: string
 }
 
+/** Un filtro que esta ACTUANDO ahora mismo, listo para pintarse como ficha y quitarse. */
+type FiltroActivo = {
+  clave: string
+  texto: string
+  /** Color de la etiqueta, solo en los filtros de etiqueta. Es un dato del usuario. */
+  color?: string
+  quitar: () => void
+}
+
 // Fallback solo si la BD no tiene pipelines (deberia siempre haberlos tras seed).
 // Los stages REALES se leen del pipeline activo via usePipelines().
 const FALLBACK_STAGES = [{ value: "lead", label: "Lead" }]
@@ -53,6 +69,19 @@ const TOPE_DE_CARGA = 500
 
 const eur = (n: number) => `${Math.round(n).toLocaleString("es-ES")} EUR`
 
+/** Como se llama cada rango de fecha cuando sale fuera, en su ficha. */
+const NOMBRE_DE_FECHA: Record<string, string> = {
+  "7d": "Últimos 7 días",
+  "30d": "Últimos 30 días",
+  "90d": "Últimos 90 días",
+}
+
+/** Como se llama el filtro de llamada cuando sale fuera, en su ficha. */
+const NOMBRE_DE_LLAMADA: Record<string, string> = {
+  yes: "Con llamada",
+  no: "Sin llamada",
+}
+
 export function ContactosPage({ initialView = "list" }: { initialView?: "list" | "kanban" } = {}) {
   const [contacts, setContacts] = useState<ContactRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -68,6 +97,12 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [pagina, setPagina] = useState(1)
+  // Los filtros NO viven en la barra: viven dentro del boton "Filtros". Ocho desplegables
+  // a la vista eran un muro, y encima tapaban lo unico que se usa siempre, que es buscar.
+  // En telefono se abren en hoja inferior; en monitor, en un panel colgado del boton.
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
+  const [panelAbierto, setPanelAbierto] = useState(false)
+  const panelRef = useRef<HTMLDivElement | null>(null)
   // Sitio al que se vuelve al cambiar de pagina: arriba del todo, con el buscador
   // y los filtros a la vista. Sin esto se cambia de pagina y se sigue a mitad de lista.
   const arribaRef = useRef<HTMLDivElement | null>(null)
@@ -81,6 +116,24 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   const { pipelines } = usePipelines()
   const { activeId, setActiveId } = useActivePipelineId(pipelines)
   const activePipeline = pipelines.find((p) => p.id === activeId) ?? null
+
+  // El panel del monitor se cierra al tocar fuera o con Escape: es un panel colgado del
+  // boton, no una ventana, y quedarse abierto tapando la lista seria lo peor de los dos.
+  useEffect(() => {
+    if (!panelAbierto) return
+    function alTocarFuera(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) setPanelAbierto(false)
+    }
+    function alEscapar(e: KeyboardEvent) {
+      if (e.key === "Escape") setPanelAbierto(false)
+    }
+    document.addEventListener("mousedown", alTocarFuera)
+    document.addEventListener("keydown", alEscapar)
+    return () => {
+      document.removeEventListener("mousedown", alTocarFuera)
+      document.removeEventListener("keydown", alEscapar)
+    }
+  }, [panelAbierto])
 
   // Stages del pipeline ACTIVO: son las columnas del kanban.
   const PIPELINE_STAGES = activePipeline
@@ -259,15 +312,67 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     return out
   })()
 
-  const activeFiltersCount =
-    (stageFilter !== "all" ? 1 : 0) +
-    (pipelineFilter !== "all" ? 1 : 0) +
-    (originFilter !== "all" ? 1 : 0) +
-    (ownerFilter !== "all" ? 1 : 0) +
-    (productFilter !== "all" ? 1 : 0) +
-    (dateRange !== "all" ? 1 : 0) +
-    (hasCallFilter !== "all" ? 1 : 0) +
-    (tagFilter.size > 0 ? 1 : 0)
+  /**
+   * Los filtros que estan ACTUANDO, uno por uno y con su nombre de verdad.
+   *
+   * De aqui salen las dos cosas que evitan el muro: el numero que lleva el boton de
+   * Filtros, y las fichas de fuera. Cada etiqueta cuenta como un filtro propio, para que
+   * el numero del boton y las fichas que se ven nunca digan cosas distintas.
+   */
+  const filtrosActivos: FiltroActivo[] = []
+  if (pipelineFilter !== "all") {
+    filtrosActivos.push({
+      clave: "pipeline",
+      texto: pipelines.find((p) => p.id === pipelineFilter)?.name ?? "Pipeline",
+      quitar: () => setPipelineFilter("all"),
+    })
+  }
+  if (stageFilter !== "all") {
+    filtrosActivos.push({
+      clave: "stage",
+      texto: STAGES_VISIBLES.find((s) => s.value === stageFilter)?.label ?? stageFilter,
+      quitar: () => setStageFilter("all"),
+    })
+  }
+  if (originFilter !== "all") {
+    filtrosActivos.push({ clave: "origen", texto: originFilter, quitar: () => setOriginFilter("all") })
+  }
+  if (ownerFilter !== "all") {
+    filtrosActivos.push({ clave: "owner", texto: ownerFilter, quitar: () => setOwnerFilter("all") })
+  }
+  if (productFilter !== "all") {
+    filtrosActivos.push({ clave: "producto", texto: productFilter, quitar: () => setProductFilter("all") })
+  }
+  if (dateRange !== "all") {
+    filtrosActivos.push({
+      clave: "fecha",
+      texto: NOMBRE_DE_FECHA[dateRange] ?? "Fecha",
+      quitar: () => setDateRange("all"),
+    })
+  }
+  if (hasCallFilter !== "all") {
+    filtrosActivos.push({
+      clave: "llamada",
+      texto: NOMBRE_DE_LLAMADA[hasCallFilter] ?? "Llamada",
+      quitar: () => setHasCallFilter("all"),
+    })
+  }
+  for (const id of tagFilter) {
+    const etiqueta = allTags.find((t) => t.id === id)
+    filtrosActivos.push({
+      clave: `tag-${id}`,
+      texto: etiqueta?.name ?? "Etiqueta",
+      color: etiqueta?.color,
+      quitar: () =>
+        setTagFilter((previo) => {
+          const siguiente = new Set(previo)
+          siguiente.delete(id)
+          return siguiente
+        }),
+    })
+  }
+
+  const activeFiltersCount = filtrosActivos.length
 
   // --- Paginacion de la vista LISTA -----------------------------------------
   // `paginaSegura` se calcula al pintar, no se guarda. Asi, si un filtro deja menos
@@ -303,108 +408,244 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
     setSearch("")
   }
 
-  // Toolbar adaptado a la pestaña. Cada pestaña respeta su ecosistema:
-  // - Contactos (list): set completo de filtros para buscar/filtrar por lo que sea.
-  // - Pipeline (kanban): selector de pipeline + filtros del pipeline activo.
+  /**
+   * Los desplegables de filtro se escriben UNA sola vez y se usan en los dos sitios: la
+   * hoja del telefono y el panel del monitor. Asi los dos ofrecen exactamente lo mismo.
+   * Todos llevan su nombre encima: dentro del panel los campos van uno debajo de otro y
+   * sin nombre no se sabe cual es cual.
+   */
+  const camposDeFiltro = (
+    <>
+      <FilterSelect value={pipelineFilter} onChange={setPipelineFilter} etiqueta="Pipeline">
+        <option value="all">Pipeline: todos</option>
+        {pipelines.map((p) => (
+          <option key={p.id} value={p.id}>{p.name}</option>
+        ))}
+      </FilterSelect>
+
+      <FilterSelect value={stageFilter} onChange={setStageFilter} etiqueta="Stage">
+        <option value="all">Stage: todos</option>
+        {STAGES_VISIBLES.map((s) => (
+          <option key={s.value} value={s.value}>{s.label}</option>
+        ))}
+      </FilterSelect>
+
+      <FilterSelect value={originFilter} onChange={setOriginFilter} etiqueta="Origen">
+        <option value="all">Origen: todos</option>
+        {filterOptions.origins.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </FilterSelect>
+
+      <FilterSelect value={ownerFilter} onChange={setOwnerFilter} etiqueta="Responsable">
+        <option value="all">Responsable: todos</option>
+        {filterOptions.owners.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </FilterSelect>
+
+      <FilterSelect value={productFilter} onChange={setProductFilter} etiqueta="Producto">
+        <option value="all">Producto: todos</option>
+        {filterOptions.products.map((p) => (
+          <option key={p} value={p}>{p}</option>
+        ))}
+      </FilterSelect>
+
+      <FilterSelect
+        value={dateRange}
+        onChange={(v) => setDateRange(v as typeof dateRange)}
+        etiqueta="Fecha"
+      >
+        <option value="all">Fecha: cualquiera</option>
+        <option value="7d">Últimos 7 días</option>
+        <option value="30d">Últimos 30 días</option>
+        <option value="90d">Últimos 90 días</option>
+      </FilterSelect>
+
+      <FilterSelect
+        value={hasCallFilter}
+        onChange={(v) => setHasCallFilter(v as typeof hasCallFilter)}
+        etiqueta="Llamada"
+      >
+        <option value="all">Llamada: cualquiera</option>
+        <option value="yes">Con llamada</option>
+        <option value="no">Sin llamada</option>
+      </FilterSelect>
+    </>
+  )
+
+  /**
+   * TODOS los filtros, escritos una vez y colocados en los dos sitios. `enRejilla` solo
+   * cambia como se reparten: en el panel del monitor caben dos por fila, en el telefono
+   * van uno debajo de otro.
+   */
+  const bloqueDeFiltros = (enRejilla: boolean) => (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-semibold text-muted-foreground">Etiquetas</span>
+        <div className="max-h-56 overflow-y-auto rounded-lg border border-border bg-popover">
+          <TagFilterList allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
+        </div>
+      </div>
+      <div className={cn("grid gap-3", enRejilla && "sm:grid-cols-2")}>{camposDeFiltro}</div>
+    </div>
+  )
+
+  const claseBotonFiltros = cn(
+    "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border px-4 text-sm font-semibold transition-colors",
+    activeFiltersCount > 0
+      ? "border-primary/30 bg-primary/10 text-primary"
+      : "border-border bg-popover text-muted-foreground hover:border-foreground/20 hover:text-foreground"
+  )
+
+  /**
+   * La barra de arriba, minima a proposito: buscar, filtrar y crear. Nada mas.
+   *
+   * Los ocho desplegables que antes vivian aqui estan dentro del boton "Filtros", y lo
+   * unico que vuelve a salir fuera es lo que de verdad esta actuando, en fichas que se
+   * quitan de una en una. Marco, 2026-08-07: "veo un huevo de filtros arriba... lo quiero
+   * mas minimalista".
+   */
   const Toolbar = (
     <div className="flex flex-col gap-3">
-      {/* Fila 1: búsqueda + acción principal */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1 md:max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#7C818A]" />
+        <div className="relative w-full md:w-auto md:min-w-0 md:max-w-md md:flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar nombre, email, teléfono, Instagram"
             aria-label="Buscar contactos"
+            inputMode="search"
+            enterKeyHint="search"
             className={cn(FIELD, "w-full pl-10")}
           />
         </div>
+
         {view === "kanban" && (
           <PipelineSelector pipelines={pipelines} activeId={activeId} onChange={setActiveId} />
         )}
+
+        {view === "list" && (
+          <div ref={panelRef} className="relative shrink-0">
+            {/* TELEFONO: hoja inferior. Un panel colgado se sale de la pantalla. */}
+            <button
+              onClick={() => setFiltrosAbiertos(true)}
+              aria-label="Abrir filtros"
+              className={cn(claseBotonFiltros, "md:hidden")}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtros
+              {activeFiltersCount > 0 && <span className="tabular-nums">{activeFiltersCount}</span>}
+            </button>
+
+            {/* MONITOR: panel anclado al propio boton. */}
+            <button
+              onClick={() => setPanelAbierto((v) => !v)}
+              aria-expanded={panelAbierto}
+              aria-haspopup="true"
+              aria-label="Abrir filtros"
+              className={cn(claseBotonFiltros, "hidden md:inline-flex")}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtros
+              {activeFiltersCount > 0 && <span className="tabular-nums">{activeFiltersCount}</span>}
+            </button>
+
+            {panelAbierto && (
+              <div className="absolute left-0 top-full z-30 mt-2 hidden w-[min(34rem,calc(100vw-3rem))] rounded-xl border border-border bg-card p-4 shadow-lg md:block">
+                {bloqueDeFiltros(true)}
+                <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
+                  <button
+                    onClick={clearAllFilters}
+                    disabled={activeFiltersCount === 0}
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-popover hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
+                  >
+                    <X className="h-4 w-4" />
+                    Quitar filtros
+                  </button>
+                  <button onClick={() => setPanelAbierto(false)} className={BTN_PRIMARY}>
+                    Ver <span className="tabular-nums">{filtered.length}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="hidden flex-1 md:block" />
-        <span className="text-[14px] text-[#A6AAB2]">
-          {filtered.length} contacto{filtered.length === 1 ? "" : "s"}
-        </span>
-        <button onClick={() => setCreating(true)} className={BTN_PRIMARY}>
+
+        <button onClick={() => setCreating(true)} className={cn(BTN_PRIMARY, "flex-1 md:flex-none")}>
           <Plus className="h-4 w-4" /> Nuevo contacto
         </button>
       </div>
 
-      {/* Fila 2: filtros (solo en pestaña Contactos · list). En kanban el filtrado vive en el pipeline. */}
-      {view === "list" && (
+      {/* Lo que de verdad esta actuando, y solo eso. Cada ficha se quita de un toque: sin
+          esto el usuario ve pocos contactos y no sabe por que. */}
+      {view === "list" && filtrosActivos.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <TagFilterButton allTags={allTags} selected={tagFilter} onChange={setTagFilter} />
-
-          <FilterSelect value={pipelineFilter} onChange={setPipelineFilter} label="Filtrar por pipeline">
-            <option value="all">Pipeline: todos</option>
-            {pipelines.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </FilterSelect>
-
-          <FilterSelect value={stageFilter} onChange={setStageFilter} label="Filtrar por stage">
-            <option value="all">Stage: todos</option>
-            {STAGES_VISIBLES.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </FilterSelect>
-
-          <FilterSelect value={originFilter} onChange={setOriginFilter} label="Filtrar por origen">
-            <option value="all">Origen: todos</option>
-            {filterOptions.origins.map((o) => (
-              <option key={o} value={o}>{o}</option>
-            ))}
-          </FilterSelect>
-
-          <FilterSelect value={ownerFilter} onChange={setOwnerFilter} label="Filtrar por responsable">
-            <option value="all">Responsable: todos</option>
-            {filterOptions.owners.map((o) => (
-              <option key={o} value={o}>{o}</option>
-            ))}
-          </FilterSelect>
-
-          <FilterSelect value={productFilter} onChange={setProductFilter} label="Filtrar por producto">
-            <option value="all">Producto: todos</option>
-            {filterOptions.products.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </FilterSelect>
-
-          <FilterSelect
-            value={dateRange}
-            onChange={(v) => setDateRange(v as typeof dateRange)}
-            label="Filtrar por fecha de entrada"
-          >
-            <option value="all">Fecha: cualquiera</option>
-            <option value="7d">Últimos 7 días</option>
-            <option value="30d">Últimos 30 días</option>
-            <option value="90d">Últimos 90 días</option>
-          </FilterSelect>
-
-          <FilterSelect
-            value={hasCallFilter}
-            onChange={(v) => setHasCallFilter(v as typeof hasCallFilter)}
-            label="Filtrar por llamada"
-          >
-            <option value="all">Llamada: cualquiera</option>
-            <option value="yes">Con llamada</option>
-            <option value="no">Sin llamada</option>
-          </FilterSelect>
-
-          {activeFiltersCount > 0 && (
+          {filtrosActivos.map((f) => (
             <button
-              onClick={clearAllFilters}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-[4px] border border-[rgba(245,246,247,0.1)] px-3 text-[14px] font-semibold text-[#A6AAB2] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] hover:text-[#F5F6F7]"
+              key={f.clave}
+              onClick={f.quitar}
+              aria-label={`Quitar el filtro ${f.texto}`}
+              className="inline-flex min-h-11 max-w-full items-center gap-1.5 rounded-lg border border-border bg-popover px-3 text-sm text-foreground transition-colors hover:border-foreground/20 md:min-h-9"
             >
-              <X className="h-4 w-4" />
-              Quitar filtros ({activeFiltersCount})
+              {f.color && (
+                <span
+                  aria-hidden
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: f.color }}
+                />
+              )}
+              <span className="min-w-0 truncate">{f.texto}</span>
+              <X className="h-4 w-4 shrink-0 text-muted-foreground" />
             </button>
-          )}
+          ))}
+          <button
+            onClick={clearAllFilters}
+            className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground md:min-h-9"
+          >
+            Quitar todos
+          </button>
         </div>
       )}
+
+      {view === "list" && (
+        <p className="text-sm text-muted-foreground">
+          <span className="tabular-nums">{filtered.length}</span> contacto{filtered.length === 1 ? "" : "s"}
+        </p>
+      )}
     </div>
+  )
+
+  // Hoja de filtros del telefono. Los MISMOS campos que en el monitor, uno debajo de otro
+  // y a 44 puntos. Abajo queda fija la salida: quitar filtros o ver los que quedan.
+  const hojaDeFiltros = (
+    <Sheet open={filtrosAbiertos} onOpenChange={setFiltrosAbiertos}>
+      <SheetContent side="bottom" className="gap-0 rounded-t-xl border-border bg-card text-foreground md:hidden">
+        <div aria-hidden className="mx-auto mt-1 h-1 w-10 rounded-full bg-foreground/20" />
+        <SheetHeader className="px-4">
+          <SheetTitle className="text-[17px] font-semibold text-foreground">Filtros</SheetTitle>
+        </SheetHeader>
+
+        <div className="px-4 pb-2">{bloqueDeFiltros(false)}</div>
+
+        <div className="sticky bottom-0 z-10 mt-4 flex gap-2 border-t border-border bg-card px-4 pt-3">
+          <button
+            onClick={clearAllFilters}
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border text-sm font-semibold text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            Quitar filtros
+            {activeFiltersCount > 0 && <span className="tabular-nums">({activeFiltersCount})</span>}
+          </button>
+          <button onClick={() => setFiltrosAbiertos(false)} className={cn(BTN_PRIMARY, "flex-1")}>
+            Ver <span className="tabular-nums">{filtered.length}</span>
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 
   const overlays = (
@@ -444,27 +685,36 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
   if (view === "kanban") {
     return (
       <>
-        <div className="flex h-full min-h-0 min-w-0 flex-col bg-[#0F0F12]">
+        <div className="flex h-full min-h-0 min-w-0 flex-col bg-background">
           {/* Toolbar fijo arriba */}
-          <div className="shrink-0 border-b border-[rgba(245,246,247,0.1)] px-4 py-3 md:px-6">
+          <div className="shrink-0 border-b border-border px-4 py-3 md:px-6">
             {Toolbar}
           </div>
           {/* Resumen del pipeline activo (suma sobre lo visible, respeta filtros). */}
-          <div className="shrink-0 border-b border-[rgba(245,246,247,0.1)] px-4 py-2.5 md:px-6">
+          <div className="shrink-0 border-b border-border px-4 py-2.5 md:px-6">
             {(() => {
               const totalRev = filtered.reduce((acc, c) => acc + (Number(c.total_revenue) || 0), 0)
               const totalCash = filtered.reduce((acc, c) => acc + (Number(c.total_cash_collected) || 0), 0)
               const alumnos = filtered.filter((c) => c.stage === "alumno").length
+              const pipelineLabel = activePipeline?.name ?? "Pipeline"
               return (
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                  <span className="text-[13px] font-semibold text-[#7C818A]">
-                    {activePipeline?.name ?? "Pipeline"}
-                  </span>
-                  <Kpi label="Contactos" value={String(filtered.length)} />
-                  <Kpi label="Alumnos" value={String(alumnos)} accent />
-                  <Kpi label="Facturado" value={eur(totalRev)} accent />
-                  <Kpi label="Cobrado" value={eur(totalCash)} />
-                </div>
+                <>
+                  {/* En telefono el nombre del pipeline va en su propia linea: en la misma
+                      fila que las cifras no cabia y las partia. */}
+                  <div className="mb-1.5 text-sm font-semibold text-muted-foreground md:hidden">
+                    {pipelineLabel}
+                  </div>
+                  {/* Telefono: dos columnas. Ordenador: la fila de siempre. */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:flex md:flex-wrap md:items-center md:gap-x-6 md:gap-y-2">
+                    <span className="hidden text-sm font-semibold text-muted-foreground md:inline">
+                      {pipelineLabel}
+                    </span>
+                    <Kpi label="Contactos" value={String(filtered.length)} />
+                    <Kpi label="Alumnos" value={String(alumnos)} accent />
+                    <Kpi label="Facturado" value={eur(totalRev)} accent />
+                    <Kpi label="Cobrado" value={eur(totalCash)} />
+                  </div>
+                </>
               )
             })()}
           </div>
@@ -524,7 +774,13 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           />
         ) : (
           <>
-          <ul className="divide-y divide-[rgba(245,246,247,0.1)] overflow-hidden rounded-[8px] border border-[rgba(245,246,247,0.1)] bg-[#131318]">
+          {/* La ficha de la lista solo lleva lo que sirve para reconocer a la persona y
+              decidir si entrar: quien es, su correo, en que punto del funnel esta y si ha
+              pagado. El telefono, los productos y las etiquetas con su nombre siguen en la
+              BD y se ven enteros al abrir el contacto; aqui solo asomaba ruido. Las
+              etiquetas quedan como puntos de color, que se reconocen de un vistazo y no
+              ocupan una linea entera. */}
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
             {enPantalla.map((c) => {
               const stage = STAGES_VISIBLES.find((s) => s.value === c.stage)
               const tone = stageTone(c.stage)
@@ -533,59 +789,60 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
                 <li key={c.id}>
                   <button
                     onClick={() => setSelectedId(c.id)}
-                    className="flex min-h-[56px] w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-[#16161B] md:px-4"
+                    className="flex min-h-14 w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-popover md:px-4"
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(245,246,247,0.1)] bg-[#16161B] text-[13px] font-semibold text-[#A6AAB2]">
+                    <span
+                      aria-hidden
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-popover text-sm font-semibold text-muted-foreground"
+                    >
                       {c.full_name?.charAt(0).toUpperCase() || "?"}
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[15px] font-semibold text-[#F5F6F7]">
-                        {c.full_name}
-                      </span>
-                      <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] text-[#7C818A]">
-                        <span className="inline-flex min-w-0 items-center gap-1">
-                          <Mail className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{c.email}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-foreground">
+                          {c.full_name}
                         </span>
-                        {c.phone && (
-                          <span className="inline-flex items-center gap-1">
-                            <Phone className="h-3.5 w-3.5 shrink-0" />
-                            {c.phone}
+                        {stage && (
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-[3px] border px-2 py-0.5 text-sm font-semibold",
+                              tone.chip
+                            )}
+                          >
+                            {stage.label}
                           </span>
                         )}
                       </span>
-                      {contactTags.length > 0 && (
-                        <span className="mt-1.5 block">
-                          <TagChips tags={contactTags} max={4} size="xs" />
+                      <span className="mt-0.5 flex items-center gap-2">
+                        <span className="min-w-0 truncate text-sm text-muted-foreground">
+                          {c.email}
                         </span>
-                      )}
+                        {contactTags.length > 0 && (
+                          <span
+                            aria-hidden
+                            title={contactTags.map((t) => t.name).join(", ")}
+                            className="flex shrink-0 items-center gap-1"
+                          >
+                            {contactTags.slice(0, 4).map((t) => (
+                              <span
+                                key={t.id}
+                                className="h-2 w-2 rounded-full"
+                                style={{ backgroundColor: t.color }}
+                              />
+                            ))}
+                          </span>
+                        )}
+                      </span>
                     </span>
 
                     {c.total_revenue > 0 && (
-                      <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#4ADE80]">
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
                         {eur(c.total_revenue)}
                       </span>
                     )}
 
-                    {c.products?.length > 0 && (
-                      <span className="hidden shrink-0 text-[13px] text-[#7C818A] lg:inline">
-                        {c.products.length} producto{c.products.length === 1 ? "" : "s"}
-                      </span>
-                    )}
-
-                    {stage && (
-                      <span
-                        className={cn(
-                          "hidden shrink-0 rounded-[3px] border px-2 py-1 text-[12px] font-semibold sm:inline-block",
-                          tone.chip
-                        )}
-                      >
-                        {stage.label}
-                      </span>
-                    )}
-
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[#7C818A]" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
                 </li>
               )
@@ -602,7 +859,7 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           />
 
           {contacts.length >= TOPE_DE_CARGA && (
-            <p className="text-[13px] text-[#E5B567]">
+            <p className="text-sm text-warn">
               Se están mostrando los {TOPE_DE_CARGA} contactos más recientes. Usa los filtros
               o el buscador para encontrar los anteriores.
             </p>
@@ -610,6 +867,8 @@ export function ContactosPage({ initialView = "list" }: { initialView?: "list" |
           </>
         )}
       </PageContainer>
+
+      {hojaDeFiltros}
 
       {selectedId && (
         <ContactDrawer
@@ -671,20 +930,20 @@ function Paginador({
   if (totalPaginas <= 1) return null
 
   const flecha =
-    "inline-flex min-h-[44px] items-center gap-1.5 rounded-[4px] border " +
-    "border-[rgba(245,246,247,0.1)] px-3 text-[14px] font-semibold text-[#A6AAB2] " +
-    "transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B] " +
-    "hover:text-[#F5F6F7] disabled:pointer-events-none disabled:opacity-35"
+    "inline-flex min-h-11 items-center gap-1.5 rounded-lg border " +
+    "border-border px-3 text-sm font-semibold text-muted-foreground " +
+    "transition-colors hover:border-foreground/20 hover:bg-popover " +
+    "hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
 
   return (
     <nav
       aria-label="Páginas de contactos"
       className="flex flex-wrap items-center justify-between gap-3 pt-1"
     >
-      <p className="text-[14px] text-[#A6AAB2]">
-        Viendo <span className="font-semibold text-[#F5F6F7]">{desde}</span> a{" "}
-        <span className="font-semibold text-[#F5F6F7]">{hasta}</span> de{" "}
-        <span className="font-semibold text-[#F5F6F7]">{total}</span>
+      <p className="text-sm text-muted-foreground">
+        Viendo <span className="font-semibold text-foreground">{desde}</span> a{" "}
+        <span className="font-semibold text-foreground">{hasta}</span> de{" "}
+        <span className="font-semibold text-foreground">{total}</span>
       </p>
 
       <div className="flex items-center gap-1.5">
@@ -694,14 +953,14 @@ function Paginador({
         </button>
 
         {/* En movil el numero de pagina se dice con palabras: los botones no caben. */}
-        <span className="px-2 text-[14px] text-[#A6AAB2] sm:hidden">
+        <span className="px-2 text-sm text-muted-foreground sm:hidden">
           {pagina} de {totalPaginas}
         </span>
 
         <div className="hidden items-center gap-1 sm:flex">
           {numerosDePagina(pagina, totalPaginas).map((n, i) =>
             n === null ? (
-              <span key={`hueco-${i}`} aria-hidden className="px-1 text-[14px] text-[#7C818A]">
+              <span key={`hueco-${i}`} aria-hidden className="px-1 text-sm text-muted-foreground">
                 ...
               </span>
             ) : (
@@ -711,10 +970,10 @@ function Paginador({
                 aria-label={`Ir a la página ${n}`}
                 aria-current={n === pagina ? "page" : undefined}
                 className={cn(
-                  "min-h-[44px] min-w-[44px] rounded-[4px] border text-[14px] font-semibold tabular-nums transition-colors",
+                  "min-h-11 min-w-11 rounded-lg border text-sm font-semibold tabular-nums transition-colors",
                   n === pagina
-                    ? "border-[#24462F] bg-[#101710] text-[#4ADE80]"
-                    : "border-transparent text-[#A6AAB2] hover:bg-[#16161B] hover:text-[#F5F6F7]"
+                    ? "border-primary/30 bg-primary/10 text-primary"
+                    : "border-transparent text-muted-foreground hover:bg-popover hover:text-foreground"
                 )}
               >
                 {n}
@@ -736,43 +995,56 @@ function Paginador({
   )
 }
 
-/** Desplegable de filtro. 44px de alto: zona tactil minima del brandkit. */
+/**
+ * Desplegable de filtro, con su nombre encima. 44px de alto (los trae FIELD): zona
+ * tactil minima del brandkit.
+ *
+ * Vive siempre dentro del panel o de la hoja de "Filtros", nunca suelto en la barra de
+ * arriba: ocho de estos a la vista eran justo el muro que Marco pidio quitar.
+ */
 function FilterSelect({
   value,
   onChange,
-  label,
+  etiqueta,
   children,
 }: {
   value: string
   onChange: (v: string) => void
-  label: string
+  etiqueta: string
   children: React.ReactNode
 }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      aria-label={label}
-      className={cn(FIELD, "max-w-full cursor-pointer pr-8")}
-    >
-      {children}
-    </select>
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-sm font-semibold text-muted-foreground">{etiqueta}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={`Filtrar por ${etiqueta.toLowerCase()}`}
+        className={cn(FIELD, "w-full cursor-pointer pr-8")}
+      >
+        {children}
+      </select>
+    </label>
   )
 }
 
-/** Cifra + su etiqueta al lado. El verde marca lo que es una venta. */
+/**
+ * Cifra + su etiqueta. El verde marca lo que es una venta.
+ * En telefono la cifra va encima de la etiqueta, para que en dos columnas no se pisen;
+ * en monitor vuelven a la misma linea.
+ */
 function Kpi({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="flex shrink-0 items-baseline gap-2">
+    <div className="flex min-w-0 shrink-0 flex-col md:flex-row md:items-baseline md:gap-2">
       <span
         className={cn(
-          "text-[16px] font-bold tabular-nums",
-          accent ? "text-[#4ADE80]" : "text-[#F5F6F7]"
+          "truncate text-base font-bold tabular-nums",
+          accent ? "text-primary" : "text-foreground"
         )}
       >
         {value}
       </span>
-      <span className="text-[13px] text-[#7C818A]">{label}</span>
+      <span className="truncate text-sm text-muted-foreground">{label}</span>
     </div>
   )
 }
@@ -791,8 +1063,8 @@ function EmptyState({
   onCreate: () => void
 }) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-[8px] border border-dashed border-[rgba(245,246,247,0.1)] px-6 py-16 text-center">
-      <p className="text-[15px] text-[#A6AAB2]">
+    <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border px-6 py-16 text-center">
+      <p className="text-[15px] text-muted-foreground">
         {filtrando
           ? "Ningún contacto coincide con esos filtros."
           : "Todavía no hay contactos."}
@@ -800,7 +1072,7 @@ function EmptyState({
       {filtrando ? (
         <button
           onClick={onClear}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-[4px] border border-[rgba(245,246,247,0.1)] px-4 text-[14px] font-semibold text-[#F5F6F7] transition-colors hover:border-[rgba(245,246,247,0.2)] hover:bg-[#16161B]"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition-colors hover:border-foreground/20 hover:bg-popover"
         >
           <X className="h-4 w-4" /> Quitar filtros
         </button>

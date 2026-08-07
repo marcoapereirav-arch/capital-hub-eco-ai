@@ -1,17 +1,39 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, X, Check, Globe } from "lucide-react"
+import { Loader2, Check, Globe, X } from "lucide-react"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import type { WebWithSteps, WebHostname, WebStatus } from "../types/web"
 import { getFunnelManifest } from "../lib/funnel-settings-manifest"
 
 /**
- * Modal ÚNICO de edición de un funnel. Concentra TODA la edición que antes vivía
+ * Hoja ÚNICA de edición de un funnel. Concentra TODA la edición que antes vivía
  * inline en la tarjeta (con lápices por todas partes): nombre, subdominio (ch/os),
  * estado (published/draft), path base y, por cada step, su nombre + su path absoluto.
  * Además incluye la sección de "Links del funnel" (campos del manifiesto del funnel,
  * GET/PUT a /api/admin/settings/funnel:<slug>).
+ *
+ * Antes era una ventana centrada hecha a mano con `fixed inset-0`: en un telefono
+ * el teclado la tapaba al escribir y no se llegaba al boton de guardar. Ahora es la
+ * hoja inferior del kit, con el lado FIJO (`side="bottom"`) y el escritorio resuelto
+ * con clases `md:`, nunca con JavaScript.
+ *
+ * La hoja es UNA columna con tres filas: cabecera fija (titulo + salida), cuerpo que
+ * se desplaza (el UNICO sitio con desplazamiento) y pie fijo con los botones. El
+ * formulario es largo, y con el desplazamiento en la caja entera la cabecera se iba
+ * hacia arriba: el cerrar desaparecia de la pantalla y no habia forma de salir. El
+ * alto tope se mide en `dvh` descontando la franja del reloj, y el pie deja libre la
+ * franja de gestos del iPhone.
  *
  * Reutiliza EXACTAMENTE los mismos endpoints que la tarjeta usaba:
  *   - PATCH /api/admin/webs/{id}            → { name, slug, status, hostname }
@@ -22,6 +44,10 @@ import { getFunnelManifest } from "../lib/funnel-settings-manifest"
  */
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-/_]*$/
+
+/** Un desplegable nativo con la ropa del tema y 44 puntos de alto en telefono. */
+const SELECT_CLASS =
+  "h-11 w-full rounded-lg border border-border bg-secondary px-3 text-base text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 md:h-9 md:text-sm"
 
 /** Datos que devolvemos a la tarjeta para que refleje los cambios al guardar. */
 export type WebEditResult = {
@@ -188,244 +214,301 @@ export function WebEditModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 sm:items-center sm:p-5"
-      onClick={() => !saving && onClose()}
-      role="dialog"
-      aria-modal="true"
+    <Sheet
+      open
+      onOpenChange={(abierto) => {
+        if (!abierto && !saving) onClose()
+      }}
     >
-      <div
-        className="relative max-h-[92dvh] w-full overflow-y-auto rounded-sm border border-border bg-card p-5 sm:max-w-lg sm:p-6"
-        onClick={(e) => e.stopPropagation()}
+      <SheetContent
+        side="bottom"
+        // El cerrar del kit es `absolute` DENTRO de la caja que se desplaza: en un
+        // formulario largo como este se va hacia arriba con el contenido y el usuario
+        // se queda encerrado. Ponemos el nuestro en la cabecera, que no se mueve.
+        showCloseButton={false}
+        className={cn(
+          // UNA sola caja en columna: cabecera fija, cuerpo que se desplaza, pie fijo.
+          // El desplazamiento propio del kit se apaga aqui; si no, hay dos sitios
+          // desplazandose a la vez y se pelean con el dedo.
+          "gap-0 overflow-hidden data-[side=bottom]:overflow-y-hidden",
+          // TELEFONO: hoja inferior que nunca se mete debajo del reloj. Con `vh` la
+          // cabecera se colaba debajo del notch y el cerrar no se podia tocar.
+          "rounded-t-xl data-[side=bottom]:max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)]",
+          // La zona segura de abajo la pone el pie, no la caja entera.
+          "data-[side=bottom]:pb-0",
+          // ESCRITORIO: cajon por la derecha, con las mismas clases y cero JavaScript.
+          // Se repite la condicion del lado porque las clases del kit (`data-[side=bottom]:...`)
+          // pesan mas que un `md:` suelto; sin repetirla el cajon sale por la izquierda.
+          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-lg md:rounded-t-none md:border-l md:pb-0",
+        )}
       >
-        <button
-          onClick={() => !saving && onClose()}
-          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
-          aria-label="Cerrar"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <h3 className="font-heading text-base font-semibold text-foreground">Editar funnel</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Aquí editas todo: nombre, dónde se publica, el path base y cada paso del funnel.
-        </p>
-
-        {/* ── Datos del funnel ── */}
-        <div className="mt-5 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-foreground">Nombre del funnel</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={saving}
-              className="mt-1 h-9 w-full rounded-sm border border-border bg-secondary px-3 text-sm font-medium text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
-              placeholder="Nombre del funnel"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-foreground">Subdominio</label>
-              <select
-                value={hostname}
-                onChange={(e) => setHostname(e.target.value as WebHostname)}
-                disabled={saving}
-                className="mt-1 h-9 w-full rounded-sm border border-border bg-secondary px-2 font-mono text-[12px] text-foreground focus:border-foreground focus:outline-none disabled:opacity-50"
-                title="Subdominio público donde se sirve esta web."
+        {/* ── Cabecera: no se desplaza, y siempre lleva la salida a la vista ── */}
+        <div className="shrink-0 border-b border-border">
+          {/* La agarradera es lo que hace que se lea como hoja y no como un error. */}
+          <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+          <div className="flex items-start justify-between gap-3 px-4 py-3">
+            <SheetHeader className="min-w-0 flex-1 gap-0.5 p-0">
+              <SheetTitle className="text-[17px] font-semibold">Editar funnel</SheetTitle>
+              <SheetDescription className="text-[15px]">
+                Aquí editas todo: nombre, dónde se publica, el path base y cada paso del funnel.
+              </SheetDescription>
+            </SheetHeader>
+            <SheetClose asChild>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                className="tap-target -mr-2 inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-secondary active:text-foreground md:hover:text-foreground"
               >
-                <option value="ch">ch. (público)</option>
-                <option value="os">os. (interno)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-foreground">Estado</label>
-              <div className="mt-1 flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setStatus("published")}
-                  disabled={saving}
-                  className={cn(
-                    "flex-1 rounded-sm border px-2 py-2 font-mono text-[11px] uppercase tracking-wide transition-colors disabled:opacity-50",
-                    status === "published"
-                      ? "border-green-500/40 bg-green-500/10 text-green-400"
-                      : "border-border bg-secondary text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Published
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStatus("draft")}
-                  disabled={saving}
-                  className={cn(
-                    "flex-1 rounded-sm border px-2 py-2 font-mono text-[11px] uppercase tracking-wide transition-colors disabled:opacity-50",
-                    status === "draft"
-                      ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-400"
-                      : "border-border bg-secondary text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Draft
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-foreground">Path base</label>
-            <p className="mb-1.5 mt-0.5 text-[11px] text-muted-foreground">
-              El path raíz de esta landing. Solo letras, números, guion y barra.
-            </p>
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono text-sm text-muted-foreground/70">/</span>
-              <input
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                disabled={saving}
-                className="h-9 w-full rounded-sm border border-border bg-secondary px-3 font-mono text-[12px] text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
-                placeholder="test-personalidad"
-              />
-            </div>
+                <X className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </SheetClose>
           </div>
         </div>
 
-        {/* ── Steps ── */}
-        <div className="mt-6 border-t border-border pt-5">
-          <h4 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-            <Globe className="h-3.5 w-3.5" />
-            Pasos del funnel ({stepDrafts.length})
-          </h4>
-          <p className="mt-1 text-[11px] text-muted-foreground/70">
-            El path de cada paso es absoluto desde la raíz del dominio (no se concatena con el path base).
-          </p>
-          <div className="mt-3 space-y-3">
-            {stepDrafts.map((s, i) => (
-              <div key={s.id} className="rounded-sm border border-border bg-secondary/40 p-3">
-                <p className="mb-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground/60">
-                  Paso {i + 1}
-                </p>
-                <label className="block text-[11px] font-medium text-foreground">Nombre</label>
-                <input
-                  value={s.name}
-                  onChange={(e) => updateStep(s.id, "name", e.target.value)}
+        {/* ── Cuerpo: el UNICO sitio que se desplaza ── */}
+        <div className="no-overscroll min-h-0 flex-1 space-y-6 overflow-y-auto p-4">
+          {/* ── Datos del funnel ── */}
+          <div className="space-y-4">
+            <label className="block">
+              <span className="mb-1.5 block text-[15px] font-medium text-foreground">Nombre del funnel</span>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={saving}
+                enterKeyHint="next"
+                className="bg-secondary"
+                placeholder="Nombre del funnel"
+              />
+            </label>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-[15px] font-medium text-foreground">Subdominio</span>
+                <select
+                  value={hostname}
+                  onChange={(e) => setHostname(e.target.value as WebHostname)}
                   disabled={saving}
-                  className="mt-1 h-8 w-full rounded-sm border border-border bg-background px-2.5 text-xs font-medium text-foreground focus:border-foreground focus:outline-none"
-                  placeholder="Nombre del paso"
-                />
-                <label className="mt-2.5 block text-[11px] font-medium text-foreground">Path</label>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="font-mono text-[11px] text-muted-foreground/70">/</span>
-                  <input
-                    value={s.slug}
-                    onChange={(e) => updateStep(s.id, "slug", e.target.value)}
+                  className={SELECT_CLASS}
+                  title="Subdominio público donde se sirve esta web."
+                >
+                  <option value="ch">ch. (público)</option>
+                  <option value="os">os. (interno)</option>
+                </select>
+              </label>
+              <div>
+                <span className="mb-1.5 block text-[15px] font-medium text-foreground">Estado</span>
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setStatus("published")}
                     disabled={saving}
-                    className="h-8 w-full rounded-sm border border-border bg-background px-2.5 font-mono text-[11px] text-foreground focus:border-foreground focus:outline-none"
-                    placeholder="ruta-absoluta"
-                  />
+                    className={cn(
+                      "h-11 flex-1 rounded-lg border px-2 text-sm font-semibold transition-colors disabled:opacity-50 md:h-9",
+                      status === "published"
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border bg-secondary text-muted-foreground",
+                    )}
+                  >
+                    Published
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatus("draft")}
+                    disabled={saving}
+                    className={cn(
+                      "h-11 flex-1 rounded-lg border px-2 text-sm font-semibold transition-colors disabled:opacity-50 md:h-9",
+                      status === "draft"
+                        ? "border-warn/40 bg-warn/10 text-warn"
+                        : "border-border bg-secondary text-muted-foreground",
+                    )}
+                  >
+                    Draft
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* ── Links del funnel (ajustes) ── */}
-        {manifest && (
-          <div className="mt-6 border-t border-border pt-5">
-            <h4 className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-              Links del funnel
-            </h4>
-            <p className="mt-1 text-[11px] text-muted-foreground/70">
-              A dónde apuntan los botones de esta landing. Se aplica al instante, sin deploy. Vacío = valor por defecto.
-            </p>
-            {settingsLoading ? (
-              <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando ajustes…
+            <div>
+              <span className="block text-[15px] font-medium text-foreground">Path base</span>
+              <p className="mb-1.5 mt-0.5 text-[15px] text-muted-foreground">
+                El path raíz de esta landing. Solo letras, números, guion y barra.
+              </p>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[15px] text-muted-foreground">/</span>
+                <Input
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  disabled={saving}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="bg-secondary"
+                  placeholder="test-personalidad"
+                />
               </div>
-            ) : (
-              <div className="mt-3 space-y-4">
-                {manifest.fields.map((f) => {
-                  // Interruptor (toggle): guarda "1"/"0". Sin valor previo = ON por defecto.
-                  if (f.type === "toggle") {
-                    const on = (settings[f.key] ?? "") !== "0"
-                    return (
-                      <div key={f.key} className="flex items-start justify-between gap-3 rounded-sm border border-border bg-secondary/40 px-3 py-2.5">
-                        <div className="min-w-0">
-                          <label className="block text-xs font-medium text-foreground">{f.label}</label>
-                          {f.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
+            </div>
+          </div>
+
+          {/* ── Steps ── */}
+          <div className="border-t border-border pt-5">
+            <h4 className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+              <Globe className="h-4 w-4" />
+              Pasos del funnel ({stepDrafts.length})
+            </h4>
+            <p className="mt-1 text-sm text-muted-foreground">
+              El path de cada paso es absoluto desde la raíz del dominio (no se concatena con el path base).
+            </p>
+            <div className="mt-3 space-y-3">
+              {stepDrafts.map((s, i) => (
+                <div key={s.id} className="rounded-lg border border-border bg-secondary/40 p-3">
+                  <p className="mb-2 text-[15px] font-semibold text-muted-foreground">Paso {i + 1}</p>
+                  <label className="block">
+                    <span className="mb-1.5 block text-[15px] font-medium text-foreground">Nombre</span>
+                    <Input
+                      value={s.name}
+                      onChange={(e) => updateStep(s.id, "name", e.target.value)}
+                      disabled={saving}
+                      enterKeyHint="next"
+                      placeholder="Nombre del paso"
+                    />
+                  </label>
+                  <label className="mt-2.5 block">
+                    <span className="mb-1.5 block text-[15px] font-medium text-foreground">Path</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-[15px] text-muted-foreground">/</span>
+                      <Input
+                        value={s.slug}
+                        onChange={(e) => updateStep(s.id, "slug", e.target.value)}
+                        disabled={saving}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        placeholder="ruta-absoluta"
+                      />
+                    </span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Links del funnel (ajustes) ── */}
+          {manifest && (
+            <div className="border-t border-border pt-5">
+              <h4 className="text-sm font-semibold text-muted-foreground">Links del funnel</h4>
+              <p className="mt-1 text-sm text-muted-foreground">
+                A dónde apuntan los botones de esta landing. Se aplica al instante, sin deploy. Vacío = valor por defecto.
+              </p>
+              {settingsLoading ? (
+                <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando ajustes…
+                </div>
+              ) : (
+                <div className="mt-3 space-y-4">
+                  {manifest.fields.map((f) => {
+                    // Interruptor (toggle): guarda "1"/"0". Sin valor previo = ON por defecto.
+                    if (f.type === "toggle") {
+                      const on = (settings[f.key] ?? "") !== "0"
+                      return (
+                        <div key={f.key} className="flex items-start justify-between gap-3 rounded-lg border border-border bg-secondary/40 px-3 py-2.5">
+                          <div className="min-w-0">
+                            <span className="block text-[15px] font-medium text-foreground">{f.label}</span>
+                            {f.hint && <p className="mt-0.5 text-sm text-muted-foreground">{f.hint}</p>}
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={on}
+                            aria-label={f.label}
+                            disabled={saving}
+                            onClick={() => setSettings((v) => ({ ...v, [f.key]: on ? "0" : "1" }))}
+                            className="flex h-11 w-12 shrink-0 items-center justify-center md:h-8"
+                          >
+                            {/* El carril es DECORACION: el estado lo lleva el boton,
+                                que es el que mide los 44 puntos que acierta un dedo. */}
+                            <span
+                              aria-hidden
+                              className={cn(
+                                "relative block h-7 w-12 rounded-full transition-colors",
+                                on ? "bg-primary" : "bg-border",
+                              )}
+                            >
+                              <span
+                                aria-hidden
+                                className={cn(
+                                  "absolute top-1 h-5 w-5 rounded-full transition-transform",
+                                  on
+                                    ? "translate-x-[26px] bg-primary-foreground"
+                                    : "translate-x-1 bg-muted-foreground",
+                                )}
+                              />
+                            </span>
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={on}
-                          disabled={saving}
-                          onClick={() => setSettings((v) => ({ ...v, [f.key]: on ? "0" : "1" }))}
-                          className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition-colors ${on ? "bg-[#22C55E]" : "bg-border"}`}
-                        >
-                          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${on ? "translate-x-[22px]" : "translate-x-0.5"}`} />
-                        </button>
-                      </div>
-                    )
-                  }
-                  // Fecha real (date): input nativo de fecha.
-                  if (f.type === "date") {
+                      )
+                    }
+                    // Fecha real (date): input nativo de fecha.
+                    if (f.type === "date") {
+                      return (
+                        <label key={f.key} className="block">
+                          <span className="block text-[15px] font-medium text-foreground">{f.label}</span>
+                          {f.hint && <span className="mb-1.5 mt-0.5 block text-[15px] text-muted-foreground">{f.hint}</span>}
+                          <Input
+                            type="date"
+                            value={settings[f.key] ?? ""}
+                            onChange={(e) => setSettings((v) => ({ ...v, [f.key]: e.target.value }))}
+                            disabled={saving}
+                            className="bg-secondary"
+                          />
+                        </label>
+                      )
+                    }
+                    // Texto (default).
                     return (
-                      <div key={f.key}>
-                        <label className="block text-xs font-medium text-foreground">{f.label}</label>
-                        {f.hint && <p className="mb-1.5 mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
-                        <input
-                          type="date"
+                      <label key={f.key} className="block">
+                        <span className="block text-[15px] font-medium text-foreground">{f.label}</span>
+                        {f.hint && <span className="mb-1.5 mt-0.5 block text-[15px] text-muted-foreground">{f.hint}</span>}
+                        <Input
                           value={settings[f.key] ?? ""}
                           onChange={(e) => setSettings((v) => ({ ...v, [f.key]: e.target.value }))}
+                          placeholder={f.default}
                           disabled={saving}
-                          className="h-9 w-full rounded-sm border border-border bg-secondary px-3 font-mono text-[12px] text-foreground focus:border-foreground focus:outline-none"
+                          className="bg-secondary"
                         />
-                      </div>
+                      </label>
                     )
-                  }
-                  // Texto (default).
-                  return (
-                    <div key={f.key}>
-                      <label className="block text-xs font-medium text-foreground">{f.label}</label>
-                      {f.hint && <p className="mb-1.5 mt-0.5 text-[11px] text-muted-foreground">{f.hint}</p>}
-                      <input
-                        value={settings[f.key] ?? ""}
-                        onChange={(e) => setSettings((v) => ({ ...v, [f.key]: e.target.value }))}
-                        placeholder={f.default}
-                        disabled={saving}
-                        className="h-9 w-full rounded-sm border border-border bg-secondary px-3 font-mono text-[12px] text-foreground placeholder:text-muted-foreground/60 focus:border-foreground focus:outline-none"
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
+        {/* El aviso de error va FUERA de lo que se desplaza: si vive dentro y el
+            usuario esta a mitad del formulario, guarda, falla y no ve nada. */}
         {error && (
-          <p className="mt-4 border-l-2 border-foreground pl-2 text-xs text-foreground">{error}</p>
+          <p className="shrink-0 border-t border-destructive/40 bg-destructive/10 px-4 py-2.5 text-[15px] text-destructive">
+            {error}
+          </p>
         )}
 
-        {/* ── Footer ── */}
-        <div className="mt-6 flex items-center justify-end gap-2 border-t border-border pt-4">
-          <button
-            onClick={() => !saving && onClose()}
-            disabled={saving}
-            className="rounded-sm border border-border bg-secondary px-3 py-2 text-xs hover:bg-secondary/70 disabled:opacity-50"
-          >
+        {/* ── Pie: fila fija de la columna, no `sticky` ni `fixed`. Con `fixed` el
+            teclado del telefono lo tapa, y con `sticky` pelea con el desplazamiento
+            del cuerpo. El relleno de abajo deja libre la franja de gestos. ── */}
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+          <Button variant="secondary" onClick={() => !saving && onClose()} disabled={saving}>
             Cerrar
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSave}
             disabled={saving || settingsLoading}
             title={settingsLoading ? "Cargando los ajustes actuales…" : undefined}
-            className="flex items-center gap-1.5 rounded-sm border border-foreground bg-foreground px-4 py-2 font-mono text-xs uppercase tracking-wide text-background disabled:opacity-50"
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : saved ? <Check className="h-3.5 w-3.5" /> : null}
+            {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : saved ? <Check className="mr-1.5 h-4 w-4" /> : null}
             {saved ? "Guardado" : "Guardar cambios"}
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

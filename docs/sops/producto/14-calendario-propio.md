@@ -3,6 +3,27 @@ title: Calendario propio · agenda pública + admin
 order: 14
 area: producto
 ---
+> # RETIRADO el 2026-08-07
+>
+> **La agenda de Capital Hub es Calendly.** El calendario propio que describe este
+> documento se retiro del codigo entero: la pagina publica de reserva, el motor de
+> reservas y los tres relojes de recordatorio.
+>
+> Marco: *"la agenda no la estamos utilizando, estamos utilizando Calendly y seguiremos
+> utilizando Calendly durante bastante tiempo. Eliminalo, no tiene sentido tenerlo"*.
+>
+> Comprobado antes de borrar: **0 reservas en toda su vida** frente a 5 de Calendly.
+>
+> **Lo que SI se quedo, y por que importa saberlo:**
+> - La pantalla `/calendario` del OS: es donde se VEN las llamadas de Calendly.
+> - Los correos `agenda-confirmed` y `agenda-reminder-*`. Se llaman "agenda" pero los
+>   manda el reloj de **Calendly** (`sendAgendaReminder`). Llegue a borrarlos y los
+>   restaure al comprobarlo: habrian dejado a los leads **sin recordatorio de su llamada,
+>   sin dar ningun error**. Si algun dia se limpian, hay que renombrarlos antes.
+> - Las tablas de la base. Borrar datos es otra decision.
+>
+> Lo de abajo queda como historico de como estaba montado, por si algun dia se retoma.
+
 
 # Calendario propio — agenda pública + admin
 

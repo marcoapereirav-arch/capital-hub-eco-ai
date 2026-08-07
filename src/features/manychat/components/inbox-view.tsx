@@ -22,42 +22,46 @@ function initials(name: string | null, ig: string | null): string {
 export function InboxView({ messages }: { messages: InboxMessage[] }) {
   if (messages.length === 0) {
     return (
-      <div className="border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-        No hay mensajes recibidos todavía. Configura el webhook en ManyChat para que los DMs lleguen aquí.
+      <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-10 text-center">
+        <h3 className="text-[17px] font-semibold text-foreground">Todavía no hay mensajes</h3>
+        <p className="max-w-[42ch] text-[15px] text-muted-foreground">
+          No hay mensajes recibidos todavía. Configura el webhook en ManyChat para que los DMs lleguen aquí.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="border border-border">
+    <div className="rounded-lg border border-border">
       <ul className="divide-y divide-border">
         {messages.map((m, idx) => (
           <li
             key={`${m.subscriberId ?? 'anon'}-${idx}`}
-            className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20"
+            className="flex items-start gap-3 px-4 py-3 md:items-center md:gap-4 md:hover:bg-muted/20"
           >
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-9 w-9 shrink-0">
               {m.profilePic && <AvatarImage src={m.profilePic} alt={m.subscriberName ?? ''} />}
-              <AvatarFallback className="font-mono text-[10px]">
+              <AvatarFallback className="text-sm">
                 {initials(m.subscriberName, m.igUsername)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">
+              {/* La fila se parte en el telefono en vez de empujar la fecha fuera */}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className="min-w-0 truncate text-[15px] font-medium text-foreground">
                   {m.subscriberName ?? m.igUsername ?? m.subscriberId ?? 'Anónimo'}
                 </span>
                 {m.igUsername && (
-                  <span className="font-mono text-[11px] text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     @{m.igUsername}
                   </span>
                 )}
               </div>
-              <p className="line-clamp-1 text-xs text-muted-foreground">
+              <p className="line-clamp-2 text-sm text-muted-foreground md:line-clamp-1">
                 {m.text ?? 'Sin texto'}
               </p>
             </div>
-            <span className="font-mono text-[10px] text-muted-foreground">
+            <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
               {formatDate(m.receivedAt)}
             </span>
           </li>

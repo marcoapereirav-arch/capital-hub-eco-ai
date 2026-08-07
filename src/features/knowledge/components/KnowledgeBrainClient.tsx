@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useCallback, useRef, useState, useTransition } from 'react'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   createSop,
@@ -21,12 +22,11 @@ import type { BrainQuadrant, View } from './brain/types'
 
 const KnowledgeBrain = dynamic(() => import('./brain/KnowledgeBrain').then((m) => m.KnowledgeBrain), {
   ssr: false,
+  // La carga usa SIEMPRE la pantalla de marca (anillo + monograma CH), nunca un
+  // circulito generico. Va dentro de la seccion, no a pantalla completa.
   loading: () => (
-    <div className="flex h-full min-h-[80vh] w-full items-center justify-center bg-neutral-950">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#4ADE80]/20 border-t-[#4ADE80]" />
-        <p className="text-[10px] uppercase tracking-widest text-[#4ADE80]/60">Cargando el cerebro…</p>
-      </div>
+    <div className="relative h-full min-h-[80dvh] w-full bg-background">
+      <LoadingScreen fullscreen={false} className="absolute inset-0" />
     </div>
   ),
 })
@@ -245,7 +245,7 @@ export default function KnowledgeBrainClient({
   )
 
   return (
-    <div className="relative h-full min-h-[80vh] w-full">
+    <div className="relative h-full min-h-[80dvh] w-full overflow-hidden">
       <KnowledgeBrain
         data={data}
         crossLinks={CROSS_LINKS}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { Check, KeyRound, Loader2, Trash2, TriangleAlert } from "lucide-react"
 
+import { cn } from "@/lib/utils"
+
 /**
  * Dónde se pega la llave que LEE las campañas de Meta.
  *
@@ -15,14 +17,10 @@ import { Check, KeyRound, Loader2, Trash2, TriangleAlert } from "lucide-react"
  * qué y no se guarda nada.
  *
  * La llave nunca vuelve al navegador: solo se enseña tapada.
+ *
+ * El color sale de los tokens del tema (src/app/globals.css), no escrito a mano: el verde
+ * de marca es `primary`, el ámbar de aviso es `warn` y el rojo de error es `destructive`.
  */
-
-const VERDE_CLARO = "#4ADE80"
-const AMBAR = "#E5B567"
-const ROJO = "#E5675B"
-const LINEA = "rgba(245,246,247,0.1)"
-const PANEL = "#131318"
-const TIPO = "'Inter Tight', sans-serif"
 
 type Info = {
   configurado: boolean
@@ -103,20 +101,20 @@ export function MarketingTokenCard() {
 
   return (
     <section
-      className="rounded-lg border p-5 md:p-6"
-      style={{
-        borderColor: listo ? "#24462F" : "rgba(229,181,103,0.35)",
-        background: listo ? "#101710" : PANEL,
-        fontFamily: TIPO,
-      }}
+      className={cn(
+        "rounded-lg border p-5 md:p-6",
+        listo ? "border-primary/30 bg-primary/5" : "border-warn/35 bg-card"
+      )}
     >
       <div className="flex items-start gap-3">
-        <KeyRound className="mt-0.5 h-5 w-5 shrink-0" style={{ color: listo ? VERDE_CLARO : AMBAR }} />
+        <KeyRound
+          className={cn("mt-0.5 h-5 w-5 shrink-0", listo ? "text-primary" : "text-warn")}
+        />
         <div className="min-w-0 flex-1">
-          <p className="text-[18px] leading-tight" style={{ fontWeight: 800, color: "#F5F6F7" }}>
+          <p className="text-[18px] leading-tight font-extrabold text-foreground">
             Llave para ver el gasto de las campañas
           </p>
-          <p className="mt-2 max-w-2xl text-[15px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+          <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
             Es distinta de la de conversiones. Esa manda los eventos a Meta, esta lee lo que
             gastan tus campañas. Sin ella la pestaña de Campañas sale vacía, pero la medición
             de los funnels funciona igual.
@@ -125,20 +123,20 @@ export function MarketingTokenCard() {
       </div>
 
       {listo && (
-        <div className="mt-5 rounded border px-4 py-3" style={{ borderColor: LINEA }}>
+        <div className="mt-5 rounded border border-border px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Check className="h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
-            <span className="text-[15px]" style={{ fontWeight: 600, color: "#F5F6F7" }}>
+            <Check className="h-4 w-4 shrink-0 text-primary" />
+            <span className="text-[15px] font-semibold text-foreground">
               Configurada
             </span>
-            <span className="text-[14px]" style={{ color: "#7C818A" }}>
+            <span className="text-[14px] text-muted-foreground">
               {info?.tapado}
             </span>
-            <span className="text-[14px]" style={{ color: "#A6AAB2" }}>
+            <span className="text-[14px] text-muted-foreground">
               {caduca(info?.expiresAt ?? null)}
             </span>
             {info?.origen === "entorno" && (
-              <span className="text-[13px]" style={{ color: "#7C818A" }}>
+              <span className="text-sm text-muted-foreground">
                 puesta en el proyecto, no desde aquí
               </span>
             )}
@@ -147,8 +145,7 @@ export function MarketingTokenCard() {
                 type="button"
                 onClick={borrar}
                 disabled={guardando}
-                className="ml-auto flex min-h-11 items-center gap-1.5 text-[14px] disabled:opacity-50"
-                style={{ color: "#7C818A" }}
+                className="ml-auto flex min-h-11 items-center gap-1.5 text-[14px] text-muted-foreground disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" />
                 Quitar
@@ -161,12 +158,11 @@ export function MarketingTokenCard() {
       <div className="mt-5">
         <label
           htmlFor="mkt-token"
-          className="block text-[14px]"
-          style={{ fontWeight: 600, color: "#F5F6F7" }}
+          className="block text-[14px] font-semibold text-foreground"
         >
           {listo ? "Cambiarla por otra" : "Pega aquí la llave"}
         </label>
-        <p className="mt-1 text-[14px]" style={{ color: "#7C818A" }}>
+        <p className="mt-1 text-[14px] text-muted-foreground">
           La sacas en Meta: Configuración del negocio, Usuarios del sistema, Capital Hub OS,
           botón Generar token, marcando el permiso ads_read.
         </p>
@@ -180,15 +176,13 @@ export function MarketingTokenCard() {
             placeholder="EAAG..."
             autoComplete="off"
             spellCheck={false}
-            className="min-h-11 flex-1 rounded border px-3.5 text-[15px] outline-none"
-            style={{ borderColor: LINEA, background: "#0F0F12", color: "#F5F6F7" }}
+            className="min-h-11 flex-1 rounded border border-border bg-background px-3.5 text-[15px] text-foreground outline-none"
           />
           <button
             type="button"
             onClick={guardar}
             disabled={guardando || valor.trim().length < 20}
-            className="flex min-h-11 items-center justify-center gap-2 rounded px-5 text-[15px] transition-opacity disabled:opacity-40"
-            style={{ fontWeight: 700, background: "#22C55E", color: "#08130C" }}
+            className="flex min-h-11 items-center justify-center gap-2 rounded bg-primary px-5 text-[15px] font-bold text-primary-foreground transition-opacity disabled:opacity-40"
           >
             {guardando && <Loader2 className="h-4 w-4 animate-spin" />}
             Guardar y probar
@@ -197,21 +191,18 @@ export function MarketingTokenCard() {
       </div>
 
       {error && (
-        <div
-          className="mt-4 flex items-start gap-3 rounded border p-4"
-          style={{ borderColor: "rgba(229,103,91,0.4)", background: "rgba(229,103,91,0.07)" }}
-        >
-          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" style={{ color: ROJO }} />
+        <div className="mt-4 flex items-start gap-3 rounded border border-destructive/40 bg-destructive/7 p-4">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div>
-            <p className="text-[15px]" style={{ fontWeight: 700, color: "#F5F6F7" }}>
+            <p className="text-[15px] font-bold text-foreground">
               {error}
             </p>
             {detalle && (
-              <p className="mt-1 text-[14px] leading-relaxed" style={{ color: "#A6AAB2" }}>
+              <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">
                 Meta responde: {detalle}
               </p>
             )}
-            <p className="mt-2 text-[14px] leading-relaxed" style={{ color: "#7C818A" }}>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
               No se ha guardado nada. Comprueba que al generarla marcaste el permiso
               ads_read y que el usuario del sistema tiene tu cuenta publicitaria asignada.
             </p>
@@ -220,12 +211,9 @@ export function MarketingTokenCard() {
       )}
 
       {exito && (
-        <div
-          className="mt-4 flex items-start gap-3 rounded border p-4"
-          style={{ borderColor: "#24462F", background: "#101710" }}
-        >
-          <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: VERDE_CLARO }} />
-          <p className="text-[15px] leading-relaxed" style={{ color: "#F5F6F7" }}>
+        <div className="mt-4 flex items-start gap-3 rounded border border-primary/30 bg-primary/5 p-4">
+          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <p className="text-[15px] leading-relaxed text-foreground">
             {exito} Ya puedes abrir la pestaña de Campañas.
           </p>
         </div>

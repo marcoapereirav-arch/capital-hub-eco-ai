@@ -143,7 +143,7 @@ export function FiltersSheet({
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="h-11 flex-1 rounded-lg bg-brand text-[15px] font-semibold text-background active:opacity-90"
+            className="h-11 flex-1 rounded-lg bg-brand text-[15px] font-semibold text-brand-ink active:opacity-90"
           >
             Ver resultados
           </button>

@@ -45,22 +45,25 @@ export function PushNotificationPrompt({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-sm border border-border bg-card p-4 shadow-lg space-y-3">
-      <p className="text-sm font-medium text-foreground">Activar notificaciones?</p>
-      <p className="text-xs text-muted-foreground">
+    // Se ancla POR ENCIMA de la barra de abajo del telefono (56 puntos mas la
+    // franja de gestos) y por encima del boton de registrar venta, para no
+    // dejar al usuario sin menu mientras el aviso esta abierto.
+    <div className="fixed right-4 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+5rem)] z-50 w-[min(24rem,calc(100vw-2rem))] space-y-3 rounded-xl border border-border bg-card p-4 shadow-lg md:right-6 md:bottom-6">
+      <p className="text-[15px] font-medium text-foreground">Activar notificaciones?</p>
+      <p className="text-sm text-muted-foreground">
         Recibe avisos de leads, agendas y ventas aunque no tengas la app abierta.
         También puedes activarlas después desde Mi perfil.
       </p>
       <div className="flex gap-2">
         <button
           onClick={handleEnable}
-          className="px-3 py-1.5 text-xs font-medium rounded-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+          className="h-11 flex-1 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground transition-opacity active:opacity-90 md:h-9 md:flex-none md:px-4 md:text-sm"
         >
           Activar
         </button>
         <button
           onClick={handleDismiss}
-          className="px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="h-11 rounded-lg px-3 text-[15px] text-muted-foreground transition-colors active:bg-muted md:h-9 md:text-sm"
         >
           Ahora no
         </button>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 import { useAccounts } from '../hooks/use-accounts'
 import { formatHandle } from '../lib/normalize-handle'
 
@@ -57,18 +58,18 @@ export function CrossQueryPanel() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h3 className="font-heading text-sm font-semibold uppercase tracking-[0.15em] text-foreground">
+        <h3 className="font-heading text-[17px] font-semibold text-foreground">
           Consulta cruzada
         </h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Pregunta en lenguaje natural. El sistema recupera los videos más relevantes por similitud
           semántica y Claude responde citando ejemplos.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
-        <div>
-          <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-semibold text-muted-foreground">
             Consulta
           </label>
           <Textarea
@@ -79,12 +80,13 @@ export function CrossQueryPanel() {
           />
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+        {/* Una columna en telefono: los campos no se estrechan, se apilan */}
+        <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-muted-foreground">
               Cuentas (vacío = todas)
             </label>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {accounts.map((a) => {
                 const active = selectedAccounts.includes(a.id)
                 return (
@@ -92,11 +94,13 @@ export function CrossQueryPanel() {
                     key={a.id}
                     type="button"
                     onClick={() => toggleAccount(a.id)}
-                    className={`rounded border px-2 py-1 font-mono text-[10px] transition-colors ${
+                    aria-pressed={active}
+                    className={cn(
+                      'h-11 rounded-lg border px-3 text-[15px] transition-colors md:h-8 md:text-sm',
                       active
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-border text-muted-foreground hover:text-foreground'
-                    }`}
+                        ? 'border-primary bg-primary/10 font-semibold text-foreground'
+                        : 'border-border text-muted-foreground md:hover:text-foreground',
+                    )}
                   >
                     {formatHandle(a.handle, a.platform)}
                   </button>
@@ -105,14 +109,15 @@ export function CrossQueryPanel() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-muted-foreground">
               Min. views
             </label>
             <Input
               type="number"
+              inputMode="numeric"
               min={0}
-              className="h-8 w-28"
+              className="w-full md:w-28"
               placeholder="0"
               value={minViews ?? ''}
               onChange={(e) => {
@@ -122,26 +127,27 @@ export function CrossQueryPanel() {
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-semibold text-muted-foreground">
               Max videos en contexto
             </label>
             <Input
               type="number"
+              inputMode="numeric"
               min={5}
               max={60}
-              className="h-8 w-20"
+              className="w-full md:w-20"
               value={maxVideos}
               onChange={(e) => setMaxVideos(Math.max(5, Number(e.target.value) || 30))}
             />
           </div>
 
-          <div className="ml-auto flex items-end">
-            <Button onClick={runQuery} disabled={loading || !prompt.trim()}>
+          <div className="flex items-end md:ml-auto">
+            <Button onClick={runQuery} disabled={loading || !prompt.trim()} className="w-full md:w-auto">
               {loading ? (
-                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
               ) : (
-                <Send className="mr-1 h-3.5 w-3.5" />
+                <Send className="mr-1 h-4 w-4" />
               )}
               Consultar
             </Button>
@@ -150,30 +156,30 @@ export function CrossQueryPanel() {
       </div>
 
       {error && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {loading && (
-        <div className="rounded-md border border-border bg-card p-4">
+        <div className="rounded-lg border border-border bg-card p-4">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="mt-2 h-4 w-1/2" />
           <Skeleton className="mt-2 h-4 w-2/3" />
-          <p className="mt-3 font-mono text-[10px] text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             Recuperando videos relevantes y construyendo la respuesta…
           </p>
         </div>
       )}
 
       {response && !loading && (
-        <div className="flex flex-col gap-2 rounded-md border border-border bg-card p-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
+          <p className="text-sm font-semibold text-muted-foreground">
             Respuesta
           </p>
-          <div className="whitespace-pre-wrap text-sm text-foreground">{response}</div>
+          <div className="text-[15px] whitespace-pre-wrap text-foreground">{response}</div>
           {videosUsed.length > 0 && (
-            <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+            <p className="mt-2 text-sm tabular-nums text-muted-foreground">
               Basado en {videosUsed.length} videos.
             </p>
           )}

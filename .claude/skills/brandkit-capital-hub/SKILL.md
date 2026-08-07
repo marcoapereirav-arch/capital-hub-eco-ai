@@ -231,8 +231,50 @@ hechos.
 
 ---
 
+## 9 bis. UN SOLO filtro de fechas. Nunca se fabrica otro
+
+**Toda pantalla que enseñe datos de un periodo usa `<PeriodFilter>`**, el de
+`src/components/ui/period-filter.tsx`. Es el desplegable que se ve arriba en el
+dashboard principal, en Email Marketing, en Calendario y en ManyChat.
+
+**PROHIBIDO escribir botones de periodo a mano.** Nada de fabricar "Hoy / Ayer /
+7 días / 30 días" en tu pantalla, ni siquiera "porque solo necesito tres".
+
+```tsx
+import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
+
+const [rango, setRango] = useState<PeriodRange | null>(null)
+
+<PeriodFilter value={rango ?? undefined} onChange={setRango} defaultPreset="30d" />
+```
+
+Y **todo lo de la pantalla obedece a ese rango**: los números, los gráficos y las
+tablas. Nada trae su propio periodo por su cuenta.
+
+- Si falta un periodo, **se añade al filtro**, no se hace uno nuevo al lado.
+- Si la fuente es una API externa (Meta, Google), se le manda el **rango exacto en
+  fechas**, nunca sus atajos: sus periodos no coinciden con los nuestros.
+
+**Hay candado:** `npm run check:filtros`, enganchado a `predev` y `prebuild`. Una
+pantalla con periodos propios ni arranca en local ni se despliega.
+
+**Why:** la pestaña Campañas de Ads tenía siete botones suyos y el mismo "este mes"
+daba un número distinto que en el dashboard principal. Marco, 2026-08-07: *"hay un
+filtro madre que siempre tiene que estar en todos los lugares en los que haya que
+poner fecha... siempre, siempre, siempre se debe utilizar el mismo patrón"*.
+
+**Y la causa de fondo:** había un segundo filtro **muerto** en el repo que no usaba
+nadie, y al buscar aparecía antes que el bueno. Por eso salió un tercero. Regla
+derivada: **un componente que no usa nadie no es inofensivo, es una trampa. Se
+borra.**
+
+Detalle completo en `docs/sops/producto/58-filtro-fechas-unico.md`.
+
+---
+
 ## 10. Checklist antes de dar una pantalla por hecha
 
+- [ ] Si hay fechas, usa `<PeriodFilter>` y NO botones propios.
 - [ ] Ni un color fuera de la sección 2.
 - [ ] Radios 4px/8px. Cero esquinas rectas y cero `rounded-2xl/3xl`.
 - [ ] Bordes hairline translúcidos.

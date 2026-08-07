@@ -58,7 +58,7 @@ export function TaskDetailSheet({
     <Sheet open onOpenChange={(v) => !v && onClose()}>
       <SheetContent
         side="bottom"
-        className="max-h-[85dvh] w-full overflow-y-auto rounded-t-xl pb-[calc(1rem+env(safe-area-inset-bottom))] md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-[460px] md:max-w-[460px] md:rounded-none md:border-l md:pb-0"
+        className="max-h-[85dvh] w-full overflow-y-auto rounded-t-xl pb-[calc(1rem+env(safe-area-inset-bottom))] md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-[460px] md:max-w-[460px] md:rounded-l-xl md:rounded-t-none md:border-l md:pb-0"
       >
         <div aria-hidden className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
         <SheetHeader className="px-4 pb-0">
@@ -91,7 +91,9 @@ export function TaskDetailSheet({
 
           <fieldset className="flex flex-col gap-1.5">
             <legend className="mb-1.5 text-sm font-medium text-muted-foreground">Prioridad</legend>
-            <div className="grid grid-cols-3 gap-2">
+            {/* Tres botones a lo ancho, repartidos con flex. En el telefono la pista de
+                debajo se lee a 14px y el boton crece si el texto salta de linea. */}
+            <div className="flex gap-2">
               {PRIORITIES.map((p) => (
                 <button
                   key={p}
@@ -100,12 +102,14 @@ export function TaskDetailSheet({
                   aria-pressed={task.priority === p}
                   className={
                     task.priority === p
-                      ? "flex h-11 flex-col items-center justify-center rounded-lg bg-brand text-background md:h-10"
-                      : "flex h-11 flex-col items-center justify-center rounded-lg border border-border bg-card text-foreground active:bg-muted md:h-10"
+                      ? "flex min-h-11 flex-1 flex-col items-center justify-center rounded-lg bg-brand px-1 py-2 text-brand-ink md:min-h-10"
+                      : "flex min-h-11 flex-1 flex-col items-center justify-center rounded-lg border border-border bg-card px-1 py-2 text-foreground active:bg-muted md:min-h-10"
                   }
                 >
                   <span className="text-[15px] font-semibold">{p}</span>
-                  <span className="text-[11px] opacity-80">{PRIORITY_HINTS[p]}</span>
+                  <span className="text-center text-sm opacity-80 md:text-[11px]">
+                    {PRIORITY_HINTS[p]}
+                  </span>
                 </button>
               ))}
             </div>
@@ -135,7 +139,7 @@ export function TaskDetailSheet({
             className={
               estaHecha
                 ? "flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border text-[15px] font-semibold text-foreground active:bg-muted"
-                : "flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[15px] font-semibold text-background active:opacity-90"
+                : "flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-[15px] font-semibold text-brand-ink active:opacity-90"
             }
           >
             {estaHecha ? <RotateCcw className="size-4" /> : <Check className="size-4" />}

@@ -1,6 +1,7 @@
 "use client"
 
 import { Folder, Video, FolderOpen } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { MenuAcciones } from "./menu-acciones"
 import type { Carpeta } from "../types"
 
@@ -63,27 +64,31 @@ export function TarjetaCarpeta({
           onSeleccionar()
         }
       }}
-      className={`group relative flex cursor-pointer select-none items-center gap-3 rounded-lg border p-4 transition ${
+      className={cn(
+        "group relative flex min-h-14 cursor-pointer select-none items-center gap-3 rounded-lg border p-4 transition-colors",
         seleccionada
-          ? "border-[#22C55E] bg-[#22C55E]/[0.08]"
-          : "border-[#2A2D34] bg-[#15161A] hover:border-[#22C55E]/40 hover:bg-[#181A1F]"
-      }`}
+          ? "border-primary bg-primary/10"
+          : "border-border bg-card md:hover:border-primary/40",
+      )}
     >
-      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#22C55E]/[0.10]">
-        <Folder className={`h-5 w-5 text-[#4ADE80] transition ${seleccionada ? "opacity-0" : "group-hover:opacity-0"}`} />
+      <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <Folder className={cn("h-5 w-5 text-primary transition", seleccionada ? "opacity-0" : "md:group-hover:opacity-0")} />
         <FolderOpen
-          className={`absolute h-5 w-5 text-[#4ADE80] transition ${seleccionada ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+          className={cn(
+            "absolute h-5 w-5 text-primary transition",
+            seleccionada ? "opacity-100" : "opacity-0 md:group-hover:opacity-100",
+          )}
         />
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-white">{carpeta.nombre}</span>
-        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-white/45">
-          {dentro.videos > 0 ? <Video className="h-3 w-3" /> : null}
+        <span className="block truncate text-[15px] font-semibold text-foreground">{carpeta.nombre}</span>
+        <span className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+          {dentro.videos > 0 ? <Video className="h-3.5 w-3.5 shrink-0" /> : null}
           {resumen}
         </span>
         {carpeta.descripcion ? (
-          <span className="mt-0.5 block truncate text-xs text-white/35">{carpeta.descripcion}</span>
+          <span className="mt-0.5 block truncate text-sm text-muted-foreground">{carpeta.descripcion}</span>
         ) : null}
       </span>
 

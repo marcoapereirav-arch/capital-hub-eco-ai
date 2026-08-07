@@ -1,6 +1,5 @@
 import type { ReactNode } from "react"
 import { CrmTabsHeader } from "@/features/crm/components/crm-tabs-header"
-import { FONT } from "@/features/crm/lib/brand"
 
 /**
  * Layout compartido por las 3 sub-pestanas del CRM:
@@ -20,13 +19,14 @@ import { FONT } from "@/features/crm/lib/brand"
  * Regla que deja: la caja que RECORTA (`overflow-hidden`) y la que DEJA BAJAR
  * (`overflow-y-auto`) no pueden ser la misma. Si una pantalla necesita ocupar el alto
  * exacto sin scroll de pagina (el kanban), pide `h-full` a este hueco; no se recorta aqui.
+ *
+ * El fondo carbon sale del token del tema (`bg-background`), no de un color a mano: en
+ * este OS los tokens YA son el brandkit (verde de marca en `--primary`, Inter Tight en
+ * `--font-sans`), asi que el dia que se retoque la marca esta pantalla se entera sola.
  */
 export default function CrmLayout({ children }: { children: ReactNode }) {
   return (
-    <div
-      className="flex h-full min-h-0 w-full flex-col bg-[#0F0F12]"
-      style={{ fontFamily: FONT }}
-    >
+    <div className="flex h-full min-h-0 w-full flex-col bg-background">
       <CrmTabsHeader />
       {/* Unico scroll vertical del CRM. `overscroll-contain` evita que el rebote se
           propague a la pagina. `pb-mobile-nav` reserva el alto de la barra inferior

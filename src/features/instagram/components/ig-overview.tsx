@@ -27,19 +27,21 @@ function KpiCard({
 }) {
   return (
     <Card className="border-border">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-1 pb-2">
+        <CardTitle className="min-w-0 flex-1 truncate text-sm font-semibold text-muted-foreground">
           {title}
         </CardTitle>
         {source && (
-          <span className="font-mono text-[9px] text-muted-foreground/60">{source}</span>
+          <span className="shrink-0 text-sm text-muted-foreground">{source}</span>
         )}
       </CardHeader>
       <CardContent>
-        <div className="font-heading text-2xl font-semibold text-foreground">
+        {/* tabular-nums alinea las cifras en columna sin recurrir a la fuente
+            de maquina de escribir, que ya no es de la marca. */}
+        <div className="font-heading text-2xl font-semibold tabular-nums text-foreground">
           {typeof value === 'number' ? fmt(value) : value}
         </div>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   )
@@ -51,15 +53,15 @@ function PostThumb({ post }: { post: IgPost }) {
       href={post.url}
       target="_blank"
       rel="noreferrer"
-      className="group relative block overflow-hidden border border-border bg-muted/30"
+      className="group relative block overflow-hidden rounded-lg border border-border bg-muted/30"
     >
-      <div className="aspect-square w-full bg-gradient-to-br from-muted/40 to-muted/10">
+      <div className="aspect-square w-full bg-muted/30">
         {post.thumbnail_url ? (
           <IgThumb
             src={post.thumbnail_url}
             mediaId={post.external_id}
             alt={post.caption?.slice(0, 80) ?? ''}
-            className="transition-opacity group-hover:opacity-70"
+            className="transition-opacity md:group-hover:opacity-70"
           />
         ) : post.external_id ? (
           // Sin thumbnail_url pero con external_id → usar proxy directo
@@ -67,7 +69,7 @@ function PostThumb({ post }: { post: IgPost }) {
             src={`/api/instagram/thumbnail/${post.external_id}`}
             mediaId={post.external_id}
             alt={post.caption?.slice(0, 80) ?? ''}
-            className="transition-opacity group-hover:opacity-70"
+            className="transition-opacity md:group-hover:opacity-70"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -75,25 +77,22 @@ function PostThumb({ post }: { post: IgPost }) {
           </div>
         )}
       </div>
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-black/60 px-2 py-1 font-mono text-[10px] text-white">
+      <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-between gap-x-2 bg-background/80 px-2 py-1 text-sm tabular-nums text-foreground">
         <span className="flex items-center gap-1">
-          <Eye className="h-3 w-3" />
+          <Eye className="h-3.5 w-3.5" />
           {fmt(post.views)}
         </span>
         <span className="flex items-center gap-1">
-          <Heart className="h-3 w-3" />
+          <Heart className="h-3.5 w-3.5" />
           {fmt(post.likes)}
         </span>
         <span className="flex items-center gap-1">
-          <MessageCircle className="h-3 w-3" />
+          <MessageCircle className="h-3.5 w-3.5" />
           {fmt(post.comments)}
         </span>
       </div>
       {post.is_reel && (
-        <Badge
-          variant="secondary"
-          className="absolute left-1 top-1 font-mono text-[9px]"
-        >
+        <Badge variant="secondary" className="absolute top-1 left-1 h-auto py-0.5 text-sm">
           REEL
         </Badge>
       )}
@@ -104,9 +103,12 @@ function PostThumb({ post }: { post: IgPost }) {
 export function IgOverviewView({ overview }: { overview: IgOverview }) {
   if (!overview.account) {
     return (
-      <div className="border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-        No hay cuenta IG marcada como propia. Ve a Content Intel y marca tu cuenta como{' '}
-        <code className="font-mono">is_own=true</code>.
+      <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-10 text-center">
+        <h3 className="text-[17px] font-semibold text-foreground">Sin cuenta de Instagram propia</h3>
+        <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+          No hay cuenta IG marcada como propia. Ve a Content Intel y marca tu cuenta como{' '}
+          <code>is_own=true</code>.
+        </p>
       </div>
     )
   }
@@ -114,11 +116,11 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
   return (
     <div className="flex flex-col gap-6">
       {!overview.metaGraphReady && (
-        <div className="border border-border bg-muted/20 p-4 text-xs">
-          <div className="font-medium text-foreground">
+        <div className="rounded-lg border border-border bg-muted/20 p-4">
+          <div className="text-[15px] font-medium text-foreground">
             Métricas básicas vía Apify (scraping)
           </div>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             Para impressions, reach, audience demographics, story metrics, trial reels y auto-publicación necesitas conectar
             Meta Graph API. Setup pendiente — ver instrucciones en /integrations.
           </p>
@@ -128,15 +130,16 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
       {overview.metaGraphReady && overview.live && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+            <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
               Snapshot en vivo (últimos 30 días)
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Datos directos de Meta Graph API. Se actualizan en cada carga.
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {/* Dos columnas en telefono, que es lo maximo que cabe en 375 puntos */}
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-5">
               {overview.live.followerCount !== null && (
                 <KpiCard
                   title="Seguidores"
@@ -178,7 +181,7 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
         <DemographicsPanel demographics={overview.demographics} />
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
         <KpiCard title="Posts Totales" value={overview.totalPosts} source="apify" />
         <KpiCard title="Reels" value={overview.totalReels} source="apify" />
         <KpiCard title="Posts 30d" value={overview.posts30d} source="apify" />
@@ -196,14 +199,14 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
       {overview.topReel && (
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+            <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
               Top Performer
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 md:flex-row">
-              <div className="md:w-48 md:flex-shrink-0">
-                <div className="aspect-[9/16] overflow-hidden border border-border bg-muted/30">
+              <div className="w-full md:w-48 md:shrink-0">
+                <div className="aspect-[9/16] max-h-[60dvh] overflow-hidden rounded-lg border border-border bg-muted/30 md:max-h-none">
                   {overview.topReel.thumbnail_url ? (
                     <IgThumb
                       src={overview.topReel.thumbnail_url}
@@ -223,20 +226,20 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
                   )}
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <p className="line-clamp-3 text-sm text-foreground">
+              <div className="flex min-w-0 flex-col gap-3">
+                <p className="line-clamp-3 text-[15px] text-foreground">
                   {overview.topReel.caption ?? '—'}
                 </p>
-                <div className="flex flex-wrap gap-3 font-mono text-xs">
-                  <Stat icon={<Eye className="h-3 w-3" />} value={overview.topReel.views} label="vistas" />
-                  <Stat icon={<Heart className="h-3 w-3" />} value={overview.topReel.likes} label="likes" />
-                  <Stat icon={<MessageCircle className="h-3 w-3" />} value={overview.topReel.comments} label="comentarios" />
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm tabular-nums">
+                  <Stat icon={<Eye className="h-3.5 w-3.5" />} value={overview.topReel.views} label="vistas" />
+                  <Stat icon={<Heart className="h-3.5 w-3.5" />} value={overview.topReel.likes} label="likes" />
+                  <Stat icon={<MessageCircle className="h-3.5 w-3.5" />} value={overview.topReel.comments} label="comentarios" />
                 </div>
                 <a
                   href={overview.topReel.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 self-start border border-border bg-foreground px-3 py-1 font-mono text-[11px] uppercase tracking-wide text-background hover:opacity-80"
+                  className="inline-flex h-11 items-center justify-center gap-2 self-stretch rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 md:h-8 md:self-start md:text-sm"
                 >
                   Ver en Instagram
                 </a>
@@ -248,17 +251,20 @@ export function IgOverviewView({ overview }: { overview: IgOverview }) {
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+          <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
             Posts Recientes
           </CardTitle>
         </CardHeader>
         <CardContent>
           {overview.recentPosts.length === 0 ? (
-            <div className="border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-              No hay posts cacheados todavía. Ejecuta sync en Content Intel.
+            <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-8 text-center">
+              <h3 className="text-[17px] font-semibold text-foreground">Todavía no hay posts</h3>
+              <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+                No hay posts cacheados todavía. Ejecuta sync en Content Intel.
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
               {overview.recentPosts.map(p => (
                 <PostThumb key={p.id} post={p} />
               ))}
@@ -292,33 +298,35 @@ function DemographicsPanel({ demographics }: { demographics: IgDemographicsSnaps
   return (
     <Card className="border-border">
       <CardHeader>
-        <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+        <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
           Audiencia (este mes)
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Demografía de tus seguidores. Datos directos de Meta.
         </p>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Una columna en telefono: cuatro barras horizontales apiladas se leen,
+            cuatro columnas de 90 puntos no. */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {blocks.map((block) => {
             const max = Math.max(1, ...block.items.map((i) => i.value))
             return (
               <div key={block.title}>
-                <div className="mb-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                <div className="mb-2 text-sm font-semibold text-muted-foreground">
                   {block.title}
                 </div>
                 <ul className="flex flex-col gap-2">
                   {block.items.slice(0, 6).map((item) => (
-                    <li key={item.key} className="flex items-center gap-2 text-xs">
-                      <span className="w-16 truncate text-foreground">{item.key}</span>
-                      <div className="flex h-1 flex-1 items-center bg-border">
+                    <li key={item.key} className="flex items-center gap-2 text-sm">
+                      <span className="w-20 shrink-0 truncate text-foreground">{item.key}</span>
+                      <div className="flex h-1.5 min-w-0 flex-1 items-center rounded-full bg-border">
                         <div
-                          className="h-full bg-foreground"
+                          className="h-full rounded-full bg-primary"
                           style={{ width: `${(item.value / max) * 100}%` }}
                         />
                       </div>
-                      <span className="w-10 text-right font-mono text-muted-foreground">
+                      <span className="w-12 shrink-0 text-right tabular-nums text-muted-foreground">
                         {fmt(item.value)}
                       </span>
                     </li>

@@ -2,12 +2,11 @@
 
 import { useState } from "react"
 import { Activity, BarChart3, Settings as SettingsIcon } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
 import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
-import { AdsInsights } from "./ads-insights"
+import { AdsPanel } from "./ads-panel"
 import { AdsEventsHealth, RegistroTecnico } from "./ads-events-health"
 
 /**
@@ -57,19 +56,23 @@ interface Props {
 }
 
 export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEventCode }: Props) {
-  // Se abre en Eventos: lo primero que hay que saber es si esto está midiendo.
-  const [tab, setTab] = useState<AdsTab>("eventos")
+  // Se abre en Campañas: lo primero es el dinero, que es a lo que se entra. A Eventos se
+  // va cuando quieres comprobar la medición, no de entrada (Marco, 2026-08-07).
+  const [tab, setTab] = useState<AdsTab>("campanas")
   const active = TABS.find((t) => t.id === tab)!
 
   return (
     <>
-      <ShellHeader title="Ads" />
       {/* PageContainer: márgenes y ancho máximo estándar del OS. Sin él la pantalla se
           pegaba a los bordes de la aplicación. El candado `npm run check:layout` impide
           que vuelva a pasar. */}
-      {/* pb-24 extra: el botón flotante de "Registrar venta" tapaba la última fila. */}
-      <PageContainer className="pb-mobile-nav [&>*:last-child]:mb-24">
-        <div className="-mx-4 flex items-center gap-2 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
+      {/* pb-24 extra: el botón flotante de "Registrar venta" tapaba la última fila.
+          El hueco de la barra de abajo ya lo reserva PageContainer, asi que aqui
+          no se repite (`pb-mobile-nav` ademas dejaba el monitor sin margen). */}
+      <PageContainer className="[&>*:last-child]:mb-24">
+        {/* Tira de pestanas a 44 puntos, deslizable y sangrada al borde para que
+            se vea que hay mas de las que caben. */}
+        <div className="-mx-4 flex snap-x items-center gap-1 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
           {TABS.map((t) => {
             const Icon = t.icon
             const isActive = tab === t.id
@@ -79,10 +82,10 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                  "-mb-px flex h-11 shrink-0 snap-start items-center gap-2 border-b-2 px-3 text-[15px] font-medium whitespace-nowrap transition-colors md:h-9 md:text-sm",
                   isActive
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "border-primary font-semibold text-foreground"
+                    : "border-transparent text-muted-foreground md:hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -97,7 +100,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
           <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
         </div>
 
-        {tab === "campanas" && <AdsInsights />}
+        {tab === "campanas" && <AdsPanel />}
 
         {tab === "eventos" && (
           <div className="flex flex-col gap-4">

@@ -30,13 +30,10 @@ const DEUDA_CONOCIDA = new Set([
   //   src/app/(main)/crm/tags/page.tsx       -> ya usa <PageContainer>
   //   src/features/crm/components/crm-tabs-header.tsx -> ya no pinta <ShellHeader>
   "src/app/(main)/dashboard/page.tsx",
-  "src/app/(main)/instagram/page.tsx",
   "src/app/(main)/integrations/page.tsx",
   "src/app/(main)/invitaciones/page.tsx",
-  "src/app/(main)/manychat/page.tsx",
   "src/app/(main)/mision/page.tsx",
   "src/features/board/components/board-page.tsx",
-  "src/features/content-intel/components/content-intel-page.tsx",
   "src/features/crm/components/crm-page.tsx",
   "src/features/webs/components/webs-page.tsx",
 ])

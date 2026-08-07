@@ -19,7 +19,7 @@ export function PriorityChip({ priority, className }: { priority: Priority; clas
   return (
     <span
       className={cn(
-        "inline-flex h-6 shrink-0 items-center rounded-sm border px-2 text-sm font-semibold tabular-nums",
+        "inline-flex h-7 shrink-0 items-center rounded-sm border px-2 text-sm font-semibold tabular-nums md:h-6",
         PRIORITY_STYLES[priority],
         className
       )}
@@ -39,7 +39,7 @@ export function StatusChip({ status, className }: { status: TaskStatus; classNam
   return (
     <span
       className={cn(
-        "inline-flex h-6 shrink-0 items-center rounded-sm border px-2 text-sm",
+        "inline-flex h-7 shrink-0 items-center rounded-sm border px-2 text-sm md:h-6",
         STATUS_STYLES[status],
         className
       )}
@@ -62,7 +62,7 @@ export function PersonChip({ nombre, className }: { nombre: string | null; class
     <span className={cn("inline-flex min-w-0 items-center gap-1.5", className)}>
       <span
         aria-hidden
-        className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground md:size-6 md:text-[11px]"
       >
         {inicialesDe(nombre)}
       </span>

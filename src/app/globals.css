@@ -4,15 +4,21 @@
 
 /*
  * Capital Hub OS — Design System
- * Fuente de verdad: /docs/Brandkit_Capital_Hub.html
- * Paleta: Monochrome Matte (sin gradientes)
+ * Fuente de verdad: el brandkit vivo, /brandkit (src/app/brandkit/version-two.tsx)
+ * Reglas escritas: docs/sops/marketing/brand/01-brandkit-oficial.md
+ * Paleta: carbon + verde de marca. Sin gradientes, sin otros colores.
  */
 
 @theme inline {
-  /* Apple-first stack: en macOS/iOS renderiza SF Pro Display/Text nativo,
-     fuera de Apple cae en Inter (cargado vía next/font) o system fallbacks. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-heading: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  /* Inter Tight es la UNICA familia de la marca (brandkit, seccion Tipografia).
+     Va primero la variable que crea next/font, que apunta a la fuente REALMENTE
+     descargada; los nombres de detras son solo red de seguridad si fallara.
+     Antes esta lista empezaba por -apple-system, asi que en un Mac nunca se
+     llegaba a Inter Tight y todo el OS renderizaba con la fuente de Apple. */
+  --font-sans: var(--font-inter-tight), "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: var(--font-inter-tight), "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  /* La mono sigue viva porque ~779 sitios del OS la usan todavia. El brandkit
+     dice que no deberia usarse: retirarla es un trabajo aparte, no de tokens. */
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
 
   --color-background: var(--background);
@@ -23,17 +29,36 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+
+  /* VERDE DE MARCA para lo que se dibuja: barras, embudos, series de un grafico.
+     Existe porque hoy `--primary` vale BLANCO en oscuro, no el verde del brandkit, y una
+     barra blanca sobre fondo carbon no se lee como marca. Cambiar `--primary` repinta el
+     OS entero y eso es un trabajo aparte, asi que se anade este token en vez de escribir
+     el color a mano dentro de las pantallas (que es justo lo que el brandkit prohibe).
+     Nadie lo usaba antes: anadirlo no cambia ni un pixel de lo que ya existe.
+
+     Va con `var(--brand)` y no con el hexadecimal escrito aqui: dentro de `@theme inline`
+     un color literal se reescribe a canales sueltos ("34 197 94"), que como valor de
+     `background-color` no es un color valido y sale TRANSPARENTE. Comprobado en el
+     navegador. El resto de tokens del proyecto siguen este mismo patron. */
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  /* `<alpha-value>` es sintaxis de Tailwind v3 y este proyecto va por la v4: alli NO se
-     sustituye, el color sale invalido y `bg-brand` pintaba TRANSPARENTE. Verificado en el
-     navegador el 2026-08-07 (getComputedStyle daba rgba(0,0,0,0)). En la v4 la opacidad
-     se resuelve sola con color-mix, asi que `bg-brand/10` sigue funcionando. */
-  --color-brand: rgb(var(--brand));
+  /* Ambar de AVISO del brandkit. Solo para avisar de algo que pide atencion
+     ("lleva 3 dias sin gastar"), nunca como color de adorno. El error sigue
+     siendo rojo (`destructive`) y el acento sigue siendo verde.
+     Va apuntando a una variable de verdad, como el resto de tokens: este bloque
+     es `inline`, o sea que mete el valor dentro de la clase pero NO publica la
+     variable. Escrito a pelo aqui, `text-warn` funcionaba pero `var(--warn)` no
+     resolvia, y el board pintaba su aviso SIN COLOR y sin dar ningun error. */
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -65,7 +90,6 @@
 @layer base {
   :root {
     --background: oklch(1 0 0);
-    --brand: 34 197 94;
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -73,6 +97,11 @@
     --popover-foreground: oklch(0.145 0 0);
     --primary: oklch(0.205 0 0);
     --primary-foreground: oklch(0.985 0 0);
+    /* Verde de marca para graficos. Mismo valor en claro y en oscuro: es la marca,
+       no el tema. Ver el comentario de --color-brand arriba. */
+    --brand: #22c55e;
+    --brand-soft: #4ade80;
+    --brand-ink: #08130c;
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
@@ -80,6 +109,8 @@
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
+    --warn: #B07D1F;
+    --warn-foreground: #FFFFFF;
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
@@ -118,9 +149,19 @@
     --popover: oklch(0.205 0.004 265);
     --popover-foreground: oklch(0.97 0.001 250);
 
-    /* PRIMARY ACCENT: #FFFFFF Blanco Puro (5%) */
-    --primary: oklch(1 0 0);
-    --primary-foreground: oklch(0.113 0.005 265);
+    /* ACCION PRINCIPAL: verde de marca #22C55E con tinta #08130C encima.
+       Antes era blanco puro. El brandkit marca el boton blanco como senal del
+       diseno ANTIGUO: "El acento es VERDE #22C55E, con tinta #08130C encima".
+       La tinta NO es decorativa: texto blanco sobre este verde da 2.11:1 y
+       falla; la tinta da 8.31:1 (AAA). */
+    --primary: #22C55E;
+    --primary-foreground: #08130C;
+    /* Verde de marca para lo que se DIBUJA (barras, embudos, series). Vale lo mismo
+       que --primary, y existe aparte porque un grafico puede necesitar su verde
+       aunque manana el boton principal cambie. Mismo valor en claro y en oscuro. */
+    --brand: #22c55e;
+    --brand-soft: #4ade80;
+    --brand-ink: #08130c;
 
     /* SECONDARY: #2A2D34 Gris Grafito (25%) */
     --secondary: oklch(0.24 0.012 260);
@@ -131,42 +172,64 @@
     --muted: oklch(0.24 0.012 260);
     --muted-foreground: oklch(0.62 0.015 255);
 
-    /* ACCENT: #2A2D34 */
-    --accent: oklch(0.24 0.012 260);
-    --accent-foreground: oklch(0.97 0.001 250);
+    /* ACENTO DE MARCA: verde #22C55E. Antes valia gris grafito #2A2D34, asi que
+       quien escribia `bg-accent` creyendo poner la marca pintaba gris.
+       OJO al anadir un componente nuevo de shadcn: sus plantillas usan
+       `accent` como fondo suave de raton encima (hover), no como color de
+       marca. En este proyecto `accent` ES la marca. Para ese gris suave se usa
+       `muted`. Si copias una plantilla de shadcn, cambia accent por muted. */
+    --accent: #22C55E;
+    --accent-foreground: #08130C;
 
     /* DESTRUCTIVE */
     --destructive: oklch(0.704 0.191 22.216);
+
+    /* AVISO: ambar del brandkit. Ni error (eso es rojo) ni acento (eso es verde). */
+    --warn: #E5B567;
+    --warn-foreground: #1A1408;
 
     /* BORDERS: subidos de 0.24 a 0.275 para que los bordes de cajas/inputs se
        VEAN — incluso cuando un componente los diluye. Regla: no bajar de aquí. */
     --border: oklch(0.275 0.012 260);
     --input: oklch(0.275 0.012 260);
-    --ring: oklch(0.55 0.015 255);
+    /* Anillo de foco (lo que rodea al campo donde estas escribiendo): verde de
+       marca en vez de gris, para que se vea de verdad al navegar con teclado. */
+    --ring: #22C55E;
 
-    /* CHARTS: escala monocromatica */
-    --chart-1: oklch(1 0 0);
+    /* GRAFICOS: la serie 1 es el verde de marca; el resto, escala de grises.
+       Hoy ningun grafico del OS usa estos tokens (pintan sus colores a mano),
+       asi que este cambio no repinta nada: deja el token correcto para el que
+       venga. */
+    --chart-1: #22C55E;
     --chart-2: oklch(0.705 0.014 255);
     --chart-3: oklch(0.52 0.015 255);
     --chart-4: oklch(0.33 0.008 265);
     --chart-5: oklch(0.24 0.012 260);
 
-    /* SIDEBAR */
+    /* SIDEBAR (menu de la izquierda) */
     --sidebar: oklch(0.113 0.005 265);
     --sidebar-foreground: oklch(0.97 0.001 250);
-    --sidebar-primary: oklch(1 0 0);
-    --sidebar-primary-foreground: oklch(0.113 0.005 265);
+    --sidebar-primary: #22C55E;
+    --sidebar-primary-foreground: #08130C;
+    /* `sidebar-accent` NO es el acento de marca: es el gris suave que se pinta
+       detras de una opcion del menu al pasar el raton o cuando esta abierta.
+       Se queda gris a proposito: si fuera verde, el menu entero seria verde. */
     --sidebar-accent: oklch(0.24 0.012 260);
     --sidebar-accent-foreground: oklch(0.97 0.001 250);
     --sidebar-border: oklch(0.275 0.012 260);
-    --sidebar-ring: oklch(0.55 0.015 255);
+    --sidebar-ring: #22C55E;
   }
 
   * {
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans;
+    @apply font-sans bg-background;
+    /* El fondo va TAMBIEN en el html, no solo en el body. Si por lo que sea la
+       app no llega a cubrir la pantalla entera (la franja de gestos del iPhone,
+       un rebote, el teclado abriendose), lo que asoma por debajo es el fondo de
+       la app y no el negro del sistema. Marco veia justo eso: una banda negra
+       pegada abajo que no encajaba. */
     /* La app es SIEMPRE dark (html.dark). Declararlo a nivel de documento hace
        que el navegador renderice autofill, scrollbars y controles nativos en
        modo oscuro — sin esto, el autofill de Chrome/Safari pinta un fondo claro

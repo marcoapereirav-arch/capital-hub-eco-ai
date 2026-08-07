@@ -23,12 +23,25 @@
  *   3. Los documentos que explican el flujo dicen todos lo mismo.
  *   4. Nadie ha vuelto a colar afirmaciones ya derogadas.
  *
- * Enganchado a `prebuild`. Si falla, el despliegue no sale.
+ * ⚡ VA EN `predev`, NUNCA EN `prebuild`. Vigila la disciplina de la MÁQUINA DE
+ * MARCO (en qué carpeta estás, con qué rama puesta). El servidor que despliega
+ * no tiene nada de eso: se baja el código en una carpeta suelta con la rama
+ * `master`, así que el vigilante SIEMPRE se dispara y tumba el despliegue.
+ * Pasó dos veces: producción se quedó servidando una versión vieja durante
+ * horas mientras los `push` salían bien. Knowledge:
+ * `ia-vigilante-de-disciplina-local-nunca-en-prebuild`.
  */
 
-import { readFileSync, existsSync, realpathSync } from 'node:fs'
+import { readFileSync, existsSync, realpathSync, readdirSync, statSync } from 'node:fs'
 import { execSync } from 'node:child_process'
-import { join } from 'node:path'
+import { join, basename } from 'node:path'
+
+// Red de seguridad: aunque alguien lo vuelva a enganchar al build, en un
+// servidor de despliegue se aparta en vez de tumbarlo.
+if (process.env.VERCEL || process.env.CI) {
+  console.log('· check:flujo — servidor de despliegue: no aplica (vigila la máquina de Marco).')
+  process.exit(0)
+}
 
 const RAIZ = process.cwd()
 const problemas = []
@@ -92,21 +105,7 @@ const principal = worktrees[0]
 const esPrincipal = principal && realpathSync(principal.ruta) === realpathSync(RAIZ)
 const ramaAqui = git('rev-parse --abbrev-ref HEAD')
 
-/* Esta guardia es SOLO para la maquina de quien trabaja.
- *
- * El servidor que publica la web (Vercel) clona el proyecto en una carpeta
- * unica, sin carpetas de chat y con la rama que le da la gana (`master`). Eso
- * es exactamente lo que esta guardia considera "estas en la carpeta principal
- * con una rama que no toca", asi que tumbaba TODOS los despliegues: la web se
- * quedaba sirviendo lo viejo y el fallo no se parecia en nada a su causa.
- *
- * Ocurrio de verdad el 2026-07-31: dos despliegues seguidos en Error a los 8
- * segundos, con produccion sin actualizarse.
- *
- * Alli no hay nada que proteger (no hay dos chats pisandose), asi que se salta. */
-const enServidorDePublicacion = Boolean(process.env.VERCEL || process.env.CI)
-
-if (!enServidorDePublicacion && esPrincipal && ramaAqui && ramaAqui !== 'dev') {
+if (esPrincipal && ramaAqui && ramaAqui !== 'dev') {
   problemas.push(
     `Estas trabajando en la CARPETA PRINCIPAL, con la rama \`${ramaAqui}\` puesta.\n` +
       `   Aqui NO se trabaja: es de donde nacen las ramas de los chats.\n` +
@@ -136,18 +135,138 @@ if (huerfanas.length > 0) {
   )
 }
 
-/* 2 · los skills del flujo tienen que nombrar dev ------------------------ */
+/* 1-ter · carpetas FANTASMA (existen en disco pero no son de nadie) ------ */
 
-const SKILLS = ['publicar', 'cerrar', 'primer']
-for (const s of SKILLS) {
-  const t = leer(`.claude/skills/${s}/SKILL.md`)
-  if (t === null) continue // el skill puede no existir en un proyecto concreto
-  const menciones = (t.match(/\bdev\b/g) || []).length
-  if (menciones < 3) {
+// Distinto de las huerfanas de arriba: estas ni siquiera estan registradas como
+// carpeta de trabajo. Aparecieron el 2026-08-05 (calendario, calendario-motor,
+// calendario-guardado, subida-audio) y NO son restos de un cierre: se crearon
+// entre 12 min y 4 h DESPUES de que su chat se cerrara, con solo la huella de un
+// `next dev` arrancando dentro. Verificado: `git worktree remove --force` borra
+// todo, incluidos `.next` y `node_modules`.
+//
+// No se ha identificado que las crea. Hasta saberlo, al menos el sistema las VE
+// y lo dice, en vez de que Marco se las encuentre por casualidad.
+if (principal) {
+  const carpetaDeChats = join(principal.ruta, '..', `${basename(principal.ruta)}-chats`)
+  if (existsSync(carpetaDeChats)) {
+    const registradas = new Set(worktrees.map((w) => realpathSync(w.ruta)))
+    let fantasmas = []
+    try {
+      fantasmas = readdirSync(carpetaDeChats, { withFileTypes: true })
+        .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+        .map((e) => join(carpetaDeChats, e.name))
+        .filter((p) => {
+          try {
+            return !registradas.has(realpathSync(p))
+          } catch {
+            return false
+          }
+        })
+    } catch {
+      /* si no se puede leer, no se avisa de nada */
+    }
+    if (fantasmas.length) {
+      avisos.push(
+        `Hay ${fantasmas.length} carpeta(s) FANTASMA en ${carpetaDeChats}:\n` +
+          fantasmas
+            .map((p) => {
+              let nacida = '?'
+              try {
+                nacida = statSync(p).birthtime.toISOString().slice(0, 16).replace('T', ' ')
+              } catch {
+                /* sin fecha */
+              }
+              return `      - ${basename(p)}   (creada ${nacida})`
+            })
+            .join('\n') +
+          `\n   No son de ningun chat: git no las conoce. Algo las creo despues de cerrar.\n` +
+          `   No estorban, pero avisa a Marco antes de tocarlas.`
+      )
+    }
+  }
+}
+
+/* 2 · el flujo tiene que estar en alguna MAQUINA, no solo en la prosa ---- */
+
+// Antes esto contaba cuantas veces el TEXTO de cada skill decia "dev". Servia
+// cuando el flujo vivia escrito en el propio SKILL.md. Desde que la mecanica se
+// movio a `scripts/publicar.mjs` y `scripts/cerrar.mjs`, el texto ya no lo dice
+// —lo hace el script— y el vigilante daba un FALSO POSITIVO que tumbaba
+// `npm run dev`. Paso el 2026-08-05.
+//
+// Lo que importa no es que el texto lo nombre: es que EXISTA la maquina y el
+// skill mande a ella. Eso es lo que se comprueba ahora.
+const PIEZAS = [
+  { skill: 'publicar', maquina: 'scripts/publicar.mjs', orden: 'npm run publicar' },
+  { skill: 'cerrar', maquina: 'scripts/cerrar.mjs', orden: 'npm run cerrar' },
+]
+
+for (const { skill, maquina, orden } of PIEZAS) {
+  const texto = leer(`.claude/skills/${skill}/SKILL.md`)
+  if (texto === null) continue // el skill puede no existir en un proyecto concreto
+
+  const codigo = leer(maquina)
+  if (codigo === null) {
+    // Sin maquina, el flujo tiene que estar en el texto del skill (modelo viejo).
+    const menciones = (texto.match(/\bdev\b/g) || []).length
+    if (menciones < 3) {
+      problemas.push(
+        `El skill \`/${skill}\` no nombra \`dev\` (${menciones} veces) y tampoco existe \`${maquina}\`.\n` +
+          `   El flujo tiene que vivir en alguna parte: o en el texto del skill, o en su script.\n` +
+          `   Fue exactamente el fallo del 2026-07-25 (/publicar unia la rama directo a main).`
+      )
+    }
+    continue
+  }
+
+  if (!texto.includes(orden)) {
     problemas.push(
-      `El skill \`/${s}\` casi no nombra \`dev\` (${menciones} veces).\n` +
-        `   Es la maquina que ejecuta el flujo: si no lo nombra, no lo hace.\n` +
-        `   Fue exactamente el fallo del 2026-07-25 (/publicar unia la rama directo a main).`
+      `El skill \`/${skill}\` no manda a su maquina.\n` +
+        `   Existe \`${maquina}\`, pero el skill no dice \`${orden}\` en ningun sitio.\n` +
+        `   Un skill que explica el flujo a mano en vez de llamar a su script se desincroniza.`
+    )
+  }
+  // La maquina tiene que HACER el recorrido, o delegar en la que lo hace.
+  // `cerrar.mjs` no nombra `dev`: llama a `publicar.mjs`, que es quien lo hace.
+  // Contar palabras aqui seria repetir el mismo error que este bloque arregla.
+  const loHace = (codigo.match(/\bdev\b/g) || []).length >= 3
+  const loDelega = /publicar\.mjs/.test(codigo)
+  if (!loHace && !loDelega) {
+    problemas.push(
+      `\`${maquina}\` ni ejecuta el recorrido \`rama → dev → main\` ni delega en quien lo hace.\n` +
+        `   O nombra \`dev\` y lo recorre, o llama a \`scripts/publicar.mjs\`.`
+    )
+  }
+}
+
+// `/primer` sigue siendo texto puro: ahi si tiene que estar escrito.
+{
+  const t = leer('.claude/skills/primer/SKILL.md')
+  if (t !== null && (t.match(/\bdev\b/g) || []).length < 3) {
+    problemas.push(
+      '`/primer` casi no nombra `dev`.\n' +
+        '   Es lo primero que lee la IA en cada chat: ahi tiene que estar el recorrido entero.'
+    )
+  }
+}
+
+/* 2-bis · la puerta de entrada tiene que estar enchufada ---------------- */
+
+// La regla "un chat = una carpeta" y la regla "el PRP se aprueba antes de
+// construir" llevaban meses escritas y no se cumplian, porque dependian de que
+// la IA se acordara. La maquina que las obliga es el enganche.
+{
+  const enganche = leer('.claude/hooks/puerta-de-entrada.mjs')
+  const ajustes = leer('.claude/settings.json')
+  if (enganche === null) {
+    problemas.push(
+      'Falta `.claude/hooks/puerta-de-entrada.mjs`.\n' +
+        '   Es lo unico que impide trabajar en la carpeta principal o sin PRP aprobado.'
+    )
+  } else if (ajustes === null || !ajustes.includes('puerta-de-entrada.mjs')) {
+    problemas.push(
+      'La puerta de entrada existe pero NO esta enchufada en `.claude/settings.json`.\n' +
+        '   Sin el enganche `PreToolUse`, el archivo esta ahi de adorno y no bloquea nada.'
     )
   }
 }
@@ -195,7 +314,7 @@ if (problemas.length > 0) {
   problemas.forEach((p, i) => console.error(`   ${i + 1}. ${p}\n`))
   console.error(
     '   EL WORKFLOW: dev → rama → dev → main → la web.\n' +
-      '   Fuente: AGENTS.md · la regla de fabrica `EL WORKFLOW` en AGENTS.md.\n'
+      '   Fuente: AGENTS.md · Knowledge `ia-workflow-rama-dev-main` · sprint FLUJO.\n'
   )
   process.exit(1)
 }

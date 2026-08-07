@@ -6,14 +6,13 @@ import {
   RefreshCw,
   Plus,
   Lightbulb,
-  Sparkles,
+  Wand2,
   ExternalLink,
   Trash2,
   Check,
   Video,
   Share2,
   FileText,
-  Filter,
   AlertCircle,
   TrendingUp,
   Zap,
@@ -22,7 +21,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sheet,
   SheetContent,
@@ -30,6 +28,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 
 import { extractApiError } from '../lib/extract-api-error'
 interface Source {
@@ -93,14 +92,31 @@ const STATUS_LABELS: Record<Idea['status'], string> = {
   archived: 'Archivado',
 }
 
+// Todo el color sale del tema: verde de marca para lo que ya avanzo, borde
+// normal para lo que sigue pendiente. Ninguna otra familia de color entra.
 const STATUS_VARIANT: Record<Idea['status'], string> = {
-  pending: 'border-foreground/40 text-foreground',
-  generating: 'border-foreground/40 text-foreground animate-pulse',
-  generated: 'border-foreground text-foreground',
-  recorded: 'border-blue-500/60 text-blue-500',
-  published: 'border-emerald-500/60 text-emerald-500',
+  pending: 'border-border text-foreground',
+  generating: 'border-primary/60 text-primary animate-pulse',
+  generated: 'border-primary/60 text-primary',
+  recorded: 'border-primary text-primary',
+  published: 'border-primary bg-primary/10 text-primary',
   archived: 'border-border text-muted-foreground',
 }
+
+// Hoja inferior en telefono y cajon por la derecha en monitor, con el lado fijo:
+// decidirlo con JavaScript pinta primero el diseno equivocado y luego salta.
+const HOJA_BASE = 'gap-0 rounded-t-xl p-0'
+const hojaAncho = (anchoMd: string) =>
+  cn(
+    HOJA_BASE,
+    'md:inset-y-0 md:right-0 md:left-auto md:h-dvh md:w-full md:rounded-l-xl md:border-l',
+    anchoMd,
+    'md:data-[side=bottom]:max-h-none md:data-[side=bottom]:overflow-y-auto md:data-[side=bottom]:pb-0',
+  )
+
+// Desplegable nativo con los 44 puntos del dedo y los colores del tema.
+const SELECT_CLASS =
+  'h-11 w-full rounded-lg border border-input bg-transparent px-3 text-base text-foreground md:h-8 md:text-sm'
 
 interface IdeasTabProps {
   /** Callback opcional: cuando se genera un chat, podemos saltar al tab Chat con Corpus */
@@ -451,7 +467,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:justify-between">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2.5">
             <Lightbulb className="h-5 w-5 text-foreground" strokeWidth={1.5} />
@@ -459,7 +475,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
               Ideas
             </h3>
           </div>
-          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
             Conecta un Google Doc con tus ideas crudas. Sincroniza para
             importarlas, y convierte cada idea en un guion grounded en el
             corpus con 1 clic.
@@ -471,7 +487,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
             disabled={startingDaily}
             size="lg"
             variant="default"
-            className="gap-2"
+            className="w-full gap-2 md:w-auto"
             title="Inicia una sesión conversacional para elegir las 3 ideas del día y generar los 3 guiones"
           >
             {startingDaily ? (
@@ -491,24 +507,24 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
 
       {/* Errores / éxitos */}
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {error}
+        <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span className="min-w-0">{error}</span>
         </div>
       )}
       {success && (
-        <div className="flex items-center gap-2 rounded-xl border border-foreground/40 bg-foreground/10 px-4 py-3 text-sm">
-          <Check className="h-4 w-4 shrink-0" />
-          {success}
+        <div className="flex items-start gap-2 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm text-primary">
+          <Check className="mt-0.5 h-4 w-4 shrink-0" />
+          <span className="min-w-0">{success}</span>
         </div>
       )}
 
       {/* Fuente registrada */}
       {!hasSources ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
-          <FileText className="h-8 w-8 text-muted-foreground/60" strokeWidth={1.5} />
-          <h4 className="font-medium text-foreground">No tienes fuentes conectadas</h4>
-          <p className="max-w-md text-sm text-muted-foreground">
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-card/40 px-6 py-10 text-center">
+          <FileText className="h-8 w-8 text-muted-foreground" strokeWidth={1.5} />
+          <h4 className="text-[17px] font-semibold text-foreground">No tienes fuentes conectadas</h4>
+          <p className="max-w-md text-[15px] text-muted-foreground">
             Conecta tu Google Doc de ideas. Solo necesitas que el doc esté en
             modo &quot;cualquiera con el link puede ver&quot;.
           </p>
@@ -518,26 +534,27 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
           </Button>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3">
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 md:flex-row md:flex-wrap md:items-center">
           {sources.map((s) => (
             <div
               key={s.id}
-              className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
             >
-              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-sm">{s.display_name ?? 'Doc sin nombre'}</span>
+              <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 text-[15px]">{s.display_name ?? 'Doc sin nombre'}</span>
               {s.source_url && (
                 <a
                   href={s.source_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-muted-foreground hover:text-foreground"
+                  className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground active:bg-muted md:h-6 md:w-6"
                   title="Abrir en Google Docs"
+                  aria-label="Abrir en Google Docs"
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-4 w-4" />
                 </a>
               )}
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-sm tabular-nums text-muted-foreground">
                 {s.last_synced_at
                   ? `sync: ${new Date(s.last_synced_at).toLocaleString('es-ES', {
                       day: '2-digit',
@@ -550,14 +567,13 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
               <Button
                 onClick={() => syncSource(s.id)}
                 disabled={syncing}
-                size="sm"
                 variant="ghost"
-                className="h-7 gap-1 text-xs"
+                className="gap-1"
               >
                 {syncing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-4 w-4" />
                 )}
                 Sync
               </Button>
@@ -566,10 +582,9 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
           <Button
             onClick={() => setAddOpen(true)}
             variant="ghost"
-            size="sm"
-            className="text-xs"
+            className="w-full md:w-auto"
           >
-            <Plus className="mr-1 h-3 w-3" />
+            <Plus className="mr-1 h-4 w-4" />
             Otro doc
           </Button>
           {ideas.length > 0 && (
@@ -577,18 +592,17 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
               onClick={runRank}
               disabled={ranking}
               variant="default"
-              size="sm"
-              className="ml-auto gap-1.5 text-xs"
+              className="w-full gap-1.5 md:ml-auto md:w-auto"
               title="Analiza tus ideas pendientes y rankea por potencial de palanca"
             >
               {ranking ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Analizando ideas…
                 </>
               ) : (
                 <>
-                  <TrendingUp className="h-3.5 w-3.5" />
+                  <TrendingUp className="h-4 w-4" />
                   Rankear por potencial
                 </>
               )}
@@ -598,17 +612,19 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
       )}
 
       {/* Filtros status */}
-      <div className="flex gap-1 rounded-lg border border-border bg-card p-1">
+      {/* Tira deslizable: cinco filtros no caben en 375 puntos sin encogerse */}
+      <div className="-mx-4 flex snap-x gap-1 overflow-x-auto px-4 md:mx-0 md:rounded-lg md:border md:border-border md:bg-card md:p-1">
         {(['pending', 'generated', 'recorded', 'published', 'all'] as const).map(
           (f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-1 rounded-md px-2 py-1.5 text-xs transition-colors ${
+              className={cn(
+                'h-11 shrink-0 snap-start rounded-lg px-3 text-[15px] whitespace-nowrap transition-colors md:h-8 md:flex-1 md:text-sm',
                 filter === f
-                  ? 'bg-foreground text-background'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  ? 'bg-primary font-semibold text-primary-foreground'
+                  : 'bg-card text-muted-foreground md:bg-transparent md:hover:text-foreground',
+              )}
             >
               {f === 'pending'
                 ? 'Pendientes'
@@ -619,7 +635,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                     : f === 'published'
                       ? 'Publicados'
                       : 'Todas'}
-              <span className="ml-1 opacity-60">
+              <span className="ml-1 tabular-nums">
                 ({f === 'all' ? counts.all : counts[f]})
               </span>
             </button>
@@ -633,9 +649,10 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       ) : ideas.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
-          <Lightbulb className="h-6 w-6 text-muted-foreground/60" strokeWidth={1.5} />
-          <p className="text-sm text-muted-foreground">
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-card/40 px-6 py-10 text-center">
+          <Lightbulb className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+          <h4 className="text-[17px] font-semibold text-foreground">Nada por aquí</h4>
+          <p className="max-w-[38ch] text-[15px] text-muted-foreground">
             {filter === 'pending'
               ? 'No tienes ideas pendientes. Sincroniza tu doc o cambia el filtro.'
               : `Sin ideas en estado "${filter}".`}
@@ -646,45 +663,48 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
           {ideas.map((idea) => {
             const isGenerating = idea.status === 'generating'
             return (
+              // TELEFONO: ficha apilada con las acciones abajo, a 44 puntos.
+              // MONITOR: la fila de siempre.
               <div
                 key={idea.id}
-                className="flex items-start gap-3 border-b border-border p-4 last:border-b-0"
+                className="flex flex-col gap-3 border-b border-border p-4 last:border-b-0 md:flex-row md:items-start"
               >
-                <Lightbulb
-                  className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-                  strokeWidth={1.5}
-                />
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <p className="line-clamp-3 text-sm leading-relaxed text-foreground">
-                    {idea.content}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] ${STATUS_VARIANT[idea.status]}`}
-                    >
-                      {STATUS_LABELS[idea.status]}
-                    </Badge>
-                    {idea.position_in_source !== null && (
-                      <span className="text-[10px] text-muted-foreground">
-                        #{(idea.position_in_source ?? 0) + 1}
-                      </span>
-                    )}
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <Lightbulb
+                    className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                    strokeWidth={1.5}
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <p className="line-clamp-3 text-[15px] leading-relaxed text-foreground">
+                      {idea.content}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge
+                        variant="outline"
+                        className={cn('h-auto py-0.5 text-sm', STATUS_VARIANT[idea.status])}
+                      >
+                        {STATUS_LABELS[idea.status]}
+                      </Badge>
+                      {idea.position_in_source !== null && (
+                        <span className="text-sm tabular-nums text-muted-foreground">
+                          #{(idea.position_in_source ?? 0) + 1}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1.5 md:shrink-0 md:flex-nowrap">
                   {(idea.status === 'pending' || idea.status === 'generated') && (
                     <Button
                       onClick={() => openGenerate(idea.id)}
-                      size="sm"
                       variant={idea.status === 'generated' ? 'ghost' : 'default'}
                       disabled={isGenerating}
-                      className="h-8 gap-1 text-xs"
+                      className="flex-1 gap-1 md:flex-none"
                     >
                       {isGenerating ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <Wand2 className="h-4 w-4" />
                       )}
                       {idea.status === 'generated' ? 'Re-generar' : 'Generar guion'}
                     </Button>
@@ -694,9 +714,8 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                       onClick={() =>
                         onChatGenerated?.(idea.generated_chat_id!, undefined)
                       }
-                      size="sm"
                       variant="default"
-                      className="h-8 gap-1 text-xs"
+                      className="flex-1 gap-1 md:flex-none"
                     >
                       Abrir chat
                     </Button>
@@ -704,31 +723,30 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                   {idea.status === 'generated' && (
                     <Button
                       onClick={() => setIdeaStatus(idea.id, 'recorded')}
-                      size="sm"
                       variant="ghost"
-                      className="h-8 gap-1 text-xs"
+                      className="flex-1 gap-1 md:flex-none"
                     >
-                      <Video className="h-3 w-3" />
+                      <Video className="h-4 w-4" />
                       Grabado
                     </Button>
                   )}
                   {idea.status === 'recorded' && (
                     <Button
                       onClick={() => setIdeaStatus(idea.id, 'published')}
-                      size="sm"
                       variant="ghost"
-                      className="h-8 gap-1 text-xs"
+                      className="flex-1 gap-1 md:flex-none"
                     >
-                      <Share2 className="h-3 w-3" />
+                      <Share2 className="h-4 w-4" />
                       Publicado
                     </Button>
                   )}
                   <button
                     onClick={() => deleteIdea(idea.id)}
-                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors active:bg-destructive/10 md:h-8 md:w-8 md:hover:bg-destructive/10 md:hover:text-destructive"
                     title="Borrar idea"
+                    aria-label="Borrar idea"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -739,34 +757,32 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
 
       {/* MODAL: ranking de ideas por potencial */}
       <Sheet open={rankOpen} onOpenChange={setRankOpen}>
-        <SheetContent
-          side="right"
-          className="flex w-full max-w-2xl flex-col gap-0 p-0 sm:max-w-2xl"
-        >
-          <SheetHeader className="border-b border-border px-6 py-4">
-            <SheetTitle className="flex items-center gap-2 text-base">
+        <SheetContent side="bottom" className={hojaAncho('md:max-w-2xl')}>
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+          <SheetHeader className="border-b border-border px-4 py-4 md:px-6">
+            <SheetTitle className="flex items-center gap-2 text-[17px] font-semibold">
               <TrendingUp className="h-4 w-4" />
               Ideas rankeadas por potencial
             </SheetTitle>
-            <SheetDescription className="text-xs">
+            <SheetDescription className="text-sm">
               Basado en patrones del corpus + avatar Andrés + cuello de
               botella actual de la cuenta. Las top te las recomiendo grabar
               primero.
             </SheetDescription>
           </SheetHeader>
-          <ScrollArea className="flex-1 overflow-y-auto">
-            <div className="flex flex-col gap-4 px-6 py-4">
+          <div>
+            <div className="flex flex-col gap-4 px-4 py-4 md:px-6">
               {rankResult && (
                 <>
                   <div className="rounded-lg border border-border bg-card/40 p-3">
-                    <div className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      <Zap className="h-3 w-3" />
+                    <div className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-muted-foreground">
+                      <Zap className="h-4 w-4" />
                       Cuello de botella detectado
                     </div>
-                    <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground">
                       {rankResult.bottleneck}
                     </p>
-                    <p className="mt-2 text-[10px] text-muted-foreground">
+                    <p className="mt-2 text-sm tabular-nums text-muted-foreground">
                       {rankResult.videosUsed} videos del corpus analizados · ~$
                       {rankResult.cost.toFixed(3)}
                     </p>
@@ -774,47 +790,54 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
 
                   <div className="flex flex-col gap-2">
                     {rankResult.items.map((it, idx) => {
+                      // Cuanto mas alta la nota, mas verde de marca. El resto,
+                      // borde normal: no entra ninguna otra familia de color.
                       const scoreColor =
                         it.score >= 80
-                          ? 'border-emerald-500/60 text-emerald-500'
+                          ? 'border-primary bg-primary/10 text-primary'
                           : it.score >= 60
-                            ? 'border-foreground text-foreground'
+                            ? 'border-primary/60 text-primary'
                             : it.score >= 40
-                              ? 'border-foreground/40 text-foreground'
+                              ? 'border-border text-foreground'
                               : 'border-border text-muted-foreground'
+                      // Las tres etapas se distinguen con recursos del tema (relleno,
+                      // solo borde, neutro) en vez de con tres familias de color:
+                      // asi la columna de embudo se sigue leyendo de un vistazo.
                       const funnelColor =
-                        it.funnel === 'TOFU'
-                          ? 'border-blue-500/60 text-blue-500'
+                        it.funnel === 'BOFU'
+                          ? 'border-primary bg-primary/10 text-primary'
                           : it.funnel === 'MOFU'
-                            ? 'border-purple-500/60 text-purple-500'
-                            : 'border-emerald-500/60 text-emerald-500'
+                            ? 'border-primary/50 text-primary'
+                            : 'border-border text-muted-foreground'
                       return (
                         <div
                           key={it.idea_id}
                           className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3"
                         >
-                          <div className="flex items-start gap-2">
-                            <span className="font-mono text-[11px] font-medium text-muted-foreground">
-                              #{idx + 1}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={`shrink-0 font-mono text-[10px] ${scoreColor}`}
-                            >
-                              {it.score}/100
-                            </Badge>
-                            <Badge
-                              variant="outline"
-                              className={`shrink-0 text-[10px] ${funnelColor}`}
-                            >
-                              {it.funnel}
-                            </Badge>
-                            <p className="flex-1 text-xs leading-relaxed text-foreground">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                                #{idx + 1}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={cn('h-auto shrink-0 py-0.5 text-sm tabular-nums', scoreColor)}
+                              >
+                                {it.score}/100
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className={cn('h-auto shrink-0 py-0.5 text-sm', funnelColor)}
+                              >
+                                {it.funnel}
+                              </Badge>
+                            </div>
+                            <p className="text-[15px] leading-relaxed text-foreground">
                               {it.content.slice(0, 200)}
                               {it.content.length > 200 ? '…' : ''}
                             </p>
                           </div>
-                          <div className="flex flex-col gap-1 border-t border-border pt-2 text-[11px] text-muted-foreground">
+                          <div className="flex flex-col gap-1 border-t border-border pt-2 text-sm text-muted-foreground">
                             <div>
                               <span className="font-medium text-foreground">
                                 Hook propuesto:
@@ -840,11 +863,10 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                                 setRankOpen(false)
                                 setTimeout(() => openGenerate(it.idea_id), 200)
                               }}
-                              size="sm"
                               variant={idx < 3 ? 'default' : 'ghost'}
-                              className="h-7 gap-1 text-xs"
+                              className="w-full gap-1 md:w-auto"
                             >
-                              <Sparkles className="h-3 w-3" />
+                              <Wand2 className="h-4 w-4" />
                               Generar guion
                             </Button>
                           </div>
@@ -855,12 +877,13 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                 </>
               )}
             </div>
-          </ScrollArea>
-          <div className="flex items-center justify-between gap-2 border-t border-border bg-card/30 px-6 py-3">
-            <p className="text-[11px] text-muted-foreground">
+          </div>
+          {/* sticky, no fixed: lo que se desplaza es la hoja */}
+          <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-popover px-4 pt-3 pb-safe-4 md:flex-row md:items-center md:justify-between md:px-6 md:pb-3">
+            <p className="text-sm text-muted-foreground">
               Te recomiendo grabar las top 3 esta semana.
             </p>
-            <Button variant="ghost" onClick={() => setRankOpen(false)}>
+            <Button variant="ghost" className="w-full md:w-auto" onClick={() => setRankOpen(false)}>
               Cerrar
             </Button>
           </div>
@@ -872,54 +895,56 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         open={addOpen}
         onOpenChange={(v) => !addingSource && setAddOpen(v)}
       >
-        <SheetContent
-          side="right"
-          className="flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md"
-        >
-          <SheetHeader className="border-b border-border px-6 py-4">
-            <SheetTitle className="text-base">Conectar Google Doc</SheetTitle>
-            <SheetDescription className="text-xs">
+        <SheetContent side="bottom" className={hojaAncho('md:max-w-md')}>
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+          <SheetHeader className="border-b border-border px-4 py-4 md:px-6">
+            <SheetTitle className="text-[17px] font-semibold">Conectar Google Doc</SheetTitle>
+            <SheetDescription className="text-sm">
               Pega la URL del doc. Importante: tiene que estar en modo
               &quot;cualquiera con el link puede ver&quot; (no requiere login).
             </SheetDescription>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="px-4 py-4 md:px-6">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   URL del Google Doc
                 </label>
                 <Input
                   value={newDocUrl}
                   onChange={(e) => setNewDocUrl(e.target.value)}
+                  inputMode="url"
+                  enterKeyHint="next"
                   placeholder="https://docs.google.com/document/d/..."
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Nombre interno (opcional)
                 </label>
                 <Input
                   value={newDocName}
                   onChange={(e) => setNewDocName(e.target.value)}
+                  enterKeyHint="done"
                   placeholder="Ej: Mi doc de ideas"
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Para hacer público el doc: en Google Docs → Compartir →
                 &quot;Cualquier persona con el enlace&quot; → Lector.
               </p>
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 border-t border-border bg-card/30 px-6 py-3">
+          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-border bg-popover px-4 pt-3 pb-safe-4 md:flex-row md:items-center md:justify-end md:px-6 md:pb-3">
             <Button
               variant="ghost"
+              className="w-full md:w-auto"
               onClick={() => setAddOpen(false)}
               disabled={addingSource}
             >
               Cancelar
             </Button>
-            <Button onClick={addSource} disabled={addingSource} className="gap-2">
+            <Button onClick={addSource} disabled={addingSource} className="w-full gap-2 md:w-auto">
               {addingSource ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -941,26 +966,24 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
         open={generateIdeaId !== null}
         onOpenChange={(v) => !generating && !v && setGenerateIdeaId(null)}
       >
-        <SheetContent
-          side="right"
-          className="flex w-full max-w-xl flex-col gap-0 p-0 sm:max-w-xl"
-        >
-          <SheetHeader className="border-b border-border px-6 py-4">
-            <SheetTitle className="flex items-center gap-2 text-base">
-              <Sparkles className="h-4 w-4" />
+        <SheetContent side="bottom" className={hojaAncho('md:max-w-xl')}>
+          <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+          <SheetHeader className="border-b border-border px-4 py-4 md:px-6">
+            <SheetTitle className="flex items-center gap-2 text-[17px] font-semibold">
+              <Wand2 className="h-4 w-4" />
               Generar guion desde idea
             </SheetTitle>
-            <SheetDescription className="text-xs">
+            <SheetDescription className="text-sm">
               Elige los filtros del corpus para anclar el guion. El sistema
               creará un chat con esos videos en contexto y la idea como brief
               inicial.
             </SheetDescription>
           </SheetHeader>
-          <ScrollArea className="flex-1 overflow-y-auto">
-            <div className="flex flex-col gap-5 px-6 py-4">
+          <div>
+            <div className="flex flex-col gap-5 px-4 py-4 md:px-6">
               {/* Cuentas */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Cuentas de referencia
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -973,7 +996,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                       else for (const id of ids) next.add(id)
                       setGenSelectedAccountIds(next)
                     }}
-                    className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                    className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
                   >
                     todas style
                   </button>
@@ -986,21 +1009,21 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                       else for (const id of ids) next.add(id)
                       setGenSelectedAccountIds(next)
                     }}
-                    className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                    className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
                   >
                     todas niche
                   </button>
                   <button
                     onClick={() => setGenSelectedAccountIds(new Set())}
-                    className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                    className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
                   >
                     limpiar (= todas)
                   </button>
                 </div>
                 {accounts.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">Cargando cuentas…</div>
+                  <div className="text-sm text-muted-foreground">Cargando cuentas…</div>
                 ) : (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {accounts
                       .filter((a) => !a.is_own)
                       .map((a) => {
@@ -1014,11 +1037,13 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                               else next.add(a.id)
                               setGenSelectedAccountIds(next)
                             }}
-                            className={`rounded-full px-2 py-0.5 text-[11px] transition ${
+                            aria-pressed={sel}
+                            className={cn(
+                              'h-11 rounded-lg border px-3 text-sm transition md:h-8',
                               sel
-                                ? 'bg-foreground text-background'
-                                : 'border border-border text-foreground hover:bg-muted/50'
-                            }`}
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border text-foreground active:bg-muted/50',
+                            )}
                           >
                             @{a.handle}
                           </button>
@@ -1030,7 +1055,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
 
               {/* Periodo */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Periodo
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -1060,11 +1085,13 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                             from_date: opt.d ? daysAgoISO(opt.d) : undefined,
                           })
                         }
-                        className={`rounded-md border border-border px-2.5 py-1 text-xs ${
+                        aria-pressed={active}
+                        className={cn(
+                          'h-11 rounded-lg border border-border px-3 text-sm md:h-8',
                           active
-                            ? 'bg-foreground text-background'
-                            : 'text-foreground hover:bg-muted/50'
-                        }`}
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'text-foreground active:bg-muted/50',
+                        )}
                       >
                         {opt.label}
                       </button>
@@ -1075,7 +1102,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
 
               {/* Min views */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Views mínimos
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -1099,11 +1126,13 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                             min_views: opt.v === 0 ? undefined : opt.v,
                           })
                         }
-                        className={`rounded-md border border-border px-2.5 py-1 text-xs ${
+                        aria-pressed={active}
+                        className={cn(
+                          'h-11 rounded-lg border border-border px-3 text-sm md:h-8',
                           active
-                            ? 'bg-foreground text-background'
-                            : 'text-foreground hover:bg-muted/50'
-                        }`}
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'text-foreground active:bg-muted/50',
+                        )}
                       >
                         {opt.label}
                       </button>
@@ -1112,9 +1141,9 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <label className="text-[15px] font-semibold text-muted-foreground">
                     Orden
                   </label>
                   <select
@@ -1125,7 +1154,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                         order_by: e.target.value as Filters['order_by'],
                       })
                     }
-                    className="h-9 rounded-md border border-input bg-transparent px-2 text-xs"
+                    className={SELECT_CLASS}
                   >
                     <option value="engagement_rate">Engagement</option>
                     <option value="views">Views</option>
@@ -1135,32 +1164,33 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <label className="text-[15px] font-semibold text-muted-foreground">
                     Max videos
                   </label>
                   <Input
                     type="number"
+                    inputMode="numeric"
                     min={3}
                     max={50}
                     value={genTotalLimit}
                     onChange={(e) =>
                       setGenTotalLimit(parseInt(e.target.value, 10) || 20)
                     }
-                    className="h-9"
                   />
                 </div>
               </div>
             </div>
-          </ScrollArea>
-          <div className="flex items-center justify-end gap-2 border-t border-border bg-card/30 px-6 py-3">
+          </div>
+          <div className="sticky bottom-0 flex flex-col-reverse gap-2 border-t border-border bg-popover px-4 pt-3 pb-safe-4 md:flex-row md:items-center md:justify-end md:px-6 md:pb-3">
             <Button
               variant="ghost"
+              className="w-full md:w-auto"
               onClick={() => setGenerateIdeaId(null)}
               disabled={generating}
             >
               Cancelar
             </Button>
-            <Button onClick={runGenerate} disabled={generating} className="gap-2">
+            <Button onClick={runGenerate} disabled={generating} className="w-full gap-2 md:w-auto">
               {generating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1168,7 +1198,7 @@ export function IdeasTab({ onChatGenerated }: IdeasTabProps = {}) {
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4" />
+                  <Wand2 className="h-4 w-4" />
                   Crear chat
                 </>
               )}

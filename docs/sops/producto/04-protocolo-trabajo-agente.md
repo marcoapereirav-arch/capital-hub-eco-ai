@@ -564,3 +564,33 @@ ni de la rama que se tenga puesta.
   trabajando donde no toca.
 - Publicar sigue igual: la rama entra en `dev` y `dev` en `main` por union, y
   unir no es guardar, asi que el freno no estorba.
+
+---
+
+## REGLA #23 — Antes de borrar algo, comprobar QUIEN lo usa de verdad
+
+Marco pide retirar una pantalla y la reaccion facil es borrar todo lo que se llame igual.
+**Eso rompe cosas vivas sin dar ningun error.**
+
+Pasos, en este orden, ANTES de borrar una linea:
+
+1. **Mirar los datos.** Si tiene tabla, contar filas. El calendario propio tenia **0
+   reservas en toda su vida** y los lead magnets **1 entrega**: eso confirmo que se podian
+   ir. Si hubiera habido cientos, la conversacion era otra.
+2. **Buscar quien lo importa desde FUERA de su carpeta.** Ahi aparecen las sorpresas.
+3. **Mirar si alguna pagina PUBLICADA depende de ello.** Una web en borrador se puede
+   romper; una publicada la ve un lead.
+4. **Desconfiar de los nombres.** Los correos `agenda-*` no eran de la agenda propia: los
+   manda el reloj de **Calendly**. Llegue a borrarlos y los restaure al comprobarlo. Sin
+   esa comprobacion, los leads se habrian quedado **sin recordatorio de su llamada** y
+   nadie se habria enterado hasta que alguien no apareciera a una llamada.
+5. **Despues de borrar, buscar los enlaces que apuntaban ahi.** Quedaron dos enlaces a
+   `/agenda` en la pantalla del calendario, llevando a un 404.
+
+**Y lo que NO se borra sin permiso explicito:** las tablas y los datos de la base, y los
+eventos de medicion ya enviados a Meta (quitarlos del catalogo rompe la lectura de lo que
+ya se disparo).
+
+**Why:** 2026-08-07, retirando los lead magnets y la agenda propia. Los dos borrados eran
+correctos; lo que casi sale mal fueron las cosas que se llamaban igual y las que quedaron
+apuntando a lo borrado.

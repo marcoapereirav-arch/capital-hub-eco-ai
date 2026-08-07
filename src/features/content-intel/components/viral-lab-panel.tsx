@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import {
   Loader2,
-  Sparkles,
+  Wand2,
   FlaskConical,
   ChevronDown,
   ChevronUp,
@@ -14,9 +14,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 import { useAccounts } from '../hooks/use-accounts'
 import { formatHandle } from '../lib/normalize-handle'
 import {
@@ -52,11 +52,15 @@ interface FromAngleResponse {
 }
 
 const INTENT_DOT_COLOR: Record<ViralIntent, string> = {
-  viral: 'bg-foreground',
-  cta: 'bg-foreground',
-  conexion: 'bg-foreground',
+  viral: 'bg-primary',
+  cta: 'bg-primary',
+  conexion: 'bg-primary',
   libre: 'bg-muted-foreground',
 }
+
+// Desplegable nativo con los 44 puntos del dedo y los colores del tema.
+const SELECT_CLASS =
+  'h-11 w-full rounded-lg border border-input bg-transparent px-3 text-base text-foreground md:h-8 md:text-sm'
 
 const FIT_LABEL: Record<'alta' | 'media' | 'baja', string> = {
   alta: 'Avatar · alta',
@@ -64,8 +68,9 @@ const FIT_LABEL: Record<'alta' | 'media' | 'baja', string> = {
   baja: 'Avatar · baja',
 }
 
+// El encaje alto se marca con el verde de marca; el resto, con el borde normal.
 const FIT_RING: Record<'alta' | 'media' | 'baja', string> = {
-  alta: 'ring-2 ring-foreground/30',
+  alta: 'ring-2 ring-primary/40',
   media: 'ring-1 ring-border',
   baja: 'ring-1 ring-border',
 }
@@ -213,7 +218,7 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
             Viral Lab
           </h3>
         </div>
-        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        <p className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
           Filtra videos del corpus, deja que el sistema analice patrones reales + tu voz, y elige qué ángulos quieres convertir en guion.
         </p>
       </div>
@@ -222,11 +227,12 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
       <div className="rounded-xl border border-border bg-card">
         <button
           onClick={() => setFilterOpen(!filterOpen)}
-          className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left transition-colors hover:bg-muted/20"
+          aria-expanded={filterOpen}
+          className="flex min-h-11 w-full items-center justify-between gap-2 px-4 py-4 text-left transition-colors active:bg-muted/20 md:px-5 md:hover:bg-muted/20"
         >
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-foreground">Filtro del corpus</span>
-            <span className="text-xs text-muted-foreground">{selectedLabel}</span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-[15px] font-medium text-foreground">Filtro del corpus</span>
+            <span className="truncate text-sm text-muted-foreground">{selectedLabel}</span>
           </div>
           {filterOpen ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -236,12 +242,12 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
         </button>
 
         {filterOpen && (
-          <div className="flex flex-col gap-5 border-t border-border px-5 pb-5 pt-4">
+          <div className="flex flex-col gap-5 border-t border-border px-4 pt-4 pb-5 md:px-5">
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-muted-foreground">
-                Cuentas <span className="text-muted-foreground/60">· vacío = todas activas</span>
+              <label className="text-[15px] font-semibold text-muted-foreground">
+                Cuentas <span className="font-normal">· vacío = todas activas</span>
               </label>
-              <div className="mt-1 flex flex-wrap gap-1">
+              <div className="mt-1 flex flex-wrap gap-1.5">
                 {accounts
                   .filter((a) => a.is_active)
                   .map((a) => {
@@ -251,11 +257,13 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
                         key={a.id}
                         type="button"
                         onClick={() => toggleAccount(a.id)}
-                        className={`rounded-md border px-2.5 py-1 text-xs transition-colors ${
+                        aria-pressed={active}
+                        className={cn(
+                          'h-11 rounded-lg border px-3 text-sm transition-colors md:h-8',
                           active
-                            ? 'border-foreground bg-foreground text-background'
-                            : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
-                        }`}
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border text-muted-foreground md:hover:border-primary/40 md:hover:text-foreground',
+                        )}
                         title={`${a.role} · ${a.video_count} videos`}
                       >
                         {formatHandle(a.handle, a.platform)}
@@ -265,15 +273,15 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-muted-foreground">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Min. views
                 </label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min={0}
-                  className="h-8"
                   placeholder="0"
                   value={minViews ?? ''}
                   onChange={(e) => {
@@ -283,12 +291,12 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
                 />
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-muted-foreground">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Últimos X días
                 </label>
                 <select
-                  className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
+                  className={SELECT_CLASS}
                   value={dateRangeDays ?? ''}
                   onChange={(e) =>
                     setDateRangeDays(e.target.value === '' ? null : Number(e.target.value))
@@ -303,12 +311,12 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-muted-foreground">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Ordenar por
                 </label>
                 <select
-                  className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
+                  className={SELECT_CLASS}
                   value={orderBy}
                   onChange={(e) => setOrderBy(e.target.value as OrderBy)}
                 >
@@ -320,15 +328,15 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-muted-foreground">
-                  Top por cuenta <span className="text-muted-foreground/60">· opcional</span>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[15px] font-semibold text-muted-foreground">
+                  Top por cuenta <span className="font-normal">· opcional</span>
                 </label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   max={50}
-                  className="h-8"
                   placeholder="sin límite"
                   value={topNPerAccount ?? ''}
                   onChange={(e) => {
@@ -339,17 +347,18 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="text-xs text-muted-foreground">Tope total de videos</label>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+              <label className="text-[15px] font-semibold text-muted-foreground">Tope total de videos</label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min={5}
                 max={100}
-                className="h-9 w-24"
+                className="w-full md:w-24"
                 value={totalLimit}
                 onChange={(e) => setTotalLimit(Math.max(5, Math.min(100, Number(e.target.value) || 50)))}
               />
-              <span className="text-xs text-muted-foreground/70">
+              <span className="text-sm text-muted-foreground">
                 máximo 100 para controlar coste
               </span>
             </div>
@@ -358,18 +367,18 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
       </div>
 
       {/* GENERACIÓN */}
-      <div className="rounded-xl border border-border bg-card p-5">
+      <div className="rounded-xl border border-border bg-card p-4 md:p-5">
         <div className="mb-4 flex flex-col gap-1">
-          <span className="text-sm font-medium text-foreground">Qué generar</span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[15px] font-medium text-foreground">Qué generar</span>
+          <span className="text-sm text-muted-foreground">
             Si pones 0 guiones, solo verás los 5 ángulos detectados — eliges manualmente cuáles convertir.
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-muted-foreground">Intent</label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[15px] font-semibold text-muted-foreground">Intent</label>
             <select
-              className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
+              className={SELECT_CLASS}
               value={intent}
               onChange={(e) => setIntent(e.target.value as ViralIntent)}
             >
@@ -381,22 +390,22 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
             </select>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-xs text-muted-foreground">Número de guiones</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[15px] font-semibold text-muted-foreground">Número de guiones</label>
             <Input
               type="number"
+              inputMode="numeric"
               min={0}
               max={10}
-              className="h-9"
               value={numScripts}
               onChange={(e) => setNumScripts(Math.max(0, Math.min(10, Number(e.target.value) || 0)))}
             />
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-2">
-          <label className="text-xs text-muted-foreground">
-            Brief adicional <span className="text-muted-foreground/60">· opcional</span>
+        <div className="mt-4 flex flex-col gap-1.5">
+          <label className="text-[15px] font-semibold text-muted-foreground">
+            Brief adicional <span className="font-normal">· opcional</span>
           </label>
           <Textarea
             rows={3}
@@ -408,24 +417,24 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
       </div>
 
       {/* ACCIÓN */}
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
-          Coste estimado <span className="text-foreground/70">~${(totalLimit * 0.015 + numScripts * 0.1).toFixed(2)}</span>
-          <span className="px-1.5 text-muted-foreground/50">·</span>
-          Tiempo <span className="text-foreground/70">~{Math.max(1, Math.ceil(totalLimit / 20) + numScripts)} min</span>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm tabular-nums text-muted-foreground">
+          Coste estimado <span className="text-foreground">~${(totalLimit * 0.015 + numScripts * 0.1).toFixed(2)}</span>
+          <span className="px-1.5" aria-hidden>·</span>
+          Tiempo <span className="text-foreground">~{Math.max(1, Math.ceil(totalLimit / 20) + numScripts)} min</span>
         </p>
         <div className="flex items-center gap-2">
           {loading && (
-            <Button onClick={cancel} variant="ghost" size="default">
+            <Button onClick={cancel} variant="ghost" className="flex-1 md:flex-none">
               <X className="mr-1.5 h-4 w-4" />
               Cancelar
             </Button>
           )}
-          <Button onClick={run} disabled={loading} size="default">
+          <Button onClick={run} disabled={loading} className="flex-1 md:flex-none">
             {loading ? (
               <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
             ) : (
-              <Sparkles className="mr-1.5 h-4 w-4" />
+              <Wand2 className="mr-1.5 h-4 w-4" />
             )}
             Ejecutar Viral Lab
           </Button>
@@ -440,11 +449,11 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
 
       {/* LOADING */}
       {loading && (
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 md:p-5">
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-4 w-1/2" />
           <Skeleton className="h-4 w-3/4" />
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             Filtrando videos · auto-transcribiendo lo que falte · analizando patrones · detectando 5 ángulos accionables.
           </p>
         </div>
@@ -455,18 +464,18 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
         <div className="flex flex-col gap-6">
           {/* Banner de pendientes (si hay scripts ya generados) */}
           {result.script_ids.length > 0 && (
-            <div className="rounded-xl border border-foreground/30 bg-foreground/[0.04] p-5">
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 md:p-5">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-[15px] font-medium text-foreground">
                     {result.script_ids.length} guion{result.script_ids.length !== 1 && 'es'} creado{result.script_ids.length !== 1 && 's'} en Pendientes
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm tabular-nums text-muted-foreground">
                     Drafts guardados · {result.tokens_used.toLocaleString('es-ES')} tokens · ${result.cost_usd.toFixed(4)}
                   </p>
                 </div>
                 {onSwitchToGenerate && (
-                  <Button onClick={onSwitchToGenerate} variant="outline" size="default" className="shrink-0">
+                  <Button onClick={onSwitchToGenerate} variant="outline" className="w-full shrink-0 md:w-auto">
                     Ver pendientes
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -482,42 +491,46 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
                 <h3 className="font-heading text-xl font-medium tracking-tight text-foreground">
                   Top {result.angles.length} ángulos para esta semana
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[15px] text-muted-foreground">
                   La IA propone los ángulos más fuertes según tu corpus + tu avatar. Genera el guion del que más te convenza con un clic.
                 </p>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {result.angles.map((angle, i) => {
                   const isLoading = angleLoading === i
                   const isGenerated = generatedAngles.has(i)
                   return (
                     <div
                       key={i}
-                      className={`flex flex-col gap-4 rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/40 ${FIT_RING[angle.avatar_fit]} ${isGenerated ? 'opacity-60' : ''}`}
+                      className={cn(
+                        'flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-all md:p-5 md:hover:border-primary/40',
+                        FIT_RING[angle.avatar_fit],
+                        isGenerated && 'opacity-60',
+                      )}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-sm text-muted-foreground">
                           {FIT_LABEL[angle.avatar_fit]}
                         </span>
                         <div className="flex items-center gap-1.5">
-                          <span className={`h-1.5 w-1.5 rounded-full ${INTENT_DOT_COLOR[angle.suggested_intent]}`} />
-                          <span className="text-xs text-muted-foreground">
+                          <span className={cn('h-2 w-2 rounded-full', INTENT_DOT_COLOR[angle.suggested_intent])} />
+                          <span className="text-sm text-muted-foreground">
                             {VIRAL_INTENT_LABELS[angle.suggested_intent]}
                           </span>
                         </div>
                       </div>
 
-                      <h4 className="font-heading text-lg font-medium leading-snug tracking-tight text-foreground">
+                      <h4 className="font-heading text-lg leading-snug font-medium tracking-tight text-foreground">
                         {angle.title}
                       </h4>
 
-                      <p className="text-sm leading-relaxed text-foreground/80">
+                      <p className="text-[15px] leading-relaxed text-foreground">
                         <span className="text-muted-foreground">Hook · </span>
                         {angle.hook_idea}
                       </p>
 
-                      <p className="text-xs leading-relaxed text-muted-foreground">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
                         {angle.why_it_works}
                       </p>
 
@@ -526,22 +539,21 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
                           onClick={() => handleGenerateFromAngle(angle, i)}
                           disabled={isLoading || isGenerated}
                           variant={isGenerated ? 'ghost' : 'default'}
-                          size="sm"
                           className="w-full"
                         >
                           {isLoading ? (
                             <>
-                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                               Generando…
                             </>
                           ) : isGenerated ? (
                             <>
-                              <Check className="mr-1.5 h-3.5 w-3.5" />
+                              <Check className="mr-1.5 h-4 w-4" />
                               Generado
                             </>
                           ) : (
                             <>
-                              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                              <Wand2 className="mr-1.5 h-4 w-4" />
                               Generar guion
                             </>
                           )}
@@ -558,11 +570,12 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
           <div className="rounded-xl border border-border bg-card">
             <button
               onClick={() => setAnalysisOpen(!analysisOpen)}
-              className="flex w-full items-center justify-between gap-2 px-5 py-4 text-left transition-colors hover:bg-muted/20"
+              aria-expanded={analysisOpen}
+              className="flex min-h-11 w-full items-center justify-between gap-2 px-4 py-4 text-left transition-colors active:bg-muted/20 md:px-5 md:hover:bg-muted/20"
             >
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">Análisis completo de patrones</span>
-                <span className="text-xs text-muted-foreground">
+              <div className="flex min-w-0 flex-col">
+                <span className="text-[15px] font-medium text-foreground">Análisis completo de patrones</span>
+                <span className="text-sm tabular-nums text-muted-foreground">
                   {result.videos_used} videos analizados · markdown crudo
                 </span>
               </div>
@@ -576,7 +589,7 @@ export function ViralLabPanel({ onSwitchToGenerate }: ViralLabPanelProps) {
             {analysisOpen && (
               <>
                 <Separator />
-                <div className="max-h-[60vh] overflow-auto whitespace-pre-wrap px-5 py-4 text-sm leading-relaxed text-foreground">
+                <div className="no-overscroll max-h-[60dvh] overflow-auto px-4 py-4 text-[15px] leading-relaxed whitespace-pre-wrap text-foreground md:px-5">
                   {result.analysis_markdown}
                 </div>
               </>

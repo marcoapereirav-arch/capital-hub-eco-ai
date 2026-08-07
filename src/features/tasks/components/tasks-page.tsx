@@ -101,7 +101,7 @@ export function TasksPage() {
         <button
           type="submit"
           disabled={!nueva.trim()}
-          className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-brand px-4 text-[15px] font-semibold text-background active:opacity-90 disabled:opacity-40 md:h-9 md:text-sm"
+          className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-brand px-4 text-[15px] font-semibold text-brand-ink active:opacity-90 disabled:opacity-40 md:h-9 md:text-sm"
         >
           <Plus className="size-4" />
           Añadir
@@ -226,7 +226,7 @@ function EstadoVacio({
         <button
           type="button"
           onClick={onQuitarFiltros}
-          className="h-11 rounded-lg bg-brand px-4 text-[15px] font-semibold text-background active:opacity-90"
+          className="h-11 rounded-lg bg-brand px-4 text-[15px] font-semibold text-brand-ink active:opacity-90"
         >
           Quitar filtros
         </button>

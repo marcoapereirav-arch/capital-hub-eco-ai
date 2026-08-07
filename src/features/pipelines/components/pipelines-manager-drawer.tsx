@@ -1,52 +1,49 @@
 "use client"
 
-import { useEffect } from "react"
-import { X } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { PipelinesPage } from "./pipelines-page"
 
 /**
- * Drawer overlay que muestra el gestor de pipelines DENTRO del entorno actual
- * (no se navega a otra pagina). Cerrar con ESC o click fuera.
+ * Gestor de pipelines DENTRO del entorno actual (no se navega a otra pagina).
  *
- * Por que un drawer y no una pagina:
+ * Por que aqui y no en una pagina:
  *   El usuario configura pipelines en el contexto del CRM (kanban o lista),
- *   sin perder de vista los contactos. Configurar y volver = 1 click.
+ *   sin perder de vista los contactos. Configurar y volver = 1 toque.
+ *
+ * El lado NO se decide con JavaScript: `useIsMobile()` devuelve false hasta que
+ * monta, asi que se pintaria primero un cajon lateral y despues saltaria abajo.
+ * Se deja `side="bottom"` fijo y el ordenador se ajusta con clases md:.
  */
 export function PipelinesManagerDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  useEffect(() => {
-    if (!open) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose()
-    }
-    document.addEventListener("keydown", onKey)
-    return () => document.removeEventListener("keydown", onKey)
-  }, [open, onClose])
-
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
-      <button
-        onClick={onClose}
-        className="flex-1 bg-black/60 backdrop-blur-[2px]"
-        aria-label="Cerrar gestor de pipelines"
-      />
-      {/* Panel */}
-      <div className="w-full max-w-4xl bg-background border-l border-border overflow-y-auto">
-        <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Gestor de Pipelines</h2>
-            <p className="text-[11px] text-muted-foreground">Crea, edita y reordena pipelines y sus stages.</p>
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="p-4 md:p-6">
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+      <SheetContent
+        side="bottom"
+        className={
+          // El `!` no es adorno: la base de sheet.tsx pinta el lado inferior con
+          // `data-[side=bottom]:...`, que compila como `.clase[data-side=bottom]` y
+          // pesa mas que cualquier clase de una sola palabra. Sin el, ni la pantalla
+          // entera del telefono ni el cajon del ordenador llegan a aplicarse.
+          // TELEFONO: hoja a pantalla completa. El gestor tiene lista + detalle, y
+          // con media pantalla no se ve nada de las dos.
+          "h-[100dvh]! max-h-[100dvh]! w-full gap-0 rounded-t-xl " +
+          // ORDENADOR: cajon ancho por la derecha, con las mismas clases y cero JavaScript.
+          "md:inset-y-0! md:right-0! md:left-auto! md:h-full! md:max-h-none! md:w-[52rem] md:max-w-[52rem] md:rounded-l-xl md:border-l"
+        }
+      >
+        {/* La agarradera es lo que hace que se lea como hoja y no como error */}
+        <div className="mx-auto mt-1 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+        {/* pr-14: el boton de cerrar de la hoja mide 44 puntos en telefono y vive en
+            la esquina de arriba a la derecha. Sin este hueco, la descripcion se mete
+            por debajo de la X. */}
+        <SheetHeader className="shrink-0 px-4 pr-14 md:px-6">
+          <SheetTitle className="text-[17px] font-semibold">Gestor de pipelines</SheetTitle>
+          <SheetDescription>Crea, edita y reordena pipelines y sus stages.</SheetDescription>
+        </SheetHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-safe-4 md:px-6">
           <PipelinesPage hideHeader />
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }
