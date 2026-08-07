@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
-import { AdsInsights } from "./ads-insights"
+import { AdsPanel } from "./ads-panel"
 import { AdsEventsHealth, RegistroTecnico } from "./ads-events-health"
 
 /**
@@ -57,8 +57,9 @@ interface Props {
 }
 
 export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEventCode }: Props) {
-  // Se abre en Eventos: lo primero que hay que saber es si esto está midiendo.
-  const [tab, setTab] = useState<AdsTab>("eventos")
+  // Se abre en Campañas: lo primero es el dinero, que es a lo que se entra. A Eventos se
+  // va cuando quieres comprobar la medición, no de entrada (Marco, 2026-08-07).
+  const [tab, setTab] = useState<AdsTab>("campanas")
   const active = TABS.find((t) => t.id === tab)!
 
   return (
@@ -79,7 +80,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+                  "flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-[15px] font-medium transition-colors md:h-9 md:text-sm",
                   isActive
                     ? "border-foreground text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground"
@@ -97,7 +98,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
           <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
         </div>
 
-        {tab === "campanas" && <AdsInsights />}
+        {tab === "campanas" && <AdsPanel />}
 
         {tab === "eventos" && (
           <div className="flex flex-col gap-4">
