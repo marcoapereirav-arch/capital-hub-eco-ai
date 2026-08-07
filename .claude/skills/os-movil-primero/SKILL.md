@@ -180,6 +180,36 @@ todo de 20 en 20.
 
 ---
 
+## 2 bis bis. NADA QUEDA DEBAJO DEL BOTON FLOTANTE. En telefono Y en ordenador
+
+> Marco, 2026-08-07: *"el widget de registrar venta no deja darle a crear el link. Esto
+> siempre lo debes tener en cuenta en TODAS las pantallas... no es la primera vez que sucede"*.
+
+El flotante "Registrar venta" vive fijo en la esquina de abajo a la derecha, en las 35
+pantallas. Lo que cae justo debajo **se ve pero no se puede pulsar**: el clic se lo lleva el
+flotante. Y el que siempre cae debajo es **el ultimo boton de la pantalla**, porque ya no
+queda contenido para apartarlo desplazando.
+
+**La reserva de sitio va en `PageContainer`, una vez, y vale para las 35.** En telefono ya
+estaba; **en ordenador faltaba** (`md:pb-6`), y por eso volvia a pasar:
+
+```
+pb-[calc(7rem+var(--sab)+1rem)]  md:pb-24
+```
+
+Reglas:
+
+- **Ninguna pantalla pone su accion principal en la esquina de abajo a la derecha.** Ese sitio
+  ya esta ocupado.
+- **Toda pantalla va dentro de `<PageContainer>`**, que es quien reserva el hueco. Una
+  pantalla que se lo salta se lo come.
+- **Se comprueba con la pagina AL FINAL**, no al principio: es ahi donde aparece.
+
+`npm run check:movil` lo mide: "Botones que el flotante deja sin pulsar". Un solo boton ahi
+cuenta como pantalla rota.
+
+---
+
 ## 2 ter. UN SOLO DESPLAZAMIENTO POR PANTALLA. El fallo que congela la app
 
 > Marco, 2026-08-07: *"Esta rota la pantalla, no puedo hacer scroll... arreglalo de raiz, que

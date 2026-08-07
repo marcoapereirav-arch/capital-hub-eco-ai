@@ -104,3 +104,31 @@ informe.
 Encontrado por Marco en la Configuración de Afiliados. Arreglado en `ListaPaginada` (afecta a
 las 5 pantallas que la usan a la vez), con `propioScroll` como excepción explícita para
 ventanas y hojas, y con la medición añadida a `check:movil` para que no vuelva a colarse.
+
+---
+
+# Y lo mismo con el botón flotante: nada debajo de él
+
+> Marco, 2026-08-07: *"el widget de registrar venta no deja darle a crear el link. Esto
+> siempre lo debes tener en cuenta en TODAS las pantallas... no es la primera vez que sucede"*.
+
+El flotante "Registrar venta" está fijo en la esquina de abajo a la derecha en las 35
+pantallas. Lo que cae debajo **se ve pero no se puede pulsar**, y el que siempre cae debajo es
+**el último botón de la pantalla**: ya no queda contenido para apartarlo desplazando.
+
+**El sitio se reserva en `PageContainer`, una sola vez, y vale para las 35.** En teléfono ya
+estaba reservado desde el barrido de agosto; **en ordenador no** (`md:pb-6`). Esa es la razón
+exacta de que se repitiera: se arregló para el teléfono y se dio por cerrado.
+
+```
+pb-[calc(7rem+var(--sab)+1rem)]   md:pb-24
+```
+
+Reglas al construir:
+
+- Ninguna pantalla pone su acción principal en la esquina de abajo a la derecha.
+- Toda pantalla va dentro de `<PageContainer>`, que es quien reserva el hueco.
+- **Se comprueba con la página al FINAL**, no al principio: es ahí donde aparece.
+
+`npm run check:movil` lo mide ahora: "Botones que el flotante deja sin pulsar". Un solo botón
+ahí cuenta como pantalla rota.

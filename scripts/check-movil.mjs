@@ -546,6 +546,50 @@ function medirPantalla(opciones) {
    * Se marca solo cuando de verdad molesta: el cajon ocupa buena parte de la
    * pantalla Y la pagina todavia tiene contenido por debajo que alcanzar.
    */
+  /* ── Botones que el FLOTANTE deja fuera de alcance ───────────────────────
+   *
+   * Los flotantes ("Registrar venta", avisos) viven fijos en una esquina. Lo que cae
+   * justo debajo SE VE pero NO SE PUEDE PULSAR: el clic se lo lleva el flotante.
+   * Marco lo encontro dos veces, la ultima encima de "Crear link" en Afiliados.
+   * Se marca solo si lo tapado es algo con lo que se interactua.
+   */
+  const tapadosPorFlotante = []
+  {
+    const flotantes = [...document.querySelectorAll("*")].filter((el) => {
+      const s = getComputedStyle(el)
+      if (s.position !== "fixed" || s.pointerEvents === "none") return false
+      if (s.visibility === "hidden" || s.display === "none" || Number(s.opacity) === 0) return false
+      const r = el.getBoundingClientRect()
+      // Un flotante de esquina, no la barra de abajo ni una cabecera a lo ancho.
+      return r.width > 30 && r.height > 30 && r.width < anchoPantalla * 0.8
+    })
+
+    for (const el of document.querySelectorAll("button,a,[role=button],input,select,textarea")) {
+      const r = el.getBoundingClientRect()
+      if (r.width < 8 || r.height < 8) continue
+      if (r.bottom < 0 || r.top > altoPantalla) continue
+      if (getComputedStyle(el).position === "fixed") continue
+      for (const f of flotantes) {
+        if (f.contains(el) || el.contains(f)) continue
+        const rf = f.getBoundingClientRect()
+        const solapaX = Math.min(r.right, rf.right) - Math.max(r.left, rf.left)
+        const solapaY = Math.min(r.bottom, rf.bottom) - Math.max(r.top, rf.top)
+        if (solapaX <= 2 || solapaY <= 2) continue
+        // El punto central del control: si ahi manda el flotante, no se puede pulsar.
+        const cx = Math.max(0, Math.min(anchoPantalla - 1, r.left + r.width / 2))
+        const cy = Math.max(0, Math.min(altoPantalla - 1, r.top + r.height / 2))
+        const encima = document.elementFromPoint(cx, cy)
+        if (!encima || (!f.contains(encima) && encima !== f)) continue
+        tapadosPorFlotante.push({
+          etiqueta: etiquetaDe(el),
+          texto: textoDe(el),
+          flotante: textoDe(f) || etiquetaDe(f),
+        })
+        break
+      }
+    }
+  }
+
   const trampas = []
   {
     /* Las TRES condiciones tienen que darse a la vez. Si falta una, no molesta a nadie:
@@ -592,6 +636,7 @@ function medirPantalla(opciones) {
     anchoPantalla,
     altoPantalla,
     trampasDeScroll: { total: trampas.length, peores: trampas.slice(0, 5) },
+    tapadosPorFlotante: { total: tapadosPorFlotante.length, peores: tapadosPorFlotante.slice(0, 5) },
     paginaSeArrastra: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     conErrorDeLaApp: Boolean(document.querySelector("nextjs-portal")),
     desbordes: {
@@ -832,13 +877,15 @@ async function principal() {
         if (m.recortes.total) partes.push(`${m.recortes.total} recortados`)
         if (m.tapadosPorLaBarra.total) partes.push(`${m.tapadosPorLaBarra.total} tapados`)
         if (m.trampasDeScroll.total) partes.push(`${m.trampasDeScroll.total} ATRAPAN EL SCROLL`)
+        if (m.tapadosPorFlotante.total) partes.push(`${m.tapadosPorFlotante.total} BAJO EL FLOTANTE`)
         if (m.girado && m.girado.desbordes) partes.push(`${m.girado.desbordes} girado`)
         const cola = gris(` (${m.segundos}s)`)
         const grave =
           m.desbordes.total > 0 ||
           m.recortes.total > 0 ||
           m.tapadosPorLaBarra.total > 0 ||
-          m.trampasDeScroll.total > 0
+          m.trampasDeScroll.total > 0 ||
+          m.tapadosPorFlotante.total > 0
         const limpio = !grave && m.tactiles.total === 0 && m.textos.total === 0
         if (limpio) linea("encaja" + cola)
         else if (grave) linea(rojo(partes.join(" . ")) + cola)
@@ -901,6 +948,10 @@ function informe({ resultados, saltadas, inaccesibles, dinamicas, BASE }) {
   dato("Pantallas medidas", resultados.length)
   dato("Pantallas que encajan enteras", pantallasQueEncajan)
   dato(
+    "Botones que el flotante deja sin pulsar",
+    resultados.reduce((s, r) => s + (r.tapadosPorFlotante?.total ?? 0), 0),
+  )
+  dato(
     "Cajones que ATRAPAN el scroll (pantalla rota)",
     resultados.reduce((s, r) => s + (r.trampasDeScroll?.total ?? 0), 0),
   )
@@ -917,6 +968,7 @@ function informe({ resultados, saltadas, inaccesibles, dinamicas, BASE }) {
   // Una pantalla que atrapa el scroll esta ROTA de usar, no fea: pesa mas que nada.
   const nota = (r) =>
     (r.trampasDeScroll?.total ?? 0) * 40 +
+    (r.tapadosPorFlotante?.total ?? 0) * 20 +
     r.desbordes.total * 10 +
     r.recortes.total * 10 +
     r.tapadosPorLaBarra.total * 6 +

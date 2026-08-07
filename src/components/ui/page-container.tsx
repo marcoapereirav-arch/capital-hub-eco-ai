@@ -44,7 +44,12 @@ export function PageContainer({
         // gestos + 3.5rem del boton verde flotante + 1rem de aire. Sin la parte
         // del boton, este tapa la ultima fila de cada pantalla: se comprobo en
         // Webs (tapaba el lapiz de editar) y en el Dashboard (tapaba las cifras).
-        "pb-[calc(7rem+var(--sab)+1rem)] md:pb-6",
+        // En ORDENADOR faltaba la misma reserva (2026-08-07). El boton flotante
+        // "Registrar venta" vive en `md:bottom-6` a la derecha, y el ultimo boton
+        // de cada pantalla quedaba DEBAJO: se veia, pero no se podia pulsar.
+        // Paso en Afiliados, encima de "Crear link", y no era la primera vez.
+        // 6rem = alto del flotante + su separacion + aire.
+        "pb-[calc(7rem+var(--sab)+1rem)] md:pb-24",
         wide ? "max-w-full" : narrow ? "max-w-4xl" : "max-w-7xl",
         className
       )}
