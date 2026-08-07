@@ -8,23 +8,53 @@
 
 ## Qué se hizo hoy
 
-**El sistema NVISION al día, y sus tres piezas rotas arregladas.**
+**El OS entero pasa al brandkit y a móvil primero. 29 de 30 pantallas sin ningún fallo.**
 
-- Llegó la **puerta de entrada** (`.claude/hooks/puerta-de-entrada.mjs`): no se escribe en
-  la carpeta principal, y no se escribe sin un PRP que Marco haya aprobado. Está activa y
-  probada — bloqueó de verdad durante esta misma sesión.
-- Llegaron `npm run publicar` y `npm run cerrar`: una sola orden cada una, sin preguntas.
-  Faltaban por completo las dos máquinas (`scripts/publicar.mjs`, `scripts/cerrar.mjs`).
-- Tres supuestos de la plantilla no se cumplían aquí y se arreglaron: la puerta no leía
-  rutas con espacio (`Capital Hub`), `publicar` exigía escribir a mano la dirección de la
-  web, y exigía un campo `version` que este proyecto llama `sha`.
-- **Publicado y comprobado:** la web sirve `469d15a`. Tardó 8m 41s (el grueso es Vercel).
+- **Los tokens dicen la verdad.** `accent` y `primary` valían gris y blanco: ahora valen el
+  verde de marca `#22C55E` con tinta `#08130C`, y las dos familias tipográficas apuntan a
+  Inter Tight de verdad (antes empezaban por `-apple-system`, así que en un Mac nunca se
+  llegaba a ella).
+- **Las 35 pantallas internas rehechas móvil primero**, en cinco oleadas con revisor.
+  Medido a 375px con la versión de producción: botones más pequeños que un dedo **234 → 1**,
+  textos ilegibles **1535 → 1**, señales de diseño viejo **619 → 0**, tapados por la barra
+  **11 → 0**. Cero deslizamiento lateral en las 30.
+- **Las 7 piezas del marco común**, que salen en todas a la vez: el notch, el teclado
+  abierto, la hoja inferior, los flotantes que tapaban el menú, los márgenes, las zonas
+  táctiles y la barra de abajo descuadrada.
+- **Dashboard nuevo**: "la cadena". Contactos → Llamadas → Ventas, con cuánta gente se
+  pierde en cada paso dibujado. Con ceros no queda vacío: señala el problema real.
+- **Actividad reciente**: 10 en el panel, ventana con todo de 20 en 20, hora exacta y por
+  dónde entró cada lead.
+- **CRM minimalista**: buscador, acción principal y un solo botón de Filtros. Los ocho
+  desplegables viven dentro.
+- **Retirados**: los lead magnets (1 entrega en toda la base) y la agenda propia (0
+  reservas). La agenda es Calendly.
+- **Ads**: entra por Campañas y el gasto en euros.
 
-**La carpeta del repo, limpia.** 42 capturas, un vídeo de 241 MB y las fotos de Adrián a
-`assets/`. Todo lo que no es del producto (restos de pruebas, entregas viejas, dos ficheros
-con datos bancarios que estaban DENTRO de git) a `Capital Hub-archivo/`, fuera del repo.
+**Tres cosas quedan ancladas para que no vuelva a pasar:**
 
-Detalle completo: [`docs/sops/sistemas/11`](docs/sops/sistemas/11-plantilla-nvision-no-se-adapta-sola.md).
+| Qué | Dónde |
+|---|---|
+| Cómo se construye una pantalla | skill `os-movil-primero` (978 líneas) |
+| Que no se pueda escribir diseño viejo | `scripts/check-brandkit.mjs`, al guardar y al construir |
+| Que ninguna lista se pinte entera (máximo 20) | `src/components/ui/lista-paginada.tsx` + regla del candado |
+
+El candado bloqueó mi propio trabajo cinco veces esta sesión, y las cinco tenía razón.
+
+**Publicado y comprobado:** `/webs/lead-magnets` y `/agenda` dan 404 en producción, que es
+la prueba de que la web sirve lo nuevo.
+
+---
+
+## Qué queda pendiente
+
+- **20 listas viejas sin paginar** (Content Intel con 2.041 vídeos y Tareas con 501 son las
+  que más urgen). Apuntadas como deuda en `.brandkit-debt.json`; las nuevas ya no pueden
+  colarse.
+- **Las tres comprobaciones que ninguna máquina puede hacer**: el notch, el teclado abierto
+  y el teléfono girado. En Chromium sin pantalla la zona segura vale cero, así que salen
+  limpias aunque estén rotas. Hay que mirarlas en un iPhone.
+- **El Board** es la única pantalla con avisos, y es a propósito: su lienzo se arrastra.
 
 ---
 

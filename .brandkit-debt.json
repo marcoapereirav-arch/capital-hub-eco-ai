@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1877,
+  "total": 1872,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -475,14 +475,6 @@
     "src/features/dashboard/components/dashboard-pending-sales.tsx": {
       "lista-sin-paginar": {
         "ventas.map(": 1
-      }
-    },
-    "src/features/dashboard/components/date-filter.tsx": {
-      "texto-por-debajo-del-minimo": {
-        "text-xs": 3
-      },
-      "control-pequeno": {
-        "h-8": 2
       }
     },
     "src/features/dashboard/components/funnel-cards.tsx": {

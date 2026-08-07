@@ -285,6 +285,43 @@ sin estilo, sin ningún error. Los colores calculados van por `style`, nunca por
 Deuda de layout resuelta de paso (quitadas de `DEUDA_CONOCIDA` en `scripts/check-layout.mjs`,
 y prohibido volver a meterlas): `crm/tags/page.tsx` y `crm-tabs-header.tsx`.
 
+## Tres trampas de tokens que fallan EN SILENCIO
+
+Las tres se cometieron el 2026-08-07 y ninguna da error: la pantalla simplemente sale mal.
+
+### 1. Un nombre de token que no existe deja el elemento SIN color
+
+Solo existen los nombres que estan en el bloque `@theme` de `globals.css`. **No existen**
+`bg-carbon`, `bg-panel`, `text-offwhite`, `border-line`, `text-deepmute`, `rounded-card`
+ni `rounded-panel`, aunque la ley de diseno escrita los nombre. Quien los escriba deja la
+pantalla sin fondo, sin borde y sin verde, y parece que no hizo nada.
+
+**Y el peor de todos: `text-muted`.** `muted` es una **superficie** gris oscura, asi que
+usarla como color de TEXTO lo deja invisible sobre el fondo oscuro. El token de texto
+secundario es `text-muted-foreground`.
+
+**Se abre `globals.css` y se comprueba el nombre antes de escribirlo.** Sin excepcion.
+
+### 2. `@theme inline` NO publica la variable
+
+El bloque de tema es `inline`: mete el valor **dentro de la clase** pero **no publica la
+variable CSS**. Consecuencia: `text-warn` funciona, y `var(--color-warn)` **no resuelve**.
+
+El board pintaba su aviso ambar **sin ningun color** por esto, y nadie lo vio porque no da
+error. Arreglo: el token se declara como todos los demas, la variable en `@layer base` y el
+tema apuntando a ella (`--color-warn: var(--warn)`).
+
+### 3. Las utilidades sueltas de `globals.css` NO admiten variante delante
+
+`pt-safe`, `pb-safe` y `px-safe` son clases sueltas escritas a mano, **no** utilidades de
+Tailwind. Por eso `data-[side=bottom]:pb-safe` **no se genera** y falla en silencio: la
+hoja inferior se quedaba sin respetar la franja de gestos del iPhone.
+
+Cuando haga falta una variante, se escribe el valor:
+`data-[side=bottom]:pb-[calc(1rem+env(safe-area-inset-bottom))]`.
+
+---
+
 ## Cambios versionados
 
 - **2026-08-06** (v6): clase de bug nueva documentada, **"la caja que recorta y la caja que
