@@ -5,10 +5,11 @@ import { AlertCircle, ArrowDown, ArrowUp, Loader2, Minus } from "lucide-react"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { cn } from "@/lib/utils"
 import { metricaPorId, type Metrica } from "@/lib/meta/metricas"
-import type { FilaCampana } from "@/lib/meta/panel"
+import type { FilaCampana, FilaConjunto } from "@/lib/meta/panel"
 import { ComparativaCampanas, Embudo, EvolucionDiaria } from "./ads-graficos"
 import { ListaCampanas, pintaValor } from "./ads-campanas"
 import { SelectorMetricas, leerElegidas } from "./ads-selector-metricas"
+import { SelectorAlcance, type Alcance } from "./ads-selector-alcance"
 
 /**
  * El panel de Campañas.
@@ -29,6 +30,7 @@ type Respuesta =
       embudo: { impresiones: number; clicsSalientes: number; visitasWeb: number; leads: number }
       dias: { fecha: string; gasto: number; leads: number; clicsSalientes: number }[]
       campanas: FilaCampana[]
+      conjuntos: FilaConjunto[]
       moneda: string
     }
   | { ok: false; error: string; sinPermiso: boolean }
@@ -42,6 +44,8 @@ export function AdsPanel() {
   const [datos, setDatos] = useState<Respuesta | null>(null)
   const [cargando, setCargando] = useState(false)
   const [elegidas, setElegidas] = useState<string[]>([])
+  // Que campañas o conjuntos estan marcados. Vacio = la cuenta entera.
+  const [alcance, setAlcance] = useState<Alcance>({ campanas: [], conjuntos: [] })
 
   // Las métricas guardadas se leen tras montar: `localStorage` no existe en el servidor y
   // leerlo en el primer pintado haría que la pantalla salte de unas columnas a otras.
@@ -53,7 +57,10 @@ export function AdsPanel() {
     if (!rango) return
     let cancelado = false
     setCargando(true)
-    fetch(`/api/admin/ads/panel?from=${aFecha(rango.from)}&to=${aFecha(rango.to)}`)
+    const q = new URLSearchParams({ from: aFecha(rango.from), to: aFecha(rango.to) })
+    if (alcance.campanas.length) q.set("campanas", alcance.campanas.join(","))
+    if (alcance.conjuntos.length) q.set("conjuntos", alcance.conjuntos.join(","))
+    fetch(`/api/admin/ads/panel?${q}`)
       .then((r) => r.json())
       .then((j) => {
         if (!cancelado) setDatos(j as Respuesta)
@@ -70,12 +77,18 @@ export function AdsPanel() {
     }
     // Se depende de las fechas sueltas: el objeto es nuevo en cada pintado y dispararía
     // la petición en bucle.
-  }, [rango?.from.getTime(), rango?.to.getTime()])
+  }, [rango?.from.getTime(), rango?.to.getTime(), alcance.campanas.join(","), alcance.conjuntos.join(",")])
 
   return (
     <div className="space-y-4">
       {/* Barra de arriba: el filtro del OS y el selector de métricas */}
       <div className="flex flex-wrap items-center gap-2">
+        <SelectorAlcance
+          campanas={datos?.ok ? datos.campanas : []}
+          conjuntos={datos?.ok ? datos.conjuntos : []}
+          valor={alcance}
+          onCambio={setAlcance}
+        />
         <PeriodFilter value={rango ?? undefined} onChange={setRango} defaultPreset="30d" />
         <SelectorMetricas elegidas={elegidas} onCambio={setElegidas} />
         {cargando && (
@@ -135,7 +148,22 @@ export function AdsPanel() {
             />
           </div>
 
-          <ListaCampanas campanas={datos.campanas} elegidas={elegidas} />
+          {/* Si hay campañas marcadas, la lista baja un nivel y enseña SUS conjuntos.
+              Asi siempre se sabe que se esta mirando y no se mezclan niveles. */}
+          {alcance.campanas.length > 0 ? (
+            <ListaCampanas
+              titulo="Conjuntos de lo que has marcado"
+              campanas={datos.conjuntos.map((c) => ({
+                id: c.id,
+                nombre: c.nombre,
+                objetivo: c.campanaNombre,
+                valores: c.valores,
+              }))}
+              elegidas={elegidas}
+            />
+          ) : (
+            <ListaCampanas titulo="Todas tus campañas" campanas={datos.campanas} elegidas={elegidas} />
+          )}
         </>
       )}
 

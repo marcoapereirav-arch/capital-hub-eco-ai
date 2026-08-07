@@ -47,6 +47,14 @@ export type OpcionesInsights = {
   porDia?: boolean
   campos: string[]
   limite?: number
+  /**
+   * Ver solo estas campañas. Vacio o sin poner = la cuenta entera.
+   * Marco quiere marcar VARIAS con casillas, no elegir una: si tiene cinco campañas y
+   * quiere ver tres, marca tres y los numeros salen sumados de esas tres.
+   */
+  campanas?: string[]
+  /** Igual pero para conjuntos, cuando se baja un nivel. */
+  conjuntos?: string[]
 }
 
 export type RespuestaInsights<T = Record<string, unknown>> =
@@ -80,6 +88,13 @@ export async function pedirInsights<T = Record<string, unknown>>(
     access_token: token,
   })
   if (o.porDia) params.set("time_increment", "1")
+
+  // El filtro de Meta admite varios valores con el operador IN, que es justo lo que hace
+  // falta para marcar varias campañas a la vez. Comprobado contra la cuenta real.
+  const filtros: { field: string; operator: string; value: string[] }[] = []
+  if (o.campanas?.length) filtros.push({ field: "campaign.id", operator: "IN", value: o.campanas })
+  if (o.conjuntos?.length) filtros.push({ field: "adset.id", operator: "IN", value: o.conjuntos })
+  if (filtros.length) params.set("filtering", JSON.stringify(filtros))
 
   try {
     const res = await fetch(`${GRAPH}/act_${cuenta}/insights?${params}`, { cache: "no-store" })

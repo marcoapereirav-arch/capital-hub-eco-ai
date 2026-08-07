@@ -26,79 +26,104 @@ function eur(n: number): string {
 export type PasoEmbudo = { nombre: string; valor: number; explica: string }
 
 /**
- * Embudo en barras horizontales. Cada paso lleva su número dentro y, entre uno y el
- * siguiente, el porcentaje que se queda por el camino. Esa caída es el dato que dice dónde
- * se atasca el dinero, así que va escrita, no deducida.
+ * Embudo de verdad: un trapecio que se estrecha, no cuatro barras sueltas.
+ *
+ * POR QUE SE REHIZO. La primera version media cada barra contra el numero MAYOR. Como las
+ * impresiones son mil veces los leads, los tres ultimos pasos salian como rayas
+ * invisibles y no se entendia nada. Marco, 2026-08-07: "estas graficas estan horribles,
+ * no se entienden, lo que veo son barras y ya esta".
+ *
+ * Ahora cada tramo se mide CONTRA EL PASO ANTERIOR, asi que todos se leen igual de bien y
+ * lo que salta a la vista es lo unico que importa: cuanta gente se cae en cada salto.
+ *
+ * Y arriba, la frase que se busca de verdad: de cada 100 que vieron el anuncio, cuantas
+ * llegaron al final.
  */
 export function Embudo({ pasos }: { pasos: PasoEmbudo[] }) {
-  const tope = Math.max(...pasos.map((p) => p.valor), 1)
+  const primero = pasos[0]?.valor ?? 0
+  const ultimo = pasos[pasos.length - 1]?.valor ?? 0
+  const deCada100 = primero > 0 ? (ultimo / primero) * 100 : 0
+
+  // El tramo mas flojo, para senalarlo dentro del dibujo y no contarlo aparte.
+  let peor = -1
+  let peorTasa = 101
+  pasos.forEach((p, i) => {
+    if (i === 0) return
+    const previo = pasos[i - 1].valor
+    const tasa = previo > 0 ? (p.valor / previo) * 100 : 100
+    if (tasa < peorTasa) {
+      peorTasa = tasa
+      peor = i
+    }
+  })
 
   return (
     <section className="rounded-lg border border-border bg-card p-4 md:p-5">
       <h3 className="text-[17px] font-semibold text-foreground">De la impresión al lead</h3>
       <p className="mt-1 text-sm text-muted-foreground">
-        Cuánta gente pasa de un paso al siguiente. El porcentaje es lo que se queda por el
-        camino.
+        Cada tramo se mide contra el anterior, para que se vea dónde se cae la gente.
       </p>
 
-      <ul className="mt-4 space-y-3">
+      <p className="mt-3 text-[15px] leading-relaxed text-foreground">
+        De cada 100 personas que vieron tu anuncio,{" "}
+        <span className="font-semibold tabular-nums">{fmtDec.format(deCada100)}</span> dejaron sus
+        datos.
+      </p>
+
+      <ol className="mt-4">
         {pasos.map((p, i) => {
-          const anterior = i > 0 ? pasos[i - 1].valor : null
-          const pasan = anterior && anterior > 0 ? (p.valor / anterior) * 100 : null
-          const ancho = Math.max((p.valor / tope) * 100, p.valor > 0 ? 6 : 0)
+          const previo = i > 0 ? pasos[i - 1].valor : null
+          const tasa = previo && previo > 0 ? (p.valor / previo) * 100 : null
+          // El ancho del tramo es su porcentaje sobre el paso anterior, con un suelo para
+          // que un tramo pequeño siga siendo visible y se pueda leer su numero.
+          const ancho = tasa === null ? 100 : Math.max(Math.min(tasa, 100), 14)
+          const esPeor = i === peor && pasos.length > 2
 
           return (
             <li key={p.nombre}>
-              {/* Un paso puede salir por encima del 100%: los pasos no cuentan lo mismo.
-                  "Salieron" cuenta PERSONAS distintas y "cargaron la página" cuenta VISITAS,
-                  así que una persona que entra dos veces suma dos visitas. Decir entonces
-                  "se pierden -16%" es un sinsentido, así que se dice lo que de verdad pasa. */}
-              {pasan !== null && (
-                <p className="mb-1.5 pl-1 text-sm text-muted-foreground">
-                  {pasan > 100 ? (
-                    <>
-                      salen{" "}
-                      <span className="font-semibold text-foreground tabular-nums">
-                        {fmtDec.format(pasan - 100)}%
-                      </span>{" "}
-                      más que en el paso anterior, porque aquí se cuentan visitas y arriba
-                      personas: quien vuelve a entrar suma otra vez
-                    </>
+              {tasa !== null && (
+                <p
+                  className={cn(
+                    "py-1.5 text-center text-sm",
+                    esPeor ? "font-semibold text-warn" : "text-muted-foreground"
+                  )}
+                >
+                  {tasa > 100 ? (
+                    <>sube un {fmtDec.format(tasa - 100)}%, aquí se cuentan visitas y arriba personas</>
                   ) : (
                     <>
-                      pasan{" "}
-                      <span className="font-semibold text-foreground tabular-nums">
-                        {fmtDec.format(pasan)}%
-                      </span>
-                      , se pierden{" "}
-                      <span className="tabular-nums">{fmtDec.format(100 - pasan)}%</span>
+                      sigue el <span className="tabular-nums">{fmtDec.format(tasa)}%</span>
+                      {esPeor && " · la caída más fuerte"}
                     </>
                   )}
                 </p>
               )}
 
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                <span className="text-[15px] font-medium text-foreground">{p.nombre}</span>
-                <span className="text-[17px] font-semibold text-foreground tabular-nums">
-                  {fmt.format(p.valor)}
-                </span>
-              </div>
-
-              <div
-                className="mt-1.5 h-8 w-full overflow-hidden rounded-lg bg-muted"
-                role="img"
-                aria-label={`${p.nombre}: ${fmt.format(p.valor)}`}
-              >
+              <div className="flex justify-center">
                 <div
-                  className="h-full rounded-lg bg-brand transition-[width] duration-500"
+                  className={cn(
+                    "flex min-h-[56px] flex-col items-center justify-center rounded-lg px-3 py-2 text-center transition-[width] duration-500",
+                    esPeor ? "bg-warn/15 ring-1 ring-warn/40" : "bg-brand/15"
+                  )}
                   style={{ width: `${ancho}%` }}
-                />
+                >
+                  <span className="text-[19px] font-semibold leading-none text-foreground tabular-nums">
+                    {fmt.format(p.valor)}
+                  </span>
+                  <span className="mt-1 text-sm leading-tight text-foreground">{p.nombre}</span>
+                </div>
               </div>
-
-              <p className="mt-1 text-sm text-muted-foreground">{p.explica}</p>
             </li>
           )
         })}
+      </ol>
+
+      <ul className="mt-4 space-y-1 border-t border-border pt-3">
+        {pasos.map((p) => (
+          <li key={p.nombre} className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{p.nombre}:</span> {p.explica}
+          </li>
+        ))}
       </ul>
     </section>
   )

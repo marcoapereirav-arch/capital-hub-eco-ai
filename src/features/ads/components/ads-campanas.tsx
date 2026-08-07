@@ -64,9 +64,12 @@ function objetivoLegible(o: string): string {
 export function ListaCampanas({
   campanas,
   elegidas,
+  titulo = "Tus campañas",
 }: {
   campanas: FilaCampana[]
   elegidas: string[]
+  /** Cambia segun el nivel: campañas de la cuenta, o conjuntos de lo marcado. */
+  titulo?: string
 }) {
   const [busqueda, setBusqueda] = useState("")
   const [orden, setOrden] = useState<{ id: string; desc: boolean }>({ id: "spend", desc: true })
@@ -131,7 +134,7 @@ export function ListaCampanas({
     <section className="rounded-lg border border-border bg-card">
       <header className="flex flex-col gap-3 border-b border-border p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h3 className="text-[17px] font-semibold text-foreground">Tus campañas</h3>
+          <h3 className="text-[17px] font-semibold text-foreground">{titulo}</h3>
           <span className="text-sm text-muted-foreground tabular-nums">
             {filtradas.length} de {campanas.length}
           </span>

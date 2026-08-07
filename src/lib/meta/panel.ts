@@ -88,6 +88,17 @@ export type FilaCampana = {
   valores: Record<string, number>
 }
 
+export type FilaConjunto = {
+  id: string
+  nombre: string
+  campanaId: string
+  campanaNombre: string
+  valores: Record<string, number>
+}
+
+/** Lo que se ha marcado con casillas. Vacio = la cuenta entera. */
+export type Seleccion = { campanas: string[]; conjuntos: string[] }
+
 export type DatosPanel = {
   ok: true
   totales: Record<string, number>
@@ -95,6 +106,7 @@ export type DatosPanel = {
   embudo: { impresiones: number; clicsSalientes: number; visitasWeb: number; leads: number }
   dias: FilaDia[]
   campanas: FilaCampana[]
+  conjuntos: FilaConjunto[]
   moneda: string
 }
 
@@ -105,23 +117,37 @@ function todosLosCampos(): string[] {
   return [...new Set([...METRICAS.map((m) => m.id), ...CAMPOS_META])]
 }
 
-export async function getDatosPanel(rango: RangoFechas): Promise<DatosPanel | ErrorPanel> {
+export async function getDatosPanel(
+  rango: RangoFechas,
+  sel: Seleccion = { campanas: [], conjuntos: [] }
+): Promise<DatosPanel | ErrorPanel> {
   const campos = todosLosCampos()
+  // Lo marcado con casillas se aplica a los totales, al dia a dia y al embudo. La LISTA de
+  // campañas se pide SIEMPRE entera: es de donde salen las casillas, asi que si se filtrara
+  // tambien, al marcar una desaparecerian las demas y no se podria desmarcar.
+  const filtro = { campanas: sel.campanas, conjuntos: sel.conjuntos }
 
-  const [tot, ant, dia, camp] = await Promise.all([
-    pedirInsights<Record<string, unknown>>({ rango, campos }),
-    pedirInsights<Record<string, unknown>>({ rango: periodoAnterior(rango), campos }),
+  const [tot, ant, dia, camp, conj] = await Promise.all([
+    pedirInsights<Record<string, unknown>>({ rango, campos, ...filtro }),
+    pedirInsights<Record<string, unknown>>({ rango: periodoAnterior(rango), campos, ...filtro }),
     // La evolución se pide a nivel de cuenta: día a día por anuncio serían cientos de filas
     // y la pantalla no dibuja eso.
     pedirInsights<Record<string, unknown>>({
       rango,
       porDia: true,
       campos: ["spend", "actions", "outbound_clicks"],
+      ...filtro,
     }),
     pedirInsights<Record<string, unknown>>({
       rango,
       nivel: "campaign",
       campos: [...campos, "campaign_id", "campaign_name"],
+    }),
+    pedirInsights<Record<string, unknown>>({
+      rango,
+      nivel: "adset",
+      campos: [...campos, "campaign_id", "campaign_name", "adset_id", "adset_name"],
+      campanas: sel.campanas,
     }),
   ])
 
@@ -167,6 +193,15 @@ export async function getDatosPanel(rango: RangoFechas): Promise<DatosPanel | Er
           id: String(f.campaign_id ?? ""),
           nombre: String(f.campaign_name ?? "Sin nombre"),
           objetivo: String(f.objective ?? ""),
+          valores: valores(f),
+        }))
+      : [],
+    conjuntos: conj.ok
+      ? conj.filas.map((f) => ({
+          id: String(f.adset_id ?? ""),
+          nombre: String(f.adset_name ?? "Sin nombre"),
+          campanaId: String(f.campaign_id ?? ""),
+          campanaNombre: String(f.campaign_name ?? ""),
           valores: valores(f),
         }))
       : [],
