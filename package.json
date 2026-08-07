@@ -13,6 +13,9 @@
     "check:layout": "node scripts/check-layout.mjs",
     "chat:nuevo": "node scripts/chat-nuevo.mjs",
     "chat:cerrar": "node scripts/chat-cerrar.mjs",
+    "publicar": "node scripts/publicar.mjs",
+    "cerrar": "node scripts/cerrar.mjs",
+    "skills:inventory": "node scripts/gen-skills-inventory.mjs",
     "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs",
     "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs"
   },

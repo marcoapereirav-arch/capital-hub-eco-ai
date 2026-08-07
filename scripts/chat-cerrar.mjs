@@ -11,7 +11,7 @@
  */
 
 import { execSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { join, dirname, basename, resolve } from 'node:path'
 
 const RAIZ = process.cwd()
@@ -70,8 +70,16 @@ function cerrar({ ruta, rama }, { forzarComprobaciones = true } = {}) {
           `   No se borra nada. Guarda o descarta primero.`
       )
     }
-    // 2 · nada sin publicar
-    const sinPublicar = gitSilencioso(`log --oneline dev..${rama}`, ruta)
+    // 2 · nada sin publicar.
+    // Se compara con el `dev` MAS NUEVO (local o el de GitHub): el local puede ir
+    // por detras — por ejemplo justo despues de publicar, o si otra carpeta lo tiene
+    // puesto y no se ha podido mover. Comparar solo con el local daria un falso
+    // "te queda algo sin publicar" y no dejaria cerrar nunca.
+    gitSilencioso('fetch origin --quiet', ruta)
+    let base = 'dev'
+    const remotoAdelante = gitSilencioso('rev-list --count dev..origin/dev', ruta)
+    if (remotoAdelante && Number(remotoAdelante) > 0) base = 'origin/dev'
+    const sinPublicar = gitSilencioso(`log --oneline ${base}..${rama}`, ruta)
     if (sinPublicar) {
       morir(
         `El chat "${nom}" tiene ${sinPublicar.split('\n').length} cambio(s) SIN PUBLICAR:\n` +
@@ -84,15 +92,50 @@ function cerrar({ ruta, rama }, { forzarComprobaciones = true } = {}) {
     }
   }
 
-  git(`worktree remove "${ruta}" --force`)
+  // Si estamos DENTRO de la carpeta que se va a borrar, hay que salir ANTES.
+  // Un proceso no puede seguir trabajando en una carpeta que ya no existe: git
+  // fallaba en silencio justo despues y la rama se quedaba VIVA mientras el
+  // mensaje decia "carpeta y rama fuera". Verificado el 2026-08-05.
+  if (resolve(process.cwd()).startsWith(resolve(ruta))) process.chdir(principal)
+
+  // Desde aqui, TODO con cwd = carpeta principal: la de este chat ya no existe.
+  git(`worktree remove "${ruta}" --force`, principal)
   // `-d` compara con el HEAD actual, no con `dev`, y se niega aunque el trabajo
   // ya este publicado. Aqui ya se comprobo arriba que `dev..rama` esta vacio
   // (nada sin publicar), asi que borrarla es seguro.
-  let borrada = gitSilencioso(`branch -d ${rama}`)
-  if (!borrada) borrada = gitSilencioso(`branch -D ${rama}`)
-  console.log(
-    `  ✓ cerrado "${nom}" · carpeta y rama fuera${borrada ? '' : ' (la rama no se pudo borrar: revisala)'}`
-  )
+  gitSilencioso(`branch -d ${rama}`, principal) || gitSilencioso(`branch -D ${rama}`, principal)
+
+  // NO se dice "cerrado" por haber lanzado los comandos: se MIRA. Es la misma
+  // regla de publicar (un push que sale bien no es una web que sirve el cambio).
+  // Marco, 2026-08-05: "cuando se cierra se debe de eliminar la carpeta y rama,
+  // es obvio, si no el sistema NO tiene sentido que este".
+  const carpetaSigue = existsSync(ruta)
+  const ramaSigue = gitSilencioso(`rev-parse --verify --quiet refs/heads/${rama}`, principal) !== null
+
+  if (!carpetaSigue && !ramaSigue) {
+    console.log(`  ✓ cerrado "${nom}" · carpeta y rama fuera, comprobado`)
+    return true
+  }
+
+  console.error(`\n\x1b[31m✗ "${nom}" NO se cerro del todo.\x1b[0m No se pierde nada, pero hay que mirarlo:\n`)
+  if (carpetaSigue) {
+    const dentro = (() => {
+      try {
+        return readdirSync(ruta).join(', ') || '(vacia)'
+      } catch {
+        return '(no se puede leer)'
+      }
+    })()
+    console.error(`   · La CARPETA sigue ahi: ${ruta}`)
+    console.error(`     dentro: ${dentro}`)
+    console.error(`     git la borro y algo la ha vuelto a crear. Mira que proceso escribe ahi.`)
+  }
+  if (ramaSigue) {
+    console.error(`   · La RAMA sigue viva: ${rama}`)
+    console.error(`     borrala a mano cuando compruebes que su trabajo esta en \`dev\`.`)
+  }
+  console.error('')
+  return false
   return true
 }
 
@@ -132,5 +175,8 @@ if (nombreArg) {
 }
 
 console.log('')
-cerrar(objetivo)
+const bien = cerrar(objetivo)
 console.log('')
+// Si la carpeta o la rama sobrevivieron, se sale con error: quien llama a este
+// comando (npm run cerrar) NO puede decir "cerrado" sobre algo que no lo esta.
+if (!bien) process.exit(1)

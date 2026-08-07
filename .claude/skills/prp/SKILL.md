@@ -12,6 +12,98 @@ allowed-tools: Read, Write, Edit, Grep, Glob
 
 ---
 
+## ⚡⚡⚡ EL PRP SE PEGA EN EL CHAT. SIEMPRE IGUAL. SIN EXCEPCION.
+
+**Marco (2026-08-05, textual):** *«en el momento de presentármelo a mí para yo poder
+verlo, quiero verlo en el mensaje en formato de bullets points… Hay veces que no hay una
+estandarización y ese es el problema… Es así como lo quiero siempre, pero hay veces que no
+me lo entregas así.»*
+
+**Lo que se le entrega es el MENSAJE.** El archivo existe solo porque, sin algo que leer,
+la puerta no puede bloquear. **Marco no lo abre nunca.**
+
+⛔ **PROHIBIDO** responder «lo dejé en tal archivo», «lo tienes en `.claude/PRPs/…`» o
+mandarle a abrir un `.md`. Desde el teléfono no puede abrirlo: si va solo en el archivo,
+**para él no existe**.
+
+### Las DOS cosas que se hacen al presentarlo
+
+1. **Se pega el PRP ENTERO en el mensaje**, con estas 5 secciones y las fases en casillas.
+2. **Se abre el panel de tareas** (`TodoWrite`) con **una entrada por fase**, y se van
+   marcando **en vivo** mientras se construye.
+
+### La plantilla · exactamente estas 5 secciones
+
+```markdown
+## Objetivo
+Una o dos frases: qué se consigue. Sin tecnicismos.
+
+## Qué voy a hacer
+- bullets cortos, uno por cosa
+- lenguaje de persona, no de código
+
+## Fases
+**A · <nombre de la fase>**
+- [ ] paso concreto
+- [ ] paso concreto
+
+**B · <nombre de la fase>**
+- [ ] paso concreto
+
+## Qué NO entra
+- lo que queda fuera a propósito, para que nadie asuma que entra
+
+## Cómo lo verás
+- qué va a ver Marco en pantalla cuando esté hecho
+```
+
+**Las fases son las que pida el trabajo.** Dos en algo pequeño, ocho en algo grande. Lo
+único que exige la puerta es que haya **3 casillas o más en total** — no 3 fases.
+
+**La puerta bloquea toda escritura** si falta cualquiera de las 5 secciones, si `Fases` no
+tiene casillas, o si `Qué NO entra` está vacío. Un PRP vago no deja construir.
+
+---
+
+## ⚡⚡⚡ DONDE VA Y COMO SE APRUEBA · esto no es opcional
+
+**El PRP de un chat vive en SU carpeta**, con el nombre de su rama:
+
+```
+<carpeta-del-chat>/.claude/PRPs/<nombre-de-la-rama>.md
+```
+
+Cabecera obligatoria, y **el enganche la lee**:
+
+```
+---
+rama: feature/<nombre>
+estado: propuesto        ← propuesto | aprobado
+---
+```
+
+**El recorrido, sin atajos:**
+
+1. El dueño dice lo que quiere → `npm run chat:nuevo <nombre>` → se escribe el PRP con
+   `estado: propuesto`.
+2. Se le **presenta en el chat**: qué entendí · qué voy a hacer · en fases. **Y se para.**
+3. Cuando él dice que sí → `estado: propuesto` pasa a `estado: aprobado`.
+4. Solo entonces se construye.
+
+⛔ **PROHIBIDO poner `estado: aprobado` por iniciativa.** El OK es del dueño, no de la IA.
+Ponerlo tú es saltarse el único punto del sistema donde él decide.
+
+**La red que lo obliga:** `.claude/hooks/puerta-de-entrada.mjs` **bloquea toda escritura**
+en una carpeta de chat que no tenga su PRP con `estado: aprobado`. No es un aviso: la
+herramienta de escritura devuelve error. Lo único que siempre se puede escribir es el
+propio `.claude/PRPs/**` — si no, sería imposible crear el PRP.
+
+**Origen (Marco 2026-08-05, textual):** *«Antes de empezar a trabajar, yo te lo tengo que
+aprobar. Eso es parte del sistema y no se está cumpliendo… Tiene que ser obligatorio.»*
+Durante semanas la regla existió sin máquina y no se cumplió ni una vez.
+
+---
+
 ## Que es un PRP
 
 Un PRP (Product Requirements Proposal) es el **blueprint de una pieza de tu software**. Define QUE construir antes de escribir una sola linea de codigo.
