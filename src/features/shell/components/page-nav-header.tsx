@@ -46,15 +46,17 @@ export function PageNavHeader({
 
   return (
     <header className="flex h-12 md:h-14 shrink-0 items-center gap-3 border-b border-border px-4">
-      <SidebarTrigger className="-ml-1 hidden h-7 w-7 text-muted-foreground hover:text-foreground md:inline-flex" />
-      <h1 className="hidden font-heading text-sm font-semibold tracking-wide uppercase text-foreground md:block">
+      <SidebarTrigger className="-ml-1 hidden h-8 w-8 text-muted-foreground hover:text-foreground md:inline-flex" />
+      <h1 className="hidden font-heading text-base font-extrabold text-foreground md:block">
         {title}
       </h1>
 
       <DropdownMenu>
         <DropdownMenuTrigger
           className={cn(
-            "group flex items-center gap-1.5 rounded-sm px-2 py-1 text-sm",
+            // 44 puntos en telefono: es el selector de grupo de la cabecera y
+            // se toca a menudo. En monitor vuelve a su medida compacta.
+            "group flex min-h-11 md:min-h-0 items-center gap-1.5 rounded-lg px-2 py-1 text-sm",
             "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             "data-[state=open]:bg-secondary data-[state=open]:text-foreground"
@@ -75,7 +77,7 @@ export function PageNavHeader({
             <div key={gi}>
               {gi > 0 && <DropdownMenuSeparator />}
               {group.label && (
-                <DropdownMenuLabel className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+                <DropdownMenuLabel className="text-sm font-semibold text-muted-foreground">
                   {group.label}
                 </DropdownMenuLabel>
               )}
@@ -94,7 +96,7 @@ export function PageNavHeader({
                     {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
                     <span className="flex-1 truncate">{item.label}</span>
                     {typeof item.count === "number" && item.count > 0 && (
-                      <span className="font-mono text-[10px] text-muted-foreground">
+                      <span className="text-sm text-muted-foreground">
                         {item.count}
                       </span>
                     )}

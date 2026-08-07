@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import {
-  Sparkles,
+  Wand2,
   Loader2,
   ChevronDown,
   ChevronRight,
@@ -13,7 +13,13 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import type { ScriptRow } from '../types/script'
+
+// Desplegable nativo con los 44 puntos del dedo y los colores del tema: en el
+// kit todavia no hay componente Select propio.
+const SELECT_CLASS =
+  'h-11 w-full rounded-lg border border-input bg-transparent px-3 text-base text-foreground md:h-8 md:text-sm'
 
 interface AccountRow {
   id: string
@@ -167,12 +173,12 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-6">
+    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 md:p-6">
       <div className="flex flex-col gap-1">
         <h3 className="font-heading text-xl font-medium tracking-tight text-foreground">
           Generar guion
         </h3>
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="text-[15px] leading-relaxed text-muted-foreground">
           Escribe tu idea. Si quieres anclar el guion a lo que funciona en cuentas
           específicas del corpus, abre los filtros.
         </p>
@@ -180,7 +186,7 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
 
       {/* IDEA / BRIEF */}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <label className="text-[15px] font-semibold text-muted-foreground">
           Tu idea
         </label>
         <Textarea
@@ -188,33 +194,33 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
           onChange={(e) => setBrief(e.target.value)}
           placeholder="Ej: guion de 60s sobre por qué la gente se queda atrapada en trabajos que odia, con anécdota personal y CTA al lead magnet."
           rows={4}
-          className="text-sm leading-relaxed"
+          className="leading-relaxed"
         />
       </div>
 
       {/* DURACIÓN + PILAR */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="text-[15px] font-semibold text-muted-foreground">
             Duración (s)
           </label>
           <Input
             type="number"
+            inputMode="numeric"
             min={10}
             max={600}
             value={durationS}
             onChange={(e) => setDurationS(parseInt(e.target.value, 10) || 60)}
-            className="h-10"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <label className="text-[15px] font-semibold text-muted-foreground">
             Pilar de contenido
           </label>
           <select
             value={contentPillar}
             onChange={(e) => setContentPillar(e.target.value)}
-            className="h-10 rounded-lg border border-input bg-transparent px-3 text-sm"
+            className={SELECT_CLASS}
           >
             <option value="libre">Libre</option>
             <option value="mentalidad-disciplina">Mentalidad / disciplina</option>
@@ -229,15 +235,16 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
       <div className="flex flex-col rounded-lg border border-dashed border-border">
         <button
           onClick={() => setGroundingOpen((v) => !v)}
-          className="flex items-center justify-between gap-2 px-4 py-3 text-left transition hover:bg-muted/30"
+          aria-expanded={groundingOpen}
+          className="flex min-h-11 items-center justify-between gap-2 px-4 py-3 text-left transition active:bg-muted/30 md:hover:bg-muted/30"
         >
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="text-[15px] font-medium text-foreground">
               Anclar al corpus (opcional)
             </span>
             {selectedAccountIds.size > 0 && (
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="h-auto py-0.5 text-sm">
                 {selectedAccountIds.size} cuenta
                 {selectedAccountIds.size !== 1 ? 's' : ''}
               </Badge>
@@ -252,7 +259,7 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
 
         {groundingOpen && (
           <div className="flex flex-col gap-4 border-t border-border px-4 py-4">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Cuando seleccionas cuentas y filtros, la IA extrae los hooks y
               estructuras dominantes de esos videos y los usa como guía para
               escribir tu guion. Tu voz propia (@adrianvillanuevarios) siempre
@@ -261,34 +268,34 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
 
             {/* Cuentas */}
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Cuentas de referencia
                 </label>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <button
                     onClick={() => selectAllByRole('style')}
-                    className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                    className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
                   >
                     todas style
                   </button>
                   <button
                     onClick={() => selectAllByRole('niche')}
-                    className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                    className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
                   >
                     todas niche
                   </button>
                   <button
                     onClick={() => setSelectedAccountIds(new Set())}
-                    className="rounded border border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/50"
+                    className="h-11 rounded-lg border border-border px-3 text-sm text-muted-foreground active:bg-muted/50 md:h-8"
                   >
                     limpiar
                   </button>
                 </div>
               </div>
               {loadingAccounts ? (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Cargando cuentas…
                 </div>
               ) : (
@@ -300,7 +307,7 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
                   ].map(({ label, items }) =>
                     items.length === 0 ? null : (
                       <div key={label} className="flex w-full flex-col gap-1">
-                        <span className="text-[10px] font-mono uppercase text-muted-foreground/70">
+                        <span className="text-sm font-semibold text-muted-foreground">
                           {label}
                         </span>
                         <div className="flex flex-wrap gap-1.5">
@@ -310,14 +317,16 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
                               <button
                                 key={a.id}
                                 onClick={() => toggleAccount(a.id)}
-                                className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                                aria-pressed={selected}
+                                className={cn(
+                                  'h-11 rounded-lg border px-3 text-sm transition-colors md:h-8',
                                   selected
-                                    ? 'bg-foreground text-background'
-                                    : 'border border-border bg-transparent text-foreground hover:bg-muted/50'
-                                }`}
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-border bg-transparent text-foreground active:bg-muted/50',
+                                )}
                               >
                                 @{a.handle}
-                                <span className="ml-1 opacity-60">
+                                <span className="ml-1 tabular-nums">
                                   ({a.video_count ?? 0})
                                 </span>
                               </button>
@@ -332,32 +341,32 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
             </div>
 
             {/* Filtros numéricos */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Views mínimos (opcional)
                 </label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min={0}
                   step={1000}
                   placeholder="ej: 50000"
                   value={minViews}
                   onChange={(e) => setMinViews(e.target.value)}
-                  className="h-9"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <label className="text-[15px] font-semibold text-muted-foreground">
                   Max videos por cuenta
                 </label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   max={20}
                   value={topNPerAccount}
                   onChange={(e) => setTopNPerAccount(e.target.value)}
-                  className="h-9"
                 />
               </div>
             </div>
@@ -366,9 +375,9 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {error}
+        <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span className="min-w-0">{error}</span>
         </div>
       )}
 
@@ -376,7 +385,7 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
         onClick={handleSubmit}
         disabled={submitting || brief.trim().length < 3}
         size="lg"
-        className="gap-2"
+        className="w-full gap-2 md:w-auto md:self-start"
       >
         {submitting ? (
           <>
@@ -385,14 +394,14 @@ export function ScriptGenerateForm({ onGenerated }: ScriptGenerateFormProps) {
           </>
         ) : (
           <>
-            <Sparkles className="h-4 w-4" />
+            <Wand2 className="h-4 w-4" />
             Generar guion
           </>
         )}
       </Button>
 
       {selectedAccountIds.size > 0 && !submitting && (
-        <p className="text-center text-[11px] text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           Tarda ~30-60s extra cuando hay grounding (la IA hace 2 llamadas
           secuenciales: extracción de patrones + generación del guion).
         </p>

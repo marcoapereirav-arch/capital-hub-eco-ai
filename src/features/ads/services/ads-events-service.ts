@@ -68,11 +68,15 @@ export function getEventLabel(eventName: string): string {
   return eventName
 }
 
+/* El color de cada estado sale de los tokens del tema: verde de marca para lo que salio
+ * bien, rojo del tema para el fallo, ambar de aviso para lo pendiente y gris para lo que
+ * se descarto por duplicado. Antes eran familias de Tailwind (amber, green, red, zinc),
+ * que pintan un verde y un gris DISTINTOS a los de la marca en la misma pantalla. */
 export const STATUS_META: Record<EventStatus, { label: string; color: string }> = {
-  pending: { label: "Pendiente", color: "bg-amber-500/10 border-amber-500/40 text-amber-300" },
-  sent: { label: "Enviado", color: "bg-green-500/10 border-green-500/40 text-green-300" },
-  failed: { label: "Falló", color: "bg-red-500/10 border-red-500/40 text-red-300" },
-  dedup: { label: "Dedup", color: "bg-zinc-500/10 border-zinc-500/40 text-zinc-300" },
+  pending: { label: "Pendiente", color: "bg-warn/10 border-warn/40 text-warn" },
+  sent: { label: "Enviado", color: "bg-primary/10 border-primary/40 text-primary" },
+  failed: { label: "Falló", color: "bg-destructive/10 border-destructive/40 text-destructive" },
+  dedup: { label: "Dedup", color: "bg-muted border-border text-muted-foreground" },
 }
 
 export async function loadMetaEvents(limit = 100): Promise<MetaEventLog[]> {

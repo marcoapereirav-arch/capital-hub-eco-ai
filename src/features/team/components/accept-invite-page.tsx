@@ -45,43 +45,43 @@ export function AcceptInvitePage({ token }: { token: string }) {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#0F0F12] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-background flex items-center justify-center px-6">
         <div className="max-w-md w-full text-center">
-          <Check className="h-12 w-12 mx-auto mb-4 text-[#37CA37]" />
-          <h1 className="text-2xl font-semibold text-white mb-2">Cuenta lista</h1>
-          <p className="text-white/60 mb-4">{success}</p>
-          <p className="text-white/40 text-xs">Redirigiendo al login…</p>
+          <Check className="h-12 w-12 mx-auto mb-4 text-primary" />
+          <h1 className="text-2xl font-semibold text-foreground mb-2">Cuenta lista</h1>
+          <p className="text-muted-foreground mb-4">{success}</p>
+          <p className="text-muted-foreground text-xs">Redirigiendo al login…</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0F0F12] flex items-center justify-center px-6 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center px-6 relative">
       {submitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(15,15,18,0.7)" }}>
           <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-7 w-7 animate-spin text-white" />
-            <span className="text-xs font-mono uppercase tracking-wider text-white">
+            <Loader2 className="h-7 w-7 animate-spin text-foreground" />
+            <span className="text-xs font-mono uppercase tracking-wider text-foreground">
               Activando tu cuenta…
             </span>
           </div>
         </div>
       )}
-      <form onSubmit={submit} className="max-w-md w-full bg-[#16161B] border border-[#2A2D34] rounded-md p-6 space-y-4">
+      <form onSubmit={submit} className="max-w-md w-full bg-card border border-border rounded-md p-6 space-y-4">
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 border border-[#2A2D34] px-3 py-1 rounded-sm mb-4">
-            <Lock className="h-3 w-3 text-[#37CA37]" />
-            <span className="font-mono text-[10px] uppercase tracking-widest text-white/70">
+          <div className="inline-flex items-center gap-2 border border-border px-3 py-1 rounded-lg mb-4">
+            <Lock className="h-3 w-3 text-primary" />
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               Configura tu contraseña
             </span>
           </div>
-          <h1 className="text-2xl font-semibold text-white">Capital Hub OS</h1>
-          <p className="text-white/60 text-sm mt-1">Define una contraseña para entrar al sistema.</p>
+          <h1 className="text-2xl font-semibold text-foreground">Capital Hub OS</h1>
+          <p className="text-muted-foreground text-sm mt-1">Define una contraseña para entrar al sistema.</p>
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono uppercase tracking-wider text-white/60 mb-1">
+          <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">
             Contraseña (mín 8 caracteres)
           </label>
           <input
@@ -90,12 +90,12 @@ export function AcceptInvitePage({ token }: { token: string }) {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            className="w-full rounded-sm border border-[#2A2D34] bg-[#0F0F12] px-3 py-2 text-sm text-white focus:border-[#37CA37] focus:outline-none"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base md:text-sm text-foreground focus:border-ring focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono uppercase tracking-wider text-white/60 mb-1">
+          <label className="block text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1">
             Confirma contraseña
           </label>
           <input
@@ -104,7 +104,7 @@ export function AcceptInvitePage({ token }: { token: string }) {
             onChange={(e) => setConfirm(e.target.value)}
             required
             minLength={8}
-            className="w-full rounded-sm border border-[#2A2D34] bg-[#0F0F12] px-3 py-2 text-sm text-white focus:border-[#37CA37] focus:outline-none"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-base md:text-sm text-foreground focus:border-ring focus:outline-none"
           />
         </div>
 
@@ -117,7 +117,7 @@ export function AcceptInvitePage({ token }: { token: string }) {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-white text-[#0F0F12] font-mono uppercase tracking-wider py-3 rounded-sm hover:opacity-90 disabled:opacity-30 inline-flex items-center justify-center gap-2"
+          className="w-full bg-white text-primary-foreground font-mono uppercase tracking-wider py-3 rounded-lg hover:opacity-90 disabled:opacity-30 inline-flex items-center justify-center gap-2"
         >
           {submitting ? (
             <>

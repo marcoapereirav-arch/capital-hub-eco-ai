@@ -138,12 +138,11 @@ export function TaskPage() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          size="sm"
           variant="ghost"
-          className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+          className="gap-1.5 text-muted-foreground hover:text-foreground"
         >
-          <Plus className="h-3.5 w-3.5" />
-          <span className="text-xs">Nuevo</span>
+          <Plus className="h-4 w-4" />
+          <span className="text-[15px] md:text-sm">Nuevo</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -153,7 +152,7 @@ export function TaskPage() {
             onSelect={() => handleAddPara(section.type, section.addLabel)}
             className="cursor-pointer"
           >
-            <section.icon className="h-3.5 w-3.5" />
+            <section.icon className="h-4 w-4" />
             <span>{section.addLabel}</span>
           </DropdownMenuItem>
         ))}
@@ -171,20 +170,26 @@ export function TaskPage() {
         rightSlot={addMenu}
       />
 
-      <div className="flex flex-1 flex-col min-w-0 min-h-0">
-        <div className="shrink-0 flex flex-col gap-3 border-b border-border px-4 py-3">
-          <TaskQuickCapture />
-          <TaskFilters />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {/* El relleno de zona segura va en su PROPIA caja: la clase px-safe se
+            emite despues que px-4 y le comeria el margen horizontal. */}
+        <div className="shrink-0 px-safe">
+          <div className="flex flex-col gap-3 border-b border-border px-4 py-3">
+            <TaskQuickCapture />
+            <TaskFilters />
+          </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-3 pb-mobile-nav md:p-4">
+        {/* El hueco de abajo reserva el sitio de la barra del telefono: sin el, la
+            ultima ficha queda debajo del menu y no se puede tocar. */}
+        <div className="min-h-0 flex-1 overflow-y-auto no-overscroll p-3 pb-mobile-nav md:overflow-x-auto md:p-4">
           {error && (
-            <div className="mb-3 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            <div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-[15px] text-destructive">
               {error}
             </div>
           )}
           {loading && !initialized ? (
-            <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+            <div className="flex h-32 items-center justify-center text-[15px] text-muted-foreground">
               Cargando tareas…
             </div>
           ) : viewMode === "board" ? (

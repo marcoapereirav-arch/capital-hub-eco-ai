@@ -262,7 +262,7 @@ export function VideoEditEditor({
                       <Input
                         value={w.word}
                         onChange={(e) => updateWord(i, e.target.value)}
-                        className="h-7 flex-1 border-0 bg-transparent px-1 text-sm focus-visible:bg-card focus-visible:ring-1"
+                        className="h-11 md:h-7 flex-1 border-0 bg-transparent px-1 text-base md:text-sm focus-visible:bg-card focus-visible:ring-1"
                       />
                       <button
                         onClick={() => deleteWord(i)}

@@ -55,14 +55,14 @@ export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="flex items-center gap-1.5 rounded-md border border-border bg-card/95 backdrop-blur px-2.5 py-1.5 text-xs shadow-md hover:bg-secondary"
+        className="flex h-11 items-center gap-1.5 rounded-lg border border-border bg-card/95 px-3 text-[15px] shadow-md backdrop-blur active:bg-secondary md:h-8 md:px-2.5 md:text-sm md:hover:bg-secondary"
         title="Abrir lista de tareas por prioridad"
       >
-        <ChevronRight className="h-3.5 w-3.5" />
+        <ChevronRight className="h-4 w-4 shrink-0" />
         <span>Lista de tareas</span>
         {groups.live.length > 0 && (
-          <span className="flex items-center gap-0.5 rounded-full bg-cyan-500 text-cyan-950 px-1.5 py-0.5 font-mono text-[9px] font-bold">
-            <Zap className="h-2.5 w-2.5 fill-cyan-950" />
+          <span className="flex items-center gap-0.5 rounded-sm bg-primary px-1.5 py-0.5 text-sm font-bold tabular-nums text-primary-foreground">
+            <Zap className="h-3 w-3 fill-current" />
             {groups.live.length}
           </span>
         )}
@@ -71,31 +71,34 @@ export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
   }
 
   return (
-    <div className="w-72 max-h-[calc(100vh-9rem)] overflow-y-auto rounded-md border border-border bg-card/95 backdrop-blur shadow-2xl">
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card/95 backdrop-blur px-3 py-2">
-        <span className="font-heading text-xs font-semibold">Lista de tareas por prioridad</span>
-        <div className="flex items-center gap-1">
+    // El panel nunca puede ser mas ancho que la pantalla: en un telefono de 375
+    // puntos un ancho fijo de 288 dejaba el board debajo sin nada de margen.
+    <div className="max-h-[calc(100dvh-9rem)] w-[min(18rem,calc(100vw-3rem))] overflow-y-auto no-overscroll rounded-lg border border-border bg-card/95 shadow-2xl backdrop-blur">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-card/95 px-3 py-2 backdrop-blur">
+        <span className="min-w-0 truncate font-heading text-sm font-semibold">Lista de tareas por prioridad</span>
+        <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={() => fitView({ padding: 0.15, duration: 600 })}
-            className="rounded-sm border border-border bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+            className="h-11 rounded-lg border border-border bg-secondary px-2 text-sm text-muted-foreground md:h-7 md:hover:text-foreground"
             title="Centrar todo el board"
           >
             Centrar
           </button>
           <button
             onClick={() => setCollapsed(true)}
-            className="rounded-sm p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground active:bg-secondary md:size-7 md:hover:bg-secondary md:hover:text-foreground"
             title="Cerrar lista"
+            aria-label="Cerrar lista"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="space-y-3 p-2 text-xs">
+      <div className="space-y-3 p-2">
         <Section
-          title="🔴 EN VIVO ahora"
-          color="text-cyan-300"
+          title="EN VIVO ahora"
+          color="text-primary"
           empty="Ninguna tarea activa. Marca una desde su drawer."
           tasks={groups.live}
           onSelect={focusNode}
@@ -103,24 +106,24 @@ export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
         />
 
         <Section
-          title="① P0 — URGENT (24h)"
-          color="text-red-300"
+          title="P0 — URGENT (24h)"
+          color="text-destructive"
           empty="Sin urgentes."
           tasks={groups.urgent}
           onSelect={focusNode}
         />
 
         <Section
-          title="② P1 — HIGH (esta semana)"
-          color="text-orange-300"
+          title="P1 — HIGH (esta semana)"
+          color="text-warn"
           empty="Sin highs."
           tasks={groups.high}
           onSelect={focusNode}
         />
 
         <Section
-          title="③ P2 — NORMAL (2-3 semanas)"
-          color="text-zinc-300"
+          title="P2 — NORMAL (2-3 semanas)"
+          color="text-muted-foreground"
           empty="—"
           tasks={groups.normal}
           onSelect={focusNode}
@@ -128,8 +131,8 @@ export function PriorityQueue({ tasks, onSelectTask }: PriorityQueueProps) {
         />
 
         <Section
-          title="⏸ WAITING (bloqueadas)"
-          color="text-yellow-300"
+          title="WAITING (bloqueadas)"
+          color="text-warn"
           empty="—"
           tasks={groups.waiting}
           onSelect={focusNode}
@@ -158,52 +161,52 @@ function Section({ title, color, empty, tasks, onSelect, live, collapsedByDefaul
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex w-full items-center justify-between gap-2 rounded-sm px-1.5 py-1 font-mono text-[10px] uppercase tracking-wide hover:bg-secondary/50",
+          "flex h-11 w-full items-center justify-between gap-2 rounded-lg px-1.5 text-sm font-semibold active:bg-secondary/50 md:h-8 md:hover:bg-secondary/50",
           color
         )}
       >
-        <span className="truncate">{title}</span>
-        <span className="flex items-center gap-1 text-muted-foreground">
-          <span className="font-semibold">{tasks.length}</span>
-          {open ? <ChevronLeft className="h-3 w-3 rotate-90" /> : <ChevronRight className="h-3 w-3 rotate-90" />}
+        <span className="min-w-0 truncate text-left">{title}</span>
+        <span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+          <span className="font-semibold tabular-nums">{tasks.length}</span>
+          {open ? <ChevronLeft className="h-4 w-4 rotate-90" /> : <ChevronRight className="h-4 w-4 rotate-90" />}
         </span>
       </button>
 
       {open && (
         <ul className="mt-1 space-y-0.5">
           {tasks.length === 0 ? (
-            <li className="px-2 py-1 text-[10px] italic text-muted-foreground">{empty}</li>
+            <li className="px-2 py-1 text-sm text-muted-foreground">{empty}</li>
           ) : (
             tasks.map((t, i) => (
               <li key={t.id}>
                 <button
                   onClick={() => onSelect(t)}
                   className={cn(
-                    "group flex w-full items-start gap-2 rounded-sm px-1.5 py-1.5 text-left text-[11px] hover:bg-secondary",
-                    live && "bg-cyan-500/10 hover:bg-cyan-500/20"
+                    "group flex min-h-11 w-full items-start gap-2 rounded-lg px-1.5 py-1.5 text-left text-sm active:bg-secondary md:hover:bg-secondary",
+                    live && "bg-primary/10 active:bg-primary/20 md:hover:bg-primary/20"
                   )}
                 >
                   <span
                     className={cn(
-                      "mt-0.5 flex-shrink-0 font-mono text-[9px] font-bold",
-                      live ? "text-cyan-400" : "text-muted-foreground"
+                      "mt-0.5 flex-shrink-0 text-sm font-bold tabular-nums",
+                      live ? "text-primary" : "text-muted-foreground"
                     )}
                   >
-                    {live ? <Zap className="h-3 w-3 animate-pulse" /> : `${i + 1}.`}
+                    {live ? <Zap className="h-4 w-4 animate-pulse" /> : `${i + 1}.`}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-foreground/90 group-hover:text-foreground">{t.title}</p>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[9px] text-muted-foreground">
-                      <span className="font-mono">{ASSIGNEE_INITIALS[t.assignee] ?? t.assignee}</span>
+                    <p className="truncate text-foreground">{t.title}</p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                      <span>{ASSIGNEE_INITIALS[t.assignee] ?? t.assignee}</span>
                       {t.priority === "urgent" && (
-                        <span className="flex items-center gap-0.5 text-orange-400">
-                          <Flame className="h-2.5 w-2.5" />
+                        <span className="flex items-center gap-0.5 text-destructive">
+                          <Flame className="h-3 w-3" />
                           urgent
                         </span>
                       )}
                       {t.dueDate && (
-                        <span className="flex items-center gap-0.5">
-                          <Clock className="h-2.5 w-2.5" />
+                        <span className="flex items-center gap-0.5 tabular-nums">
+                          <Clock className="h-3 w-3" />
                           {new Date(t.dueDate).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
                         </span>
                       )}

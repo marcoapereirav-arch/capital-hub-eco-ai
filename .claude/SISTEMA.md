@@ -15,6 +15,7 @@ VERSION: 5
 ## Changelog
 
 ### v5 — 2026-07-30
+- **La GUARDIA de la carpeta principal.** `/primer` dice "abre tu carpeta", pero eso es una instruccion escrita. Ahora `check:flujo` comprueba que en la carpeta principal SOLO este `dev`: si un chat se pone a trabajar ahi con otra rama, `npm run dev` **se niega a arrancar** y le dice el comando exacto. Corre en `predev`, asi que salta antes de que el chat empiece, no despues.
 - **UN CHAT = UNA RAMA = UNA CARPETA.** Cada chat trabaja en su propia carpeta (`git worktree`), no solo en su propia rama. Es lo que permite tener **varios chats trabajando a la vez de verdad**, cada uno con su localhost, sin turnarse ni pisarse. Una carpeta solo puede tener UNA rama puesta: con una sola carpeta, dos chats con ramas distintas se turnan el checkout y el que tiene trabajo sin guardar puede perderlo.
 - **Dos comandos nuevos, y cada uno hace TODO de una vez** (si fueran tres pasos, algun dia se harian dos): `npm run chat:nuevo <nombre>` (pone `dev` al dia, crea rama + carpeta y la deja lista) y `npm run chat:cerrar [nombre]` (comprueba que no queda nada sin guardar ni sin publicar, y solo entonces borra rama y carpeta; si falta algo **se niega**). Mas `chat:cerrar -- --limpiar` para recoger chats mal cerrados.
 - **Derogada la excepcion "trivial → sobre `dev` directamente".** Ahora SIEMPRE rama y carpeta, sin excepcion: la excepcion abria el hueco de dos chats compartiendo `dev`.

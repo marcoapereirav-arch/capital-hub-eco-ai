@@ -2,6 +2,23 @@
 title: Lead Magnets — flow end-to-end
 order: 6
 ---
+> # RETIRADO el 2026-08-07
+>
+> Los lead magnets se retiraron del OS entero: la pantalla, la entrada publica `/lm/<slug>`,
+> el motor de entrega, el envio de eventos a Meta y el enlace de ManyChat.
+>
+> Marco: *"no funciona, no la estamos utilizando y por ende no tiene sentido tenerla ahi.
+> Elimina lead magnet de raiz. Ya cuando vayamos a construirlo, lo construiremos"*.
+>
+> Comprobado antes de borrar: **1 lead magnet y 1 entrega** en toda la base.
+>
+> Se quedaron a proposito: las tablas de la base, el evento de Meta
+> `mifge_lead_magnet_optin` (es historial de medicion ya enviado a Facebook, y quitarlo del
+> catalogo romperia la lectura de lo que ya se disparo) y el tipo de web `lead_magnet`,
+> porque hay webs guardadas con ese tipo.
+>
+> Lo de abajo queda como historico, por si algun dia se retoma.
+
 
 # Lead Magnets — captura, entrega, atribución
 

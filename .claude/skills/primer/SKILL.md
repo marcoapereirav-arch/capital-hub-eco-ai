@@ -164,10 +164,13 @@ dev al día · nada sin guardar.
 **Si `dev` está atrás de `main`, avísalo como problema**, no como dato: significa que
 alguien publicó saltándose `dev`, y la próxima rama nacería de una foto vieja.
 
-### 1-ter. ABRIR EL SITIO DE TRABAJO DE ESTE CHAT
+### 1-ter. ⚡ EL DISPARADOR · en cuanto el dueño diga lo que quiere
 
-**En cuanto el dueño diga qué quiere hacer** (no antes: `/primer` solo lee), este chat
-necesita **su rama y su carpeta**. Es **UN comando**:
+> **El disparador es este: el dueño dice lo que quiere.** No cuando empiezas a
+> escribir código, no cuando te parece que ya toca. **En ese mismo mensaje**, antes de
+> tocar un solo archivo, la IA hace **DOS cosas y se para**.
+
+**PASO 1 · Abrir la carpeta y la rama de este chat. UN comando:**
 
 ```bash
 npm run chat:nuevo <nombre-corto-de-lo-que-se-va-a-hacer>
@@ -175,13 +178,53 @@ npm run chat:nuevo <nombre-corto-de-lo-que-se-va-a-hacer>
 
 Pone `dev` al día, crea la rama desde `dev`, crea la carpeta y la deja lista
 (`node_modules` clonado en ~10 s, claves enlazadas). Después **se trabaja SIEMPRE dentro
-de esa carpeta**.
+de esa carpeta**, con rutas absolutas.
 
 **SIEMPRE, sin excepción**, aunque el cambio sea un texto o un color. La excepción
 "trivial → sobre `dev`" está **derogada**: abría el hueco de dos chats compartiendo `dev`.
 
 **Si este chat ya está dentro de la carpeta de un chat** (`git worktree list` lo dice),
 no se crea nada: ya tiene su sitio.
+
+**PASO 2 · Escribir el PRP, PEGARLO EN EL CHAT, y ESPERAR.**
+
+El archivo va en `.claude/PRPs/<nombre-de-la-rama>.md`, dentro de la carpeta del chat, con
+`estado: propuesto` en la cabecera. **Pero lo que se le entrega es el MENSAJE**: él no abre
+el archivo nunca — desde el teléfono ni siquiera puede.
+
+Se hacen **dos cosas**:
+
+1. **Pegar el PRP ENTERO en el mensaje**, con estas 5 secciones y las fases en casillas:
+
+   ```
+   ## Objetivo          una o dos frases
+   ## Qué voy a hacer   bullets cortos
+   ## Fases             **A · nombre** + casillas  - [ ]
+   ## Qué NO entra      lo que queda fuera a propósito
+   ## Cómo lo verás     qué verá en pantalla
+   ```
+
+   Las fases son **las que pida el trabajo**: dos en algo pequeño, ocho en algo grande.
+
+2. **Abrir el panel de tareas** con una entrada por fase, y marcarlas **en vivo** mientras
+   se construye.
+
+Y **se para ahí**. Cuando él dice que sí, `estado: propuesto` pasa a `estado: aprobado` y
+solo entonces se construye.
+
+⛔ **PROHIBIDO poner `aprobado` por iniciativa.** El OK es suyo, no tuyo.
+⛔ **PROHIBIDO** responder «lo dejé en tal archivo» o mandarle a abrir un `.md`.
+
+El detalle completo del formato está en el skill `/prp`.
+
+**La red que lo obliga:** `.claude/hooks/puerta-de-entrada.mjs` **bloquea** cualquier
+escritura que ocurra en la carpeta principal o sin PRP aprobado. Si haces bien estos dos
+pasos no la notas nunca. Si te los saltas, no puedes escribir.
+
+**Origen (Marco 2026-08-05, textual):** *«llevo rato que no veo que me presentes el PRP en
+el momento de empezar a trabajar. No lo estás haciendo… Antes de empezar a trabajar, yo te
+lo tengo que aprobar. Eso es parte del sistema y no se está cumpliendo. Tiene que ser
+obligatorio.»*
 
 Extrae de toda esta lectura:
 - **Nombre del proyecto**

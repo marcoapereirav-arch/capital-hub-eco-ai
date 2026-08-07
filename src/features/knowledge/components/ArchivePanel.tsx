@@ -2,11 +2,20 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { LoadingScreen } from '@/components/ui/loading-screen'
+import { cn } from '@/lib/utils'
 import { getArchived, restoreSop, purgeSop } from '@/actions/knowledge'
 import { QUADRANT_LABEL, type Quadrant } from '@/features/knowledge/services/quadrants'
 
 type ArchivedDoc = { id: string; slug: string; title: string; quadrant: string; subfolder: string | null; archived_at: string }
 
+/**
+ * El Archivador. Hoja inferior en telefono, cajon por la derecha en escritorio:
+ * el lado va FIJO y el cambio se hace con clases. Antes era un panel absoluto
+ * pegado al borde derecho que en un telefono tapaba la pantalla entera y cuyo
+ * final quedaba debajo de la barra de abajo.
+ */
 export function ArchivePanel({ onClose }: { onClose: () => void }) {
   const router = useRouter()
   const [items, setItems] = useState<ArchivedDoc[] | null>(null)
@@ -51,64 +60,73 @@ export function ArchivePanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <aside className="absolute bottom-0 right-0 top-0 z-50 flex w-full max-w-md flex-col border-l border-[rgba(244,244,250,0.22)] bg-[#1E1E1E]/95 backdrop-blur-xl">
-      <div className="flex items-center justify-between gap-3 border-b border-[rgba(244,244,250,0.12)] p-5">
-        <div>
-          <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#4ADE80]/70">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5C21.75 4.254 21.246 3.75 20.625 3.75H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-            Archivador
-          </p>
-          <h2 className="mt-1 font-display text-lg text-neutral-100">Documentos borrados</h2>
-        </div>
-        <button onClick={onClose} className="shrink-0 text-neutral-100/40 hover:text-neutral-100">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        {items === null ? (
-          <div className="flex justify-center py-10">
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#4ADE80]/20 border-t-[#4ADE80]" />
-          </div>
-        ) : items.length === 0 ? (
-          <p className="py-10 text-center text-sm italic text-neutral-100/40">El archivador está vacío.</p>
-        ) : (
-          <ul className="space-y-2">
-            {items.map((it) => (
-              <li
-                key={it.id}
-                className="flex flex-col gap-2 rounded-[14px] border border-[rgba(244,244,250,0.22)] bg-white/[0.02] p-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-neutral-100/90">{it.title}</p>
-                  <p className="truncate text-[10px] uppercase tracking-wide text-neutral-100/40">
-                    {QUADRANT_LABEL[it.quadrant as Quadrant] ?? it.quadrant}
-                    {it.subfolder ? ` › ${it.subfolder}` : ''} · {new Date(it.archived_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onRestore(it.id)}
-                    className="flex-1 rounded-lg border border-[#4ADE80]/30 px-3 py-1.5 text-[11px] uppercase tracking-widest text-[#4ADE80]/90 transition-colors hover:bg-[#4ADE80]/10"
-                  >
-                    Restaurar
-                  </button>
-                  <button
-                    onClick={() => onPurge(it.id, it.title)}
-                    className="rounded-lg border border-red-300/25 px-3 py-1.5 text-[11px] uppercase tracking-widest text-red-300/70 transition-colors hover:border-red-300/50 hover:text-red-300"
-                  >
-                    Borrar
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+    <Sheet
+      open
+      onOpenChange={(abierto) => {
+        if (!abierto) onClose()
+      }}
+    >
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        className={cn(
+          'rounded-t-xl',
+          // Las clases del kit para el lado inferior llevan el selector `data-[side=bottom]`,
+          // que pesa mas que un `md:` suelto y lo gana. Por eso el escritorio repite la
+          // condicion del lado: si no, el cajon sale por la IZQUIERDA y tapa la barra lateral.
+          'md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-md md:border-l md:pb-0',
         )}
-      </div>
-    </aside>
+      >
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <p className="text-sm font-semibold text-primary">Archivador</p>
+          <SheetTitle className="text-[17px] font-semibold">Documentos borrados</SheetTitle>
+        </SheetHeader>
+
+        <div className="px-4 pb-safe-4">
+          {items === null ? (
+            <div className="relative min-h-[160px]">
+              <LoadingScreen fullscreen={false} className="absolute inset-0" />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+              <h3 className="text-[17px] font-semibold text-foreground">El archivador está vacío.</h3>
+              <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+                Lo que borres desde el Knowledge cae aquí y se puede recuperar.
+              </p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {items.map((it) => (
+                <li key={it.id} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[15px] text-foreground">{it.title}</p>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {QUADRANT_LABEL[it.quadrant as Quadrant] ?? it.quadrant}
+                      {it.subfolder ? ` › ${it.subfolder}` : ''} ·{' '}
+                      {new Date(it.archived_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onRestore(it.id)}
+                      className="h-11 flex-1 rounded-lg border border-primary/30 px-3 text-[15px] font-semibold text-primary transition-colors active:bg-primary/10 md:h-9"
+                    >
+                      Restaurar
+                    </button>
+                    <button
+                      onClick={() => onPurge(it.id, it.title)}
+                      className="h-11 shrink-0 rounded-lg border border-destructive/30 px-3 text-[15px] text-destructive transition-colors active:bg-destructive/10 md:h-9"
+                    >
+                      Borrar
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -11,9 +11,10 @@ export function QueriesScriptsTab() {
   return (
     <div className="flex flex-col gap-4">
       <Tabs value={subTab} onValueChange={(v) => setSubTab(v as 'studio' | 'drafts')}>
-        <TabsList>
-          <TabsTrigger value="studio">Studio</TabsTrigger>
-          <TabsTrigger value="drafts">Drafts</TabsTrigger>
+        {/* 44 puntos de alto en telefono, compacta en monitor */}
+        <TabsList className="h-[50px]! w-full max-w-full justify-start md:h-8! md:w-fit">
+          <TabsTrigger value="studio" className="px-3 text-[15px] md:text-sm">Studio</TabsTrigger>
+          <TabsTrigger value="drafts" className="px-3 text-[15px] md:text-sm">Drafts</TabsTrigger>
         </TabsList>
         <TabsContent value="studio" className="mt-4">
           <StudioPanel onSwitchToDrafts={() => setSubTab('drafts')} />

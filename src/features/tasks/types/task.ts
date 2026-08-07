@@ -37,11 +37,15 @@ export const PARA_PRIORITY_LABELS: Record<ParaPriority, string> = {
   low: "Baja",
 }
 
+// Los cuatro niveles se pintan con los tokens del tema, no con familias sueltas de
+// Tailwind: rojo de error para lo urgente, ambar de aviso para lo importante y
+// grises de la marca para el resto. Antes eran red/amber/cyan/zinc, o sea cuatro
+// colores que no existen en el brandkit de Capital Hub.
 export const PARA_PRIORITY_COLORS: Record<ParaPriority, string> = {
-  urgent: "border-red-500/40 text-red-400 bg-red-500/[0.06]",
-  important: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
-  normal: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
-  low: "border-zinc-500/40 text-muted-foreground bg-zinc-500/[0.06]",
+  urgent: "border-destructive/40 text-destructive bg-destructive/10",
+  important: "border-warn/40 text-warn bg-warn/10",
+  normal: "border-border text-foreground bg-muted",
+  low: "border-border text-muted-foreground bg-muted",
 }
 
 export type Focus = {

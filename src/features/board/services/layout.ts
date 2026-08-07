@@ -2,6 +2,7 @@ import type { Node, Edge } from "@xyflow/react"
 import type { ParaItem } from "@/features/tasks/types/task"
 import type { TaskWithDeps } from "../types/board"
 import type { SavedPositions } from "./board-persist"
+import { PROJECT_NODE_SIZE, AREA_NODE_SIZE } from "../components/project-node"
 
 // Paleta de colores por proyecto (cíclica). Cada PARA item recibe un color estable.
 const PROJECT_PALETTE = [
@@ -71,10 +72,15 @@ export function buildLayout(
     const color = colorForProject(i)
     const projectId = `project-${para.id}`
 
+    // El nodo se coloca por su esquina superior izquierda, asi que hay que restar
+    // medio circulo para que su CENTRO caiga sobre la orbita. El tamano se importa
+    // del componente para que no vuelvan a separarse.
+    const medio = (para.type === "project" ? PROJECT_NODE_SIZE : AREA_NODE_SIZE) / 2
+
     nodes.push({
       id: projectId,
       type: "project",
-      position: pos(projectId, { x: px - 50, y: py - 50 }),
+      position: pos(projectId, { x: px - medio, y: py - medio }),
       data: {
         label: para.name,
         color,
@@ -82,14 +88,16 @@ export function buildLayout(
       },
     })
 
-    // Edge sutil proyecto → misión
+    // Edge sutil proyecto → misión. Verde de marca, como el nodo de la misión:
+    // antes era el ambar del diseno viejo escrito a mano y dejaba una mision
+    // verde con rayos ambar alrededor.
     edges.push({
       id: `edge-mission-${para.id}`,
       source: `project-${para.id}`,
       target: "mission",
       type: "default",
       style: {
-        stroke: "#fbbf24",
+        stroke: "var(--primary)",
         strokeOpacity: 0.15,
         strokeWidth: 1,
         strokeDasharray: "3 6",
@@ -147,8 +155,9 @@ export function buildLayout(
           y: orphanRadius * Math.sin(angle) - 25,
         }),
         data: {
+          // Tarea sin proyecto: gris del tema, no un gris de Tailwind a mano.
           task,
-          projectColor: "#6b7280",
+          projectColor: "var(--muted-foreground)",
         },
       })
     })
@@ -166,19 +175,23 @@ export function buildLayout(
         target: task.id,
         type: "default",
         style: {
-          stroke: bothActive ? "#fb923c" : "#3f3f46",
+          // Una dependencia viva pide atencion: ambar de AVISO del tema. Apagada,
+          // el borde gris. Antes eran dos naranjas escritos a mano.
+          stroke: bothActive ? "var(--warn)" : "var(--border)",
           strokeWidth: 2,
           strokeDasharray: "5 5",
         },
         animated: bothActive,
         label: "depende",
+        // La etiqueta hereda Inter Tight, que es la unica familia de la marca:
+        // antes forzaba la fuente de maquina de escribir. Y 12 en vez de 9,
+        // porque a 9 no se lee ni con el board centrado.
         labelStyle: {
-          fill: "#fbbf24",
-          fontSize: 9,
-          fontFamily: "var(--font-mono), monospace",
+          fill: "var(--warn)",
+          fontSize: 12,
         },
         labelBgStyle: {
-          fill: "#0F0F12",
+          fill: "var(--background)",
           fillOpacity: 0.85,
         },
         labelBgPadding: [4, 4],

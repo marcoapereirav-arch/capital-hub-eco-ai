@@ -101,7 +101,7 @@ export function MeetingUrlCard() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="https://us05web.zoom.us/j/8765432109?pwd=..."
-          className="flex-1 rounded-sm border border-border bg-background px-2 py-1.5 text-xs font-mono"
+          className="h-11 md:h-9 flex-1 rounded-lg border border-border bg-background px-2 text-base md:text-sm"
         />
         {draft && (
           <button

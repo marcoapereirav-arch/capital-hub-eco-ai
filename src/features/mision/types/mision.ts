@@ -62,17 +62,21 @@ export const STATUS_LABELS: Record<GTDStatus, string> = {
   done: "Completada",
 }
 
+/* La marca es carbon y verde: lo hecho va en verde, lo bloqueado en el rojo del
+ * tema, lo que pide atencion en el ambar de aviso y el resto en gris. Antes
+ * cada estado traia una familia de Tailwind escrita a mano (blue, emerald,
+ * orange), que son colores distintos a los de la marca. */
 export const STATUS_COLORS: Record<GTDStatus, string> = {
-  inbox: "bg-muted text-muted-foreground",
-  next: "bg-blue-500/15 text-blue-300 border-blue-500/30",
-  waiting: "bg-red-500/15 text-red-300 border-red-500/30",
+  inbox: "bg-muted text-muted-foreground border-border",
+  next: "bg-muted text-foreground border-border",
+  waiting: "bg-destructive/10 text-destructive border-destructive/30",
   someday: "bg-muted text-muted-foreground border-border",
-  done: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  done: "bg-primary/10 text-primary border-primary/30",
 }
 
 export const PRIORITY_COLORS: Record<Priority, string> = {
-  urgent: "bg-red-500/15 text-red-300 border-red-500/30",
-  high: "bg-orange-500/15 text-orange-300 border-orange-500/30",
+  urgent: "bg-destructive/10 text-destructive border-destructive/30",
+  high: "bg-warn/10 text-warn border-warn/30",
   normal: "bg-muted text-muted-foreground border-border",
-  low: "bg-muted/50 text-muted-foreground/70 border-border",
+  low: "bg-muted text-muted-foreground border-border",
 }

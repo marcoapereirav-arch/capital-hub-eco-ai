@@ -2,6 +2,10 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import { updateKnowledgeSettings } from '@/actions/knowledge'
 import { QUADRANTS, type QuadrantMeta } from '../../services/quadrants'
 
@@ -13,13 +17,19 @@ interface QuadrantEdit {
 }
 
 /**
- * Modal de configuración del Knowledge. El admin puede cambiar:
+ * Ajustes del Knowledge. El admin puede cambiar:
  *   - Nombre del proyecto (lo que sale en la bola central del 3D).
  *   - Color del núcleo central.
  *   - Para cada cuadrante: label, descripción corta, color.
  *
  * Los keys de los cuadrantes son fijos (no editables) porque están enlazados
  * a los datos en BD. Solo se edita la "fachada visual".
+ *
+ * Los colores de los cuadrantes SI son un color a mano a proposito: los elige el
+ * usuario y son datos de producto, no diseno. Todo lo demas va por tokens.
+ *
+ * Antes era una ventana centrada a mano: en un telefono el teclado la tapaba al
+ * escribir. Ahora es la hoja inferior del kit, con el lado FIJO.
  */
 export function SettingsPanel({
   open,
@@ -50,15 +60,6 @@ export function SettingsPanel({
     setQuadrants(initialQuadrants.map((q) => ({ key: q.key, label: q.label, blurb: q.blurb, color: q.color })))
   }, [open, initialProjectName, initialCoreColor, initialQuadrants])
 
-  useEffect(() => {
-    if (!open) return
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
-
-  if (!open) return null
-
   function updateQuadrant(key: string, patch: Partial<QuadrantEdit>) {
     setQuadrants((prev) => prev.map((q) => (q.key === key ? { ...q, ...patch } : q)))
   }
@@ -85,141 +86,125 @@ export function SettingsPanel({
   }
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        className="fixed z-[100] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(560px,92vw)] max-h-[88vh] overflow-y-auto rounded-2xl border border-[#4ADE80]/30 bg-[#1E1E1E] shadow-2xl"
-        role="dialog"
-        aria-label="Configuración del Knowledge"
+    <Sheet
+      open={open}
+      onOpenChange={(abierto) => {
+        if (!abierto) onClose()
+      }}
+    >
+      <SheetContent
+        side="bottom"
+        className={cn(
+          'rounded-t-xl',
+          // El escritorio repite la condicion del lado porque las clases del kit
+          // (`data-[side=bottom]:...`) pesan mas que un `md:` suelto y lo ganan.
+          'md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-xl md:border-l md:pb-0',
+        )}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-[#4ADE80]/15 bg-[#1E1E1E]">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 font-body">Configuración</p>
-            <h2 className="font-display text-lg text-neutral-100">Personaliza tu Knowledge</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 inline-flex items-center justify-center rounded text-neutral-100/55 hover:text-[#4ADE80] hover:bg-white/5"
-            aria-label="Cerrar"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <SheetTitle className="text-[17px] font-semibold">Personaliza tu Knowledge</SheetTitle>
+          <SheetDescription>Nombre del proyecto, color del núcleo y cuadrantes.</SheetDescription>
+        </SheetHeader>
 
-        <div className="px-5 py-5 space-y-6">
-
+        <div className="space-y-6 px-4 pb-4">
           {/* Nombre del proyecto */}
           <section>
-            <h3 className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 font-body mb-2">Nombre del proyecto</h3>
-            <p className="text-[11px] text-neutral-100/50 font-body mb-2 leading-relaxed">
+            <h3 className="mb-2 text-[15px] font-semibold text-foreground">Nombre del proyecto</h3>
+            <p className="mb-2 text-[15px] leading-relaxed text-muted-foreground">
               Aparece en la bola central del cerebro 3D y en la cabecera.
             </p>
-            <input
+            <Input
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder="Ej: Mi Proyecto"
-              className="w-full bg-white/5 border border-[#4ADE80]/20 focus:border-[#4ADE80]/50 rounded px-3 py-2 text-sm font-body text-neutral-100 outline-none"
             />
           </section>
 
           {/* Color del núcleo */}
           <section>
-            <h3 className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 font-body mb-2">Color del núcleo central</h3>
+            <h3 className="mb-2 text-[15px] font-semibold text-foreground">Color del núcleo central</h3>
             <div className="flex items-center gap-3">
               <input
                 type="color"
                 value={coreColor}
                 onChange={(e) => setCoreColor(e.target.value)}
-                className="w-12 h-10 rounded border border-[#4ADE80]/20 bg-transparent cursor-pointer"
+                aria-label="Color del núcleo central"
+                className="h-11 w-14 shrink-0 cursor-pointer rounded-lg border border-border bg-transparent"
               />
-              <input
+              <Input
                 value={coreColor}
                 onChange={(e) => setCoreColor(e.target.value)}
                 placeholder="#22C55E"
-                className="flex-1 bg-white/5 border border-[#4ADE80]/20 focus:border-[#4ADE80]/50 rounded px-3 py-2 text-sm font-mono text-neutral-100 outline-none"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="tabular-nums"
               />
             </div>
           </section>
 
           {/* Cuadrantes */}
           <section>
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h3 className="text-[10px] uppercase tracking-widest text-[#4ADE80]/70 font-body">Cuadrantes</h3>
-                <p className="text-[11px] text-neutral-100/50 font-body mt-1 leading-relaxed">
+            <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-semibold text-foreground">Cuadrantes</h3>
+                <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground">
                   Las 6 carpetas raíz del Knowledge. Cambia el nombre, descripción y color de cada una.
                 </p>
               </div>
-              <button
-                onClick={onResetQuadrants}
-                className="text-[10px] uppercase tracking-widest text-neutral-100/50 hover:text-[#4ADE80] border border-[#4ADE80]/20 hover:border-[#4ADE80]/40 px-2 py-1 rounded transition-colors"
-              >
+              <Button variant="outline" onClick={onResetQuadrants} className="shrink-0">
                 Restaurar default
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-3">
               {quadrants.map((q) => (
-                <div key={q.key} className="rounded-lg border border-[#4ADE80]/15 bg-white/[0.02] p-3 space-y-2">
+                <div key={q.key} className="space-y-2 rounded-lg border border-border bg-card p-3">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full shrink-0"
+                    <span
+                      aria-hidden
+                      className="h-3 w-3 shrink-0 rounded-full"
                       style={{ background: q.color }}
                     />
-                    <span className="text-[10px] uppercase tracking-widest text-neutral-100/40 font-body shrink-0">
-                      {q.key}
-                    </span>
+                    <span className="shrink-0 text-sm font-semibold text-muted-foreground">{q.key}</span>
                   </div>
-                  <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                    <input
+                  <div className="flex items-center gap-2">
+                    <Input
                       value={q.label}
                       onChange={(e) => updateQuadrant(q.key, { label: e.target.value })}
                       placeholder="Nombre visible"
-                      className="bg-white/5 border border-[#4ADE80]/20 focus:border-[#4ADE80]/50 rounded px-3 py-1.5 text-sm font-body text-neutral-100 outline-none"
                     />
                     <input
                       type="color"
                       value={q.color}
                       onChange={(e) => updateQuadrant(q.key, { color: e.target.value })}
-                      className="w-12 h-9 rounded border border-[#4ADE80]/20 bg-transparent cursor-pointer"
+                      className="h-11 w-14 shrink-0 cursor-pointer rounded-lg border border-border bg-transparent md:h-9"
+                      aria-label={`Color del cuadrante ${q.key}`}
                       title="Color del cuadrante"
                     />
                   </div>
-                  <input
+                  <Input
                     value={q.blurb}
                     onChange={(e) => updateQuadrant(q.key, { blurb: e.target.value })}
                     placeholder="Descripción corta"
-                    className="w-full bg-white/5 border border-[#4ADE80]/20 focus:border-[#4ADE80]/50 rounded px-3 py-1.5 text-[12px] font-body text-neutral-100/80 outline-none"
                   />
                 </div>
               ))}
             </div>
           </section>
-
         </div>
 
-        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 px-5 py-3 border-t border-[#4ADE80]/15 bg-[#1E1E1E]">
-          <button
-            onClick={onClose}
-            className="text-[11px] uppercase tracking-widest text-neutral-100/60 hover:text-neutral-100 border border-[#4ADE80]/15 hover:border-[#4ADE80]/30 px-4 py-2 transition-colors"
-          >
+        {/* Pegada abajo DENTRO de la hoja, para que el teclado no la tape. */}
+        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-safe-4 md:pb-3">
+          <Button variant="secondary" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            onClick={onSave}
-            disabled={pending}
-            className="text-[11px] uppercase tracking-widest text-[#4ADE80] bg-[#4ADE80]/15 hover:bg-[#4ADE80]/25 border border-[#4ADE80]/40 px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          </Button>
+          <Button onClick={onSave} disabled={pending}>
             {pending ? 'Guardando…' : 'Guardar'}
-          </button>
+          </Button>
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   )
 }

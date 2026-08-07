@@ -12,20 +12,23 @@ export function TagsPanel({ tags, customFields }: TagsPanelProps) {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+          <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
             Tags ({tags.length})
           </CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Etiquetas definidas en tu cuenta de ManyChat.
           </p>
         </CardHeader>
         <CardContent>
           {tags.length === 0 ? (
-            <Empty message="Aún no hay tags. Créalos en ManyChat → Settings → Tags." />
+            <Empty
+              title="Todavía no hay tags"
+              message="Aún no hay tags. Créalos en ManyChat → Settings → Tags."
+            />
           ) : (
             <div className="flex flex-wrap gap-2">
               {tags.map(t => (
-                <Badge key={t.id} variant="secondary" className="font-mono text-[11px]">
+                <Badge key={t.id} variant="secondary" className="h-auto py-0.5 text-sm">
                   {t.name}
                 </Badge>
               ))}
@@ -36,30 +39,33 @@ export function TagsPanel({ tags, customFields }: TagsPanelProps) {
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="font-heading text-sm font-semibold uppercase tracking-wide text-foreground">
+          <CardTitle className="font-heading text-[15px] font-semibold text-foreground">
             Custom Fields ({customFields.length})
           </CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Campos personalizados para guardar datos por suscriptor.
           </p>
         </CardHeader>
         <CardContent>
           {customFields.length === 0 ? (
-            <Empty message="Aún no hay custom fields. Créalos en ManyChat → Settings → Custom Fields." />
+            <Empty
+              title="Todavía no hay custom fields"
+              message="Aún no hay custom fields. Créalos en ManyChat → Settings → Custom Fields."
+            />
           ) : (
             <ul className="flex flex-col gap-2">
               {customFields.map(f => (
                 <li
                   key={f.id}
-                  className="flex items-center justify-between border border-border bg-muted/20 px-3 py-2"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted/20 px-3 py-2"
                 >
-                  <div className="flex flex-col">
-                    <span className="text-sm text-foreground">{f.name}</span>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-[15px] text-foreground">{f.name}</span>
                     {f.description && (
-                      <span className="text-[10px] text-muted-foreground">{f.description}</span>
+                      <span className="text-sm text-muted-foreground">{f.description}</span>
                     )}
                   </div>
-                  <Badge variant="secondary" className="font-mono text-[10px]">
+                  <Badge variant="secondary" className="h-auto shrink-0 py-0.5 text-sm">
                     {f.type ?? 'text'}
                   </Badge>
                 </li>
@@ -72,10 +78,11 @@ export function TagsPanel({ tags, customFields }: TagsPanelProps) {
   )
 }
 
-function Empty({ message }: { message: string }) {
+function Empty({ title, message }: { title: string; message: string }) {
   return (
-    <div className="border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-      {message}
+    <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center">
+      <h3 className="text-[17px] font-semibold text-foreground">{title}</h3>
+      <p className="max-w-[38ch] text-[15px] text-muted-foreground">{message}</p>
     </div>
   )
 }

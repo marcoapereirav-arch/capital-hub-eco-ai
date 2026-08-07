@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { PageContainer } from "@/components/ui/page-container"
 import { TaskList } from "@/features/tasks/components/task-list"
 import { TaskDetail } from "@/features/tasks/components/task-detail"
 import { useTaskStore } from "@/features/tasks/store/task-store"
@@ -72,29 +73,32 @@ export function ProjectDetail({ id }: { id: string }) {
     paused: "En pausa",
     completed: "Completado",
   }
+  // Los tres estados se distinguen con los tokens del tema: verde de marca para lo
+  // terminado, ambar de aviso para lo pausado y el gris de la marca para lo que
+  // esta en marcha. Antes eran cyan / amber / green de Tailwind.
   const STATUS_COLOR: Record<string, string> = {
-    active: "border-cyan-500/40 text-cyan-400 bg-cyan-500/[0.06]",
-    paused: "border-amber-500/40 text-amber-400 bg-amber-500/[0.06]",
-    completed: "border-green-500/40 text-green-400 bg-green-500/[0.06]",
+    active: "border-border text-foreground bg-muted",
+    paused: "border-warn/40 text-warn bg-warn/10",
+    completed: "border-primary/40 text-primary bg-primary/10",
   }
 
   if (loading && !initialized) {
     return (
-      <div className="p-6 text-sm text-muted-foreground">Cargando…</div>
+      <div className="p-6 text-[15px] text-muted-foreground">Cargando…</div>
     )
   }
 
   if (!project) {
     return (
-      <div className="p-6">
+      <PageContainer narrow>
         <Link
           href="/projects"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="-ml-1 inline-flex h-11 items-center gap-1.5 rounded-lg px-1 text-[15px] text-muted-foreground active:bg-muted md:h-8 md:text-sm md:hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Proyectos
+          <ArrowLeft className="h-4 w-4 shrink-0" /> Proyectos
         </Link>
-        <p className="text-sm text-muted-foreground">Proyecto no encontrado.</p>
-      </div>
+        <p className="text-[15px] text-muted-foreground">Proyecto no encontrado.</p>
+      </PageContainer>
     )
   }
 
@@ -103,31 +107,31 @@ export function ProjectDetail({ id }: { id: string }) {
       <header className="shrink-0 border-b border-border bg-background px-4 py-3 md:px-6">
         <Link
           href="/projects"
-          className="mb-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="-ml-1 mb-1 inline-flex h-11 items-center gap-1.5 rounded-lg px-1 text-[15px] text-muted-foreground active:bg-muted md:mb-2 md:h-8 md:text-sm md:hover:text-foreground"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Proyectos
+          <ArrowLeft className="h-4 w-4 shrink-0" /> Proyectos
         </Link>
 
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2 md:gap-3">
           <button
             type="button"
             onClick={toggleStatus}
             aria-label={isDone ? "Marcar como en progreso" : "Marcar como completado"}
             title={isDone ? "Marcar como en progreso" : "Marcar como completado"}
-            className="mt-1 shrink-0 rounded-full text-muted-foreground transition hover:text-primary"
+            className="-ml-1 flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition active:bg-muted md:ml-0 md:mt-1 md:size-6 md:hover:text-primary"
           >
             {isDone ? (
-              <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              <CheckCircle2 className="h-6 w-6 text-primary" />
             ) : (
               <Circle className="h-6 w-6" />
             )}
           </button>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
               <h1
                 className={cn(
-                  "text-xl font-semibold leading-tight",
+                  "min-w-0 text-xl leading-tight font-semibold tracking-tight",
                   isDone && "line-through opacity-70"
                 )}
               >
@@ -142,42 +146,39 @@ export function ProjectDetail({ id }: { id: string }) {
                   <button
                     type="button"
                     className={cn(
-                      "shrink-0 inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider transition-colors hover:opacity-80",
+                      "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-sm transition-colors md:h-7 md:hover:opacity-80",
                       STATUS_COLOR[project.status] ?? "border-border text-muted-foreground"
                     )}
                     title="Cambiar estado del proyecto"
                   >
-                    {project.status === "active" && <Play className="h-3 w-3" />}
-                    {project.status === "paused" && <Pause className="h-3 w-3" />}
-                    {project.status === "completed" && <CheckCircle2 className="h-3 w-3" />}
+                    {project.status === "active" && <Play className="h-3.5 w-3.5 shrink-0" />}
+                    {project.status === "paused" && <Pause className="h-3.5 w-3.5 shrink-0" />}
+                    {project.status === "completed" && <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />}
                     {STATUS_LABEL[project.status] ?? project.status}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuItem onClick={() => setStatus("active")}>
-                    <Play className="h-3.5 w-3.5 mr-2" /> En progreso
-                    {project.status === "active" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                    <Play className="mr-2 h-4 w-4" /> En progreso
+                    {project.status === "active" && <span className="ml-auto text-sm text-muted-foreground">actual</span>}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatus("paused")}>
-                    <Pause className="h-3.5 w-3.5 mr-2" /> En pausa
-                    {project.status === "paused" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                    <Pause className="mr-2 h-4 w-4" /> En pausa
+                    {project.status === "paused" && <span className="ml-auto text-sm text-muted-foreground">actual</span>}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setStatus("completed")}>
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Completado
-                    {project.status === "completed" && <span className="ml-auto text-[10px] text-muted-foreground">actual</span>}
+                    <CheckCircle2 className="mr-2 h-4 w-4" /> Completado
+                    {project.status === "completed" && <span className="ml-auto text-sm text-muted-foreground">actual</span>}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {total} tareas · {doneCount} hechas ({pct}%) · {nextCount} pendientes ahora
             </p>
             <div className="mt-2 h-1 max-w-md overflow-hidden rounded-full bg-muted">
               <div
-                className={cn(
-                  "h-full transition-all",
-                  isDone ? "bg-emerald-500" : "bg-primary"
-                )}
+                className="h-full bg-primary transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -186,21 +187,21 @@ export function ProjectDetail({ id }: { id: string }) {
       </header>
 
       {error && (
-        <div className="shrink-0 border-b border-destructive/30 bg-destructive/5 px-4 py-2 text-sm text-destructive md:px-6">
+        <div className="shrink-0 border-b border-destructive/30 bg-destructive/5 px-4 py-2 text-[15px] text-destructive md:px-6">
           {error}
         </div>
       )}
 
       {/* Toolbar con toggle hechas/pendientes */}
-      <div className="shrink-0 border-b border-border px-4 py-2 md:px-6 flex items-center justify-between gap-2">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2 md:px-6">
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setShowDone(false)}
             className={cn(
-              "rounded-sm text-[10px] font-mono uppercase tracking-wider px-2 py-1 border transition-colors",
+              "h-11 rounded-lg border px-3 text-[15px] whitespace-nowrap transition-colors md:h-8 md:text-sm",
               !showDone
-                ? "border-foreground text-foreground bg-card"
-                : "border-border text-muted-foreground hover:bg-card/50"
+                ? "border-foreground bg-card text-foreground"
+                : "border-border text-muted-foreground md:hover:bg-card/50"
             )}
           >
             Pendientes ({nextCount})
@@ -208,33 +209,37 @@ export function ProjectDetail({ id }: { id: string }) {
           <button
             onClick={() => setShowDone(true)}
             className={cn(
-              "rounded-sm text-[10px] font-mono uppercase tracking-wider px-2 py-1 border transition-colors",
+              "h-11 rounded-lg border px-3 text-[15px] whitespace-nowrap transition-colors md:h-8 md:text-sm",
               showDone
-                ? "border-foreground text-foreground bg-card"
-                : "border-border text-muted-foreground hover:bg-card/50"
+                ? "border-foreground bg-card text-foreground"
+                : "border-border text-muted-foreground md:hover:bg-card/50"
             )}
           >
             Todas ({total})
           </button>
         </div>
-        <div className="text-[10px] font-mono text-muted-foreground">
-          {showDone ? <Eye className="h-3 w-3 inline mr-1" /> : <EyeOff className="h-3 w-3 inline mr-1" />}
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+          {showDone ? <Eye className="h-4 w-4 shrink-0" /> : <EyeOff className="h-4 w-4 shrink-0" />}
           {showDone ? "mostrando hechas" : "ocultas hechas"}
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto p-3 pb-mobile-nav md:p-4">
-        {loading && !initialized ? (
-          <div className="text-center py-12 text-sm text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Cargando tareas…
-          </div>
-        ) : projectTasks.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-12 text-center text-sm text-muted-foreground">
-            Sin tareas en este proyecto todavía.
-          </div>
-        ) : (
-          <TaskList />
-        )}
+      <div className="min-h-0 flex-1 overflow-y-auto no-overscroll">
+        <PageContainer>
+          {loading && !initialized ? (
+            <div className="py-12 text-center text-[15px] text-muted-foreground">
+              <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" /> Cargando tareas…
+            </div>
+          ) : projectTasks.length === 0 ? (
+            <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-10 text-center">
+              <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+                Sin tareas en este proyecto todavía.
+              </p>
+            </div>
+          ) : (
+            <TaskList />
+          )}
+        </PageContainer>
       </div>
 
       <TaskDetail />

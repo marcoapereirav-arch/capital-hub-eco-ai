@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import * as tus from "tus-js-client"
-import { Upload, Link2, X, AlertCircle, Check } from "lucide-react"
+import { Upload, Link2, AlertCircle, Check } from "lucide-react"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import { duracionLegible, esLoomValido, type DatosLoom } from "../types"
 
 type Props = {
@@ -20,6 +24,10 @@ type Modo = "archivo" | "loom"
  * Con archivo, el navegador manda el vídeo DIRECTO a Bunny (protocolo TUS), sin
  * pasar por el OS: por eso no hay limite de tamaño y una subida cortada se
  * reanuda sola. El OS solo da el permiso y guarda la ficha.
+ *
+ * Hoja inferior en telefono, cajon por la derecha en escritorio: el lado va FIJO
+ * y la accion principal queda pegada abajo DENTRO de la hoja, para que el
+ * teclado no la tape.
  */
 export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: Props) {
   const [modo, setModo] = useState<Modo>("archivo")
@@ -125,34 +133,28 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#0F0F12]/90 p-0 backdrop-blur-sm sm:items-center sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Añadir un tutorial"
-      onClick={guardando ? undefined : onCerrar}
+    <Sheet
+      open
+      onOpenChange={(abierto) => {
+        if (!abierto && !guardando) onCerrar()
+      }}
     >
-      <div
-        className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-lg border border-[#2A2D34] bg-[#15161A] sm:rounded-lg"
-        onClick={(e) => e.stopPropagation()}
+      <SheetContent
+        side="bottom"
+        className={cn(
+          "rounded-t-xl",
+          // Se repite la condicion del lado porque las clases del kit (`data-[side=bottom]:...`)
+          // pesan mas que un `md:` suelto; sin repetirla el cajon sale por la izquierda.
+          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-lg md:border-l md:pb-0",
+        )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#2A2D34] p-5">
-          <div>
-            <h2 className="text-base font-semibold text-white">Añadir un tutorial</h2>
-            <p className="mt-0.5 text-xs text-white/50">En la carpeta {carpetaNombre}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            disabled={guardando}
-            aria-label="Cerrar"
-            className="rounded-lg border border-white/10 p-1.5 text-white/60 transition hover:text-white disabled:opacity-40"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <SheetHeader>
+          <SheetTitle className="text-[17px] font-semibold">Añadir un tutorial</SheetTitle>
+          <SheetDescription>En la carpeta {carpetaNombre}</SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-5 p-5">
+        <div className="space-y-5 px-4 pb-4">
           {/* Las dos formas de meter el vídeo. */}
           <div className="grid grid-cols-2 gap-2">
             <BotonModo activo={modo === "archivo"} onClick={() => setModo("archivo")} icon={Upload} titulo="Subir vídeo" pie="Se guarda en Bunny" />
@@ -175,59 +177,63 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
                 type="button"
                 onClick={() => inputArchivo.current?.click()}
                 disabled={guardando}
-                className="flex w-full flex-col items-center gap-2 rounded-lg border border-dashed border-[#2A2D34] px-4 py-8 text-center transition hover:border-[#22C55E]/50 disabled:opacity-50"
+                className="flex w-full flex-col items-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center transition-colors active:bg-muted disabled:opacity-50 md:hover:border-primary/50"
               >
-                <Upload className="h-6 w-6 text-[#4ADE80]" />
-                <span className="text-sm font-medium text-white">
+                <Upload className="h-6 w-6 text-primary" />
+                <span className="text-[15px] font-medium text-foreground">
                   {archivo ? archivo.name : "Elige el archivo de vídeo"}
                 </span>
-                <span className="text-xs text-white/45">
+                <span className="text-sm text-muted-foreground">
                   {archivo ? `${(archivo.size / 1024 / 1024).toFixed(0)} MB` : "Sin límite de tamaño"}
                 </span>
               </button>
             </div>
           ) : (
             <div>
-              <label htmlFor="loom" className="mb-1.5 block text-xs font-medium text-white/70">
+              <label htmlFor="loom" className="mb-1.5 block text-[15px] font-medium text-muted-foreground">
                 Pega aquí el link de Loom
               </label>
-              <input
+              <Input
                 id="loom"
                 type="url"
+                inputMode="url"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={loomUrl}
                 onChange={(e) => {
                   setLoomUrl(e.target.value)
                   setError(null)
                 }}
                 placeholder="https://www.loom.com/share/..."
-                className="w-full rounded-lg border border-[#2A2D34] bg-[#0F0F12] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#22C55E]/60 focus:outline-none"
+                className="bg-background"
               />
               {loomUrl && !esLoomValido(loomUrl) ? (
-                <p className="mt-1.5 text-xs text-amber-400">
+                <p className="mt-1.5 text-sm text-warn">
                   Ese link no parece de Loom. Copia el de compartir, el que empieza por loom.com/share.
                 </p>
               ) : null}
 
               {consultandoLoom ? (
-                <p className="mt-2 text-xs text-white/45">Leyendo el vídeo en Loom…</p>
+                <p className="mt-2 text-sm text-muted-foreground">Leyendo el vídeo en Loom…</p>
               ) : null}
 
               {/* Se enseña lo que Loom devolvio: asi Marco ve que reconocio el
                   video antes de guardar, en vez de darle a Añadir a ciegas. */}
               {loomDatos?.titulo ? (
-                <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-[#22C55E]/30 bg-[#22C55E]/[0.06] p-2.5">
+                <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/10 p-2.5">
                   {loomDatos.miniatura ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={loomDatos.miniatura} alt="" className="h-12 w-20 shrink-0 rounded object-cover" />
+                    <img src={loomDatos.miniatura} alt="" className="h-12 w-20 shrink-0 rounded-sm object-cover" />
                   ) : null}
                   <div className="min-w-0">
-                    <p className="flex items-center gap-1.5 text-xs font-medium text-[#4ADE80]">
-                      <Check className="h-3.5 w-3.5" />
+                    <p className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                      <Check className="h-4 w-4" />
                       Vídeo encontrado
                     </p>
-                    <p className="mt-0.5 truncate text-xs text-white">{loomDatos.titulo}</p>
+                    <p className="mt-0.5 truncate text-sm text-foreground">{loomDatos.titulo}</p>
                     {duracionLegible(loomDatos.duracion_seg) ? (
-                      <p className="text-xs text-white/45">{duracionLegible(loomDatos.duracion_seg)}</p>
+                      <p className="text-sm tabular-nums text-muted-foreground">{duracionLegible(loomDatos.duracion_seg)}</p>
                     ) : null}
                   </div>
                 </div>
@@ -240,49 +246,40 @@ export function NuevoTutorial({ carpetaId, carpetaNombre, onListo, onCerrar }: P
 
           {progreso !== null ? (
             <div>
-              <div className="mb-1.5 flex justify-between text-xs text-white/60">
+              <div className="mb-1.5 flex justify-between text-sm text-muted-foreground">
                 <span>Subiendo el vídeo</span>
-                <span className="font-medium text-[#4ADE80]">{progreso}%</span>
+                <span className="font-medium tabular-nums text-primary">{progreso}%</span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-[#2A2D34]">
-                <div className="h-full rounded-full bg-[#22C55E] transition-all" style={{ width: `${progreso}%` }} />
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progreso}%` }} />
               </div>
-              <p className="mt-1.5 text-xs text-white/45">No cierres esta ventana hasta que termine.</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">No cierres esta ventana hasta que termine.</p>
             </div>
           ) : null}
 
           {error ? (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/[0.06] p-3">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
-              <p className="text-xs leading-relaxed text-red-300">{error}</p>
+            <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <p className="text-sm leading-relaxed text-destructive">{error}</p>
             </div>
           ) : null}
 
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onCerrar}
-              disabled={guardando}
-              className="flex-1 rounded-lg border border-[#2A2D34] px-4 py-2.5 text-sm font-medium text-white/70 transition hover:text-white disabled:opacity-40"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={guardar}
-              disabled={!puedeGuardar}
-              className="flex-1 rounded-lg bg-[#22C55E] px-4 py-2.5 text-sm font-semibold text-[#0F0F12] transition hover:bg-[#4ADE80] disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              {guardando ? "Guardando…" : "Añadir"}
-            </button>
-          </div>
-
-          <p className="text-center text-xs text-white/40">
+          <p className="text-center text-sm text-muted-foreground">
             Se guarda como borrador. Sale al equipo cuando le des a publicar.
           </p>
         </div>
-      </div>
-    </div>
+
+        {/* Pegada abajo DENTRO de la hoja: con `fixed` el teclado la tapa. */}
+        <div className="sticky bottom-0 z-10 flex gap-2 border-t border-border bg-popover px-4 py-3 pb-safe-4 md:pb-3">
+          <Button variant="secondary" onClick={onCerrar} disabled={guardando} className="flex-1">
+            Cancelar
+          </Button>
+          <Button onClick={guardar} disabled={!puedeGuardar} className="flex-1">
+            {guardando ? "Guardando…" : "Añadir"}
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -293,15 +290,15 @@ function BotonModo({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 transition ${
-        activo
-          ? "border-[#22C55E]/60 bg-[#22C55E]/[0.08]"
-          : "border-[#2A2D34] hover:border-white/25"
-      }`}
+      aria-pressed={activo}
+      className={cn(
+        "flex min-h-11 flex-col items-center gap-1.5 rounded-lg border px-3 py-3 transition-colors",
+        activo ? "border-primary/60 bg-primary/10" : "border-border md:hover:border-primary/40",
+      )}
     >
-      <Icon className={`h-4 w-4 ${activo ? "text-[#4ADE80]" : "text-white/50"}`} />
-      <span className={`text-xs font-semibold ${activo ? "text-white" : "text-white/70"}`}>{titulo}</span>
-      <span className="text-[11px] text-white/40">{pie}</span>
+      <Icon className={cn("h-4 w-4", activo ? "text-primary" : "text-muted-foreground")} />
+      <span className={cn("text-sm font-semibold", activo ? "text-foreground" : "text-muted-foreground")}>{titulo}</span>
+      <span className="text-sm text-muted-foreground">{pie}</span>
     </button>
   )
 }
@@ -311,14 +308,15 @@ function Campo({
 }: { id: string; etiqueta: string; valor: string; onChange: (v: string) => void; placeholder: string }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-white/70">{etiqueta}</label>
-      <input
+      <label htmlFor={id} className="mb-1.5 block text-[15px] font-medium text-muted-foreground">{etiqueta}</label>
+      <Input
         id={id}
         type="text"
         value={valor}
         onChange={(e) => onChange(e.target.value)}
+        enterKeyHint="next"
         placeholder={placeholder}
-        className="w-full rounded-lg border border-[#2A2D34] bg-[#0F0F12] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#22C55E]/60 focus:outline-none"
+        className="bg-background"
       />
     </div>
   )

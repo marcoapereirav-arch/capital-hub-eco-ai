@@ -8,6 +8,10 @@ import { cn } from "@/lib/utils"
 /**
  * Filtro por etiquetas (se pueden marcar varias). Un contacto pasa el filtro si tiene
  * AL MENOS UNA de las marcadas.
+ *
+ * En telefono NO se usa este boton: los filtros del CRM viven todos dentro de la hoja
+ * inferior "Filtros", y alli se pinta <TagFilterList /> directamente. Un menu flotante
+ * en telefono se sale de la pantalla y no se puede arrastrar.
  */
 export function TagFilterButton({
   allTags,
@@ -39,13 +43,6 @@ export function TagFilterButton({
     }
   }, [open])
 
-  function toggle(id: string) {
-    const next = new Set(selected)
-    if (next.has(id)) next.delete(id)
-    else next.add(id)
-    onChange(next)
-  }
-
   const activo = selected.size > 0
 
   return (
@@ -54,8 +51,8 @@ export function TagFilterButton({
         className={cn(
           "inline-flex min-h-[44px] items-center rounded-[4px] border transition-colors",
           activo
-            ? "border-[#24462F] bg-[#101710] text-[#4ADE80]"
-            : "border-[rgba(245,246,247,0.1)] bg-[#16161B] text-[#A6AAB2] hover:text-[#F5F6F7]"
+            ? "border-primary/30 bg-primary/10 text-primary"
+            : "border-border bg-popover text-muted-foreground md:hover:text-foreground"
         )}
       >
         <button
@@ -74,7 +71,7 @@ export function TagFilterButton({
           <button
             onClick={() => onChange(new Set())}
             aria-label="Quitar el filtro de etiquetas"
-            className="flex h-11 w-9 items-center justify-center rounded-r-[4px] transition-colors hover:bg-[#16161B]"
+            className="flex h-11 w-11 items-center justify-center rounded-r-[4px] transition-colors hover:bg-popover md:w-9"
           >
             <X className="h-4 w-4" />
           </button>
@@ -82,46 +79,75 @@ export function TagFilterButton({
       </div>
 
       {open && (
-        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 min-w-[240px] overflow-y-auto overscroll-contain rounded-[4px] border border-[rgba(245,246,247,0.1)] bg-[#16161B] shadow-[0_18px_40px_-16px_rgba(0,0,0,0.85)]">
-          {allTags.length === 0 ? (
-            <p className="px-3 py-3 text-[14px] text-[#A6AAB2]">
-              Todavía no hay etiquetas. Se crean en la pestaña Etiquetas.
-            </p>
-          ) : (
-            allTags.map((tag) => {
-              const isSelected = selected.has(tag.id)
-              return (
-                <button
-                  key={tag.id}
-                  onClick={() => toggle(tag.id)}
-                  aria-pressed={isSelected}
-                  className="flex min-h-[44px] w-full items-center gap-2.5 px-3 text-left text-[14px] text-[#F5F6F7] transition-colors hover:bg-[#131318]"
-                >
-                  <span
-                    className={cn(
-                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border",
-                      isSelected
-                        ? "border-[#22C55E] bg-[#22C55E]"
-                        : "border-[rgba(245,246,247,0.2)]"
-                    )}
-                  >
-                    {isSelected && <Check className="h-3 w-3 text-[#08130C]" />}
-                  </span>
-                  <span
-                    className="h-2 w-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: tag.color }}
-                  />
-                  <span className="truncate">{tag.name}</span>
-                </button>
-              )
-            })
-          )}
-          {activo && (
-            <p className="border-t border-[rgba(245,246,247,0.1)] px-3 py-2 text-[13px] text-[#7C818A]">
-              Se muestran los contactos que tengan alguna de las marcadas.
-            </p>
-          )}
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-[4px] border border-border bg-popover shadow-[0_18px_40px_-16px_rgba(0,0,0,0.85)] md:w-auto md:min-w-[240px]">
+          <TagFilterList allTags={allTags} selected={selected} onChange={onChange} />
         </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * La lista en si, sin envoltorio. Se usa tal cual dentro de la hoja de filtros del
+ * telefono y dentro del menu flotante del ordenador.
+ */
+export function TagFilterList({
+  allTags,
+  selected,
+  onChange,
+}: {
+  allTags: Tag[]
+  selected: Set<string>
+  onChange: (s: Set<string>) => void
+}) {
+  function toggle(id: string) {
+    const next = new Set(selected)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    onChange(next)
+  }
+
+  if (allTags.length === 0) {
+    return (
+      <p className="px-3 py-3 text-[14px] text-muted-foreground">
+        Todavía no hay etiquetas. Se crean en la pestaña Etiquetas.
+      </p>
+    )
+  }
+
+  return (
+    <div>
+      {allTags.map((tag) => {
+        const isSelected = selected.has(tag.id)
+        return (
+          <button
+            key={tag.id}
+            onClick={() => toggle(tag.id)}
+            aria-pressed={isSelected}
+            className="flex min-h-[44px] w-full items-center gap-2.5 px-3 text-left text-[14px] text-foreground transition-colors active:bg-card md:hover:bg-card"
+          >
+            <span
+              className={cn(
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border",
+                isSelected
+                  ? "border-primary bg-primary"
+                  : "border-foreground/20"
+              )}
+            >
+              {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+            </span>
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: tag.color }}
+            />
+            <span className="min-w-0 truncate">{tag.name}</span>
+          </button>
+        )
+      })}
+      {selected.size > 0 && (
+        <p className="border-t border-border px-3 py-2 text-[14px] text-muted-foreground md:text-[13px]">
+          Se muestran los contactos que tengan alguna de las marcadas.
+        </p>
       )}
     </div>
   )

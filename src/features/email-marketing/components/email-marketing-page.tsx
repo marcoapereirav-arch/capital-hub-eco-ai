@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Mail, Send, FileText, Settings, BarChart3, Search, Filter, CheckCircle2, XCircle, Eye, MousePointerClick } from "lucide-react"
-import { ShellHeader } from "@/features/shell/components/shell-header"
+import { Mail, Send, FileText, Settings, BarChart3, Search, CheckCircle2, XCircle, Eye, MousePointerClick, X } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { Input } from "@/components/ui/input"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 import { cn } from "@/lib/utils"
 
 type Stats = {
@@ -59,55 +61,56 @@ type Template = {
   updatedAt?: string | null
 }
 
-const FREQ_META: Record<string, { label: string; color: string }> = {
-  alta: { label: "ALTA", color: "border-red-500/40 text-red-400 bg-red-500/[0.04]" },
-  media: { label: "MEDIA", color: "border-amber-500/40 text-amber-400 bg-amber-500/[0.04]" },
-  baja: { label: "BAJA", color: "border-zinc-500/40 text-zinc-400 bg-zinc-500/[0.04]" },
+// La marca es carbon + verde. Lo bueno va en verde (primary), lo que falla en
+// rojo del tema (destructive) y lo que pide atencion en ambar de aviso (warn).
+// Ninguna otra familia de color entra en la pantalla.
+const FREQ_META: Record<string, { label: string; className: string }> = {
+  alta: { label: "ALTA", className: "border-destructive/40 bg-destructive/10 text-destructive" },
+  media: { label: "MEDIA", className: "border-warn/40 bg-warn/10 text-warn" },
+  baja: { label: "BAJA", className: "border-border bg-muted text-muted-foreground" },
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  lifecycle: "text-cyan-400 border-cyan-500/40",
-  calendar: "text-amber-400 border-amber-500/40",
-  transactional: "text-green-400 border-green-500/40",
-  retargeting: "text-purple-400 border-purple-500/40",
-  auth: "text-blue-400 border-blue-500/40",
-  internal: "text-muted-foreground border-border",
-}
+// Clase compartida de los desplegables nativos. No hay componente Select en el
+// kit todavia, asi que al menos miden 44 puntos y llevan los colores del tema.
+const SELECT_CLASS =
+  "h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground md:h-8 md:w-auto md:text-sm"
+
+const TABS = [
+  ["dashboard", "Dashboard", BarChart3],
+  ["templates", "Plantillas", FileText],
+  ["logs", "Envíos", Send],
+  ["broadcasts", "Broadcasts", Mail],
+  ["config", "Configuración", Settings],
+] as const
 
 export function EmailMarketingPage() {
   const [tab, setTab] = useState<"dashboard" | "templates" | "logs" | "broadcasts" | "config">("dashboard")
 
   return (
     <>
-      <ShellHeader title="Email Marketing" />
 
       <PageContainer>
-        <div className="flex items-center gap-2">
-          <Mail className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-lg font-semibold">Email Marketing</h1>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            · Resend + React Email
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Mail className="h-5 w-5 shrink-0 text-muted-foreground" />
+          <h1 className="min-w-0 flex-1 truncate text-lg font-semibold">Email Marketing</h1>
+          <span className="text-sm text-muted-foreground">· Resend + React Email</span>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
-          {([
-            ["dashboard", "Dashboard", BarChart3],
-            ["templates", "Plantillas", FileText],
-            ["logs", "Envíos", Send],
-            ["broadcasts", "Broadcasts", Mail],
-            ["config", "Configuración", Settings],
-          ] as const).map(([k, label, Icon]) => (
+        {/* Tira de pestanas: se sale del margen del contenedor para que la
+            primera y la ultima toquen el borde y se vea que hay mas. */}
+        <div className="-mx-4 flex snap-x gap-1 overflow-x-auto border-b border-border px-4 md:mx-0 md:px-0">
+          {TABS.map(([k, label, Icon]) => (
             <button
               key={k}
               onClick={() => setTab(k)}
               className={cn(
-                "px-3 py-2 text-sm transition-colors border-b-2 -mb-px flex items-center gap-1.5 shrink-0",
-                tab === k ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                "-mb-px flex h-11 shrink-0 snap-start items-center gap-1.5 border-b-2 px-3 text-[15px] whitespace-nowrap transition-colors md:h-9 md:text-sm",
+                tab === k
+                  ? "border-primary font-semibold text-foreground"
+                  : "border-transparent text-muted-foreground md:hover:text-foreground"
               )}
             >
-              <Icon className="h-3.5 w-3.5" /> {label}
+              <Icon className="h-4 w-4" /> {label}
             </button>
           ))}
         </div>
@@ -141,48 +144,49 @@ function DashboardTab() {
     <div className="space-y-4">
       {/* Filtro de periodo (reusable). Si quieres este mismo filtro en otro dashboard,
           importa <PeriodFilter> de @/components/ui/period-filter */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            Métricas {stats?.range ? `· ${new Date(stats.range.from).toLocaleDateString("es-ES")} – ${new Date(stats.range.to).toLocaleDateString("es-ES")}` : ""}
-          </p>
-        </div>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Métricas {stats?.range ? `· ${new Date(stats.range.from).toLocaleDateString("es-ES")} – ${new Date(stats.range.to).toLocaleDateString("es-ES")}` : ""}
+        </p>
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
       {loading || !stats ? (
-        <div className="text-sm text-muted-foreground py-12 text-center">Cargando métricas…</div>
+        <LoadingScreen fullscreen={false} className="min-h-[200px] rounded-lg" />
       ) : (
         <>
-          {/* 6 KPI cards completas */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <StatCard label="Enviados" value={stats.metrics.total} accent="cyan" />
-            <StatCard label="Entregados" value={stats.metrics.delivered} sublabel={`${stats.metrics.deliveryRate}%`} accent="green" />
-            <StatCard label="Abiertos" value={stats.metrics.opened} sublabel={`${stats.metrics.openRate}%`} suffix="" accent="amber" />
-            <StatCard label="Clicados" value={stats.metrics.clicked} sublabel={`${stats.metrics.clickRate}%`} accent="purple" />
-            <StatCard label="Bounces" value={stats.metrics.bounced} sublabel={`${stats.metrics.bounceRate}%`} accent={stats.metrics.bounced > 0 ? "red" : "cyan"} />
-            <StatCard label="Fallidos" value={stats.metrics.failed} sublabel={`${stats.metrics.failureRate}%`} accent={stats.metrics.failed > 0 ? "red" : "cyan"} />
+          {/* Fila de numeros: dos columnas en telefono, seis en monitor */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <StatCard label="Enviados" value={stats.metrics.total} />
+            <StatCard label="Entregados" value={stats.metrics.delivered} sublabel={`${stats.metrics.deliveryRate}%`} tone="positive" />
+            <StatCard label="Abiertos" value={stats.metrics.opened} sublabel={`${stats.metrics.openRate}%`} />
+            <StatCard label="Clicados" value={stats.metrics.clicked} sublabel={`${stats.metrics.clickRate}%`} />
+            <StatCard label="Bounces" value={stats.metrics.bounced} sublabel={`${stats.metrics.bounceRate}%`} tone={stats.metrics.bounced > 0 ? "negative" : "neutral"} />
+            <StatCard label="Fallidos" value={stats.metrics.failed} sublabel={`${stats.metrics.failureRate}%`} tone={stats.metrics.failed > 0 ? "negative" : "neutral"} />
           </div>
 
-          <section>
-            <h2 className="text-sm font-semibold mb-2">Top templates en el período</h2>
+          <section className="space-y-2">
+            <h2 className="text-[15px] font-semibold">Top templates en el período</h2>
             {stats.topTemplates.length === 0 ? (
-              <div className="text-xs text-muted-foreground p-3 border border-dashed border-border rounded-sm">
-                Sin envíos en este rango. Cambia el filtro de período para ver otras fechas.
+              <div className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-8 text-center">
+                <h3 className="text-[17px] font-semibold text-foreground">Sin envíos en este rango</h3>
+                <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+                  Cambia el filtro de período para ver otras fechas.
+                </p>
               </div>
             ) : (
-              <div className="rounded-md border border-border divide-y divide-border">
+              <div className="divide-y divide-border rounded-lg border border-border">
                 {stats.topTemplates.map((t) => {
                   const openR = t.total > 0 ? Math.round((t.opened / t.total) * 100) : 0
                   const clickR = t.total > 0 ? Math.round((t.clicked / t.total) * 100) : 0
                   return (
-                    <div key={t.template} className="flex items-center justify-between px-3 py-2 text-sm">
-                      <span className="font-mono text-xs truncate">{t.template}</span>
-                      <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider shrink-0">
-                        <span className="text-muted-foreground">{t.total} envíos</span>
-                        <span className="text-amber-400">{openR}% open</span>
-                        <span className="text-violet-400">{clickR}% click</span>
-                        {t.failed > 0 && <span className="text-red-400">{t.failed} fallos</span>}
+                    <div key={t.template} className="flex flex-col gap-1 px-3 py-3 md:flex-row md:items-center md:justify-between md:gap-3">
+                      <span className="min-w-0 truncate text-[15px] text-foreground">{t.template}</span>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                        <span className="tabular-nums">{t.total} envíos</span>
+                        <span className="tabular-nums">{openR}% open</span>
+                        <span className="tabular-nums">{clickR}% click</span>
+                        {t.failed > 0 && <span className="tabular-nums text-destructive">{t.failed} fallos</span>}
                       </div>
                     </div>
                   )
@@ -212,7 +216,7 @@ function TemplatesTab() {
 
   useEffect(() => { load() }, [])
 
-  if (loading) return <div className="text-sm text-muted-foreground py-6">Cargando…</div>
+  if (loading) return <LoadingScreen fullscreen={false} className="min-h-[200px] rounded-lg" />
 
   // Filtro búsqueda (label + trigger + key)
   const q = search.trim().toLowerCase()
@@ -226,7 +230,7 @@ function TemplatesTab() {
     : templates
 
   // Agrupar por group (nuevo) con fallback a category (legacy)
-  const groups = new Map<string, { label: string; color: string; order: number; items: Template[] }>()
+  const groups = new Map<string, { label: string; order: number; items: Template[] }>()
   for (const t of filtered) {
     const groupKey = t.group ?? t.category ?? "otros"
     const existing = groups.get(groupKey)
@@ -235,7 +239,6 @@ function TemplatesTab() {
     } else {
       groups.set(groupKey, {
         label: t.group_label ?? t.category ?? "Otros",
-        color: t.group_color ?? "border-border text-muted-foreground",
         order: t.group_order ?? 99,
         items: [t],
       })
@@ -245,67 +248,70 @@ function TemplatesTab() {
 
   return (
     <div className="space-y-4">
-      {/* Header + buscador */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-muted-foreground flex-1 min-w-[280px]">
+      {/* La busqueda ocupa su propia linea en telefono */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-3">
+        <p className="text-sm text-muted-foreground md:min-w-0 md:flex-1">
           {templates.length} plantillas editables · click para editar asunto + HTML visualmente · cambios sin redeploy
         </p>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
+        <div className="relative w-full md:w-64">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar plantilla…"
-            className="h-8 w-64 rounded-sm border border-border bg-background pl-8 pr-2 text-xs"
+            type="search"
+            className="pl-9"
           />
         </div>
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-xs text-muted-foreground py-12 text-center border border-dashed border-border rounded-sm">
-          Ninguna plantilla matchea "{search}".
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-10 text-center">
+          {/* La frase de abajo es del dueno y se conserva literal: el titulo se
+              anade encima, no la sustituye. */}
+          <h3 className="text-[17px] font-semibold text-foreground">Sin resultados</h3>
+          <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+            Ninguna plantilla matchea &quot;{search}&quot;.
+          </p>
         </div>
       )}
 
       {sortedGroups.map(([groupKey, group]) => (
-        <section key={groupKey} className={cn("rounded-md border p-3 space-y-2", group.color)}>
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold">{group.label}</h2>
-            <span className="text-[9px] font-mono uppercase tracking-wider opacity-70">
+        <section key={groupKey} className="space-y-2 rounded-xl border border-border bg-card p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{group.label}</h2>
+            <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
               {group.items.length} {group.items.length === 1 ? "plantilla" : "plantillas"}
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {group.items.map((t) => {
               const freq = FREQ_META[t.frequency ?? "baja"]
               return (
               <button
                 key={t.key}
                 onClick={() => setEditing(t)}
-                className="rounded-md border border-border bg-background/60 p-3 hover:border-foreground/40 hover:bg-card/60 transition-colors text-left"
+                className="rounded-lg border border-border bg-background p-3 text-left transition-colors active:bg-muted md:hover:border-primary/40"
               >
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <div className="text-sm font-medium leading-tight">{t.label}</div>
-                  <div className="flex items-center gap-1 shrink-0">
+                <div className="mb-1.5 flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1 text-[15px] leading-tight font-medium">{t.label}</div>
+                  <div className="flex shrink-0 flex-wrap items-center gap-1">
                     {t.paused && (
                       <span
-                        className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-amber-500/15 text-amber-300 border border-amber-500/40"
+                        className="rounded-sm border border-warn/40 bg-warn/10 px-1.5 py-0.5 text-sm font-semibold text-warn"
                         title="Esta plantilla esta pausada. NO se envia."
                       >
                         pausado
                       </span>
                     )}
                     {t.hasOverride && (
-                      <span className="text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-green-500/10 text-green-400 border border-green-500/30">
+                      <span className="rounded-sm border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-sm font-semibold text-primary">
                         editado
                       </span>
                     )}
                     {freq && (
                       <span
-                        className={cn(
-                          "text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-sm border",
-                          freq.color
-                        )}
+                        className={cn("rounded-sm border px-1.5 py-0.5 text-sm font-semibold", freq.className)}
                         title={`Frecuencia de envio: ${freq.label}`}
                       >
                         {freq.label}
@@ -315,14 +321,14 @@ function TemplatesTab() {
                 </div>
                 {/* TRIGGER - lo más visual: cuándo se dispara este email */}
                 {t.trigger && (
-                  <div className="mb-2 rounded-sm border-l-2 border-foreground/30 pl-2 py-1 bg-foreground/[0.03]">
-                    <div className="text-[9px] font-mono uppercase tracking-wider text-foreground/60 mb-0.5">Se envía cuando</div>
-                    <p className="text-xs text-foreground/85 leading-snug">{t.trigger}</p>
+                  <div className="mb-2 rounded-sm border-l-2 border-primary/50 bg-muted/60 py-1 pl-2">
+                    <div className="mb-0.5 text-sm font-semibold text-muted-foreground">Se envía cuando</div>
+                    <p className="text-sm leading-snug text-foreground">{t.trigger}</p>
                   </div>
                 )}
-                <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-mono text-muted-foreground/70 truncate">{t.key}</div>
-                  <div className="text-[10px] font-mono text-foreground/60 underline shrink-0 ml-2">Editar →</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{t.key}</div>
+                  <div className="shrink-0 text-sm font-semibold text-primary">Editar →</div>
                 </div>
               </button>
               )
@@ -355,12 +361,16 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
   // Solo se recalcula al abrir un template distinto (sino el iframe se reset).
   const initialSrcDoc = useMemo(() => {
     const html = template.currentHtml ?? template.defaultHtml ?? ""
+    // Dentro del iframe no llegan ni las clases ni las variables del tema: es otro
+    // documento. Por eso las pistas de edicion se dibujan SIN color propio
+    // (currentColor y un brillo), que es lo unico que funciona sobre cualquier
+    // plantilla sin meter un color de marca equivocado.
     const editorScript = `
       <style>
         body { outline: none !important; cursor: text; }
-        body:focus, *:focus { outline: 1px dashed rgba(55, 202, 55, 0.4) !important; outline-offset: 2px; }
+        body:focus, *:focus { outline: 1px dashed currentColor !important; outline-offset: 2px; }
         a { pointer-events: none !important; }
-        [contenteditable=true]:hover { background: rgba(55, 202, 55, 0.04); }
+        [contenteditable=true]:hover { filter: brightness(1.08); }
       </style>
       <script>
         document.body.contentEditable = 'true';
@@ -460,95 +470,80 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="bg-background border border-border rounded-lg w-full max-w-5xl h-[94vh] flex flex-col overflow-hidden">
-        <div className="border-b border-border px-4 py-3 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="text-sm font-semibold truncate">{template.label}</h3>
-            <p className="text-[10px] font-mono text-muted-foreground truncate">
+    <Sheet open onOpenChange={(abierto) => { if (!abierto) onClose() }}>
+      <SheetContent
+        side="bottom"
+        showCloseButton={false}
+        className={cn(
+          // TELEFONO: hoja inferior que se desplaza entera
+          "gap-0 rounded-t-xl p-0",
+          // MONITOR: cajon ancho por la derecha, decidido con clases y cero JavaScript
+          "md:inset-y-0 md:right-0 md:left-auto md:h-dvh md:w-[min(72rem,92vw)] md:max-w-none md:rounded-l-xl md:border-l",
+          "md:data-[side=bottom]:max-h-none md:data-[side=bottom]:overflow-hidden md:data-[side=bottom]:pb-0"
+        )}
+      >
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
+
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-4 py-3">
+          <div className="min-w-0 flex-1">
+            <SheetTitle className="truncate text-[17px] font-semibold">{template.label}</SheetTitle>
+            <p className="truncate text-sm text-muted-foreground">
               Haz click sobre cualquier texto del email y escribe directamente.
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={togglePause}
-              disabled={togglingPause}
-              className={cn(
-                "rounded-sm border px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider disabled:opacity-40",
-                paused
-                  ? "border-green-500/50 text-green-300 hover:bg-green-500/10"
-                  : "border-amber-500/50 text-amber-300 hover:bg-amber-500/10"
-              )}
-              title={paused ? "Reactivar envio" : "Pausar envio (no se enviara aunque exista cron)"}
-            >
-              {togglingPause ? "..." : paused ? "Reactivar envio" : "Pausar envio"}
-            </button>
-            {template.hasOverride && (
-              <button
-                onClick={deleteOverride}
-                disabled={reset}
-                className="rounded-sm border border-red-500/40 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-red-300 hover:bg-red-500/10 disabled:opacity-40"
-                title="Borrar tu version y volver al texto original del codigo"
-              >
-                {reset ? "Restaurando..." : "Volver al original"}
-              </button>
-            )}
-            <button
-              onClick={save}
-              disabled={saving || !subject.trim()}
-              className="rounded-sm bg-gradient-to-br from-green-500 to-green-600 text-black px-4 py-1.5 text-[10px] font-mono uppercase tracking-wider font-bold disabled:opacity-30"
-            >
-              {saving ? "Guardando..." : "Guardar cambios"}
-            </button>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xs font-mono uppercase tracking-wider px-2">
-              X
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-muted md:h-8 md:w-8"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-border space-y-2.5">
+        <div className="shrink-0 space-y-3 border-b border-border px-4 py-3">
           <label className="block">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-foreground/80">
-              Asunto del email <span className="text-red-400">*</span>
+            <span className="text-sm font-semibold text-muted-foreground">
+              Asunto del email <span className="text-destructive">*</span>
             </span>
-            <input
+            <Input
               type="text"
               value={subject}
+              enterKeyHint="done"
               onChange={(e) => setSubject(e.target.value)}
-              className="mt-1 w-full rounded-sm border border-white/25 bg-white/[0.04] px-3 py-2 text-sm focus:bg-white/[0.08] focus:border-green-500/70 focus:outline-none transition-colors"
+              className="mt-1.5"
             />
           </label>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Toolbar formato */}
-            <div className="flex items-center gap-1 mr-2">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => applyCommand("bold")}
-                className="w-7 h-7 rounded-sm border border-border text-foreground hover:bg-white/[0.06] font-bold text-xs"
+                className="h-11 w-11 rounded-lg border border-border text-[15px] font-bold text-foreground active:bg-muted md:h-8 md:w-8 md:text-sm"
                 title="Negrita (Ctrl+B)"
               >B</button>
               <button
                 onClick={() => applyCommand("italic")}
-                className="w-7 h-7 rounded-sm border border-border text-foreground hover:bg-white/[0.06] italic text-xs"
+                className="h-11 w-11 rounded-lg border border-border text-[15px] text-foreground italic active:bg-muted md:h-8 md:w-8 md:text-sm"
                 title="Itálica (Ctrl+I)"
               >I</button>
               <button
                 onClick={() => applyCommand("underline")}
-                className="w-7 h-7 rounded-sm border border-border text-foreground hover:bg-white/[0.06] underline text-xs"
+                className="h-11 w-11 rounded-lg border border-border text-[15px] text-foreground underline active:bg-muted md:h-8 md:w-8 md:text-sm"
                 title="Subrayado (Ctrl+U)"
               >U</button>
             </div>
             {/* Variables */}
             {template.variables && template.variables.length > 0 && (
               <>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mr-1">
+                <span className="text-sm font-semibold text-muted-foreground">
                   Insertar variable:
                 </span>
                 {template.variables.map((v) => (
                   <button
                     key={v}
                     onClick={() => insertText(`{{${v}}}`)}
-                    className="text-[11px] font-mono px-2 py-1 rounded bg-white/[0.05] border border-border text-foreground hover:border-white/35"
+                    className="h-11 rounded-lg border border-border bg-muted px-2.5 text-sm text-foreground active:bg-secondary md:h-8"
                     title="Insertar en la posición del cursor"
                   >
                     {`{{${v}}}`}
@@ -559,22 +554,66 @@ function TemplateEditor({ template, onClose, onSaved }: { template: Template; on
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden bg-zinc-200">
+        {/* En telefono la hoja entera se desplaza, asi que el lienzo lleva alto
+            propio; en monitor ocupa lo que sobra del cajon.
+            Lleva shrink-0 porque la hoja es flex-col con tope de alto: sin el, era
+            el UNICO hijo encogible y toda la presion de desbordamiento caia aqui,
+            asi que el 52dvh se quedaba en una franja de 70 puntos y la hoja
+            tampoco se desplazaba, porque tras encogerse ya "cabia". */}
+        <div className="h-[52dvh] shrink-0 bg-muted md:h-auto md:min-h-0 md:flex-1 md:shrink">
           <iframe
             ref={iframeRef}
             title="editor"
             srcDoc={initialSrcDoc}
-            className="w-full h-full bg-white"
+            className="h-full w-full"
           />
         </div>
 
         {err && (
-          <div className="px-4 py-2 border-t border-red-500/40 bg-red-500/[0.06] text-xs text-red-300">
+          <div className="shrink-0 border-t border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
             {err}
           </div>
         )}
-      </div>
-    </div>
+
+        {/* La accion principal va anclada abajo con sticky (no fixed): el
+            desplazamiento real lo hace la hoja, y fixed se queda pegado a la
+            ventana, que es justo lo que tapa el teclado. */}
+        <div className="sticky bottom-0 z-10 flex shrink-0 flex-col gap-2 border-t border-border bg-popover px-4 py-3 pb-safe-4 md:flex-row md:items-center md:justify-end md:pb-3">
+          <button
+            onClick={save}
+            disabled={saving || !subject.trim()}
+            className="h-11 w-full rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-40 md:order-last md:h-8 md:w-auto md:text-sm"
+          >
+            {saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+          <div className="grid grid-cols-2 gap-2 md:flex md:gap-2">
+            <button
+              onClick={togglePause}
+              disabled={togglingPause}
+              className={cn(
+                "h-11 rounded-lg border px-3 text-[15px] font-semibold disabled:opacity-40 md:h-8 md:text-sm",
+                paused
+                  ? "border-primary/50 text-primary active:bg-primary/10"
+                  : "border-warn/50 text-warn active:bg-warn/10"
+              )}
+              title={paused ? "Reactivar envio" : "Pausar envio (no se enviara aunque exista cron)"}
+            >
+              {togglingPause ? "..." : paused ? "Reactivar envio" : "Pausar envio"}
+            </button>
+            {template.hasOverride && (
+              <button
+                onClick={deleteOverride}
+                disabled={reset}
+                className="h-11 rounded-lg border border-destructive/40 px-3 text-[15px] font-semibold text-destructive active:bg-destructive/10 disabled:opacity-40 md:h-8 md:text-sm"
+                title="Borrar tu version y volver al texto original del codigo"
+              >
+                {reset ? "Restaurando..." : "Volver al original"}
+              </button>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -605,53 +644,72 @@ function LogsTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
+      {/* La busqueda ocupa su propia linea; los dos desplegables van debajo
+          repartidos a mitades, cada uno a 44 puntos. */}
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
+        <div className="relative w-full md:max-w-md md:min-w-0 md:flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") load() }}
             placeholder="Buscar email, asunto, nombre…"
-            className="w-full h-8 rounded-sm border border-border bg-background pl-8 pr-2 text-sm"
+            type="search"
+            enterKeyHint="search"
+            className="pl-9"
           />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-8 rounded-sm border border-border bg-background px-2 text-xs">
-          <option value="all">Todos los estados</option>
-          <option value="sent">Enviados OK</option>
-          <option value="failed">Fallidos</option>
-        </select>
-        <select value={templateFilter} onChange={(e) => setTemplateFilter(e.target.value)} className="h-8 rounded-sm border border-border bg-background px-2 text-xs">
-          <option value="all">Todos los templates</option>
-          {uniqueTemplates.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <div className="grid grid-cols-2 gap-2 md:flex md:gap-2">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={SELECT_CLASS}>
+            <option value="all">Todos los estados</option>
+            <option value="sent">Enviados OK</option>
+            <option value="failed">Fallidos</option>
+          </select>
+          <select value={templateFilter} onChange={(e) => setTemplateFilter(e.target.value)} className={SELECT_CLASS}>
+            <option value="all">Todos los templates</option>
+            {uniqueTemplates.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground py-6 text-center">Cargando…</div>
+        <LoadingScreen fullscreen={false} className="min-h-[200px] rounded-lg" />
       ) : logs.length === 0 ? (
-        <div className="text-sm text-muted-foreground py-12 text-center rounded-md border border-dashed border-border">
-          Sin envíos con esos filtros.
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border px-6 py-10 text-center">
+          <h3 className="text-[17px] font-semibold text-foreground">Sin envíos con esos filtros</h3>
+          <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+            Cambia el estado o la plantilla para ver otros envíos.
+          </p>
         </div>
       ) : (
-        <div className="rounded-md border border-border divide-y divide-border">
+        <div className="divide-y divide-border rounded-lg border border-border">
           {logs.map((l) => (
-            <div key={l.id} className="px-3 py-2 grid grid-cols-[1fr_auto_auto] gap-3 items-center">
+            <div key={l.id} className="flex flex-col gap-1 px-3 py-3 md:grid md:grid-cols-[1fr_auto_auto] md:items-center md:gap-3">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm">
-                  {l.status === "sent" ? <CheckCircle2 className="h-3 w-3 text-green-400" /> : <XCircle className="h-3 w-3 text-red-400" />}
-                  <span className="truncate">{l.subject}</span>
+                <div className="flex items-center gap-2 text-[15px]">
+                  {l.status === "sent"
+                    ? <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                    : <XCircle className="h-4 w-4 shrink-0 text-destructive" />}
+                  <span className="min-w-0 truncate">{l.subject}</span>
                 </div>
-                <div className="text-[10px] font-mono text-muted-foreground truncate">
-                  <span className="font-mono">{l.template}</span> · {l.to_email}{l.to_name ? ` (${l.to_name})` : ""}
+                <div className="truncate text-sm text-muted-foreground">
+                  {l.template} · {l.to_email}{l.to_name ? ` (${l.to_name})` : ""}
                 </div>
-                {l.error && <div className="text-[10px] text-red-400 mt-0.5 truncate">{l.error}</div>}
+                {l.error && <div className="mt-0.5 truncate text-sm text-destructive">{l.error}</div>}
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
-                {l.opened_at && <Eye className="h-3 w-3 text-amber-400" />}
-                {l.clicked_at && <MousePointerClick className="h-3 w-3 text-purple-400" />}
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                {l.opened_at && (
+                  <span className="flex items-center gap-1">
+                    <Eye className="h-4 w-4 text-primary" /> Abierto
+                  </span>
+                )}
+                {l.clicked_at && (
+                  <span className="flex items-center gap-1">
+                    <MousePointerClick className="h-4 w-4 text-primary" /> Click
+                  </span>
+                )}
               </div>
-              <div className="text-[10px] font-mono text-muted-foreground">
+              <div className="text-sm tabular-nums text-muted-foreground">
                 {l.sent_at && new Date(l.sent_at).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
@@ -665,20 +723,20 @@ function LogsTab() {
 function BroadcastsTab() {
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-amber-500/40 bg-amber-500/[0.04] p-4">
-        <h3 className="text-sm font-semibold mb-1">⚠️ Próximamente</h3>
-        <p className="text-xs text-muted-foreground">
+      <div className="rounded-xl border border-warn/40 bg-warn/10 p-4">
+        <h3 className="mb-1 text-[15px] font-semibold">Próximamente</h3>
+        <p className="text-sm text-muted-foreground">
           Enviar emails a segmentos de contactos (ej: todos los stage=won con producto IA Integrator).
           Requiere:
         </p>
-        <ul className="text-xs text-muted-foreground mt-2 space-y-1 list-disc pl-4">
+        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-muted-foreground">
           <li>Selector de segmento (filtros sobre tabla contacts)</li>
           <li>Editor de copy con template base + variables (nombre, producto, etc)</li>
           <li>Vista previa antes de enviar</li>
           <li>Programar envío (now / fecha futura)</li>
           <li>Log de qué contactos lo recibieron</li>
         </ul>
-        <p className="text-xs text-muted-foreground mt-2">
+        <p className="mt-2 text-sm text-muted-foreground">
           Cuando lo necesites, dímelo y lo construyo. Estimo ~6h.
         </p>
       </div>
@@ -689,33 +747,35 @@ function BroadcastsTab() {
 function ConfigTab() {
   return (
     <div className="space-y-3">
-      <section className="rounded-md border border-border p-3 space-y-2">
-        <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Resend</h3>
-        <div className="text-sm space-y-1">
-          <div><span className="text-muted-foreground">From email:</span> <code className="font-mono text-xs">adrian@mail.capitalhubapp.com</code></div>
-          <div><span className="text-muted-foreground">From name:</span> <code className="font-mono text-xs">Adrián Villanueva</code></div>
-          <div><span className="text-muted-foreground">Dominio verificado:</span> <code className="font-mono text-xs">mail.capitalhubapp.com</code></div>
+      <section className="space-y-2 rounded-xl border border-border bg-card p-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Resend</h3>
+        <div className="space-y-1 text-[15px]">
+          <div className="break-words"><span className="text-muted-foreground">From email:</span> adrian@mail.capitalhubapp.com</div>
+          <div className="break-words"><span className="text-muted-foreground">From name:</span> Adrián Villanueva</div>
+          <div className="break-words"><span className="text-muted-foreground">Dominio verificado:</span> mail.capitalhubapp.com</div>
         </div>
-        <p className="text-[10px] text-muted-foreground">Editar via env vars: <code>RESEND_FROM_EMAIL</code>, <code>RESEND_FROM_NAME</code></p>
+        <p className="text-sm text-muted-foreground">Editar via env vars: RESEND_FROM_EMAIL, RESEND_FROM_NAME</p>
       </section>
 
-      <section className="rounded-md border border-green-500/40 bg-green-500/[0.04] p-3 space-y-2">
-        <h3 className="text-xs font-mono uppercase tracking-wider text-green-400">✓ Webhooks Resend activos</h3>
-        <p className="text-xs text-muted-foreground">
+      <section className="space-y-2 rounded-xl border border-primary/40 bg-primary/10 p-3">
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+          <CheckCircle2 className="h-4 w-4" /> Webhooks Resend activos
+        </h3>
+        <p className="text-sm text-muted-foreground">
           Tracking automático de aperturas, clicks, bounces, entregas y quejas. Las métricas del Dashboard se
           actualizan en tiempo real cuando los destinatarios interactúan con los emails.
         </p>
-        <ul className="text-xs space-y-1 text-muted-foreground list-disc pl-4">
-          <li>Endpoint: <code className="font-mono">os.capitalhubapp.com/api/email/webhooks/resend</code></li>
+        <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
+          <li className="break-words">Endpoint: os.capitalhubapp.com/api/email/webhooks/resend</li>
           <li>Estado: enabled en Resend dashboard</li>
           <li>Eventos suscritos: sent, delivered, opened, clicked, bounced, complained, failed</li>
         </ul>
       </section>
 
-      <section className="rounded-md border border-border p-3 space-y-2">
-        <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">Brand y layout</h3>
-        <p className="text-xs text-muted-foreground">
-          Todos los templates usan <code className="font-mono">src/lib/email/templates/_layout.tsx</code> como base.
+      <section className="space-y-2 rounded-xl border border-border bg-card p-3">
+        <h3 className="text-sm font-semibold text-muted-foreground">Brand y layout</h3>
+        <p className="text-sm break-words text-muted-foreground">
+          Todos los templates usan src/lib/email/templates/_layout.tsx como base.
           Colores: verde Capital Hub (#37CA37), fondo oscuro (#0F0F12). Logo y unsubscribe link aplicables a todos
           en el _layout.
         </p>
@@ -728,28 +788,26 @@ function StatCard({
   label,
   value,
   sublabel,
-  suffix,
-  accent,
+  tone = "neutral",
 }: {
   label: string
   value: number
   sublabel?: string
-  suffix?: string
-  accent?: "cyan" | "green" | "red" | "amber" | "purple"
+  tone?: "neutral" | "positive" | "negative"
 }) {
-  const colorClass = accent ? {
-    cyan: "text-cyan-400",
-    green: "text-green-400",
-    red: "text-red-400",
-    amber: "text-amber-400",
-    purple: "text-purple-400",
-  }[accent] : ""
-
   return (
-    <div className="rounded-md border border-border bg-card/40 p-3">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1.5">{label}</div>
-      <div className={cn("text-2xl font-semibold", colorClass)}>{value}{suffix}</div>
-      {sublabel && <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">{sublabel}</div>}
+    <div className="rounded-lg border border-border bg-card p-3">
+      <div className="text-sm font-semibold text-muted-foreground">{label}</div>
+      <div
+        className={cn(
+          "mt-1 text-2xl font-semibold tabular-nums",
+          tone === "positive" && "text-primary",
+          tone === "negative" && "text-destructive"
+        )}
+      >
+        {value}
+      </div>
+      {sublabel && <div className="mt-0.5 text-sm tabular-nums text-muted-foreground">{sublabel}</div>}
     </div>
   )
 }

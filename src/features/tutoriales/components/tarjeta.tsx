@@ -1,6 +1,7 @@
 "use client"
 
 import { Play, Eye, EyeOff, Clock, Video } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { MenuAcciones } from "./menu-acciones"
 import { comoSeReproduce, duracionLegible, type Tutorial } from "../types"
 
@@ -59,35 +60,37 @@ export function Tarjeta({
           onSeleccionar()
         }
       }}
-      className={`group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-lg border transition ${
+      className={cn(
+        "group relative flex cursor-pointer select-none flex-col overflow-hidden rounded-lg border transition-colors",
         seleccionado
-          ? "border-[#22C55E] bg-[#22C55E]/[0.06]"
-          : "border-[#2A2D34] bg-[#0F0F12] hover:border-[#22C55E]/40"
-      }`}
+          ? "border-primary bg-primary/10"
+          : "border-border bg-background md:hover:border-primary/40",
+      )}
     >
-      <div className="relative aspect-video w-full overflow-hidden bg-[#15161A]">
+      <div className="relative aspect-video w-full overflow-hidden bg-card">
         {fuente?.posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={fuente.posterUrl}
             alt=""
             loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="absolute inset-0 h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.03]"
           />
         ) : (
-          // Ficha sin video: en vez de un hueco gris, fondo de marca con icono.
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#15161A] to-[#0F0F12]">
-            <Video className="h-10 w-10 text-[#2A2D34]" />
+          // Ficha sin video: en vez de un hueco gris, superficie de marca con icono.
+          <div className="absolute inset-0 flex items-center justify-center bg-card">
+            <Video className="h-10 w-10 text-muted-foreground" />
           </div>
         )}
 
         {!sinVideo ? (
           <>
-            <div className="absolute inset-0 bg-[#0F0F12]/20 transition group-hover:bg-[#0F0F12]/40" />
+            <div className="absolute inset-0 bg-background/20 transition md:group-hover:bg-background/40" />
             <span
-              className={`absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#22C55E] text-[#0F0F12] shadow-lg transition ${
-                seleccionado ? "scale-110" : "group-hover:scale-110"
-              }`}
+              className={cn(
+                "absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition",
+                seleccionado ? "scale-110" : "md:group-hover:scale-110",
+              )}
             >
               <Play className="ml-0.5 h-6 w-6 fill-current" />
             </span>
@@ -95,31 +98,31 @@ export function Tarjeta({
         ) : null}
 
         {duracion ? (
-          <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-[#0F0F12]/85 px-2 py-1 text-xs font-medium text-white">
-            <Clock className="h-3 w-3" />
+          <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-sm bg-background/85 px-2 py-1 text-sm font-medium tabular-nums text-foreground">
+            <Clock className="h-3.5 w-3.5" />
             {duracion}
           </span>
         ) : null}
 
         {borrador ? (
-          <span className="absolute left-2 top-2 rounded bg-amber-500/90 px-2 py-1 text-xs font-semibold text-[#0F0F12]">
+          <span className="absolute left-2 top-2 rounded-sm bg-warn px-2 py-1 text-sm font-semibold text-warn-foreground">
             Borrador
           </span>
         ) : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-4">
-        <h3 className="text-sm font-semibold leading-snug text-white">{tutorial.titulo}</h3>
+        <h3 className="text-[15px] font-semibold leading-snug text-foreground">{tutorial.titulo}</h3>
         {tutorial.descripcion ? (
-          <p className="line-clamp-2 text-xs leading-relaxed text-white/55">{tutorial.descripcion}</p>
+          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{tutorial.descripcion}</p>
         ) : null}
         {sinVideo ? (
-          <p className="mt-1 text-xs text-amber-400/90">Todavía sin vídeo. Súbelo o pega un link de Loom.</p>
+          <p className="mt-1 text-sm text-warn">Todavía sin vídeo. Súbelo o pega un link de Loom.</p>
         ) : null}
       </div>
 
       {esAdmin ? (
-        <div className="flex items-center gap-2 border-t border-[#2A2D34] px-4 py-3">
+        <div className="flex items-center gap-2 border-t border-border px-4 py-2">
           <button
             type="button"
             onClick={(e) => {
@@ -128,9 +131,9 @@ export function Tarjeta({
             }}
             onDoubleClick={(e) => e.stopPropagation()}
             disabled={sinVideo && borrador}
-            className="flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-white/70 transition hover:bg-white/5 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors active:bg-muted disabled:cursor-not-allowed disabled:opacity-40 md:h-8 md:hover:bg-muted md:hover:text-foreground"
           >
-            {borrador ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+            {borrador ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
             {borrador ? "Publicar" : "Ocultar"}
           </button>
           <div className="ml-auto">

@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronRight, Home } from "lucide-react"
+import { cn } from "@/lib/utils"
 import type { Carpeta } from "../types"
 
 type Props = {
@@ -16,19 +17,20 @@ type Props = {
  */
 export function Migas({ camino, onIr }: Props) {
   return (
-    <nav aria-label="Dónde estás" className="-mx-1 mb-5 overflow-x-auto px-1">
-      <ol className="flex w-max items-center gap-1 text-sm">
+    <nav aria-label="Dónde estás" className="-mx-4 mb-5 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <ol className="flex w-max items-center gap-1 text-[15px]">
         <li>
           <button
             type="button"
             onClick={() => onIr(null)}
-            className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition ${
+            className={cn(
+              "flex h-11 items-center gap-1.5 rounded-lg px-2 transition-colors md:h-9",
               camino.length === 0
-                ? "text-white"
-                : "text-white/50 hover:bg-white/5 hover:text-white"
-            }`}
+                ? "text-foreground"
+                : "text-muted-foreground active:bg-muted md:hover:bg-muted md:hover:text-foreground",
+            )}
           >
-            <Home className="h-3.5 w-3.5" />
+            <Home className="h-4 w-4 shrink-0" />
             Tutoriales
           </button>
         </li>
@@ -37,14 +39,17 @@ export function Migas({ camino, onIr }: Props) {
           const ultima = i === camino.length - 1
           return (
             <li key={c.id} className="flex items-center gap-1">
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-white/25" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
               <button
                 type="button"
                 onClick={() => onIr(c.id)}
                 aria-current={ultima ? "page" : undefined}
-                className={`max-w-[45vw] truncate rounded-lg px-2 py-1.5 transition sm:max-w-none ${
-                  ultima ? "font-medium text-white" : "text-white/50 hover:bg-white/5 hover:text-white"
-                }`}
+                className={cn(
+                  "h-11 max-w-[45vw] truncate rounded-lg px-2 transition-colors md:h-9 md:max-w-none",
+                  ultima
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground active:bg-muted md:hover:bg-muted md:hover:text-foreground",
+                )}
               >
                 {c.nombre}
               </button>

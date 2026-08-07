@@ -74,11 +74,11 @@ function GoToAppButton({ isCollapsed }: { isCollapsed: boolean }) {
     >
       <span className="flex items-center gap-2 min-w-0">
         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
-        <span className="font-mono uppercase tracking-wider text-[10px] text-muted-foreground group-hover:text-foreground truncate">
+        <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground truncate">
           Ir a la App
         </span>
       </span>
-      <span className="text-[9px] font-mono text-muted-foreground/60 shrink-0">↗</span>
+      <span className="text-sm text-muted-foreground shrink-0" aria-hidden>↗</span>
     </a>
   )
 }
@@ -108,7 +108,7 @@ export function AppSidebar({ userEmail, userName, userRole, realRole }: AppSideb
           if (visibleItems.length === 0) return null
           return (
           <SidebarGroup key={section.label}>
-            <SidebarGroupLabel className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">
+            <SidebarGroupLabel className="text-sm md:text-xs font-semibold text-muted-foreground">
               {section.label}
             </SidebarGroupLabel>
             <SidebarMenu>
@@ -130,7 +130,7 @@ export function AppSidebar({ userEmail, userName, userRole, realRole }: AppSideb
                       <SidebarMenuBadge>
                         <Badge
                           variant="outline"
-                          className="font-mono text-[9px] px-1 py-0 border-muted-foreground/30 text-muted-foreground"
+                          className="text-sm md:text-xs px-1.5 py-0 border-border text-muted-foreground"
                         >
                           {item.badge}
                         </Badge>

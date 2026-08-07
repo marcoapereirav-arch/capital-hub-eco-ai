@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Loader2, Copy, Check, Plus } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 
 type AffiliateStat = { leads: number; agendados: number; alumnos: number; total: number; revenue: number }
 type Affiliate = { slug: string; name: string; active: boolean; link: string; stats: AffiliateStat }
@@ -65,67 +65,67 @@ export function AdsAffiliatesPanel() {
   }
 
   if (rows === null) {
-    return (
-      <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando afiliados…
-      </div>
-    )
+    return <LoadingScreen fullscreen={false} className="min-h-[200px] rounded-lg" />
   }
 
   return (
     <div className="space-y-5">
-      {/* Crear afiliado */}
-      <form onSubmit={createAffiliate} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      {/* Crear afiliado: campo a ancho completo y accion debajo en telefono */}
+      <form onSubmit={createAffiliate} className="flex flex-col gap-2 md:flex-row md:items-center">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nombre del afiliado (ej. Paolo)"
-          className="h-9 flex-1 rounded-sm border border-border bg-secondary px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-foreground focus:outline-none"
+          enterKeyHint="done"
+          className="h-11 w-full rounded-lg border border-border bg-secondary px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none md:h-8 md:min-w-0 md:flex-1 md:text-sm"
           disabled={creating}
         />
         <button
           type="submit"
           disabled={creating}
-          className="flex h-9 items-center justify-center gap-1.5 rounded-sm border border-foreground bg-foreground px-3 text-xs font-mono uppercase tracking-wide text-background disabled:opacity-50"
+          className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-50 md:h-8 md:text-sm"
         >
-          {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
           Añadir afiliado
         </button>
       </form>
-      {error && <p className="text-xs text-foreground border-l-2 border-foreground pl-2">{error}</p>}
+      {error && <p className="border-l-2 border-destructive pl-2 text-sm text-destructive">{error}</p>}
 
       {/* Lista */}
       {rows.length === 0 ? (
-        <div className="rounded-sm border border-dashed border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
-          Aún no hay afiliados. Crea el primero arriba.
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
+          <h3 className="text-[17px] font-semibold text-foreground">Todavía no hay afiliados</h3>
+          <p className="max-w-[38ch] text-[15px] text-muted-foreground">
+            Aún no hay afiliados. Crea el primero arriba.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {rows.map((a) => (
-            <div key={a.slug} className="rounded-sm border border-border bg-card p-4">
+            <div key={a.slug} className="rounded-lg border border-border bg-card p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="font-heading text-sm font-semibold text-foreground">{a.name}</p>
-                  <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="font-heading text-[15px] font-semibold text-foreground">{a.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">
                     utm_source={a.slug}
                   </p>
                 </div>
                 <button
                   onClick={() => copyLink(a.slug, a.link)}
-                  className="flex items-center gap-1.5 rounded-sm border border-border bg-secondary px-2.5 py-1.5 text-[11px] hover:bg-secondary/70"
+                  className="flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 text-sm text-foreground active:bg-secondary/70 md:h-8"
                 >
-                  {copied === a.slug ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied === a.slug ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied === a.slug ? "Copiado" : "Copiar link"}
                 </button>
               </div>
 
               {/* Link */}
-              <p className="mt-2 break-all rounded-sm border border-border bg-secondary px-2 py-1 font-mono text-[11px] text-muted-foreground">
+              <p className="mt-2 rounded-lg border border-border bg-secondary px-2 py-1.5 text-sm break-all text-muted-foreground">
                 {a.link}
               </p>
 
-              {/* Stats */}
-              <div className="mt-3 grid grid-cols-4 gap-2">
+              {/* Fila de numeros: dos columnas en telefono, cuatro en monitor */}
+              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
                 <Stat label="Leads" value={a.stats.leads} />
                 <Stat label="Agendados" value={a.stats.agendados} />
                 <Stat label="Alumnos" value={a.stats.alumnos} />
@@ -141,9 +141,9 @@ export function AdsAffiliatesPanel() {
 
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className={cn("rounded-sm border border-border bg-secondary/30 px-2 py-1.5 text-center")}>
-      <p className="font-heading text-base font-semibold text-foreground">{value}</p>
-      <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">{label}</p>
+    <div className="rounded-lg border border-border bg-secondary/30 px-2 py-2 text-center">
+      <p className="font-heading text-base font-semibold tabular-nums text-foreground">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
     </div>
   )
 }

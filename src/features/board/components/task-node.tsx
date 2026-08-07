@@ -18,50 +18,57 @@ const ASSIGNEE_INITIALS: Record<string, string> = {
   ai: "AI",
 }
 
+// Todas las etiquetas del nodo pintan con los tokens del tema. Antes eran blue,
+// amber, purple y cyan de Tailwind: cuatro colores que no existen en la marca.
+// El unico que se distingue en verde es la IA, porque no es una persona.
 const ASSIGNEE_BG: Record<string, string> = {
-  marco: "bg-blue-500/30 text-blue-100 border-blue-400/50",
-  adrian: "bg-amber-500/30 text-amber-100 border-amber-400/50",
-  equipo: "bg-purple-500/30 text-purple-100 border-purple-400/50",
-  // AI: cyan brillante con anillo extra para destacar visualmente que NO es humano
-  ai: "bg-cyan-500/40 text-cyan-50 border-cyan-300/70 ring-1 ring-cyan-400/40",
+  marco: "border-border bg-secondary text-foreground",
+  adrian: "border-border bg-secondary text-foreground",
+  equipo: "border-border bg-muted text-muted-foreground",
+  ai: "border-primary/50 bg-primary/20 text-primary",
 }
 
 const PRIORITY_SIZE = {
-  urgent: { w: 260, py: "py-3.5", title: "text-[13px]" },
-  high: { w: 215, py: "py-2.5", title: "text-[12px]" },
-  normal: { w: 180, py: "py-2", title: "text-[11px]" },
-  low: { w: 145, py: "py-1.5", title: "text-[10px]" },
+  urgent: { w: 260, py: "py-3.5", title: "text-[15px]" },
+  high: { w: 215, py: "py-2.5", title: "text-sm" },
+  normal: { w: 180, py: "py-2", title: "text-sm" },
+  low: { w: 145, py: "py-1.5", title: "text-sm" },
 }
 
 const PRIORITY_LABEL: Record<string, { code: string; cls: string }> = {
-  urgent: { code: "P0", cls: "bg-red-500/40 text-red-100 border-red-400/60" },
-  high: { code: "P1", cls: "bg-orange-500/30 text-orange-100 border-orange-400/50" },
-  normal: { code: "P2", cls: "bg-zinc-500/30 text-zinc-100 border-zinc-400/40" },
-  low: { code: "P3", cls: "bg-zinc-700/30 text-zinc-300 border-zinc-600/40" },
+  urgent: { code: "P0", cls: "border-destructive/60 bg-destructive/20 text-destructive" },
+  high: { code: "P1", cls: "border-warn/60 bg-warn/20 text-warn" },
+  normal: { code: "P2", cls: "border-border bg-muted text-foreground" },
+  low: { code: "P3", cls: "border-border bg-card text-muted-foreground" },
 }
 
+// El fondo codifica el status, asi que los tres grises tienen que ser tres grises
+// DISTINTOS. `secondary` y `muted` valen exactamente lo mismo en el tema, de modo
+// que next y someday salian del mismo color pixel por pixel. Se reparten los tres
+// niveles que si se distinguen: secondary (0.24) > popover (0.205) > card (0.185).
+// Si esto cambia, hay que cambiar tambien los cuadraditos de legend-modal.tsx.
 const STATUS_BG: Record<string, string> = {
-  done: "bg-green-600/40",
-  next: "bg-blue-600/40",
-  waiting: "bg-yellow-600/35",
-  someday: "bg-purple-600/35",
-  inbox: "bg-zinc-700/40",
+  done: "bg-primary/15",
+  next: "bg-secondary",
+  waiting: "bg-warn/10",
+  someday: "bg-card",
+  inbox: "bg-popover",
 }
 
 const STATUS_ICON = {
-  done: <CheckCircle2 className="h-3.5 w-3.5 text-green-300" />,
-  next: <Circle className="h-3.5 w-3.5 text-blue-300 fill-blue-300/40" />,
-  waiting: <Hourglass className="h-3.5 w-3.5 text-yellow-300" />,
-  someday: <Moon className="h-3.5 w-3.5 text-purple-300" />,
-  inbox: <Inbox className="h-3.5 w-3.5 text-zinc-400" />,
+  done: <CheckCircle2 className="h-4 w-4 text-primary" />,
+  next: <Circle className="h-4 w-4 fill-foreground text-foreground" />,
+  waiting: <Hourglass className="h-4 w-4 text-warn" />,
+  someday: <Moon className="h-4 w-4 text-muted-foreground" />,
+  inbox: <Inbox className="h-4 w-4 text-muted-foreground" />,
 }
 
 const STATUS_TEXT_LABEL: Record<string, string> = {
-  done: "✓ done",
-  next: "▶ activo",
-  waiting: "⏸ waiting",
-  someday: "○ someday",
-  inbox: "□ inbox",
+  done: "done",
+  next: "activo",
+  waiting: "waiting",
+  someday: "someday",
+  inbox: "inbox",
 }
 
 export function TaskNode({ data }: NodeProps) {
@@ -83,19 +90,16 @@ export function TaskNode({ data }: NodeProps) {
         width: sizeCfg.w,
         borderColor: projectColor,
         opacity,
-        ...(isInProgress && {
-          boxShadow:
-            "0 0 0 2px rgba(34, 211, 238, 0.6), 0 0 20px rgba(34, 211, 238, 0.4), 0 0 40px rgba(34, 211, 238, 0.2)",
-        }),
       }}
       className={cn(
-        "relative rounded-md border-2 shadow-md transition-all hover:shadow-lg hover:scale-[1.03] cursor-pointer",
+        "relative cursor-pointer rounded-lg border-2 px-3 shadow-md transition-all hover:scale-[1.03] hover:shadow-lg",
         STATUS_BG[task.status],
         sizeCfg.py,
-        "px-3",
-        isNext && !isInProgress && "ring-1 ring-blue-300/40",
-        isInProgress && "animate-pulse",
-        isUrgent && !isDone && !isInProgress && "shadow-orange-500/30 shadow-lg",
+        isNext && !isInProgress && "ring-1 ring-border",
+        // Lo que se esta haciendo AHORA se marca con el verde de la marca, no con
+        // una sombra cyan escrita en rgba.
+        isInProgress && "animate-pulse ring-2 ring-primary",
+        isUrgent && !isDone && !isInProgress && "ring-1 ring-destructive/40",
         isWaiting && "border-dashed"
       )}
     >
@@ -106,7 +110,7 @@ export function TaskNode({ data }: NodeProps) {
       <div className="absolute -top-2 -left-2 flex items-center gap-1">
         <span
           className={cn(
-            "rounded-sm border px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase shadow-sm",
+            "rounded-sm border px-1.5 py-0.5 text-sm font-bold shadow-sm",
             prio.cls
           )}
           title={`Prioridad: ${task.priority}`}
@@ -114,22 +118,22 @@ export function TaskNode({ data }: NodeProps) {
           {prio.code}
         </span>
         {isUrgent && !isDone && (
-          <Flame className="h-4 w-4 text-orange-400 drop-shadow-[0_0_4px_rgba(251,146,60,0.8)] animate-pulse" />
+          <Flame className="h-4 w-4 animate-pulse text-destructive" />
         )}
       </div>
 
       {/* Badge fecha — esquina superior derecha si tiene */}
       {task.dueDate && (
-        <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-sm border border-border bg-zinc-900 px-1.5 py-0.5 font-mono text-[9px] text-white/90 shadow-sm">
-          <Calendar className="h-2.5 w-2.5" />
+        <div className="absolute -top-2 -right-2 flex items-center gap-1 rounded-sm border border-border bg-popover px-1.5 py-0.5 text-sm tabular-nums text-foreground shadow-sm">
+          <Calendar className="h-3 w-3" />
           {new Date(task.dueDate).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
         </div>
       )}
 
       {/* EN VIVO badge — abajo derecha */}
       {isInProgress && (
-        <div className="absolute -bottom-2 -right-2 flex items-center gap-1 rounded-full border border-cyan-300 bg-cyan-500 px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-cyan-950 shadow-[0_0_10px_rgba(34,211,238,0.8)]">
-          <Zap className="h-3 w-3 fill-cyan-950" />
+        <div className="absolute -right-2 -bottom-2 flex items-center gap-1 rounded-sm border border-primary bg-primary px-2 py-0.5 text-sm font-bold text-primary-foreground shadow-sm">
+          <Zap className="h-3 w-3 fill-current" />
           EN VIVO
         </div>
       )}
@@ -144,7 +148,7 @@ export function TaskNode({ data }: NodeProps) {
             className={cn(
               "font-heading leading-tight font-medium",
               sizeCfg.title,
-              isDone ? "line-through text-white/70" : "text-white"
+              isDone ? "text-muted-foreground line-through" : "text-foreground"
             )}
           >
             {task.title.length > 80 ? task.title.slice(0, 77) + "..." : task.title}
@@ -154,13 +158,13 @@ export function TaskNode({ data }: NodeProps) {
             <div className="flex items-center gap-1.5">
               <span
                 className={cn(
-                  "rounded-sm border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide",
+                  "rounded-sm border px-1.5 py-0.5 text-sm",
                   ASSIGNEE_BG[task.assignee]
                 )}
               >
                 {ASSIGNEE_INITIALS[task.assignee] ?? task.assignee.slice(0, 2).toUpperCase()}
               </span>
-              <span className="font-mono text-[8px] uppercase tracking-wide text-white/60">
+              <span className="text-sm text-muted-foreground">
                 {STATUS_TEXT_LABEL[task.status]}
               </span>
             </div>

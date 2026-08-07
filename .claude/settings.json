@@ -1,14 +1,57 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/puerta-de-entrada.mjs\"",
+            "statusMessage": "puerta de entrada",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
+    "//": "FUSION 2026-08-07 (/update-ecoai): se trajo el enganche `puerta-de-entrada` y la lista `allow` de la plantilla NVISION, PERO se conservo la lista `ask` de Capital Hub. La plantilla oficial quita el `ask` de git push / vercel / gh pr merge / gh release; aqui se mantiene a proposito, porque publicar debe seguir pidiendo confirmacion. `ask` gana a `allow`, asi que las entradas que se solapan siguen preguntando.",
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node scripts/:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git switch:*)",
+      "Bash(git merge:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git worktree:*)",
+      "Bash(git update-ref:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git ls-remote:*)",
+      "Skill(publicar)",
+      "Skill(cerrar)"
+    ],
     "ask": [
       "Bash(git push:*)",
       "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
       "Bash(vercel:*)",
       "Bash(npx vercel:*)",
       "Bash(gh pr merge:*)",
       "Bash(gh release:*)",
-      "Bash(supabase db push:*)"
+      "Bash(supabase db push:*)",
+      "Bash(npx supabase db push:*)"
     ],
     "deny": [
       "Read(./.env)",
