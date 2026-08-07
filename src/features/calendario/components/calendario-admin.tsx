@@ -132,7 +132,7 @@ export function CalendarioAdmin() {
             Owner: {owner?.display_name ?? "Adrián"} · slots de {owner?.slot_minutes ?? 30} min · {owner?.buffer_minutes ?? 10} min buffer
           </p>
           <p className="mt-2 text-[15px] text-muted-foreground md:text-sm">
-            URL pública para reservar: <a href="/agenda" className="text-primary underline">/agenda</a>
+            Las llamadas se reservan por Calendly.
           </p>
         </div>
 
@@ -169,14 +169,8 @@ export function CalendarioAdmin() {
                 <Calendar className="h-8 w-8 text-muted-foreground" />
                 <h3 className="text-[17px] font-semibold text-foreground">Todavía no hay reservas</h3>
                 <p className="max-w-[38ch] text-[15px] text-muted-foreground">
-                  Las llamadas que reserven desde la página pública aparecen aquí.
+                  Las llamadas que se reserven por Calendly aparecen aquí.
                 </p>
-                <a
-                  href="/agenda"
-                  className="inline-flex h-11 items-center rounded-lg border border-border px-4 text-[15px] text-foreground"
-                >
-                  Ver la página pública
-                </a>
               </div>
             ) : (
               <>
