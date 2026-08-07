@@ -54,7 +54,9 @@ export function PageNavHeader({
       <DropdownMenu>
         <DropdownMenuTrigger
           className={cn(
-            "group flex items-center gap-1.5 rounded-sm px-2 py-1 text-sm",
+            // 44 puntos en telefono: es el selector de grupo de la cabecera y
+            // se toca a menudo. En monitor vuelve a su medida compacta.
+            "group flex min-h-11 md:min-h-0 items-center gap-1.5 rounded-lg px-2 py-1 text-sm",
             "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             "data-[state=open]:bg-secondary data-[state=open]:text-foreground"

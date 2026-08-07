@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-06",
-  "total": 1925,
+  "total": 1924,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -296,9 +296,6 @@
       }
     },
     "src/components/ui/tabs.tsx": {
-      "esquina-recta": {
-        "rounded-none": 1
-      },
       "token-diluido": {
         "text-foreground/60": 1
       }
