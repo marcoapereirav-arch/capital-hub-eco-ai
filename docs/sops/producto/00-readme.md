@@ -9,13 +9,13 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 
 | # | Documento | Qué contiene |
 |---|---|---|
-| 01 | [Board y sistema de tareas](01-board-y-sistema-tareas.md) | GTD + PARA, board visual, stages, regla auto-sync |
+| 01 | [Operaciones — la lista de tareas](01-board-y-sistema-tareas.md) | UNA lista, un solo nivel: título, descripción, P1/P2/P3 y responsable. Se tiró el sistema GTD + PARA (board, proyectos, áreas, focos) el 2026-08-07 |
 | 02 | [Arquitectura OS vs App](02-arquitectura-os-app.md) | Capital Hub OS (admin) vs Capital Hub App (cliente) — proyectos separados |
 | 03 | [Mobile-First OS](03-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints |
 | 04 | [Protocolo de trabajo del agente](04-protocolo-trabajo-agente.md) | Reglas auto-board, auto-knowledge, auto-commit, no inventar UI, hablar claro y sin tecnicismos |
 | 05 | [Protocolo de proyectos externos](05-proyectos-externos.md) | Verificar nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / DNS |
 | 06 | [Vercel - deploy y colaboración](06-vercel-deploy-y-colaboracion.md) | Producción en team Pro de Adrian. Workflow diario, env vars, dominios |
-| 07 | [Misión Producto Terminado — dashboard /mision](07-mision-producto-terminado.md) | Dashboard del lanzamiento al 2026-05-31. Reutiliza tasks + para_items, añade fases y bloques. 66 tareas seedeadas |
+| 07 | ~~Misión Producto Terminado~~ | **RETIRADO el 2026-08-07.** La pantalla `/mision`, su tabla y sus 67 tareas se borraron de raíz: era el mismo sistema de tareas con otra cara. `/mision` redirige a `/operaciones`. Ver SOP 01 |
 | 47 | [Reglas de UI — contraste y legibilidad](47-reglas-ui-contraste-legibilidad.md) | Nunca texto/icono del color del fondo. Fix autofill blanco-sobre-blanco en dark mode + controles nativos |
 | 48 | [Diseño dinámico y efecto WOW](48-diseno-dinamico-wow.md) | Regla principal: funnels/landings dinámicos, con motion y WOW, siempre dentro del brandkit |
 | 49 | [Efecto de carga de marca (SIEMPRE)](49-efecto-de-carga.md) | `<LoadingScreen />` (anillo + monograma CH) en TODA carga. `app/loading.tsx` de raíz. Nada de spinners genéricos ni pantallas en blanco/gris |

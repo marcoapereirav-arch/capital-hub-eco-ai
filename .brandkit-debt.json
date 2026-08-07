@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1740,
+  "total": 1732,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -381,21 +381,6 @@
     "src/features/automatizaciones/components/automatizaciones-page.tsx": {
       "lista-sin-paginar": {
         "items.map(": 1
-      }
-    },
-    "src/features/board/components/mission-node.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      }
-    },
-    "src/features/board/components/priority-queue.tsx": {
-      "lista-sin-paginar": {
-        "tasks.map(": 1
-      }
-    },
-    "src/features/board/components/task-node.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
       }
     },
     "src/features/content-intel/components/corpus-chat-panel.tsx": {
@@ -910,11 +895,6 @@
     "src/features/knowledge/components/brain/SettingsPanel.tsx": {
       "color-a-mano": {
         "#22C55E": 1
-      }
-    },
-    "src/features/operaciones-dashboard/components/operaciones-dashboard.tsx": {
-      "lista-sin-paginar": {
-        "tasks.map(": 1
       }
     },
     "src/features/public-pages/funnel-lt8/agenda-thanks-page.tsx": {
@@ -1605,21 +1585,6 @@
     "src/features/sistemas/components/medicion-ads-workflow.tsx": {
       "lista-sin-paginar": {
         "eventos.map(": 1
-      }
-    },
-    "src/features/tasks/components/task-board.tsx": {
-      "lista-sin-paginar": {
-        "tasks.map(": 1
-      }
-    },
-    "src/features/tasks/components/task-list.tsx": {
-      "lista-sin-paginar": {
-        "tasks.map(": 2
-      }
-    },
-    "src/features/tasks/components/task-page.tsx": {
-      "lista-sin-paginar": {
-        "items.map(": 1
       }
     },
     "src/features/team/components/accept-invite-page.tsx": {

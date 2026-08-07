@@ -8,7 +8,6 @@ import {
   Camera,
   BookOpen,
   Megaphone,
-  Rocket,
   FolderKanban,
   CalendarCheck,
   Shield,
@@ -27,7 +26,7 @@ export const navSections: NavSection[] = [
     label: "Principal",
     items: [
       { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, mobilePrimary: true },
-      { title: "Operaciones", href: "/overview", icon: FolderKanban },
+      { title: "Operaciones", href: "/operaciones", icon: FolderKanban },
       { title: "Knowledge", href: "/knowledge", icon: BookOpen },
       { title: "Tutoriales", href: "/tutoriales", icon: GraduationCap },
       { title: "Equipo", href: "/team", icon: Shield },
@@ -56,7 +55,6 @@ export const navSections: NavSection[] = [
     items: [
       { title: "Invitaciones App", href: "/invitaciones", icon: Mail },
       { title: "Integraciones", href: "/integrations", icon: Link2 },
-      { title: "Misión", href: "/mision", icon: Rocket },
     ],
   },
   // Ventas y Finanzas — pendientes de rutas. Se añaden secciones aquí cuando existan.
@@ -81,10 +79,11 @@ export const navPrimary = navAll
   .sort((a, b) => ORDEN_BARRA_MOVIL.indexOf(a.href) - ORDEN_BARRA_MOVIL.indexOf(b.href))
 export const navSecondary = navAll.filter((i) => !i.mobilePrimary)
 
-// Subrutas que comparten el entorno "Operaciones" (mismo layout con subtabs).
-// El sidebar las agrupa bajo "Operaciones" (/overview), pero cada una tiene su
-// propia ruta — sin esto, el título de la TopBar caía al fallback "Capital Hub".
-const OPERACIONES_ROUTES = ["/overview", "/areas", "/projects", "/tasks", "/board"]
+// Operaciones ya no tiene subpestañas: es UNA lista y vive en /operaciones. Las rutas
+// viejas (/overview, /areas, /projects, /tasks, /board) se retiraron el 2026-08-07 —
+// se mantienen aquí solo para que su título siga saliendo si alguien tiene un enlace
+// guardado y cae en la redirección.
+const OPERACIONES_ROUTES = ["/operaciones", "/overview", "/areas", "/projects", "/tasks", "/board"]
 
 /**
  * Título de sección para el chrome superior (TopBar desktop + MobileHeader),
