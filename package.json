@@ -13,13 +13,14 @@
     "check:layout": "node scripts/check-layout.mjs",
     "check:movil": "node scripts/check-movil.mjs",
     "check:brandkit": "node scripts/check-brandkit.mjs",
+    "check:filtros": "node scripts/check-filtros.mjs",
     "chat:nuevo": "node scripts/chat-nuevo.mjs",
     "chat:cerrar": "node scripts/chat-cerrar.mjs",
     "publicar": "node scripts/publicar.mjs",
     "cerrar": "node scripts/cerrar.mjs",
     "skills:inventory": "node scripts/gen-skills-inventory.mjs",
-    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs",
-    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs"
+    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs && node scripts/check-filtros.mjs",
+    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs && node scripts/check-filtros.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

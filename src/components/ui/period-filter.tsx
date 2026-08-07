@@ -206,7 +206,7 @@ export function PeriodFilter({
       <button
         ref={buttonRef}
         onClick={() => setOpen((s) => !s)}
-        className="inline-flex h-11 md:h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm text-foreground transition-colors hover:bg-muted"
+        className="inline-flex h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 text-[15px] text-foreground transition-colors active:bg-muted md:h-9 md:text-sm"
       >
         <Calendar className="h-4 w-4 text-muted-foreground" />
         <span className="font-medium">{currentLabel}</span>

@@ -6,7 +6,7 @@ import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 import { AdsTrackerPanel } from "./ads-tracker-panel"
 import { AdsConfigPanel } from "./ads-config-panel"
-import { AdsInsights } from "./ads-insights"
+import { AdsPanel } from "./ads-panel"
 import { AdsEventsHealth, RegistroTecnico } from "./ads-events-health"
 
 /**
@@ -56,10 +56,8 @@ interface Props {
 }
 
 export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEventCode }: Props) {
-  // Se abre en Eventos: lo primero que hay que saber es si esto está midiendo.
-  // Se entra por Campanas, que es la primera pestana y lo que Marco quiere ver
-  // al abrir Ads: si esta ganando o perdiendo dinero. Eventos es el detalle
-  // tecnico y solo hace falta cuando algo falla (Marco, 2026-08-07).
+  // Se abre en Campañas: lo primero es el dinero, que es a lo que se entra. A Eventos se
+  // va cuando quieres comprobar la medición, no de entrada (Marco, 2026-08-07).
   const [tab, setTab] = useState<AdsTab>("campanas")
   const active = TABS.find((t) => t.id === tab)!
 
@@ -102,7 +100,7 @@ export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEv
           <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
         </div>
 
-        {tab === "campanas" && <AdsInsights />}
+        {tab === "campanas" && <AdsPanel />}
 
         {tab === "eventos" && (
           <div className="flex flex-col gap-4">
