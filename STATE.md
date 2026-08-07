@@ -8,6 +8,37 @@
 
 ## Qué se hizo hoy
 
+**Operaciones deja de ser un sistema y pasa a ser UNA lista.**
+
+Marco: *"no lo hemos usado en meses… lo vamos a organizar solo en un nivel de tareas y ya
+está"*. Se retiró el sistema GTD + PARA entero.
+
+- **La tarea tiene cuatro cosas**: título, descripción, prioridad `P1/P2/P3` y responsable
+  (una persona real del OS, leída de `profiles` — no una lista escrita a mano). Tres
+  estados: pendiente, hecha, archivada. Y se puede eliminar.
+- **Filtros** por estado, prioridad, responsable y texto; **orden** por prioridad o fecha.
+  En el teléfono, hoja inferior; en el ordenador, una fila.
+- **Borrado**: 247 tareas sin hacer, 67 de Misión, 33 proyectos, 4 áreas, 2 recursos, el
+  foco del webinar, las pantallas Dashboard/Áreas/Proyectos/Board, y **Misión de raíz**
+  (`/mision`, su feature y la tabla `launch_phases`). Fuera también `para_items` y `focuses`.
+- **Se queda el historial**: 262 tareas hechas, con la prioridad traducida a la escala nueva
+  y el responsable enganchado a su perfil real. Copia de seguridad de las 510 en
+  `archivo/backup-operaciones-2026-08-07.json` (fuera de git).
+- **Una sola ruta**: `/operaciones`. Las viejas (`/overview`, `/tasks`, `/board`,
+  `/projects`, `/areas`, `/mision`) redirigen ahí: nadie se come un 404.
+- **Permisos**: la política de `tasks` pasa de `is_admin()` (solo super_admin) a
+  `is_os_user()` (cualquier usuario activo del OS). Con responsable por persona, una tarea
+  que su responsable no puede abrir no sirve de nada.
+
+Lo aprendido está en el SOP `producto/01` (que era el del board y ahora es el de la lista),
+incluidas las dos trampas que costaron tiempo: el token `--color-brand` que pintaba
+transparente y el `.next` viejo que tumbó la publicación dos veces.
+
+**Pendiente de Marco:** confirmar que le parece bien que la lista la vea todo el equipo del
+OS y no solo él y Adrián.
+
+---
+
 **El OS entero pasa al brandkit y a móvil primero. 29 de 30 pantallas sin ningún fallo.**
 
 - **Los tokens dicen la verdad.** `accent` y `primary` valían gris y blanco: ahora valen el

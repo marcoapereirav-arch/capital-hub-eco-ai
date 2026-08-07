@@ -97,16 +97,45 @@ responsable.
 4. **La fecha de completado la pone el sistema**, no el usuario. Al marcar hecha se sella
    y al volver a pendiente se borra, para que el historial no mienta.
 
-## Trampa encontrada al construir esto
+## Dos trampas encontradas al construir esto
 
-`bg-brand` pintaba **transparente**. El token era
-`--color-brand: rgb(var(--brand) / <alpha-value>)`, sintaxis de **Tailwind v3**, y este
-proyecto va por la **v4**, donde `<alpha-value>` no se sustituye: el color sale inválido.
-El botón verde principal existía, medía 44px y era invisible.
+### 1. `bg-brand` pintaba transparente
 
-Corregido a `--color-brand: rgb(var(--brand))` en `globals.css`. En la v4 la opacidad se
-resuelve sola con `color-mix`, así que `bg-brand/10` sigue funcionando.
+El token era `--color-brand: rgb(var(--brand) / <alpha-value>)`, sintaxis de **Tailwind
+v3**, y este proyecto va por la **v4**, donde `<alpha-value>` no se sustituye: el color
+sale inválido. El botón verde principal existía, medía 44px y era **invisible**.
 
-**La lección ya estaba escrita en el brandkit y volvió a pasar:** el nombre de un token no
-garantiza su valor. Se comprueba **en el navegador** con `getComputedStyle`, no leyendo el
-CSS. Un `bg-*` que devuelve `rgba(0,0,0,0)` es un token roto, no un descuido de diseño.
+Lo arreglaron los dos chats a la vez y ganó la versión del otro, que es la buena: `--brand`
+pasa a ser un color de verdad (`#22c55e`) y el token apunta a él con `var(--brand)`, más
+`--brand-soft` y `--brand-ink` para la tinta. Mi parche (`rgb(var(--brand))`) se retiró en
+la unión: con `--brand` ya siendo un hexadecimal, habría vuelto a romperlo.
+
+**La lección, que ya estaba escrita en el brandkit y volvió a pasar:** el nombre de un
+token no garantiza su valor. Se comprueba **en el navegador** con `getComputedStyle`, no
+leyendo el CSS. Un `bg-*` que devuelve `rgba(0,0,0,0)` es un token roto, no un descuido de
+diseño. Y la tinta sobre verde es `text-brand-ink`, nunca `text-background` ni `text-white`.
+
+### 2. `npm run publicar` fallaba por basura de compilaciones viejas
+
+La puerta paró la publicación **dos veces** con errores de tipos que apuntaban a rutas que
+este mismo trabajo acababa de borrar:
+
+```
+.next/types/validator.ts: Cannot find module '.../(operaciones)/board/page.js'
+```
+
+No era un fallo del código: `tsconfig` incluye `.next/types/**/*.ts`, y ahí quedaba el
+índice de rutas de una compilación anterior, que seguía nombrando las pantallas borradas.
+**Y no basta con limpiarlo en la carpeta del chat**: la puerta corre también sobre la
+**carpeta principal**, que tenía su propio `.next` viejo.
+
+Cuando un trabajo **borra rutas**, antes de publicar se limpia el `.next` de **las dos**
+carpetas:
+
+```bash
+node -e "require('fs').rmSync('.next',{recursive:true,force:true})"   # en la del chat
+node -e "require('fs').rmSync('.next',{recursive:true,force:true})"   # y en la principal
+```
+
+Señal para reconocerlo: el error dice "Cannot find module" de un archivo que **tú acabas
+de borrar a propósito**. Eso nunca es el código, es la caché.
