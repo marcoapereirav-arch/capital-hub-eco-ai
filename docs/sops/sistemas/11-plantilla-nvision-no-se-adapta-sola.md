@@ -107,6 +107,44 @@ sin una sola pregunta.
 
 ---
 
+## Lo que salió en la primera publicación real (2026-08-07)
+
+Tres cosas más, aprendidas publicando de verdad. Ninguna se había visto en el ensayo.
+
+### El archivador va FUERA del repo
+
+Primero se creó `archivo/` dentro de `Capital Hub/`. TypeScript lo compiló igual y el
+`typecheck` se puso rojo con errores de código que no es del producto (una entrega vieja
+que usa `framer-motion`). Excluirlo en `tsconfig.json` no servía a tiempo: la exclusión
+viajaba en la rama y el `typecheck` que la necesitaba corría en la carpeta principal, que
+todavía no la tenía.
+
+**Regla:** lo que no es del producto vive **fuera del repo**, en
+`/Users/marcoantonio/Marco-Codes/Capital Hub-archivo/`, hermano de `Capital Hub-chats/`.
+Dentro del repo no se guarda nada que no compile.
+
+### La caché `.next` vieja tumba la puerta
+
+El `typecheck` falló con 12 errores de páginas que **ya no existen** (`lead-magnets`,
+`agenda`, `api/calendar`). No eran del trabajo: era `.next/dev/types/validator.ts` del
+31 de julio, generado antes de que otro chat borrara esas páginas. `tsconfig.json` incluye
+`.next/dev/types/**/*.ts`, así que `tsc` los lee como si fueran código vivo.
+
+**Arreglo:** apartar `.next/dev/types`. Next lo regenera al arrancar.
+**Cuándo sospechar:** el `typecheck` se queja de rutas que borró otro chat.
+
+### La puerta bloquea resolver choques en la carpeta principal
+
+El workflow manda resolver los conflictos **en `dev`**, o sea en la carpeta principal. Pero
+la puerta bloquea toda escritura ahí, así que no deja resolverlos. Es un hueco real.
+
+**La vuelta que funciona, y que además es más limpia:** en vez de unir la rama a `dev` en
+la principal, se une **`dev` a la rama, dentro de la carpeta del chat**. Ahí sí se puede
+escribir, se resuelve, se guarda, y después `npm run publicar` ya no encuentra choque.
+Esto hay que reportarlo a NVISION (está en el prompt de [11b](11b-prompt-para-nvision.md)).
+
+---
+
 ## Cómo quedó, medido
 
 | Cosa | Antes | Ahora |

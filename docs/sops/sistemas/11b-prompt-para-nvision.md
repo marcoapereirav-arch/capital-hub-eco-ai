@@ -89,6 +89,37 @@ Acepta los nombres habituales en vez de exigir uno:
 
 Y compara solo los 7 primeros caracteres, porque un proyecto puede devolver el sha entero.
 
+FALLO 4 · la puerta impide resolver los choques que el propio workflow manda resolver
+
+El skill publicar dice: si hay conflicto al unir la rama con dev, resuélvelo EN DEV. dev
+está en la carpeta principal. Pero puerta-de-entrada.mjs bloquea toda escritura en la
+carpeta principal. Resultado: el sistema te manda hacer algo y su propio vigilante te lo
+prohíbe. Pasó en la primera publicación real.
+
+La vuelta que funciona es unir dev a la rama DENTRO de la carpeta del chat (donde sí se
+puede escribir), resolver ahí, y luego publicar: ya no hay choque. Eso además es mejor
+práctica, porque el conflicto se resuelve aislado y dev nunca llega a ensuciarse.
+
+Quiero dos cosas:
+- Que el skill publicar diga EXACTAMENTE eso: ante un choque, `git merge dev` dentro de la
+  carpeta del chat, resolver ahí, y volver a lanzar publicar. Nunca resolver en dev.
+- Que el mensaje de bloqueo de la puerta, cuando detecte un merge a medias en la carpeta
+  principal (existe .git/MERGE_HEAD), no diga "abre una carpeta de chat": eso no aplica.
+  Que diga cómo salir (git merge --abort y resolver en la rama).
+
+FALLO 5 · la caché .next vieja tumba la puerta con errores que no son del trabajo
+
+typecheck falló con 12 errores de páginas BORRADAS por otro chat, procedentes de
+.next/dev/types/validator.ts generado semanas antes. El tsconfig de la plantilla incluye
+".next/dev/types/**/*.ts", así que tsc los lee como código vivo. Esto va a pasarle a
+cualquiera que trabaje con varios chats: uno borra una página, y la caché del otro
+mantiene el tipo apuntando a la nada.
+
+Haz que publicar detecte ese caso: si el typecheck falla y TODOS los errores están dentro
+de .next/, que no se rinda — que borre .next/dev/types (o .next/types), reintente UNA vez,
+y solo falle si sigue rojo. Y que lo diga en el mensaje, para que el dueño no crea que su
+trabajo rompió algo.
+
 QUÉ QUIERO DE VUELTA
 
 1. Los tres arreglos aplicados en la plantilla.
