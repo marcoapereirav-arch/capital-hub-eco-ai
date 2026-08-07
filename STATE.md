@@ -2,11 +2,61 @@
 
 > Se actualiza en cada cierre de chat. Dice la verdad de hoy, no la intención.
 
-**Última actualización:** 2026-08-07
+**Última actualización:** 2026-08-08
 
 ---
 
 ## Qué se hizo hoy
+
+**Afiliados pasa de una pantalla con un link fijo a un sistema completo.**
+
+Marco: *"el link no puede ir solo a test de personalidad… yo lo quiero crear directamente
+con cualquier funnel que yo quiera"*.
+
+- **Dos pestañas** en `/afiliados`: Dashboard (visitas, personas, agendados, alumnos e
+  ingresos, con el filtro de fechas del OS, ranking, cruce por funnel y evolución) y
+  Configuración (cada persona, sus links, renombrar y activar o desactivar).
+- **El link va al funnel que se elija.** El destino fijo escrito a fuego se retiró. La lista
+  sale del catálogo único del OS, así que **un funnel nuevo aparece solo**.
+- **Tres de los cinco funnels no guardaban de dónde venía el lead** (reservar, mifge, lt8):
+  entraba con el link de Paolo y se guardaba sin fuente, en silencio. La atribución pasa a
+  una pieza única con candado (`npm run check:afiliados`).
+- **Los links apuntaban al dominio del OS**, no al público. Corregido.
+- **Los contadores escondían gente**: seguimiento, no show, perdido y lead cualificado no
+  salían en ningún número.
+- **Etiquetado de punta a punta**: `fuente:<afiliado>` nace con el afiliado (no con su primer
+  lead) y se rellenó hacia atrás en 18 contactos; el contacto guarda además por qué funnel
+  entró; al registrar la venta el afiliado queda escrito en la venta y en el aviso.
+- **Traqueo de cada link**: tabla `affiliate_visits` alimentada desde el layout público, así
+  que se mide incluso en funnels sin formulario (LT8, MIFGE). Registrado en
+  `/automatizaciones`.
+
+Knowledge: [`marketing/11-afiliados.md`](docs/sops/marketing/11-afiliados.md).
+
+**Dos fallos de raíz que Marco encontró y que ya no pueden volver:**
+
+| Qué pasaba | Arreglo de raíz | Qué lo impide |
+|---|---|---|
+| La pantalla no se dejaba desplazar con el puntero encima de la lista | `ListaPaginada` ya no crea cajón propio (`propioScroll` como excepción). Cae en las 5 pantallas que la usan | `check:movil` mide los cajones que atrapan el gesto |
+| El botón flotante tapaba el último botón de cada pantalla en ordenador | Una línea en `PageContainer` (`md:pb-24`), que cae en las 35 | `check:movil` mide los botones que el flotante deja sin pulsar |
+
+Los dos eran **fallos mudos**: sin error, con los tipos y la construcción en verde, y con la
+captura de pantalla completa viéndose perfecta. Reporte en
+[`producto/62`](docs/sops/producto/62-un-solo-scroll-por-pantalla.md) y regla escrita en la
+skill `os-movil-primero` (secciones 2 bis bis y 2 ter).
+
+**Pendiente que no puedo cerrar yo:** la atribución de `/reservar` depende del webhook de
+Calendly, que **nunca ha corrido** (`calendly_webhook_log` con 0 filas). El código ya manda
+las UTMs dentro de la reserva y las lee de forma defensiva, pero hace falta **una reserva de
+verdad** para confirmarlo. Las visitas de ese link sí se cuentan igual.
+
+**Herramienta nueva:** `npm run db:sql <archivo.sql>` aplica migraciones a la base real sin
+depender del MCP de Supabase, que en sesiones no interactivas no está autorizado. Sin esto,
+el archivo de migración se escribía y **nunca llegaba a la base**.
+
+---
+
+## Qué se hizo el 2026-08-07
 
 **Operaciones deja de ser un sistema y pasa a ser UNA lista.**
 
