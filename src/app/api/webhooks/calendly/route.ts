@@ -4,9 +4,18 @@ import { verifyWebhookSignature } from "@/lib/calendly"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
 import { notifyAdrianBooking, sendAgendaConfirmed } from "@/lib/email/senders"
 import { pushToUsers, filterByNotificationPref } from "@/lib/notifications/notify-admins"
+import {
+  camposAtribucionExistente,
+  camposAtribucionNuevo,
+  etiquetarAtribucion,
+  normalizarFuente,
+} from "@/lib/atribucion/atribucion"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
+
+/** Este funnel, en el catalogo unico. La reserva de sesion es /reservar. */
+const FUNNEL_SLUG = "reservar"
 
 function getAdminClient() {
   return createClient(
@@ -155,7 +164,7 @@ async function notifyHost(
 async function moveContactForCalendly(
   admin: Admin,
   kind: "created" | "canceled" | "no_show",
-  inv: { email?: string; name?: string; phone?: string | null },
+  inv: { email?: string; name?: string; phone?: string | null; source?: string | null },
   scheduledStart: string,
   eventName: string,
   hostUserEmails: string[] = [],
@@ -163,9 +172,12 @@ async function moveContactForCalendly(
   const email = inv.email?.toLowerCase().trim()
   if (!email) return
 
+  // Quien lo trajo. Viaja dentro de la reserva desde /reservar (ver el tipo `tracking`).
+  const source = inv.source ?? null
+
   const { data: existing } = await admin
     .from("contacts")
-    .select("id, stage, pipeline_id")
+    .select("id, stage, pipeline_id, affiliate_slug, funnel_slug")
     .ilike("email", email)
     .maybeSingle()
 
@@ -178,7 +190,10 @@ async function moveContactForCalendly(
         stage: nextStage,
         last_call_at: scheduledStart ?? new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        // Atribución first-touch: solo rellena lo que estaba vacío.
+        ...camposAtribucionExistente(existing, { source, funnelSlug: FUNNEL_SLUG }),
       }).eq("id", existing.id)
+      await etiquetarAtribucion(admin, existing.id, { source, funnelSlug: FUNNEL_SLUG })
       await logJourney(admin, existing.id, "call_booked", "Agendó llamada (Calendly)")
     } else {
       // Decisión Marco 2026-06-20: leads que agendan DIRECTO en Calendly (sin pasar
@@ -195,10 +210,13 @@ async function moveContactForCalendly(
         stage: "agendado",
         pipeline_id: pipeline?.id ?? null,
         origin: "calendly_direct",
-        source: "calendly_direct",
+        ...camposAtribucionNuevo({ source, funnelSlug: FUNNEL_SLUG }),
       }).select("id").single()
       contactId = created?.id
-      if (contactId) await logJourney(admin, contactId, "call_booked", "Agendó llamada (Calendly, sin test previo) → pipeline general")
+      if (contactId) {
+        await etiquetarAtribucion(admin, contactId, { source, funnelSlug: FUNNEL_SLUG })
+        await logJourney(admin, contactId, "call_booked", "Agendó llamada (Calendly, sin test previo) → pipeline general")
+      }
     }
   } else if (kind === "canceled" && existing) {
     // Decisión Marco 2026-06-20: cancelación → seguimiento INMEDIATO (no 7 días).
@@ -303,6 +321,21 @@ export async function POST(req: NextRequest) {
       email?: string
       text_reminder_number?: string | null
       cancellation?: { reason?: string }
+      /**
+       * UTMs con las que se abrio el calendario. Calendly las devuelve aqui cuando el
+       * widget se carga con `?utm_source=...`, que es lo que hace /reservar desde el
+       * 2026-08-07. Se lee de forma defensiva: si un dia no viene, la reserva se guarda
+       * igual, solo que sin fuente. PENDIENTE de confirmar con una reserva real: hoy el
+       * registro de webhooks de Calendly esta vacio (0 filas), asi que aun no se ha visto
+       * un payload de verdad.
+       */
+      tracking?: {
+        utm_source?: string | null
+        utm_medium?: string | null
+        utm_campaign?: string | null
+        utm_content?: string | null
+        utm_term?: string | null
+      }
       scheduled_event?: {
         uri: string
         name: string
@@ -354,7 +387,12 @@ export async function POST(req: NextRequest) {
       await moveContactForCalendly(
         admin,
         event === "invitee.created" ? "created" : "canceled",
-        { email: inv.email, name: inv.name, phone: inv.text_reminder_number ?? null },
+        {
+          email: inv.email,
+          name: inv.name,
+          phone: inv.text_reminder_number ?? null,
+          source: normalizarFuente(inv.tracking?.utm_source),
+        },
         scheduled.start_time,
         scheduled.name,
         hostEmails,

@@ -7,6 +7,15 @@ import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/noti
 import { sendEmail } from "@/lib/email/send-email"
 import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
 import { getTestPersonalidadSettings } from "@/features/funnel-test-personalidad/get-settings"
+import {
+  camposAtribucionExistente,
+  camposAtribucionNuevo,
+  etiquetarAtribucion,
+  normalizarFuente,
+} from "@/lib/atribucion/atribucion"
+
+/** Este funnel, en el catalogo unico. La atribucion se cuelga de aqui. */
+const FUNNEL_SLUG = "test-personalidad"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -76,36 +85,13 @@ export async function POST(req: Request) {
   )
 
   const { full_name, email, phone } = parsed.data
-  const source = parsed.data.utm_source ? slugify(parsed.data.utm_source) : null
-
-  // Crea el tag si no existe y devuelve su id. Colores del brandkit (neutros).
-  const ensureTag = async (name: string, color: string, description: string): Promise<string | null> => {
-    const { data: existing } = await admin.from("tags").select("id").eq("name", name).maybeSingle()
-    if (existing?.id) return existing.id as string
-    const { data: created } = await admin
-      .from("tags")
-      .insert({ name, color, description })
-      .select("id")
-      .single()
-    return (created?.id as string) ?? null
-  }
+  // Quien lo trajo. La normalización vive en la pieza única de atribución.
+  const source = normalizarFuente(parsed.data.utm_source)
 
   // Pipeline contextual de este funnel: Test Personalidad
   const { data: pipeline } = await admin
     .from("pipelines").select("id").eq("slug", "test-personalidad").maybeSingle()
   const pipelineId = pipeline?.id ?? null
-
-  // Tag de origen (de qué funnel vino) — color neutro brandkit
-  const origenTagId = await ensureTag(
-    "origen:test_personalidad",
-    "#2A2D34",
-    "Lead que entró por la landing del test de personalidad",
-  )
-
-  // Tag de fuente (qué afiliado/canal lo trajo) — si hay utm_source
-  const fuenteTagId = source
-    ? await ensureTag(`fuente:${source}`, "#3F3F46", `Lead atribuido a la fuente '${source}'`)
-    : null
 
   // Upsert contacto por email
   let contactId: string | null = null
@@ -119,7 +105,7 @@ export async function POST(req: Request) {
   {
     const { data: existing } = await admin
       .from("contacts")
-      .select("id, slug, stage, pipeline_id, affiliate_slug")
+      .select("id, slug, stage, pipeline_id, affiliate_slug, funnel_slug")
       .ilike("email", email)
       .maybeSingle()
 
@@ -133,8 +119,8 @@ export async function POST(req: Request) {
       if (!existing.stage) update.stage = "lead"
       // pipeline_id: preservar si ya tenía; asignar el del funnel si era huérfano
       if (!existing.pipeline_id && pipelineId) update.pipeline_id = pipelineId
-      // affiliate_slug: first-touch — solo si todavía no tenía fuente
-      if (!existing.affiliate_slug && source) update.affiliate_slug = source
+      // Atribución (fuente + funnel), first-touch. Decidida en un solo sitio.
+      Object.assign(update, camposAtribucionExistente(existing, { source, funnelSlug: FUNNEL_SLUG }))
       await admin.from("contacts").update(update).eq("id", existing.id)
     } else {
       const slug = slugify(full_name) + "_" + Math.random().toString(36).slice(2, 8)
@@ -146,8 +132,7 @@ export async function POST(req: Request) {
         stage: "lead",
         pipeline_id: pipelineId,
         origin: "landing_test_personalidad",
-        source: source ?? "landing_test_personalidad",
-        affiliate_slug: source,
+        ...camposAtribucionNuevo({ source, funnelSlug: FUNNEL_SLUG }),
       }).select("id").single()
       if (cErr) {
         return NextResponse.json({ error: "Error guardando el lead. Inténtalo de nuevo." }, { status: 500 })
@@ -157,12 +142,9 @@ export async function POST(req: Request) {
     }
   }
 
-  // Asignar tags (origen + fuente). Ignora 23505 (ya asignado).
+  // Etiquetas de origen y de fuente. Las pone la pieza única de atribución.
   if (contactId) {
-    const tagRows = [origenTagId, fuenteTagId]
-      .filter((id): id is string => !!id)
-      .map((tag_id) => ({ contact_id: contactId as string, tag_id }))
-    if (tagRows.length) await admin.from("contact_tags").insert(tagRows)
+    await etiquetarAtribucion(admin, contactId, { source, funnelSlug: FUNNEL_SLUG })
   }
 
   // Journey event

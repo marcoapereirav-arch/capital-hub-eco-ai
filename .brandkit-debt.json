@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1732,
+  "total": 1727,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -136,18 +136,6 @@
         "#2A2D34": 1,
         "#3F3F46": 1,
         "#52525B": 1
-      }
-    },
-    "src/app/api/optin/test-personalidad/route.ts": {
-      "color-a-mano": {
-        "#2A2D34": 1,
-        "#3F3F46": 1
-      }
-    },
-    "src/app/api/optin/webinar/route.ts": {
-      "color-a-mano": {
-        "#2A2D34": 1,
-        "#3F3F46": 1
       }
     },
     "src/app/api/webhooks/manychat/route.ts": {
@@ -306,11 +294,6 @@
       },
       "texto-por-debajo-del-minimo": {
         "text-xs": 1
-      }
-    },
-    "src/features/ads/components/ads-affiliates-panel.tsx": {
-      "lista-sin-paginar": {
-        "rows.map(": 1
       }
     },
     "src/features/auth/components/ForgotPasswordForm.tsx": {
