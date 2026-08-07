@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { MoreHorizontal, LogOut, User } from "lucide-react"
+import { MoreHorizontal, LogOut, User, X } from "lucide-react"
 import {
   Sheet,
   SheetContent,
@@ -61,7 +61,7 @@ export function MobileBottomNav({
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 pb-safe backdrop-blur-md md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
         {/* Reparto a partes iguales entre los que DE VERDAD se pintan. Antes
             eran 5 columnas fijas con 4 botones (o 3, segun el rol): la barra
             salia corrida a la izquierda con un hueco vacio a la derecha. */}
@@ -129,10 +129,20 @@ export function MobileBottomNav({
         >
           <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border" />
 
-          <SheetHeader className="px-4 pt-3">
+          {/* SIEMPRE hay salida. Antes esta hoja no tenia ninguna y Marco se
+              quedaba atrapado dentro. */}
+          <SheetHeader className="flex-row items-center justify-between gap-3 px-4 pt-3 pb-1">
             <SheetTitle className="text-base font-extrabold text-foreground">
               Más
             </SheetTitle>
+            <button
+              type="button"
+              onClick={() => setMoreOpen(false)}
+              className="tap-target -mr-2 inline-flex items-center gap-1.5 rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors active:bg-secondary active:text-foreground"
+            >
+              <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+              Cerrar
+            </button>
           </SheetHeader>
 
           <div className="grid grid-cols-2 gap-2 px-4 pb-2">

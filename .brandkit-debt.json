@@ -10,7 +10,7 @@
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
   "generado": "2026-08-07",
-  "total": 1872,
+  "total": 1740,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -912,11 +912,6 @@
         "#22C55E": 1
       }
     },
-    "src/features/notifications/components/NotificationsPanel.tsx": {
-      "lista-sin-paginar": {
-        "items.map(": 1
-      }
-    },
     "src/features/operaciones-dashboard/components/operaciones-dashboard.tsx": {
       "lista-sin-paginar": {
         "tasks.map(": 1
@@ -1536,59 +1531,24 @@
       }
     },
     "src/features/sales/components/registrar-venta-modal.tsx": {
-      "modal-a-mano": {
-        "fixed inset-0": 2
-      },
       "color-prohibido": {
         "border-amber-500": 2,
-        "border-green-500": 5,
+        "border-green-500": 4,
         "text-amber-400": 1,
-        "text-green-400": 4,
-        "text-amber-300": 2,
+        "text-amber-300": 1,
         "bg-amber-500": 1,
         "text-amber-200": 1,
-        "text-green-300": 1,
         "bg-green-500": 3,
         "text-red-400": 2,
-        "border-red-500": 2,
-        "bg-red-500": 3,
-        "from-green-500": 1,
-        "to-green-600": 1,
-        "text-red-300": 2
+        "border-red-500": 1,
+        "bg-red-500": 1,
+        "text-red-300": 1
+      },
+      "texto-por-debajo-del-minimo": {
+        "text-xs": 4
       },
       "fuente-mono": {
-        "font-mono": 14
-      },
-      "mayusculas-separadas": {
-        "uppercase + tracking ancho": 11
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-[10px]": 8,
-        "text-xs": 8,
-        "text-[11px]": 1
-      },
-      "degradado-de-color": {
-        "bg-gradient-to-": 1
-      },
-      "token-diluido": {
-        "text-foreground/90": 1
-      }
-    },
-    "src/features/sales/components/sale-stage-prompt.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "modal-a-mano": {
-        "fixed inset-0": 1
-      },
-      "color-prohibido": {
-        "border-green-500": 2,
-        "bg-green-500": 3,
-        "text-green-400": 2
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-[13px]": 1,
-        "text-[12px]": 2
+        "font-mono": 1
       }
     },
     "src/features/shell/components/app-sidebar.tsx": {
@@ -1640,21 +1600,6 @@
       },
       "acento-blanco": {
         "background: \"#FFFFFF": 1
-      }
-    },
-    "src/features/shell/components/view-as-role-dropdown.tsx": {
-      "pantalla-solo-para-monitor": {
-        "archivo sin instrucciones de telefono": 1
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-xs": 3,
-        "text-[10px]": 2
-      },
-      "fuente-mono": {
-        "font-mono": 1
-      },
-      "mayusculas-separadas": {
-        "uppercase + tracking ancho": 1
       }
     },
     "src/features/sistemas/components/medicion-ads-workflow.tsx": {
@@ -1751,37 +1696,6 @@
       },
       "control-pequeno": {
         "h-8": 1
-      }
-    },
-    "src/features/webs/components/calls-admin-panel.tsx": {
-      "fuente-mono": {
-        "font-mono": 18
-      },
-      "mayusculas-separadas": {
-        "uppercase + tracking ancho": 11
-      },
-      "texto-por-debajo-del-minimo": {
-        "text-[10px]": 10,
-        "text-[9px]": 1,
-        "text-xs": 4,
-        "text-[11px]": 2
-      },
-      "color-prohibido": {
-        "text-red-400": 1,
-        "text-cyan-400": 2,
-        "text-green-400": 1,
-        "text-orange-400": 1,
-        "text-cyan-300": 1
-      },
-      "token-diluido": {
-        "text-muted-foreground/60": 2,
-        "text-foreground/90": 1
-      },
-      "rejilla-sin-movil": {
-        "grid-cols-12": 1
-      },
-      "modal-a-mano": {
-        "fixed inset-0": 1
       }
     },
     "src/features/webs/components/google-calendar-card.tsx": {

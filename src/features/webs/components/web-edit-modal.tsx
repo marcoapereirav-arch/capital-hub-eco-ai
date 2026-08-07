@@ -1,8 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, Check, Globe } from "lucide-react"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Loader2, Check, Globe, X } from "lucide-react"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -20,6 +27,13 @@ import { getFunnelManifest } from "../lib/funnel-settings-manifest"
  * el teclado la tapaba al escribir y no se llegaba al boton de guardar. Ahora es la
  * hoja inferior del kit, con el lado FIJO (`side="bottom"`) y el escritorio resuelto
  * con clases `md:`, nunca con JavaScript.
+ *
+ * La hoja es UNA columna con tres filas: cabecera fija (titulo + salida), cuerpo que
+ * se desplaza (el UNICO sitio con desplazamiento) y pie fijo con los botones. El
+ * formulario es largo, y con el desplazamiento en la caja entera la cabecera se iba
+ * hacia arriba: el cerrar desaparecia de la pantalla y no habia forma de salir. El
+ * alto tope se mide en `dvh` descontando la franja del reloj, y el pie deja libre la
+ * franja de gestos del iPhone.
  *
  * Reutiliza EXACTAMENTE los mismos endpoints que la tarjeta usaba:
  *   - PATCH /api/admin/webs/{id}            → { name, slug, status, hostname }
@@ -208,26 +222,51 @@ export function WebEditModal({
     >
       <SheetContent
         side="bottom"
+        // El cerrar del kit es `absolute` DENTRO de la caja que se desplaza: en un
+        // formulario largo como este se va hacia arriba con el contenido y el usuario
+        // se queda encerrado. Ponemos el nuestro en la cabecera, que no se mueve.
+        showCloseButton={false}
         className={cn(
-          // TELEFONO: hoja inferior, nunca a pantalla completa, con scroll propio.
-          "rounded-t-xl",
+          // UNA sola caja en columna: cabecera fija, cuerpo que se desplaza, pie fijo.
+          // El desplazamiento propio del kit se apaga aqui; si no, hay dos sitios
+          // desplazandose a la vez y se pelean con el dedo.
+          "gap-0 overflow-hidden data-[side=bottom]:overflow-y-hidden",
+          // TELEFONO: hoja inferior que nunca se mete debajo del reloj. Con `vh` la
+          // cabecera se colaba debajo del notch y el cerrar no se podia tocar.
+          "rounded-t-xl data-[side=bottom]:max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)]",
+          // La zona segura de abajo la pone el pie, no la caja entera.
+          "data-[side=bottom]:pb-0",
           // ESCRITORIO: cajon por la derecha, con las mismas clases y cero JavaScript.
           // Se repite la condicion del lado porque las clases del kit (`data-[side=bottom]:...`)
           // pesan mas que un `md:` suelto; sin repetirla el cajon sale por la izquierda.
-          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-lg md:border-l md:pb-0",
+          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-lg md:rounded-t-none md:border-l md:pb-0",
         )}
       >
-        {/* La agarradera es lo que hace que se lea como hoja y no como un error. */}
-        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        {/* ── Cabecera: no se desplaza, y siempre lleva la salida a la vista ── */}
+        <div className="shrink-0 border-b border-border">
+          {/* La agarradera es lo que hace que se lea como hoja y no como un error. */}
+          <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+          <div className="flex items-start justify-between gap-3 px-4 py-3">
+            <SheetHeader className="min-w-0 flex-1 gap-0.5 p-0">
+              <SheetTitle className="text-[17px] font-semibold">Editar funnel</SheetTitle>
+              <SheetDescription className="text-[15px]">
+                Aquí editas todo: nombre, dónde se publica, el path base y cada paso del funnel.
+              </SheetDescription>
+            </SheetHeader>
+            <SheetClose asChild>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                className="tap-target -mr-2 inline-flex shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-secondary active:text-foreground md:hover:text-foreground"
+              >
+                <X className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </SheetClose>
+          </div>
+        </div>
 
-        <SheetHeader>
-          <SheetTitle className="text-[17px] font-semibold">Editar funnel</SheetTitle>
-          <SheetDescription>
-            Aquí editas todo: nombre, dónde se publica, el path base y cada paso del funnel.
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="space-y-6 px-4 pb-4">
+        {/* ── Cuerpo: el UNICO sitio que se desplaza ── */}
+        <div className="no-overscroll min-h-0 flex-1 space-y-6 overflow-y-auto p-4">
           {/* ── Datos del funnel ── */}
           <div className="space-y-4">
             <label className="block">
@@ -443,18 +482,20 @@ export function WebEditModal({
               )}
             </div>
           )}
-
-          {error && (
-            <p className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
         </div>
 
-        {/* Barra de accion pegada abajo DENTRO de la hoja: con `fixed` el teclado
-            del telefono la tapa, porque el desplazamiento real lo hace este
-            contenedor y no la ventana. */}
-        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-safe-4 md:pb-3">
+        {/* El aviso de error va FUERA de lo que se desplaza: si vive dentro y el
+            usuario esta a mitad del formulario, guarda, falla y no ve nada. */}
+        {error && (
+          <p className="shrink-0 border-t border-destructive/40 bg-destructive/10 px-4 py-2.5 text-[15px] text-destructive">
+            {error}
+          </p>
+        )}
+
+        {/* ── Pie: fila fija de la columna, no `sticky` ni `fixed`. Con `fixed` el
+            teclado del telefono lo tapa, y con `sticky` pelea con el desplazamiento
+            del cuerpo. El relleno de abajo deja libre la franja de gestos. ── */}
+        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-popover px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
           <Button variant="secondary" onClick={() => !saving && onClose()} disabled={saving}>
             Cerrar
           </Button>
