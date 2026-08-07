@@ -538,9 +538,12 @@ const REGLAS = [
     titulo: "Rejilla de columnas sin version de telefono",
     familia: "estructura",
     patron: new RegExp(BORDE + PREFIJOS + "grid-cols-(\\d+|\\[[^\\]]*\\])(?![\\w-])", "g"),
-    filtro: (m) => {
+    filtro: (m, ctx) => {
       if (esDeEscritorio(m[1])) return false
       if (m[2].startsWith("[")) return true // columnas medidas: nunca caben en 375
+      // Si en la MISMA linea hay una version de monitor de la rejilla, el autor ya penso
+      // el tamano: `grid-cols-4 sm:grid-cols-6` es justo lo que pide la ley. No se marca.
+      if (/(?:sm|md|lg|xl|2xl):grid-cols-/.test(ctx.linea)) return false
       return Number(m[2]) >= 3
     },
     arreglo: [
@@ -621,7 +624,12 @@ const REGLAS = [
     familia: "estructura",
     patron: /fixed inset-0/g,
     ventana: 3,
-    filtro: (m, ctx) => /items-center|justify-center|place-items-center/.test(ctx.ventana),
+    // Si el archivo la pinta con un portal al body (a mano con createPortal, o usando un
+    // primitivo de Radix que ya portalea), el peligro que persigue esta regla desaparece:
+    // ningun padre con desenfoque puede atraparla. No se marca.
+    filtro: (m, ctx) =>
+      /items-center|justify-center|place-items-center/.test(ctx.ventana) &&
+      !/createPortal|Portal\b/.test(ctx.archivo ?? ""),
     arreglo: [
       "Una ventana centrada en un telefono la tapa el teclado al escribir, y si el contenido es",
       "largo no se llega al boton de guardar.",
@@ -920,6 +928,9 @@ function senalesDe(codigoCrudo, rel) {
         const ctx = {
           sinTokens: ctxArchivo.sinTokens,
           datoDeProducto: ctxArchivo.datoDeProducto,
+          // El archivo entero, para reglas que necesitan saber algo del conjunto
+          // (por ejemplo, si la ventana se pinta con un portal al body).
+          archivo: codigo,
           linea,
           ventana: regla.ventana === undefined ? linea : ventanaDe(lineas, i, regla.ventana),
           // A que etiqueta pertenece de verdad esta clase. Se busca hacia atras

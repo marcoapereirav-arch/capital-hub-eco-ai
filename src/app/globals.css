@@ -38,9 +38,13 @@
   --color-brand: rgb(var(--brand) / <alpha-value>);
   /* Ambar de AVISO del brandkit. Solo para avisar de algo que pide atencion
      ("lleva 3 dias sin gastar"), nunca como color de adorno. El error sigue
-     siendo rojo (`destructive`) y el acento sigue siendo verde. */
-  --color-warn: #E5B567;
-  --color-warn-foreground: #1A1408;
+     siendo rojo (`destructive`) y el acento sigue siendo verde.
+     Va apuntando a una variable de verdad, como el resto de tokens: este bloque
+     es `inline`, o sea que mete el valor dentro de la clase pero NO publica la
+     variable. Escrito a pelo aqui, `text-warn` funcionaba pero `var(--warn)` no
+     resolvia, y el board pintaba su aviso SIN COLOR y sin dar ningun error. */
+  --color-warn: var(--warn);
+  --color-warn-foreground: var(--warn-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -87,6 +91,8 @@
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
+    --warn: #B07D1F;
+    --warn-foreground: #FFFFFF;
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
     --ring: oklch(0.708 0 0);
@@ -153,6 +159,10 @@
 
     /* DESTRUCTIVE */
     --destructive: oklch(0.704 0.191 22.216);
+
+    /* AVISO: ambar del brandkit. Ni error (eso es rojo) ni acento (eso es verde). */
+    --warn: #E5B567;
+    --warn-foreground: #1A1408;
 
     /* BORDERS: subidos de 0.24 a 0.275 para que los bordes de cajas/inputs se
        VEAN — incluso cuando un componente los diluye. Regla: no bajar de aquí. */

@@ -2,24 +2,36 @@ import type { ReactNode } from "react"
 import { CrmTabsHeader } from "@/features/crm/components/crm-tabs-header"
 
 /**
- * Layout compartido entre las 3 sub-pestañas del CRM:
+ * Layout compartido por las 3 sub-pestanas del CRM:
  * - /crm/contactos (lista)
- * - /crm/pipeline  (kanban)
+ * - /crm/pipeline  (kanban con arrastrar y soltar)
  * - /crm/tags      (etiquetas)
  *
- * El header con tabs vive aquí para que se mantenga visible al cambiar de sub-pestaña
- * y el ancho del contenedor sea idéntico en todas. Sin layout shift.
+ * Las pestanas viven aqui para que sigan visibles al cambiar de sub-pestana y el ancho
+ * sea identico en las tres. Sin saltos de layout.
  *
- * El area de contenido lleva su PROPIO desplazamiento vertical: antes era
- * `overflow-hidden`, asi que en un telefono la lista de contactos se cortaba por
- * abajo y no habia forma de llegar al final. El horizontal sigue recortado para
- * que ninguna pieza ancha arrastre la pagina entera de lado.
+ * EL SCROLL DEL CRM VIVE AQUI, y en un solo sitio. Hasta el 2026-08-06 esta misma caja
+ * llevaba `overflow-hidden`, asi que la lista de contactos (2307px con 30 contactos) se
+ * recortaba a la altura de la ventana (799px) y NO habia forma de bajar: 1508px de
+ * contactos invisibles. El contenedor de fuera si tiene `overflow-y-auto`, pero nunca
+ * llegaba a desbordar porque este de aqui ya habia cortado el contenido.
+ *
+ * Regla que deja: la caja que RECORTA (`overflow-hidden`) y la que DEJA BAJAR
+ * (`overflow-y-auto`) no pueden ser la misma. Si una pantalla necesita ocupar el alto
+ * exacto sin scroll de pagina (el kanban), pide `h-full` a este hueco; no se recorta aqui.
+ *
+ * El fondo carbon sale del token del tema (`bg-background`), no de un color a mano: en
+ * este OS los tokens YA son el brandkit (verde de marca en `--primary`, Inter Tight en
+ * `--font-sans`), asi que el dia que se retoque la marca esta pantalla se entera sola.
  */
 export default function CrmLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
+    <div className="flex h-full min-h-0 w-full flex-col bg-background">
       <CrmTabsHeader />
-      <div className="no-overscroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+      {/* Unico scroll vertical del CRM. `overscroll-contain` evita que el rebote se
+          propague a la pagina. `pb-mobile-nav` reserva el alto de la barra inferior
+          de movil (en escritorio es 0) para que la ultima fila no quede debajo. */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain pb-mobile-nav">
         {children}
       </div>
     </div>

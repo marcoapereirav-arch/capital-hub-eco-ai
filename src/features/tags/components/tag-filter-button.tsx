@@ -6,11 +6,12 @@ import type { Tag } from "../types/tag"
 import { cn } from "@/lib/utils"
 
 /**
- * Filtro multi-tag.
+ * Filtro por etiquetas (se pueden marcar varias). Un contacto pasa el filtro si tiene
+ * AL MENOS UNA de las marcadas.
  *
- * En telefono NO se usa este boton: los filtros del CRM viven todos dentro de la
- * hoja inferior "Filtros", y alli se pinta <TagFilterList /> directamente. Un menu
- * flotante en telefono se sale de la pantalla y no se puede arrastrar.
+ * En telefono NO se usa este boton: los filtros del CRM viven todos dentro de la hoja
+ * inferior "Filtros", y alli se pinta <TagFilterList /> directamente. Un menu flotante
+ * en telefono se sale de la pantalla y no se puede arrastrar.
  */
 export function TagFilterButton({
   allTags,
@@ -31,38 +32,54 @@ export function TagFilterButton({
         setOpen(false)
       }
     }
+    function onEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false)
+    }
     document.addEventListener("mousedown", onClickOutside)
-    return () => document.removeEventListener("mousedown", onClickOutside)
+    document.addEventListener("keydown", onEscape)
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside)
+      document.removeEventListener("keydown", onEscape)
+    }
   }, [open])
 
+  const activo = selected.size > 0
+
   return (
-    <div ref={ref} className="relative inline-flex items-center gap-1">
-      <button
-        onClick={() => setOpen((v) => !v)}
+    <div ref={ref} className="relative">
+      <div
         className={cn(
-          "inline-flex h-11 items-center gap-1.5 rounded-lg border bg-card px-3 text-[15px] transition-colors md:h-8 md:px-2 md:text-sm",
-          selected.size > 0
-            ? "border-primary/40 text-foreground"
-            : "border-border text-muted-foreground md:hover:text-foreground"
+          "inline-flex min-h-[44px] items-center rounded-[4px] border transition-colors",
+          activo
+            ? "border-primary/30 bg-primary/10 text-primary"
+            : "border-border bg-popover text-muted-foreground md:hover:text-foreground"
         )}
       >
-        <TagIcon className="h-4 w-4" />
-        Tags
-        {selected.size > 0 && <span className="tabular-nums">· {selected.size}</span>}
-      </button>
-
-      {selected.size > 0 && (
         <button
-          onClick={() => onChange(new Set())}
-          aria-label="Quitar el filtro de tags"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground md:h-8 md:w-8 md:hover:text-foreground"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-haspopup="true"
+          className="inline-flex min-h-[44px] items-center gap-2 px-3 text-[14px] font-semibold"
         >
-          <X className="h-4 w-4" />
+          <TagIcon className="h-4 w-4" />
+          Etiquetas
+          {activo && <span className="tabular-nums">({selected.size})</span>}
         </button>
-      )}
+        {activo && (
+          // Boton propio, no un <span> con onClick dentro de otro boton: eso era HTML
+          // invalido y no se podia usar con el teclado.
+          <button
+            onClick={() => onChange(new Set())}
+            aria-label="Quitar el filtro de etiquetas"
+            className="flex h-11 w-11 items-center justify-center rounded-r-[4px] transition-colors hover:bg-popover md:w-9"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       {open && (
-        <div className="absolute top-full left-0 z-20 mt-1 max-h-72 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-border bg-popover shadow-lg">
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-72 w-[min(20rem,calc(100vw-2rem))] overflow-y-auto overscroll-contain rounded-[4px] border border-border bg-popover shadow-[0_18px_40px_-16px_rgba(0,0,0,0.85)] md:w-auto md:min-w-[240px]">
           <TagFilterList allTags={allTags} selected={selected} onChange={onChange} />
         </div>
       )}
@@ -92,9 +109,9 @@ export function TagFilterList({
 
   if (allTags.length === 0) {
     return (
-      <div className="px-3 py-3 text-sm text-muted-foreground">
-        Sin tags todavía. Crea desde /crm/tags.
-      </div>
+      <p className="px-3 py-3 text-[14px] text-muted-foreground">
+        Todavía no hay etiquetas. Se crean en la pestaña Etiquetas.
+      </p>
     )
   }
 
@@ -106,15 +123,18 @@ export function TagFilterList({
           <button
             key={tag.id}
             onClick={() => toggle(tag.id)}
-            className="flex h-11 w-full items-center gap-2 px-3 text-left text-[15px] text-foreground active:bg-muted md:h-9 md:text-sm md:hover:bg-muted"
+            aria-pressed={isSelected}
+            className="flex min-h-[44px] w-full items-center gap-2.5 px-3 text-left text-[14px] text-foreground transition-colors active:bg-card md:hover:bg-card"
           >
             <span
               className={cn(
-                "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border",
-                isSelected ? "border-primary bg-primary/10" : "border-border"
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border",
+                isSelected
+                  ? "border-primary bg-primary"
+                  : "border-foreground/20"
               )}
             >
-              {isSelected && <Check className="h-3 w-3 text-primary" />}
+              {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
             </span>
             <span
               className="h-2 w-2 shrink-0 rounded-full"
@@ -125,9 +145,9 @@ export function TagFilterList({
         )
       })}
       {selected.size > 0 && (
-        <div className="border-t border-border px-3 py-2 text-sm text-muted-foreground">
-          Lógica: coincide cualquier (OR)
-        </div>
+        <p className="border-t border-border px-3 py-2 text-[14px] text-muted-foreground md:text-[13px]">
+          Se muestran los contactos que tengan alguna de las marcadas.
+        </p>
       )}
     </div>
   )

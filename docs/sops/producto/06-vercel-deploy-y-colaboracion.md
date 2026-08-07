@@ -98,6 +98,40 @@ Vercel mantiene 34+ env vars cifradas en producción. La fuente de verdad es sie
 
 **Si uno commitea código que requiere una env var nueva pero olvida ponerla en Vercel, el deploy puede fallar o el endpoint romperá en producción.** Cuidado.
 
+### Una env var que solo está en Production hace fallar TODAS las vistas previas
+
+**Detectado el 2026-08-06.** Cada push de `dev` crea un despliegue de vista previa que
+termina en **Error**, mientras el de producción sale bien **con el mismo commit**. Llevaba
+así desde el 28 de julio (`VERCEL_SUPPORT_LARGE_FUNCTIONS` se creó "9d ago", solo en
+Production).
+
+**El error, al final del log, ya pasada la compilación:**
+
+```
+The Vercel Function "api/content-intel/corpus-chats/[id]/filters" is 257.23mb uncompressed
+which exceeds the maximum uncompressed size limit of 250mb.
+... set VERCEL_SUPPORT_LARGE_FUNCTIONS=1 in your environment variables and redeploy.
+```
+
+**Por qué engaña:** el build **compila bien** (`✓ Compiled successfully`) y falla después, al
+subir los archivos. Quien mire el log por encima ve la compilación correcta y da el
+despliegue por bueno. Además, como producción sí tiene la variable, **la web nunca se
+rompe**: el fallo es invisible salvo que se mire la lista de despliegues.
+
+**Arreglo (1 minuto, en el dashboard de Vercel del team de Adrián):** Settings →
+Environment Variables → `VERCEL_SUPPORT_LARGE_FUNCTIONS` → marcar también **Preview** (y
+Development). Comprobar con:
+
+```
+npx vercel env ls --scope adrianvillanuevarios-cmds-projects | grep LARGE_FUNCTIONS
+```
+
+Tiene que decir `Production, Preview`, no solo `Production`.
+
+**Regla que deja:** una env var que hace falta para **construir** (no solo para ejecutar) se
+pone en **los tres entornos**. Si solo está en Production, las vistas previas dejan de servir
+para lo único que sirven: ver el cambio antes de publicarlo.
+
 ## Si necesitas usar Vercel CLI desde tu máquina
 
 El repo local de Marco está linkeado al proyecto en el team de Adrian. Si Vercel CLI dice "Project not linked" o similar (por ejemplo si clonas el repo en otra máquina), correr:

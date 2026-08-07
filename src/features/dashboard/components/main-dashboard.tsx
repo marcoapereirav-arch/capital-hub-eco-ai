@@ -2,14 +2,26 @@
 
 import type React from "react"
 import { useEffect, useMemo, useState } from "react"
-import { Trash2, Loader2, ShoppingBag, ArrowUpRight } from "lucide-react"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { createBrowserClient } from "@supabase/ssr"
 import { cn } from "@/lib/utils"
+import { LoadingScreen } from "@/components/ui/loading-screen"
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
 import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
 import { DashboardFunnel } from "./dashboard-funnel"
-import { DashboardRevenueChart } from "./dashboard-revenue-chart"
+import { DashboardChain } from "./dashboard-chain"
+import { DashboardPulse } from "./dashboard-pulse"
+import { DashboardPendingSales, type VentaPorCompletar } from "./dashboard-pending-sales"
+import { DashboardActivity } from "./dashboard-activity"
+import {
+  construirCadena,
+  construirPulso,
+  diaMes,
+  eur,
+  plural,
+  previousRange,
+  ymd,
+} from "../lib/dashboard-lecturas"
 
 // =============================================================================
 // Tipos (datos REALES de Capital Hub)
@@ -25,15 +37,6 @@ type ContactRow = {
   created_at: string
   last_call_at: string | null
   products: string[] | null
-}
-
-type PendingSaleRow = {
-  id: string
-  full_name: string | null
-  email: string
-  phone: string | null
-  products: string[] | null
-  sale_pending_since: string | null
 }
 
 type StudentInviteRow = {
@@ -52,52 +55,23 @@ type CalendarBookingRow = {
 }
 
 // =============================================================================
-// Helpers
-// =============================================================================
-
-function eur(n: number): string {
-  return new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-  }).format(n || 0)
-}
-
-function ymd(d: Date): string {
-  return d.toISOString().slice(0, 10)
-}
-
-/** Calcula el rango ANTERIOR de la misma longitud (para comparar deltas). */
-function previousRange(from: Date, to: Date): { from: Date; to: Date } {
-  const lengthMs = to.getTime() - from.getTime()
-  const prevTo = new Date(from.getTime())
-  const prevFrom = new Date(from.getTime() - lengthMs)
-  return { from: prevFrom, to: prevTo }
-}
-
-function timeAgo(iso: string | null): string {
-  if (!iso) return ""
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return "ahora"
-  if (m < 60) return `${m} min`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h} h`
-  const d = Math.floor(h / 24)
-  return `${d} d`
-}
-
-function fechaCorta(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })
-}
-
-// =============================================================================
-// Hook de count-up (animacion — no toca datos)
+// Hook de count-up (animacion, no toca datos)
+//
+// Respeta prefers-reduced-motion: antes contaba igual aunque el sistema pidiera
+// menos movimiento, y el brandkit dice que TODO degrada con esa preferencia.
 // =============================================================================
 
 function useCountUp(target: number, duration = 1400, delay = 0) {
   const [val, setVal] = useState(0)
   useEffect(() => {
+    const quieto =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    if (quieto) {
+      setVal(target)
+      return
+    }
     let raf = 0
     let start: number | null = null
     const t0 = setTimeout(() => {
@@ -118,7 +92,7 @@ function useCountUp(target: number, duration = 1400, delay = 0) {
 }
 
 // =============================================================================
-// Card base — superficie del tema, esquina de panel (6px)
+// Card base: superficie del tema, esquina de panel (6px)
 // =============================================================================
 
 function Card({
@@ -161,108 +135,17 @@ function Card({
   )
 }
 
-// =============================================================================
-// KPI Card (count-up + delta REAL)
-// =============================================================================
-
-function KpiCard({
-  label,
-  value,
-  fmt,
-  delta,
-  i,
-}: {
-  label: string
-  value: number
-  fmt: (n: number) => string
-  delta?: { text: string; up: boolean } | null
-  i: number
-}) {
-  const v = useCountUp(value, 1400, 300 + i * 45)
+/** Carga de un bloque, con el alto ya reservado para que la tarjeta no salte. */
+function CargandoBloque({ alto }: { alto: string }) {
   return (
-    <Card delay={80 + i * 35} className="p-4 md:p-5">
-      <span className="block text-sm text-muted-foreground">{label}</span>
-      <div className="mt-2 text-2xl font-bold leading-none tabular-nums text-foreground">
-        {fmt(v)}
-      </div>
-      {delta && (
-        <div
-          className={cn(
-            "mt-2.5 inline-flex items-center gap-1 text-sm font-semibold",
-            delta.up ? "text-primary" : "text-muted-foreground",
-          )}
-        >
-          <span aria-hidden>{delta.up ? "▲" : "▾"}</span> {delta.text}
-        </div>
-      )}
-    </Card>
-  )
-}
-
-// =============================================================================
-// Actividad reciente REAL — contactos ordenados por created_at.
-// =============================================================================
-
-function RecentFeed({
-  items,
-  stageLabel,
-}: {
-  items: ContactRow[]
-  stageLabel: (stage: string) => string
-}) {
-  if (items.length === 0) {
-    return (
-      <div className="flex min-h-[160px] flex-col items-center justify-center px-6 py-8 text-center">
-        <p className="text-[15px] text-muted-foreground">Sin contactos en este periodo.</p>
-      </div>
-    )
-  }
-  return (
-    <ul className="space-y-3 px-4 pt-4 pb-4 md:px-5">
-      {items.slice(0, 7).map((c) => (
-        <li key={c.id} className="flex items-center gap-3">
-          <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[15px] text-foreground">{c.full_name ?? "Contacto"}</div>
-            <div className="truncate text-sm text-muted-foreground">
-              {stageLabel(c.stage)}
-              {c.origin ? ` · ${c.origin}` : ""}
-            </div>
-          </div>
-          <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-            {timeAgo(c.created_at)}
-          </span>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-// =============================================================================
-// Fila de resumen (label + valor) del hero
-// =============================================================================
-
-function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="flex min-w-0 items-center gap-2 text-[15px] text-muted-foreground">
-        {accent && <span className="size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />}
-        <span className="min-w-0 truncate">{label}</span>
-      </span>
-      <span
-        className={cn(
-          "shrink-0 text-[15px] font-semibold tabular-nums",
-          accent ? "text-primary" : "text-foreground",
-        )}
-      >
-        {value}
-      </span>
+    <div className={cn("relative w-full", alto)}>
+      <LoadingScreen fullscreen={false} className="absolute inset-0 bg-transparent" />
     </div>
   )
 }
 
 // =============================================================================
-// Componente principal — DATOS reales de Capital Hub
+// Componente principal: DATOS reales de Capital Hub
 // =============================================================================
 
 export function MainDashboard() {
@@ -274,16 +157,13 @@ export function MainDashboard() {
   const [previousInvites, setPreviousInvites] = useState<StudentInviteRow[]>([])
   const [bookings, setBookings] = useState<CalendarBookingRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [deletingInvite, setDeletingInvite] = useState<string | null>(null)
-  const [revenueTimeSeries, setRevenueTimeSeries] = useState<{ date: string; revenue: number }[]>([])
-  const [pendingSales, setPendingSales] = useState<PendingSaleRow[]>([])
+  /* La serie de 30 dias se sigue cargando exactamente igual (la carga de datos no
+     se toca), pero el pulso mide el PERIODO elegido en el filtro, asi que sus
+     columnas se sacan de `contacts`, que ya viene recortado a ese periodo. */
+  const [, setRevenueTimeSeries] = useState<{ date: string; revenue: number }[]>([])
+  const [pendingSales, setPendingSales] = useState<VentaPorCompletar[]>([])
   const [salePrefill, setSalePrefill] =
     useState<React.ComponentProps<typeof RegistrarVentaModal>["prefill"]>(undefined)
-
-  const dateStr = useMemo(
-    () => new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }),
-    [],
-  )
 
   // Pipeline activo: el embudo se adapta a sus stages dinamicamente.
   const { pipelines } = usePipelines()
@@ -310,7 +190,6 @@ export function MainDashboard() {
      una decision de diseno: se respeta tal cual y solo se usa como punto de
      identificacion dentro del embudo. */
   const colorOf = (stage: string) => STAGE_HEX[stage] ?? "currentColor"
-  const stageLabel = (stage: string) => STAGE_LABELS[stage] ?? stage
 
   const FUNNEL_ORDER = useMemo(
     () =>
@@ -403,7 +282,7 @@ export function MainDashboard() {
       setInvites((invitesRes.data ?? []) as StudentInviteRow[])
       setPreviousInvites((prevInvitesRes.data ?? []) as unknown as StudentInviteRow[])
       setBookings((bookingsRes.data ?? []) as CalendarBookingRow[])
-      setPendingSales((pendingSalesRes.data ?? []) as PendingSaleRow[])
+      setPendingSales((pendingSalesRes.data ?? []) as VentaPorCompletar[])
 
       const seriesMap = new Map<string, number>()
       for (let d = new Date(series30dStart); d <= range.to; d.setDate(d.getDate() + 1)) {
@@ -432,38 +311,31 @@ export function MainDashboard() {
     const revenue = contacts.reduce((s, c) => s + (c.total_revenue ?? 0), 0)
     const prevRevenue = previousContacts.reduce((s, c) => s + (c.total_revenue ?? 0), 0)
     const revenueDelta = revenue - prevRevenue
-    const revenuePct = prevRevenue > 0 ? Math.round((revenueDelta / prevRevenue) * 100) : null
 
     const cashCollected = contacts.reduce((s, c) => s + (c.total_cash_collected ?? 0), 0)
-    const prevCash = previousContacts.reduce((s, c) => s + (c.total_cash_collected ?? 0), 0)
-    const cashDelta = cashCollected - prevCash
-    const cashPct = prevCash > 0 ? Math.round((cashDelta / prevCash) * 100) : null
 
     const ventas = invites.length
     const prevVentas = previousInvites.length
-    const ventasDelta = ventas - prevVentas
 
     const llamadasCompletadas = bookings.filter((b) => b.status === "completed").length
-    const conversion = llamadasCompletadas > 0 ? Math.round((ventas / llamadasCompletadas) * 100) : 0
 
     const contactosNuevos = contacts.length
+    const prevContactos = previousContacts.length
     const llamadas = bookings.length
     const noShows = bookings.filter((b) => b.status === "no_show").length
-    const showRate = llamadas > 0 ? Math.round(((llamadas - noShows) / llamadas) * 100) : 0
+    const showRate = llamadas > 0 ? Math.round((llamadasCompletadas / llamadas) * 100) : 0
 
     const ticketMedio = ventas > 0 ? Math.round(revenue / ventas) : 0
 
     return {
       revenue,
+      prevRevenue,
       revenueDelta,
-      revenuePct,
       cashCollected,
-      cashDelta,
-      cashPct,
       ventas,
-      ventasDelta,
-      conversion,
+      prevVentas,
       contactosNuevos,
+      prevContactos,
       llamadas,
       llamadasCompletadas,
       noShows,
@@ -471,6 +343,82 @@ export function MainDashboard() {
       ticketMedio,
     }
   }, [contacts, previousContacts, invites, previousInvites, bookings])
+
+  const facturadoAnimado = useCountUp(loading ? 0 : kpis.revenue, 1200, 200)
+
+  // ---------------------------------------------------------------------------
+  // LA CADENA: contactos -> llamadas -> ventas, con el dinero colgando arriba.
+  // Todo sale de datos que ya se cargan hoy.
+  // ---------------------------------------------------------------------------
+  const cadena = useMemo(
+    () =>
+      construirCadena({
+        contactos: kpis.contactosNuevos,
+        contactosAnterior: kpis.prevContactos,
+        llamadas: kpis.llamadas,
+        llamadasHechas: kpis.llamadasCompletadas,
+        noShows: kpis.noShows,
+        showRate: kpis.showRate,
+        ventas: kpis.ventas,
+        ventasAnterior: kpis.prevVentas,
+        facturado: kpis.revenue,
+        ticketMedio: kpis.ticketMedio,
+        ultimoContacto: contacts[0]?.created_at ?? null,
+        hayVentasPendientes: pendingSales.length > 0,
+      }),
+    [kpis, contacts, pendingSales.length],
+  )
+
+  const comparacionDinero = useMemo(() => {
+    if (loading || kpis.prevRevenue <= 0) return null
+    const sube = kpis.revenueDelta >= 0
+    return {
+      sube,
+      texto: `${sube ? "+" : "-"}${eur(Math.abs(kpis.revenueDelta))} vs periodo anterior`,
+    }
+  }, [loading, kpis.prevRevenue, kpis.revenueDelta])
+
+  const cobro = useMemo(() => {
+    if (loading || kpis.revenue <= 0) return null
+    const pct = Math.max(0, Math.min(100, Math.round((kpis.cashCollected / kpis.revenue) * 100)))
+    return {
+      pct,
+      cobrado: eur(kpis.cashCollected),
+      porCobrar: eur(Math.max(0, kpis.revenue - kpis.cashCollected)),
+    }
+  }, [loading, kpis.revenue, kpis.cashCollected])
+
+  const pieInvitaciones = useMemo(() => {
+    const activadas = invites.filter((i) => i.accepted_at).length
+    return {
+      href: "/invitaciones",
+      texto:
+        invites.length === 0
+          ? "Sin invitaciones a la App en este periodo"
+          : `${invites.length} ${plural(invites.length, "invitación enviada", "invitaciones enviadas")}, ${activadas} ${plural(activadas, "activada", "activadas")}`,
+    }
+  }, [invites])
+
+  const leyenda = useMemo(() => {
+    if (!range) return null
+    const prev = previousRange(range.from, range.to)
+    return `Comparado con ${diaMes(prev.from)} al ${diaMes(prev.to)}. La marca fina de cada barra es donde llegó entonces.`
+  }, [range])
+
+  // ---------------------------------------------------------------------------
+  // EL PULSO: tramos del PERIODO elegido, midiendo PERSONAS.
+  //
+  // Mide personas y no dinero a proposito: es lo unico que se mueve cuando la
+  // facturacion esta a cero, que es como se abre el panel hoy. El dinero se
+  // marca encima de la columna en la que entro.
+  // ---------------------------------------------------------------------------
+  const pulso = useMemo(
+    () =>
+      range
+        ? construirPulso(range.from, range.to, contacts)
+        : { tramos: [], unidad: "Día", desde: "", hasta: "" },
+    [range, contacts],
+  )
 
   // ---------------------------------------------------------------------------
   // Embudo REAL (acumulado total, pipeline activo)
@@ -494,344 +442,143 @@ export function MainDashboard() {
     return { main, branches }
   }, [allContacts, FUNNEL_ORDER, FUNNEL_BRANCHES, STAGE_LABELS])
 
-  async function handleDeleteInvite(id: string) {
-    if (!confirm("¿Borrar esta invitación? No se puede deshacer.")) return
-    setDeletingInvite(id)
-    try {
-      const res = await fetch(`/api/admin/invites/${id}`, { method: "DELETE" })
-      if (res.ok) {
-        setInvites((prev) => prev.filter((i) => i.id !== id))
-      } else {
-        alert("Error al borrar. Solo super_admin puede borrar invitaciones.")
-      }
-    } finally {
-      setDeletingInvite(null)
-    }
-  }
-
-  // 8 KPIs REALES para el grid (delta solo cuando existe dato del periodo anterior)
-  const kpiCards: {
-    label: string
-    value: number
-    fmt: (n: number) => string
-    delta?: { text: string; up: boolean } | null
-  }[] = [
-    {
-      label: "Revenue",
-      value: kpis.revenue,
-      fmt: (n) => eur(n),
-      delta: kpis.revenuePct !== null ? { text: `${kpis.revenuePct > 0 ? "+" : ""}${kpis.revenuePct}%`, up: kpis.revenuePct >= 0 } : null,
-    },
-    {
-      label: "Cash collected",
-      value: kpis.cashCollected,
-      fmt: (n) => eur(n),
-      delta: kpis.cashPct !== null ? { text: `${kpis.cashPct > 0 ? "+" : ""}${kpis.cashPct}%`, up: kpis.cashPct >= 0 } : null,
-    },
-    {
-      label: "Ventas",
-      value: kpis.ventas,
-      fmt: (n) => String(Math.round(n)),
-      delta: kpis.ventasDelta !== 0 ? { text: `${kpis.ventasDelta > 0 ? "+" : ""}${kpis.ventasDelta}`, up: kpis.ventasDelta >= 0 } : null,
-    },
-    { label: "Conversión llamada → venta", value: kpis.conversion, fmt: (n) => `${Math.round(n)}%` },
-    { label: "Contactos nuevos", value: kpis.contactosNuevos, fmt: (n) => String(Math.round(n)) },
-    { label: "Llamadas hechas", value: kpis.llamadasCompletadas, fmt: (n) => String(Math.round(n)) },
-    { label: "Show rate", value: kpis.showRate, fmt: (n) => `${Math.round(n)}%` },
-    { label: "Ticket medio", value: kpis.ticketMedio, fmt: (n) => (kpis.ventas > 0 ? eur(n) : "—") },
-  ]
-
-  const noRevenue = revenueTimeSeries.every((p) => p.revenue === 0)
-
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
   return (
     <div className="relative">
       {/* Solo las animaciones. El color y la fuente los pone el tema: cuando
-          estaban escritos aqui dentro, cambiar la marca no repintaba nada. */}
+          estaban escritos aqui dentro, cambiar la marca no repintaba nada.
+          Se anima transform y opacity, nunca width ni height. */}
       <style>{`
         @keyframes hud-in{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
         .hud-in{opacity:0;animation:hud-in .6s cubic-bezier(.16,1,.3,1) forwards}
         @keyframes funnel-in{from{transform:scaleX(.3);transform-origin:left}to{transform:scaleX(1);transform-origin:left}}
         .funnel-in{animation:funnel-in .8s cubic-bezier(.16,1,.3,1) both;transform-origin:left}
-        @media (prefers-reduced-motion:reduce){.hud-in{animation:none;opacity:1}.funnel-in{animation:none}}
+        @keyframes cadena-in{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+        .cadena-in{animation:cadena-in .6s cubic-bezier(.16,1,.3,1) both;transform-origin:left}
+        @keyframes pulso-in{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+        .pulso-in{animation:pulso-in .5s cubic-bezier(.16,1,.3,1) both;transform-origin:bottom}
+        @media (prefers-reduced-motion:reduce){
+          .hud-in{animation:none;opacity:1}
+          .funnel-in{animation:none}
+          .cadena-in{animation:none}
+          .pulso-in{animation:none}
+        }
       `}</style>
 
       <div className="mx-auto max-w-6xl">
-        {/* CABECERA */}
-        <header className="hud-in flex flex-wrap items-end justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-sm font-semibold text-muted-foreground">Panel</div>
-            <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
-              Centro de mando <span className="text-muted-foreground">· Capital Hub</span>
-            </h1>
-          </div>
-          <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
-            <span className="hidden text-sm capitalize text-muted-foreground md:block">
-              {dateStr}
-            </span>
-            <PeriodFilter onChange={setRange} defaultPreset="30d" />
-          </div>
-        </header>
-
-        {/* mini-lecturas REALES */}
-        <div className="hud-in mt-6 grid grid-cols-2 gap-3 md:grid-cols-4" style={{ animationDelay: "40ms" }}>
-          {[
-            { l: "Ingresos", v: loading ? "…" : eur(kpis.revenue) },
-            { l: "Ventas", v: loading ? "…" : String(kpis.ventas) },
-            { l: "Conversión", v: loading ? "…" : `${kpis.conversion}%` },
-            { l: "Contactos nuevos", v: loading ? "…" : String(kpis.contactosNuevos) },
-          ].map((r) => (
-            <div
-              key={r.l}
-              className="flex flex-col gap-1 rounded-lg border border-border bg-card px-3 py-3 md:flex-row md:items-center md:justify-between md:px-4"
-            >
-              <span className="min-w-0 truncate text-sm text-muted-foreground">{r.l}</span>
-              <span className="text-[15px] font-bold tabular-nums text-foreground">{r.v}</span>
-            </div>
-          ))}
+        {/* El nombre de la seccion ya lo escribe la barra de arriba del OS, en
+            telefono y en ordenador. Aqui solo queda el control del periodo y la
+            leyenda que explica, una sola vez, que significa lo gris y lo fino
+            del resto de la pagina. */}
+        <div className="hud-in flex flex-wrap items-center gap-3">
+          <PeriodFilter onChange={setRange} defaultPreset="30d" />
         </div>
+        {leyenda && (
+          <p className="hud-in mt-2 text-sm text-muted-foreground" style={{ animationDelay: "40ms" }}>
+            {leyenda}
+          </p>
+        )}
 
-        {/* HERO — facturacion + resumen operativo */}
-        <Card delay={100} className="mt-4">
-          <div className="grid gap-6 p-4 md:grid-cols-[minmax(0,1fr)_1px_minmax(0,0.9fr)] md:gap-8 md:p-6">
-            <div className="min-w-0">
-              <span className="block text-sm font-semibold text-muted-foreground">
-                Facturación del periodo
-              </span>
-              <div className="mt-3 text-4xl font-bold leading-none tabular-nums text-foreground md:text-5xl">
-                {loading ? "…" : eur(kpis.revenue)}
-              </div>
-              {kpis.revenuePct !== null && !loading && (
-                <div
-                  className={cn(
-                    "mt-3 inline-flex flex-wrap items-center gap-1 text-sm font-semibold",
-                    kpis.revenuePct >= 0 ? "text-primary" : "text-muted-foreground",
-                  )}
-                >
-                  <span aria-hidden>{kpis.revenuePct >= 0 ? "▲" : "▾"}</span>
-                  {kpis.revenuePct > 0 ? "+" : ""}
-                  {kpis.revenuePct}% vs periodo anterior
-                </div>
-              )}
-              <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3">
-                {[
-                  { l: "Cash collected", v: loading ? "…" : eur(kpis.cashCollected) },
-                  { l: "Ventas", v: loading ? "…" : String(kpis.ventas) },
-                  { l: "Ticket medio", v: loading || kpis.ventas === 0 ? "—" : eur(kpis.ticketMedio) },
-                ].map((s) => (
-                  <div key={s.l} className="min-w-0">
-                    <div className="text-lg font-semibold tabular-nums text-foreground">{s.v}</div>
-                    <div className="mt-0.5 truncate text-sm text-muted-foreground">{s.l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="hidden bg-border md:block" />
-
-            <div className="min-w-0">
-              <span className="block text-sm font-semibold text-muted-foreground">
-                Resumen del periodo
-              </span>
-              <div className="mt-4 space-y-3.5">
-                <Stat label="Llamadas hechas" value={loading ? "…" : `${kpis.llamadasCompletadas} / ${kpis.llamadas}`} />
-                <Stat label="Show rate" value={loading ? "…" : `${kpis.showRate}%`} />
-                <Stat label="No-shows" value={loading ? "…" : String(kpis.noShows)} />
-                <Stat label="Conversión llamada → venta" value={loading ? "…" : `${kpis.conversion}%`} accent />
-              </div>
-            </div>
-          </div>
+        {/* BLOQUE 1: LA CADENA */}
+        <Card delay={80} className="mt-4">
+          {loading ? (
+            <CargandoBloque alto="h-[420px]" />
+          ) : (
+            <DashboardChain
+              facturado={eur(Math.round(facturadoAnimado))}
+              comparacion={comparacionDinero}
+              cobro={cobro}
+              eslabones={cadena.eslabones}
+              conectores={cadena.conectores}
+              lecturaPorDefecto={cadena.lecturaPorDefecto}
+              enlacePorDefecto={cadena.enlacePorDefecto}
+              botonPrincipal={cadena.botonPrincipal}
+              pie={pieInvitaciones}
+            />
+          )}
         </Card>
 
-        {/* embudo + actividad */}
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <Card
-            delay={120}
-            title="Embudo de conversión"
-            right={
-              pipelines.length > 1 ? (
-                <select
-                  value={activePipelineId ?? ""}
-                  onChange={(e) => setActivePipelineId(e.target.value)}
-                  className="h-11 max-w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8 md:px-2.5 md:text-sm"
-                  aria-label="Cambiar de embudo"
-                >
-                  {pipelines.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              ) : undefined
-            }
-          >
-            <p className="px-4 pt-2 text-sm text-muted-foreground md:px-5">
-              {activePipeline?.name ?? "Pipeline"} {"·"} acumulado total
-            </p>
-            {loading ? (
-              <div className="flex h-40 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <DashboardFunnel main={funnelData.main} branches={funnelData.branches} colorOf={colorOf} />
-            )}
-          </Card>
-
-          <Card delay={160} title="Actividad reciente">
-            {loading ? (
-              <div className="flex h-40 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <RecentFeed items={contacts} stageLabel={stageLabel} />
-            )}
-          </Card>
-        </div>
-
-        {/* KPIs REALES (8) */}
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          {kpiCards.map((k, i) => (
-            <KpiCard key={k.label} label={k.label} value={loading ? 0 : k.value} fmt={k.fmt} delta={loading ? null : k.delta} i={i} />
-          ))}
-        </div>
-
-        {/* facturacion 30 dias */}
-        <Card delay={140} title="Ingresos · últimos 30 días" className="mt-4 pb-5">
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-4 text-sm md:px-5">
-            <span className="flex items-center gap-1.5 font-semibold text-primary">
-              <span className="h-1.5 w-4 rounded-full bg-primary" />
-              Ingresos
-            </span>
-            <span className="text-muted-foreground md:ml-auto">
-              pasa el cursor para ver el detalle
-            </span>
-          </div>
-          <div className="mt-2 px-4 md:px-5">
-            {loading ? (
-              <div className="flex h-52 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : noRevenue ? (
-              <div className="flex h-52 items-center justify-center text-[15px] text-muted-foreground">
-                Sin revenue en este periodo
-              </div>
-            ) : (
-              <DashboardRevenueChart data={revenueTimeSeries} formatoEuro={eur} />
-            )}
-          </div>
-        </Card>
-
-        {/* VENTAS POR COMPLETAR (real, interactivo) */}
+        {/* BLOQUE 2: VENTAS POR COMPLETAR (solo si hay algo que cerrar) */}
         {pendingSales.length > 0 && (
-          <Card delay={160} title="Ventas por completar" count={pendingSales.length} className="mt-4">
-            <ul className="mt-3 divide-y divide-border pb-2">
-              {pendingSales.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex flex-col gap-2 px-4 py-3 md:flex-row md:items-center md:gap-3 md:px-5"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[15px] text-foreground">{p.full_name ?? p.email}</div>
-                    <div className="truncate text-sm text-muted-foreground">{p.email}</div>
-                  </div>
-                  <div className="hidden text-sm tabular-nums text-muted-foreground md:block">
-                    {p.sale_pending_since ? fechaCorta(p.sale_pending_since) : ""}
-                  </div>
-                  <button
-                    onClick={() =>
-                      setSalePrefill({
-                        contact_id: p.id,
-                        full_name: p.full_name ?? "",
-                        email: p.email,
-                        phone: p.phone ?? "",
-                        products: p.products ?? [],
-                        close_type: "direct",
-                      })
-                    }
-                    className="inline-flex h-11 w-full shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[15px] font-semibold text-primary-foreground active:opacity-90 md:h-8 md:w-auto md:text-sm"
-                  >
-                    <ShoppingBag className="size-4" /> Registrar venta
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <Card delay={120} title="Ventas por completar" count={pendingSales.length} className="mt-4">
+            <DashboardPendingSales
+              ventas={pendingSales}
+              onRegistrar={(p) =>
+                setSalePrefill({
+                  contact_id: p.id,
+                  full_name: p.full_name ?? "",
+                  email: p.email,
+                  phone: p.phone ?? "",
+                  products: p.products ?? [],
+                  close_type: "direct",
+                })
+              }
+            />
           </Card>
         )}
 
-        {/* INVITACIONES APP (real, interactivo) */}
-        <Card delay={200} className="mt-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4 md:px-5 md:pt-5">
-            <span className="min-w-0 flex-1 text-sm font-semibold text-muted-foreground">
-              Invitaciones App <span className="tabular-nums">· {invites.length}</span>
-            </span>
-            <a
-              href="/crm/contactos?stage=alumno"
-              className="inline-flex h-11 shrink-0 items-center gap-1 text-sm text-foreground md:h-8"
-            >
-              Ver todas <ArrowUpRight className="size-4" />
-            </a>
-          </div>
-          <div className="mt-3 pb-2">
-            {loading ? (
-              <div className="px-4 py-4 text-[15px] text-muted-foreground md:px-5">Cargando…</div>
-            ) : invites.length === 0 ? (
-              <div className="px-4 py-4 text-[15px] text-muted-foreground md:px-5">
-                Sin invitaciones en este periodo.
-              </div>
-            ) : (
-              <ul className="divide-y divide-border">
-                {invites.slice(0, 12).map((inv) => (
-                  <li
-                    key={inv.id}
-                    className="flex items-start gap-3 px-4 py-3 md:items-center md:px-5"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[15px] text-foreground">{inv.full_name}</div>
-                      <div className="truncate text-sm text-muted-foreground">{inv.email}</div>
-                      {/* En el telefono no hay sitio para columnas: producto y
-                          fecha bajan debajo del nombre en vez de desaparecer
-                          por el borde derecho. */}
-                      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground md:hidden">
-                        <span className="min-w-0 truncate">{inv.products.join(", ")}</span>
-                        <span className="tabular-nums">{fechaCorta(inv.created_at)}</span>
-                      </div>
-                    </div>
-                    <div className="hidden min-w-0 max-w-[12rem] truncate text-sm text-muted-foreground md:block">
-                      {inv.products.join(", ")}
-                    </div>
-                    <div className="hidden text-sm tabular-nums text-muted-foreground md:block">
-                      {fechaCorta(inv.created_at)}
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-lg border px-2 py-0.5 text-sm",
-                        inv.accepted_at
-                          ? "border-primary/40 text-primary"
-                          : "border-border text-muted-foreground",
-                      )}
-                    >
-                      {inv.accepted_at ? "Activado" : "Pendiente"}
-                    </span>
-                    <button
-                      onClick={() => handleDeleteInvite(inv.id)}
-                      disabled={deletingInvite === inv.id}
-                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-muted disabled:opacity-50 md:size-8"
-                      title="Eliminar invitación (solo super_admin)"
-                    >
-                      {deletingInvite === inv.id ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="size-4" />
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+        {/* BLOQUE 3: EL PULSO */}
+        <Card
+          delay={160}
+          title={`Qué pasó cada ${pulso.unidad.toLowerCase()}`}
+          className="mt-4"
+        >
+          {loading ? (
+            <CargandoBloque alto="h-[280px]" />
+          ) : (
+            <DashboardPulse
+              tramos={pulso.tramos}
+              unidad={pulso.unidad}
+              desde={pulso.desde}
+              hasta={pulso.hasta}
+              formatoEuro={eur}
+            />
+          )}
         </Card>
+
+        {/* BLOQUE 4: DONDE ESTA LA GENTE AHORA (acumulado, no del periodo) */}
+        <Card
+          delay={200}
+          title="Embudo de conversión"
+          className="mt-4"
+          right={
+            pipelines.length > 1 ? (
+              <select
+                value={activePipelineId ?? ""}
+                onChange={(e) => setActivePipelineId(e.target.value)}
+                className="h-11 max-w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8 md:px-2.5 md:text-sm"
+                aria-label="Cambiar de embudo"
+              >
+                {pipelines.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            ) : undefined
+          }
+        >
+          <p className="px-4 pt-2 text-sm text-muted-foreground md:px-5">
+            {activePipeline?.name ?? "Pipeline"} {"·"} acumulado total
+          </p>
+          {loading ? (
+            <CargandoBloque alto="h-[240px]" />
+          ) : (
+            <DashboardFunnel main={funnelData.main} branches={funnelData.branches} colorOf={colorOf} />
+          )}
+        </Card>
+
+        {/* Lo que va pasando dentro del sistema. Marco lo quiere de vuelta con la
+            hora exacta y por donde entro cada lead (2026-08-07). */}
+        <div className="mt-4">
+          <DashboardActivity
+            contactos={contacts}
+            etiquetaDeStage={(stage) => STAGE_LABELS[stage] ?? stage}
+            cargando={loading}
+          />
+        </div>
 
         <div className="h-8" />
       </div>

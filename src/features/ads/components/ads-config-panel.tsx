@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Eye, EyeOff, Send, Check, AlertTriangle, Loader2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { triggerManualEvent, KNOWN_EVENTS, EVENT_LABELS } from "../services/ads-events-service"
+import { MarketingTokenCard } from "./marketing-token-card"
 
 interface Props {
   pixelIdMasked: string | null
@@ -52,6 +53,10 @@ export function AdsConfigPanel({ pixelIdMasked, capiTokenMasked, adAccountId, ha
 
   return (
     <div className="space-y-5">
+      {/* Lo primero: dónde se pega la llave que lee las campañas. Es lo único de esta
+          pantalla que el equipo necesita tocar de verdad. */}
+      <MarketingTokenCard />
+
       {/* Status global. Verde = todo bien; ambar de aviso = falta algo. */}
       <div
         className={cn(

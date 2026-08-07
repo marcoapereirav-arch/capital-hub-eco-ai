@@ -25,13 +25,7 @@ export default async function SistemaDetalleRoute({
     // Datos REALES: el mismo cálculo que alimenta la pantalla de Eventos de Ads. Lo que se
     // ve en el board es lo que está pasando, no un dibujo fijo que se queda viejo.
     const { funnels, capiMode } = await getFunnelsStatus()
-    return (
-      <MedicionAdsWorkflow
-        funnels={funnels}
-        capiMode={capiMode}
-        marketingTokenListo={Boolean(process.env.META_MARKETING_API_TOKEN)}
-      />
-    )
+    return <MedicionAdsWorkflow funnels={funnels} capiMode={capiMode} />
   }
 
   if (slug === "webinar") {

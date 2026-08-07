@@ -1,17 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { Layers, Settings } from "lucide-react"
+import { Settings } from "lucide-react"
 import type { Pipeline } from "../types/pipeline"
 import { PipelinesManagerDrawer } from "./pipelines-manager-drawer"
+import { FIELD } from "@/features/crm/lib/brand"
 import { cn } from "@/lib/utils"
 
 /**
- * Selector del pipeline activo + boton para abrir el gestor de pipelines en una
- * hoja SIN salir del entorno. Reemplaza la pestana 'Pipelines' separada.
+ * Elige que pipeline se ve en el kanban, y abre su configuracion en un panel lateral
+ * SIN salir de la pantalla.
  *
- * En telefono el desplegable ocupa la linea entera y mide 44 puntos: es un
- * <select> nativo, asi que el sistema lo pinta como rueda y se acierta con el dedo.
+ * En telefono el desplegable ocupa la linea entera y el boton se queda en cuadrado:
+ * es un <select> nativo, asi que el sistema lo pinta como rueda y se acierta con el
+ * dedo. Los 44 puntos de alto (zona tactil minima) ya vienen de FIELD, igual que en
+ * el resto de campos del CRM.
  */
 export function PipelineSelector({
   pipelines,
@@ -30,28 +33,27 @@ export function PipelineSelector({
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div className={cn("flex w-full items-center gap-2 md:w-auto", className)}>
-      <Layers className="h-4 w-4 shrink-0 text-muted-foreground" />
+    <div className={cn("flex w-full items-center gap-2 md:inline-flex md:w-auto", className)}>
       {pipelines.length === 0 ? (
-        <span className="text-sm text-muted-foreground">Sin pipelines</span>
+        <span className="text-[14px] text-muted-foreground">Sin pipelines</span>
       ) : (
         <select
           value={activeId ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          aria-label="Pipeline activo"
-          className="h-11 min-w-0 flex-1 rounded-lg border border-border bg-card px-3 text-base text-foreground md:h-8 md:flex-none md:px-2 md:text-sm"
+          aria-label="Pipeline que se está viendo"
+          className={cn(FIELD, "min-w-0 flex-1 cursor-pointer pr-8 md:flex-none")}
         >
           {pipelines.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name}{p.isDefault ? " · default" : ""}
+              {p.name}{p.isDefault ? " (por defecto)" : ""}
             </option>
           ))}
         </select>
       )}
       <button
         onClick={() => setDrawerOpen(true)}
-        className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[15px] text-muted-foreground transition-colors md:h-8 md:px-2 md:text-sm md:hover:text-foreground"
-        title="Configurar pipelines y stages"
+        className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-2 rounded-[4px] border border-border px-3 text-[14px] font-semibold text-muted-foreground transition-colors hover:border-foreground/20 hover:bg-popover hover:text-foreground md:min-w-0 md:justify-start"
+        title="Configurar pipelines y sus columnas"
       >
         <Settings className="h-4 w-4" />
         <span className="hidden md:inline">Configurar</span>

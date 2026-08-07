@@ -57,7 +57,10 @@ interface Props {
 
 export function AdsPage({ pixelIdMasked, capiTokenMasked, adAccountId, hasTestEventCode }: Props) {
   // Se abre en Eventos: lo primero que hay que saber es si esto está midiendo.
-  const [tab, setTab] = useState<AdsTab>("eventos")
+  // Se entra por Campanas, que es la primera pestana y lo que Marco quiere ver
+  // al abrir Ads: si esta ganando o perdiendo dinero. Eventos es el detalle
+  // tecnico y solo hace falta cuando algo falla (Marco, 2026-08-07).
+  const [tab, setTab] = useState<AdsTab>("campanas")
   const active = TABS.find((t) => t.id === tab)!
 
   return (

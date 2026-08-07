@@ -1,13 +1,27 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Pencil, Trash2, Tag as TagIcon, Loader2 } from "lucide-react"
+import { createPortal } from "react-dom"
+import { Plus, Pencil, Trash2, Tag as TagIcon, Loader2, X, Check } from "lucide-react"
 import { tagsService } from "../services/tags-service"
 import { TAG_COLOR_PALETTE, type Tag } from "../types/tag"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { LoadingScreen } from "@/components/ui/loading-screen"
+import { BTN_GHOST, BTN_PRIMARY, CARD, FIELD, FONT, PANEL } from "@/features/crm/lib/brand"
 import { cn } from "@/lib/utils"
 
+/**
+ * Etiquetas del CRM. Diseno del brandkit oficial.
+ *
+ * El COLOR de cada etiqueta lo elige el usuario y es un dato, no decoracion: por eso
+ * sigue saliendo tal cual lo guardo, por `style`. Lo que va en brandkit es todo lo de
+ * alrededor (fondos, bordes, textos, botones), y se pinta con los tokens del tema
+ * (`bg-card`, `border-border`, `text-muted-foreground`...) definidos en
+ * `src/app/globals.css`. Las clases largas reutilizables viven en
+ * `@/features/crm/lib/brand`, que tambien esta escrito con esos tokens.
+ *
+ * Medidas de telefono: todo lo que se toca mide 44 puntos de alto y la letra nunca baja
+ * de 14 puntos. Las variantes `md:` devuelven la densidad de monitor.
+ */
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
@@ -32,60 +46,48 @@ export function TagsPage() {
     : tags
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 md:space-y-6">
-      {/* Cabecera */}
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-            <TagIcon className="h-4 w-4 text-muted-foreground" />
-            Tags · <span className="tabular-nums">{tags.length}</span>
+    <div className="space-y-5">
+      {/* En telefono el titulo y la accion van uno debajo de otro; a partir de md vuelven
+          a la misma linea, con la accion a la derecha. */}
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h1 className="flex items-center gap-2 text-[20px] font-bold tracking-tight text-foreground">
+            <TagIcon className="h-5 w-5 text-primary" />
+            Etiquetas
+            <span className="tabular-nums text-muted-foreground">{tags.length}</span>
           </h1>
-          <p className="mt-1 text-[15px] text-muted-foreground md:text-sm">
+          <p className="mt-1 text-[14px] text-muted-foreground">
             Etiquetas reutilizables para segmentar contactos y disparar automatizaciones.
           </p>
         </div>
-      </div>
-
-      {/* Buscador en su propia linea + accion principal, como manda la barra de
-          herramientas en telefono (maximo dos cosas visibles). */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-center">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar tag por nombre…"
-          inputMode="search"
-          enterKeyHint="search"
-          className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:max-w-md md:text-sm"
-        />
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 md:ml-auto md:h-9 md:w-auto md:text-sm"
-        >
-          <Plus className="h-4 w-4" /> Nuevo tag
+        <button onClick={() => setCreating(true)} className={cn(BTN_PRIMARY, "w-full md:w-auto")}>
+          <Plus className="h-4 w-4" /> Nueva etiqueta
         </button>
       </div>
 
-      {/* Lista */}
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar etiqueta por nombre"
+        aria-label="Buscar etiqueta"
+        inputMode="search"
+        enterKeyHint="search"
+        className={cn(FIELD, "w-full max-w-md")}
+      />
+
       {loading ? (
-        <LoadingScreen fullscreen={false} className="min-h-[200px]" />
+        <LoadingScreen fullscreen={false} className="py-20" />
       ) : filtered.length === 0 ? (
-        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border px-6 py-10 text-center">
-          <TagIcon className="h-8 w-8 text-muted-foreground" />
-          <h3 className="text-[17px] font-semibold text-foreground">
-            {search ? "Ningún tag coincide" : "Todavía no hay tags"}
-          </h3>
-          <p className="max-w-[38ch] text-[15px] text-muted-foreground">
-            {search
-              ? "Prueba con otro nombre o crea uno nuevo."
-              : "Los tags que crees aparecen aquí y se pueden asignar a cualquier contacto."}
+        <div className="flex flex-col items-center gap-4 rounded-[8px] border border-dashed border-border px-6 py-16 text-center">
+          <p className="text-[15px] text-muted-foreground">
+            {search ? "Ninguna etiqueta coincide con esa búsqueda." : "Todavía no hay etiquetas."}
           </p>
-          <button
-            onClick={() => setCreating(true)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> Crear el primero
-          </button>
+          {!search && (
+            <button onClick={() => setCreating(true)} className={BTN_PRIMARY}>
+              <Plus className="h-4 w-4" /> Crear la primera
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -95,7 +97,7 @@ export function TagsPage() {
               tag={tag}
               onEdit={() => setEditing(tag)}
               onDelete={async () => {
-                if (!confirm(`¿Borrar tag "${tag.name}"? Se quitara de todos los contactos que lo tengan.`)) return
+                if (!confirm(`¿Borrar la etiqueta "${tag.name}"? Se quitará de todos los contactos que la tengan.`)) return
                 await tagsService.delete(tag.id)
                 load()
               }}
@@ -104,7 +106,6 @@ export function TagsPage() {
         </div>
       )}
 
-      {/* Crear / editar */}
       {(creating || editing) && (
         <TagEditor
           tag={editing}
@@ -118,36 +119,36 @@ export function TagsPage() {
 
 function TagCard({ tag, onEdit, onDelete }: { tag: Tag; onEdit: () => void; onDelete: () => void }) {
   return (
-    <div className="group rounded-xl border border-border bg-card p-3 transition-colors md:hover:border-foreground/30">
+    <div className={cn(CARD, "p-4 transition-colors hover:border-foreground/20")}>
       <div className="flex items-start justify-between gap-2">
-        {/* El color del tag lo elige el usuario: es un dato, no diseno */}
         <span
-          className="inline-flex min-w-0 items-center gap-1.5 rounded-sm border px-2 py-1 text-[15px] font-medium md:text-sm"
-          style={{ backgroundColor: `${tag.color}22`, color: tag.color, borderColor: `${tag.color}55` }}
+          className="inline-flex min-w-0 items-center gap-1.5 rounded-[3px] px-2 py-1 text-[14px] font-semibold md:text-[13px]"
+          style={{ backgroundColor: `${tag.color}22`, color: tag.color, border: `1px solid ${tag.color}55` }}
         >
           <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tag.color }} />
           <span className="min-w-0 truncate">{tag.name}</span>
         </span>
-        {/* En telefono no hay raton: estas acciones se ven siempre */}
-        <div className="flex shrink-0 gap-0.5 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+        {/* Visibles siempre: un boton que solo aparece al pasar el cursor no existe en movil.
+            44 puntos en telefono, 36 en monitor. */}
+        <div className="flex shrink-0 gap-1">
           <button
             onClick={onEdit}
-            aria-label={`Editar ${tag.name}`}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground md:h-8 md:w-8 md:hover:text-foreground"
+            aria-label={`Editar la etiqueta ${tag.name}`}
+            className="flex h-11 w-11 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-popover hover:text-foreground md:h-9 md:w-9"
           >
             <Pencil className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
-            aria-label={`Borrar ${tag.name}`}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground md:h-8 md:w-8 md:hover:text-destructive"
+            aria-label={`Borrar la etiqueta ${tag.name}`}
+            className="flex h-11 w-11 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-popover hover:text-warn md:h-9 md:w-9"
           >
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>
       {tag.description && (
-        <p className="mt-2 line-clamp-2 text-[15px] text-muted-foreground md:text-sm">{tag.description}</p>
+        <p className="mt-2.5 line-clamp-2 text-[14px] text-muted-foreground">{tag.description}</p>
       )}
     </div>
   )
@@ -162,7 +163,7 @@ function TagEditor({ tag, onClose, onSaved }: { tag: Tag | null; onClose: () => 
 
   async function save() {
     if (!name.trim()) {
-      setError("El nombre es obligatorio")
+      setError("Ponle un nombre a la etiqueta para poder guardarla.")
       return
     }
     setSaving(true)
@@ -175,127 +176,152 @@ function TagEditor({ tag, onClose, onSaved }: { tag: Tag | null; onClose: () => 
       }
       onSaved()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al guardar")
+      setError(e instanceof Error ? e.message : "No se pudo guardar. Inténtalo otra vez.")
     } finally {
       setSaving(false)
     }
   }
 
-  return (
-    <Sheet open onOpenChange={(o) => { if (!o) onClose() }}>
-      <SheetContent
-        side="bottom"
-        className={
-          "max-h-[85dvh] w-full gap-0 overflow-y-auto rounded-t-xl pb-safe-4 " +
-          // El `!` es obligatorio: la base de sheet.tsx pinta el lado inferior con
-          // `data-[side=bottom]:...`, que compila como `.clase[data-side=bottom]` y
-          // pesa mas que `md:left-auto`. Sin el, el cajon del ordenador sale pegado
-          // al borde izquierdo y con la altura de una hoja de telefono.
-          "md:inset-y-0! md:right-0! md:left-auto! md:h-full! md:max-h-none! md:w-[28rem] md:max-w-[28rem] md:rounded-l-xl md:border-l md:pb-4"
-        }
+  // La ventana se pinta en el body con un portal, NUNCA anidada aqui dentro: si
+  // algun padre tiene desenfoque o transform, pasa a ser el marco de referencia de
+  // lo que es `fixed` y la ventana se encoge en una esquina. Es el fallo recurrente
+  // de la SOP 47 (causa raiz 3), que ya paso con la campana de notificaciones.
+  const contenido = (
+    // En telefono el editor es una hoja pegada abajo (se alcanza con el pulgar); a partir
+    // de md vuelve a ser la ventana centrada de siempre.
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 md:items-center md:p-4"
+      onClick={onClose}
+      style={{ fontFamily: FONT }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={tag ? "Editar etiqueta" : "Nueva etiqueta"}
+        className={cn(
+          PANEL,
+          "w-full max-w-none space-y-4 rounded-t-[8px] rounded-b-none p-4 pb-safe-4",
+          "max-h-[88dvh] overflow-y-auto shadow-[0_24px_60px_-20px_rgba(0,0,0,0.8)]",
+          "md:max-h-none md:max-w-md md:rounded-b-[8px] md:p-6 md:pb-6"
+        )}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
-        <SheetHeader className="px-4">
-          <SheetTitle className="text-[17px] font-semibold">{tag ? "Editar tag" : "Nuevo tag"}</SheetTitle>
-        </SheetHeader>
-
-        <div className="space-y-4 px-4 pb-2">
-          {/* Vista previa */}
-          <div className="flex items-center justify-center rounded-lg border border-border bg-background py-3">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-[15px] font-medium"
-              style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}55` }}
-            >
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-              {name || "Vista previa"}
-            </span>
-          </div>
-
-          <label className="flex flex-col gap-1.5">
-            <Etiqueta>Nombre</Etiqueta>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="ej. vip, pago_fallido, alumno_evergreen"
-              enterKeyHint="next"
-              className="h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
-              autoFocus
-            />
-          </label>
-
-          {/* Color: lo elige el usuario, va en style. Cada muestra, 44 puntos. */}
-          <div>
-            <Etiqueta>Color</Etiqueta>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {TAG_COLOR_PALETTE.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  className={cn(
-                    "h-11 w-11 rounded-lg border-2 md:h-8 md:w-8",
-                    color === c.value ? "border-foreground" : "border-transparent"
-                  )}
-                  style={{ backgroundColor: c.value }}
-                  title={c.label}
-                  aria-label={c.label}
-                  aria-pressed={color === c.value}
-                />
-              ))}
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <Etiqueta>Custom hex:</Etiqueta>
-              <input
-                type="text"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                aria-label="Color en hexadecimal"
-                className="h-11 w-28 rounded-lg border border-border bg-card px-3 text-base text-foreground tabular-nums md:h-8 md:text-sm"
-              />
-            </div>
-          </div>
-
-          <label className="flex flex-col gap-1.5">
-            <Etiqueta>Descripción</Etiqueta>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="(opcional) Cuándo se usa este tag…"
-              rows={2}
-              className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
-            />
-          </label>
-
-          {error && <p className="text-[15px] text-destructive">{error}</p>}
-        </div>
-
-        <div className="sticky bottom-0 z-10 flex gap-2 border-t border-border bg-popover px-4 pt-3 pb-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[17px] font-bold tracking-tight text-foreground">
+            {tag ? "Editar etiqueta" : "Nueva etiqueta"}
+          </h2>
           <button
             onClick={onClose}
-            className="h-11 flex-1 rounded-lg border border-border text-[15px] text-foreground md:h-9 md:flex-none md:px-4 md:text-sm"
+            aria-label="Cerrar"
+            className="flex h-11 w-11 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-popover hover:text-foreground md:h-9 md:w-9"
           >
-            Cancelar
-          </button>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-50 md:h-9 md:flex-none md:px-4 md:text-sm"
-          >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {tag ? "Guardar" : "Crear tag"}
+            <X className="h-4 w-4" />
           </button>
         </div>
-      </SheetContent>
-    </Sheet>
+
+        <div className="flex items-center justify-center rounded-[4px] border border-border bg-popover py-4">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-[3px] px-3 py-1.5 text-[14px] font-semibold"
+            style={{ backgroundColor: `${color}22`, color, border: `1px solid ${color}55` }}
+          >
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+            {name || "Vista previa"}
+          </span>
+        </div>
+
+        <label className="block">
+          <Etiqueta>Nombre</Etiqueta>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="vip, pago_fallido, alumno_evergreen"
+            enterKeyHint="next"
+            className={cn(FIELD, "w-full")}
+            autoFocus
+          />
+        </label>
+
+        <div>
+          <Etiqueta>Color</Etiqueta>
+          {/* Cada muestra mide 44 puntos en telefono. */}
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+            {TAG_COLOR_PALETTE.map((c) => (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() => setColor(c.value)}
+                aria-label={c.label}
+                aria-pressed={color === c.value}
+                className={cn(
+                  "flex h-11 items-center justify-center rounded-[4px] border-2 transition-transform md:h-10",
+                  color === c.value
+                    ? "scale-105 border-foreground"
+                    : "border-transparent hover:scale-105"
+                )}
+                style={{ backgroundColor: c.value }}
+              >
+                {color === c.value && <Check className="h-4 w-4 text-white" />}
+              </button>
+            ))}
+          </div>
+          <label className="mt-2.5 flex flex-wrap items-center gap-2">
+            <span className="text-[14px] text-muted-foreground md:text-[13px]">Otro color</span>
+            <input
+              type="text"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              aria-label="Color en hexadecimal"
+              className={cn(FIELD, "w-28 tabular-nums md:h-10")}
+            />
+          </label>
+        </div>
+
+        <label className="block">
+          <Etiqueta>
+            Descripción <span className="font-normal text-muted-foreground">(opcional)</span>
+          </Etiqueta>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Cuándo se usa esta etiqueta"
+            rows={2}
+            className="w-full resize-none rounded-[4px] border border-border bg-popover px-3 py-2.5 text-[14px] text-foreground placeholder:text-muted-foreground transition-colors focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring/45"
+          />
+        </label>
+
+        {error && <p className="text-[14px] text-warn">{error}</p>}
+
+        {/* En telefono los dos botones se reparten el ancho; en monitor vuelven a la
+            derecha, con su tamano natural. */}
+        <div className="flex gap-2 pt-1 md:justify-end">
+          <button onClick={onClose} className={cn(BTN_GHOST, "flex-1 md:flex-none")}>
+            Cancelar
+          </button>
+          <button onClick={save} disabled={saving} className={cn(BTN_PRIMARY, "flex-1 md:flex-none")}>
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {tag ? "Guardar cambios" : "Crear etiqueta"}
+          </button>
+        </div>
+      </div>
+    </div>
   )
+
+  if (typeof document === "undefined") return null
+  return createPortal(contenido, document.body)
 }
 
 /**
- * Etiqueta de un campo. Va en su propio componente a proposito: escrita pegada
- * al <input> el candado la confunde con la letra DEL campo (mira dos lineas
- * arriba y dos abajo) y bloquea el guardado. Aqui la clase no toca ningun campo.
+ * Titulo de un campo. Va en su propio componente a proposito: escrito pegado al `<input>`
+ * el candado lo confunde con la letra DEL campo (mira dos lineas arriba y dos abajo) y
+ * bloquea el guardado. Aqui la clase no toca ningun campo.
+ *
+ * 14 puntos en telefono, 13 en monitor.
  */
 function Etiqueta({ children }: { children: React.ReactNode }) {
-  return <span className="text-sm font-medium text-muted-foreground">{children}</span>
+  return (
+    <span className="mb-1.5 block text-[14px] font-semibold text-muted-foreground md:text-[13px]">
+      {children}
+    </span>
+  )
 }

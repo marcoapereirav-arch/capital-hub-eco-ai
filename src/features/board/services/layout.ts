@@ -177,7 +177,7 @@ export function buildLayout(
         style: {
           // Una dependencia viva pide atencion: ambar de AVISO del tema. Apagada,
           // el borde gris. Antes eran dos naranjas escritos a mano.
-          stroke: bothActive ? "var(--color-warn)" : "var(--border)",
+          stroke: bothActive ? "var(--warn)" : "var(--border)",
           strokeWidth: 2,
           strokeDasharray: "5 5",
         },
@@ -187,7 +187,7 @@ export function buildLayout(
         // antes forzaba la fuente de maquina de escribir. Y 12 en vez de 9,
         // porque a 9 no se lee ni con el board centrado.
         labelStyle: {
-          fill: "var(--color-warn)",
+          fill: "var(--warn)",
           fontSize: 12,
         },
         labelBgStyle: {

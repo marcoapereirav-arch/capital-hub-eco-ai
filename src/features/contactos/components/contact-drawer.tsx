@@ -1,13 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Mail, Phone, Calendar, MessageSquare, Save, Trash2, ShoppingBag, RotateCcw } from "lucide-react"
+import {
+  X, Mail, Phone, Calendar, MessageSquare, Save, Trash2, ShoppingBag,
+  AtSign, RotateCw, ArrowLeft,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { ContactTagsPanel } from "@/features/tags/components/contact-tags-panel"
 import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
 import { SaleStagePrompt } from "@/features/sales/components/sale-stage-prompt"
+import { FONT } from "@/features/crm/lib/brand"
 
 type ContactDetail = {
   id: string
@@ -64,6 +68,10 @@ const PRODUCT_OPTIONS = ["IA Integrator", "Media Buyer Digital", "Comercial Clos
 const CLASES_ACCION =
   "inline-flex h-11 items-center gap-1.5 rounded-lg border border-border px-3 text-[15px] text-foreground md:h-8 md:px-2.5 md:text-sm md:hover:bg-muted"
 
+/** Accion principal: verde de marca con su tinta encima. 44 puntos en telefono. */
+const CLASES_PRIMARIO =
+  "inline-flex h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-40 md:h-9 md:text-sm"
+
 /** Campo de escritura. text-base en telefono o el iPhone se acerca solo. */
 const CLASES_CAMPO =
   "h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
@@ -97,6 +105,9 @@ export function ContactDrawer({
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [draft, setDraft] = useState<Partial<ContactDetail>>({})
+  // Aviso dentro de la ficha en vez de alert() del navegador: el alert corta la
+  // pagina y en telefono tapa todo.
+  const [aviso, setAviso] = useState<string | null>(null)
   // Flujo "mover a Alumno" desde la ficha: popup ahora/mas tarde + modal de venta.
   const [salePrompt, setSalePrompt] = useState(false)
   const [saleModalOpen, setSaleModalOpen] = useState(false)
@@ -154,18 +165,31 @@ export function ContactDrawer({
     onClose()
   }
 
+  const stageOptions = (() => {
+    const currentPipeline = pipelines?.find((p) => p.id === contact?.pipeline_id)
+    return currentPipeline
+      ? currentPipeline.stages.map((s) => ({ value: s.key, label: s.name }))
+      : stages
+  })()
+
   const pestanas = [
     ["datos", "Datos"],
-    ["productos", "Productos + ventas"],
-    ["journey", `Journey (${events.length + bookings.length})`],
+    ["productos", "Productos y ventas"],
+    ["journey", `Historial (${events.length + bookings.length})`],
     ["notas", "Notas"],
   ] as const
 
   return (
     <>
+      {/* La hoja cierra sola con Escape y tocando fuera: lo trae el propio kit
+          (Radix), asi que aqui no hace falta escuchar el teclado a mano. */}
       <Sheet open onOpenChange={(o) => { if (!o) onClose() }}>
         <SheetContent
           side="bottom"
+          aria-label="Ficha del contacto"
+          // Inter Tight garantizada: la hoja se cuelga del <body>, fuera del arbol
+          // del CRM, y por tanto no hereda la fuente de esa pantalla.
+          style={{ fontFamily: FONT }}
           className={
             // El `!` no es adorno: la base de sheet.tsx pinta el lado inferior con
             // `data-[side=bottom]:...`, que compila como `.clase[data-side=bottom]`
@@ -180,17 +204,34 @@ export function ContactDrawer({
           }
         >
           {loading || !contact ? (
-            <LoadingScreen fullscreen={false} className="min-h-[200px] flex-1" />
+            <>
+              <SheetTitle className="sr-only">Ficha del contacto</SheetTitle>
+              <LoadingScreen fullscreen={false} className="min-h-[200px] flex-1" />
+            </>
           ) : (
             <div className="no-overscroll min-h-0 flex-1 overflow-y-auto">
-              {/* Cabecera */}
-              <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-popover px-4 py-3 pr-14">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-[15px] font-semibold text-secondary-foreground">
-                  {contact.full_name.charAt(0)}
+              {/* Cabecera. Lleva SIEMPRE una salida visible con texto, arriba a la
+                  izquierda. La X de cerrar la pone la propia hoja arriba a la
+                  derecha, por eso esta fila le reserva sitio con pr-14. */}
+              <div className="sticky top-0 z-10 border-b border-border bg-popover">
+                <div className="flex items-center gap-2 pt-3 pr-14 pl-4">
+                  <button
+                    onClick={onClose}
+                    className="inline-flex h-11 items-center gap-1.5 rounded-lg px-2 text-[15px] font-semibold text-muted-foreground md:h-9 md:text-sm md:hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Volver
+                  </button>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate text-[17px] font-semibold text-foreground">{contact.full_name}</h2>
-                  <div className="truncate text-sm text-muted-foreground">{contact.email}</div>
+                <div className="flex items-center gap-3 px-4 pt-1 pb-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[15px] font-semibold text-muted-foreground">
+                    {contact.full_name.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <SheetTitle className="truncate text-[19px] font-bold tracking-tight text-foreground">
+                      {contact.full_name}
+                    </SheetTitle>
+                    <p className="truncate text-sm text-muted-foreground">{contact.email}</p>
+                  </div>
                 </div>
               </div>
 
@@ -210,43 +251,46 @@ export function ContactDrawer({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={CLASES_ACCION}
-                    title="Abrir conversación en panel ManyChat (opcional)"
+                    title="Abrir la conversación en ManyChat"
                   >
                     <MessageSquare className="h-4 w-4" /> ManyChat
                   </a>
                 )}
                 {contact.instagram_username && (
                   <a
-                    href={`https://instagram.com/${contact.instagram_username.replace(/^@/, '')}`}
+                    href={`https://instagram.com/${contact.instagram_username.replace(/^@/, "")}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={CLASES_ACCION}
-                    title="Abrir perfil de Instagram"
+                    title="Abrir el perfil de Instagram"
                   >
-                    <MessageSquare className="h-4 w-4" /> IG
+                    <AtSign className="h-4 w-4" /> Instagram
                   </a>
                 )}
+
                 <button
                   onClick={() => setSaleModalOpen(true)}
-                  className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-primary/40 px-3 text-[15px] text-primary md:h-8 md:px-2.5 md:text-sm"
+                  className={CLASES_PRIMARIO}
                   title="Registrar la venta y dar acceso a la App"
                 >
                   <ShoppingBag className="h-4 w-4" /> Registrar venta
                 </button>
+
+                <div className="hidden flex-1 md:block" />
+
                 {(contact.stage === "won" || contact.stage === "alumno") && (
                   <button
                     onClick={async () => {
                       const res = await fetch(`/api/admin/contacts/${contact.id}/resend-invite`, { method: "POST" })
                       const data = await res.json()
-                      alert(res.ok
-                        ? `Magic link reenviado a ${data.sent_to}`
-                        : (data.error ?? "No se pudo reenviar"),
-                      )
+                      setAviso(res.ok
+                        ? `Acceso reenviado a ${data.sent_to}`
+                        : (data.error ?? "No se pudo reenviar. Comprueba que el contacto tenga email y vuelve a intentarlo."))
                     }}
                     className={CLASES_ACCION}
-                    title="Reenviar magic link de acceso a la App"
+                    title="Reenviar el enlace de acceso a la App"
                   >
-                    <RotateCcw className="h-4 w-4" /> Reenviar acceso
+                    <RotateCw className="h-4 w-4" /> Reenviar acceso
                   </button>
                 )}
                 <button
@@ -258,7 +302,21 @@ export function ContactDrawer({
                 </button>
               </div>
 
-              {/* Pipeline y stage: en telefono cada uno en su linea, con etiqueta encima */}
+              {aviso && (
+                <div className="flex items-start justify-between gap-3 border-b border-border bg-primary/10 px-4 py-2.5">
+                  <p className="text-[15px] text-primary">{aviso}</p>
+                  <button
+                    onClick={() => setAviso(null)}
+                    aria-label="Cerrar aviso"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-primary md:h-8 md:w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Pipeline y stage: en telefono cada uno en su linea, con etiqueta encima.
+                  Pipeline: el servidor recoloca el stage si el actual no existe en el destino. */}
               <div className="grid grid-cols-1 gap-3 border-b border-border px-4 py-3 md:grid-cols-2">
                 {pipelines && pipelines.length > 0 && (
                   <label className="flex min-w-0 flex-col gap-1.5">
@@ -267,8 +325,8 @@ export function ContactDrawer({
                       value={contact.pipeline_id ?? ""}
                       onChange={(e) => save({ pipeline_id: e.target.value || null })}
                       disabled={saving}
+                      aria-label="Pipeline del contacto"
                       className={CLASES_SELECT}
-                      title="Pipeline al que pertenece este contacto"
                     >
                       <option value="">Sin pipeline</option>
                       {pipelines.map((p) => (
@@ -289,16 +347,10 @@ export function ContactDrawer({
                       save({ stage: v })
                     }}
                     disabled={saving}
+                    aria-label="Stage dentro del pipeline"
                     className={CLASES_SELECT}
-                    title="Stage actual dentro del pipeline"
                   >
-                    {(() => {
-                      const currentPipeline = pipelines?.find((p) => p.id === contact.pipeline_id)
-                      const stageOpts = currentPipeline
-                        ? currentPipeline.stages.map((s) => ({ value: s.key, label: s.name }))
-                        : stages
-                      return stageOpts.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)
-                    })()}
+                    {stageOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </label>
               </div>
@@ -312,6 +364,7 @@ export function ContactDrawer({
                   <button
                     key={k}
                     onClick={() => setTab(k)}
+                    aria-current={tab === k ? "true" : undefined}
                     className={cn(
                       // Sin `-mb-px`: al declarar overflow-x el navegador calcula
                       // overflow-y como auto, y ese margen negativo dejaba la tira
@@ -332,12 +385,12 @@ export function ContactDrawer({
                 <div className="space-y-3 px-4 py-4 pb-safe-4">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <DataField label="Nombre completo" value={draft.full_name ?? contact.full_name} onChange={(v) => setDraft({ ...draft, full_name: v })} autoComplete="name" />
-                    <DataField label="Email" value={draft.email ?? contact.email} onChange={(v) => setDraft({ ...draft, email: v })} type="email" inputMode="email" autoComplete="email" />
-                    <DataField label="Teléfono" value={draft.phone ?? contact.phone ?? ""} onChange={(v) => setDraft({ ...draft, phone: v })} type="tel" inputMode="tel" autoComplete="tel" />
-                    <DataField label="Instagram (@usuario)" value={draft.instagram_username ?? contact.instagram_username ?? ""} onChange={(v) => setDraft({ ...draft, instagram_username: v.replace(/^@/, "") })} placeholder="ej. juan_lopez (sin @)" />
+                    <DataField label="Email" type="email" value={draft.email ?? contact.email} onChange={(v) => setDraft({ ...draft, email: v })} inputMode="email" autoComplete="email" />
+                    <DataField label="Teléfono" type="tel" value={draft.phone ?? contact.phone ?? ""} onChange={(v) => setDraft({ ...draft, phone: v })} inputMode="tel" autoComplete="tel" />
+                    <DataField label="Instagram" value={draft.instagram_username ?? contact.instagram_username ?? ""} onChange={(v) => setDraft({ ...draft, instagram_username: v.replace(/^@/, "") })} placeholder="juan_lopez (sin arroba)" />
                     <DataField label="Empresa" value={draft.company ?? contact.company ?? ""} onChange={(v) => setDraft({ ...draft, company: v })} />
-                    <DataField label="Origen" value={draft.source ?? contact.source ?? ""} onChange={(v) => setDraft({ ...draft, source: v })} placeholder="organic, ads, referral, manychat…" />
-                    <DataField label="Asignado a" value={draft.owner_assignee ?? contact.owner_assignee ?? ""} onChange={(v) => setDraft({ ...draft, owner_assignee: v })} placeholder="adrian, nagai, marco…" />
+                    <DataField label="Origen" value={draft.source ?? contact.source ?? ""} onChange={(v) => setDraft({ ...draft, source: v })} placeholder="organic, ads, referral, manychat" />
+                    <DataField label="Responsable" value={draft.owner_assignee ?? contact.owner_assignee ?? ""} onChange={(v) => setDraft({ ...draft, owner_assignee: v })} placeholder="adrian, nagai, marco" />
                   </div>
 
                   {/* ManyChat subscriber ID (solo lectura, lo setea el webhook) */}
@@ -348,9 +401,9 @@ export function ContactDrawer({
                     </div>
                   )}
 
-                  <div className="border-t border-border pt-3 text-sm text-muted-foreground">
-                    <div>Creado: <span className="tabular-nums">{new Date(contact.created_at).toLocaleString("es-ES")}</span></div>
-                    <div>Actualizado: <span className="tabular-nums">{new Date(contact.updated_at).toLocaleString("es-ES")}</span></div>
+                  <div className="space-y-1 border-t border-border pt-4 text-sm text-muted-foreground">
+                    <p>Entró el <span className="tabular-nums">{new Date(contact.created_at).toLocaleString("es-ES")}</span></p>
+                    <p>Última actualización el <span className="tabular-nums">{new Date(contact.updated_at).toLocaleString("es-ES")}</span></p>
                   </div>
 
                   {/* La accion principal va abajo con sticky, no con fixed: el
@@ -367,7 +420,7 @@ export function ContactDrawer({
                       <button
                         onClick={() => save(draft)}
                         disabled={saving}
-                        className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:flex-none md:px-4 md:text-sm"
+                        className={cn(CLASES_PRIMARIO, "flex-1 md:flex-none")}
                       >
                         <Save className="h-4 w-4" /> Guardar cambios
                       </button>
@@ -378,9 +431,9 @@ export function ContactDrawer({
 
               {/* PRODUCTOS */}
               {tab === "productos" && (
-                <div className="space-y-4 px-4 py-4 pb-safe-4">
+                <div className="space-y-6 px-4 py-4 pb-safe-4">
                   <section>
-                    <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Productos comprados</h3>
+                    <h3 className="mb-2.5 text-[15px] font-semibold text-foreground">Productos comprados</h3>
                     <div className="flex flex-wrap gap-2">
                       {PRODUCT_OPTIONS.map((p) => {
                         const has = contact.products.includes(p)
@@ -391,14 +444,15 @@ export function ContactDrawer({
                               const next = has ? contact.products.filter((x) => x !== p) : [...contact.products, p]
                               save({ products: next })
                             }}
+                            aria-pressed={has}
                             className={cn(
-                              "h-11 rounded-lg border px-3 text-[15px] transition-colors md:h-9 md:text-sm",
+                              "inline-flex h-11 items-center rounded-lg border px-3 text-[15px] font-semibold transition-colors md:h-9 md:text-sm",
                               has
                                 ? "border-primary/40 bg-primary/10 text-primary"
-                                : "border-border text-muted-foreground"
+                                : "border-border text-muted-foreground md:hover:text-foreground"
                             )}
                           >
-                            {has ? "✓ " : "+ "}{p}
+                            {p}
                           </button>
                         )
                       })}
@@ -406,46 +460,46 @@ export function ContactDrawer({
                   </section>
 
                   <section className="space-y-3">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Cifras</h3>
-                    <NumberField label="Facturación total (€)" value={contact.total_revenue} onSave={(v) => save({ total_revenue: v })} />
-                    <NumberField label="Cash collected total (€)" value={contact.total_cash_collected} onSave={(v) => save({ total_cash_collected: v })} />
+                    <h3 className="text-[15px] font-semibold text-foreground">Cifras</h3>
+                    <NumberField label="Facturación total (EUR)" value={contact.total_revenue} onSave={(v) => save({ total_revenue: v })} />
+                    <NumberField label="Cobrado hasta hoy (EUR)" value={contact.total_cash_collected} onSave={(v) => save({ total_cash_collected: v })} />
                   </section>
                 </div>
               )}
 
-              {/* JOURNEY */}
+              {/* HISTORIAL */}
               {tab === "journey" && (
                 <div className="space-y-3 px-4 py-4 pb-safe-4">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Timeline</h3>
                   {bookings.length === 0 && events.length === 0 ? (
-                    <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 px-6 py-10 text-center">
-                      <h4 className="text-[17px] font-semibold text-foreground">Sin eventos todavía</h4>
-                      <p className="max-w-[38ch] text-[15px] text-muted-foreground">
-                        Aquí aparecen las llamadas reservadas y las notas que añadas al journey.
-                      </p>
-                    </div>
+                    <p className="rounded-lg border border-dashed border-border px-4 py-10 text-center text-[15px] text-muted-foreground">
+                      Todavía no ha pasado nada con este contacto.
+                    </p>
                   ) : (
                     <ul className="space-y-2">
                       {bookings.map((b) => (
-                        <li key={`b-${b.id}`} className="flex items-start gap-2 rounded-lg border border-border px-3 py-2">
-                          <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                          <div className="min-w-0 flex-1 text-[15px] text-foreground">
-                            <div>Llamada {b.status === "cancelled" ? "(cancelada)" : ""}</div>
-                            <div className="text-sm text-muted-foreground tabular-nums">
+                        <li key={`b-${b.id}`} className="flex items-start gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
+                          <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[15px] text-foreground">
+                              Llamada{b.status === "cancelled" ? " (cancelada)" : ""}
+                            </p>
+                            <p className="text-sm text-muted-foreground tabular-nums">
                               {new Date(b.start_at).toLocaleString("es-ES", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                            </div>
+                            </p>
                           </div>
                         </li>
                       ))}
                       {events.map((e) => (
-                        <li key={e.id} className="flex items-start gap-2 rounded-lg border border-border px-3 py-2">
-                          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-muted-foreground" />
-                          <div className="min-w-0 flex-1 text-[15px] text-foreground">
-                            <div>{e.title}</div>
-                            {e.description && <div className="mt-0.5 text-sm whitespace-pre-wrap text-muted-foreground">{e.description}</div>}
-                            <div className="mt-1 text-sm text-muted-foreground tabular-nums">
+                        <li key={e.id} className="flex items-start gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[15px] text-foreground">{e.title}</p>
+                            {e.description && (
+                              <p className="mt-0.5 text-[15px] whitespace-pre-wrap text-muted-foreground">{e.description}</p>
+                            )}
+                            <p className="mt-1 text-sm text-muted-foreground tabular-nums">
                               {new Date(e.created_at).toLocaleString("es-ES")}
-                            </div>
+                            </p>
                           </div>
                         </li>
                       ))}
@@ -546,10 +600,7 @@ function NumberField({ label, value, onSave }: { label: string; value: number; o
           className={`${CLASES_CAMPO} min-w-0 flex-1 tabular-nums`}
         />
         {changed && (
-          <button
-            onClick={() => onSave(parseFloat(draft || "0"))}
-            className="h-11 shrink-0 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 md:h-9 md:text-sm"
-          >
+          <button onClick={() => onSave(parseFloat(draft || "0"))} className={cn(CLASES_PRIMARIO, "shrink-0")}>
             Guardar
           </button>
         )}
@@ -572,10 +623,7 @@ function NotesTab({ notes, onSave, onAdd }: { notes: string; onSave: (v: string)
           <textarea value={main} onChange={(e) => setMain(e.target.value)} rows={6} className={clasesArea} />
         </label>
         {main !== notes && (
-          <button
-            onClick={() => onSave(main)}
-            className="mt-2 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 md:h-9 md:w-auto md:text-sm"
-          >
+          <button onClick={() => onSave(main)} className={cn(CLASES_PRIMARIO, "mt-2 w-full md:w-auto")}>
             <Save className="h-4 w-4" /> Guardar nota general
           </button>
         )}
@@ -583,11 +631,11 @@ function NotesTab({ notes, onSave, onAdd }: { notes: string; onSave: (v: string)
 
       <section>
         <label className="flex flex-col gap-1.5">
-          <Etiqueta>Añadir nota al journey</Etiqueta>
+          <Etiqueta>Añadir al historial</Etiqueta>
           <textarea
             value={quick}
             onChange={(e) => setQuick(e.target.value)}
-            placeholder="Ej: Le interesa el plan anual pero quiere pensarlo. Llamar viernes 14h."
+            placeholder="Le interesa el plan anual pero quiere pensarlo. Llamar el viernes a las 14h."
             rows={3}
             className={clasesArea}
           />
@@ -595,9 +643,9 @@ function NotesTab({ notes, onSave, onAdd }: { notes: string; onSave: (v: string)
         <button
           onClick={() => { onAdd(quick); setQuick("") }}
           disabled={!quick.trim()}
-          className="mt-2 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:w-auto md:text-sm"
+          className={cn(CLASES_PRIMARIO, "mt-2 w-full md:w-auto")}
         >
-          <MessageSquare className="h-4 w-4" /> Añadir al journey
+          <MessageSquare className="h-4 w-4" /> Añadir al historial
         </button>
       </section>
     </div>

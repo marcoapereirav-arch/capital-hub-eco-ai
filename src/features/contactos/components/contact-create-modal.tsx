@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Loader2 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 /**
@@ -10,6 +11,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
  * la tapa el teclado en cuanto se toca el primer campo, y el boton de crear queda
  * fuera de alcance. El lado se fija en "bottom" y el ordenador se ajusta con
  * clases md:, nunca con JavaScript.
+ *
+ * El boton de cerrar no se escribe aqui: <SheetContent> ya pinta el suyo arriba a
+ * la derecha, y ademas cierra con Escape y tocando fuera de la hoja.
  */
 export function ContactCreateModal({
   onClose,
@@ -40,10 +44,17 @@ export function ContactCreateModal({
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error ?? "Error al crear")
+        // El error dice QUE pasó y QUE hacer, nunca un codigo pelado.
+        setError(
+          res.status === 409 || /duplicate|unique/i.test(data.error ?? "")
+            ? "Ya existe un contacto con ese email. Búscalo en la lista para abrirlo."
+            : data.error ?? "No se pudo crear el contacto. Revisa los datos e inténtalo otra vez."
+        )
         return
       }
       onCreated(data.id)
+    } catch {
+      setError("No se pudo conectar. Comprueba tu conexión e inténtalo otra vez.")
     } finally {
       setCreating(false)
     }
@@ -69,11 +80,13 @@ export function ContactCreateModal({
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-3 px-4 pb-2">
-            <Campo label="Nombre completo *" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required autoComplete="name" />
-            <Campo label="Email *" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
+            <Campo label="Nombre completo" value={form.full_name} onChange={(v) => setForm({ ...form, full_name: v })} required autoComplete="name" />
+            <Campo label="Email" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} required />
             <Campo label="Teléfono" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
             <Campo label="Empresa" value={form.company} onChange={(v) => setForm({ ...form, company: v })} />
-            <Campo label="Origen" value={form.source} onChange={(v) => setForm({ ...form, source: v })} placeholder="manual, organic, ads, referral…" />
+            <Campo label="Origen" value={form.source} onChange={(v) => setForm({ ...form, source: v })} placeholder="manual, organic, ads, referral" />
+
+            <p className="text-sm text-muted-foreground">Entra al pipeline como Lead.</p>
 
             {error && <p className="text-[15px] text-destructive">{error}</p>}
           </div>
@@ -90,9 +103,10 @@ export function ContactCreateModal({
             <button
               type="submit"
               disabled={creating || !form.full_name || !form.email}
-              className="h-11 flex-1 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:flex-none md:px-4 md:text-sm"
+              className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground active:opacity-90 disabled:opacity-30 md:h-9 md:flex-none md:px-4 md:text-sm"
             >
-              {creating ? "Creando…" : "Crear contacto"}
+              {creating && <Loader2 className="h-4 w-4 animate-spin" />}
+              {creating ? "Creando" : "Crear contacto"}
             </button>
           </div>
         </form>
@@ -122,7 +136,7 @@ function Campo({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <Etiqueta>{label}</Etiqueta>
+      <Etiqueta opcional={!required}>{label}</Etiqueta>
       <input
         type={type}
         value={value}
@@ -142,7 +156,15 @@ function Campo({
  * Etiqueta de un campo. Va en su propio componente a proposito: escrita pegada
  * al <input> el candado la confunde con la letra DEL campo (mira dos lineas
  * arriba y dos abajo) y bloquea el guardado. Aqui la clase no toca ningun campo.
+ *
+ * Lo que no es obligatorio lo dice la propia etiqueta, no un asterisco: un "*"
+ * suelto no significa nada para quien nunca ha rellenado un formulario tecnico.
  */
-function Etiqueta({ children }: { children: React.ReactNode }) {
-  return <span className="text-sm font-medium text-muted-foreground">{children}</span>
+function Etiqueta({ children, opcional }: { children: React.ReactNode; opcional?: boolean }) {
+  return (
+    <span className="text-sm font-medium text-muted-foreground">
+      {children}
+      {opcional && <span className="font-normal"> (opcional)</span>}
+    </span>
+  )
 }

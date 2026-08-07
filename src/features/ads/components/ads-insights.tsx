@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Eye, MousePointer, DollarSign, Users, AlertCircle, Loader2 } from "lucide-react"
+import { Eye, MousePointer, Euro, Users, AlertCircle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const PRESETS = [
@@ -138,7 +138,7 @@ export function AdsInsights() {
 
       {row && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Card label="Gasto" value={eur(row.spend)} icon={DollarSign} destacado />
+          <Card label="Gasto" value={eur(row.spend)} icon={Euro} destacado />
           <Card
             label="Impresiones"
             value={num(row.impressions)}
@@ -181,7 +181,7 @@ function Card({
   label: string
   value: string
   sublabel?: string
-  icon: typeof DollarSign
+  icon: typeof Euro
   /** La cifra de dinero es la que manda: va en verde de marca, el resto en carbon. */
   destacado?: boolean
 }) {

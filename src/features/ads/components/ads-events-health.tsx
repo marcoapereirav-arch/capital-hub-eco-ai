@@ -14,17 +14,20 @@ import { cn } from "@/lib/utils"
  *
  * Todo el color sale de los tokens del tema (verde de marca, rojo de error, carbón). Antes
  * esta pantalla llevaba la paleta grabada a mano en atributos `style`, asi que no escuchaba
- * al tema: el dia que cambiara la marca se quedaba con los colores viejos.
+ * al tema: el dia que cambiara la marca se quedaba con los colores viejos. Los tokens del
+ * OS YA son el brandkit (`--primary` es el verde #22C55E y `--font-sans` es Inter Tight).
  */
 
 type EventRow = {
   name: string
   when: string
-  kind: "estandar" | "nuestro"
+  /** `automatico` es PageView: lo dispara el píxel solo, sin pasar por nuestro servidor. */
+  kind: "estandar" | "nuestro" | "automatico"
   lastAt: string | null
   sent: number
   failed: number
   neverSeen: boolean
+  automatico: boolean
 }
 
 type FunnelRow = {
@@ -192,17 +195,29 @@ export function AdsEventsHealth() {
                         {e.when}
                       </p>
                       <p className="mt-0.5 text-sm text-muted-foreground">
-                        {e.name} · {e.kind === "estandar" ? "evento de Meta" : "evento nuestro"}
+                        {e.name} ·{" "}
+                        {e.kind === "automatico"
+                          ? "automático del píxel"
+                          : e.kind === "estandar"
+                            ? "evento de Meta"
+                            : "evento nuestro"}
                       </p>
                     </div>
                   </div>
 
                   <div className="pl-7 md:pl-0 md:text-right">
-                    <p className="text-sm font-semibold text-muted-foreground">
-                      {e.neverSeen ? "sin estrenar" : hace(e.lastAt)}
+                    <p
+                      className={cn(
+                        "text-sm font-semibold",
+                        e.automatico ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      {e.automatico ? "activo" : e.neverSeen ? "sin estrenar" : hace(e.lastAt)}
                     </p>
                     <p className="mt-0.5 text-sm text-muted-foreground">
-                      {e.neverSeen ? (
+                      {e.automatico ? (
+                        "va con el píxel, en todas las páginas"
+                      ) : e.neverSeen ? (
                         "nadie lo ha hecho aún"
                       ) : (
                         <>
@@ -260,7 +275,8 @@ function Chip({ texto, activo }: { texto: string; activo: boolean }) {
 /**
  * Rojo SOLO cuando Meta rechazó un envío. Un evento sin estrenar va en gris: está
  * conectado, lo que pasa es que nadie ha hecho esa acción todavía. Pintarlo de rojo
- * hacía leer "roto" donde no lo había.
+ * hacía leer "roto" donde no lo había. El automático del píxel nunca está sin estrenar:
+ * el servidor ya lo marca como visto, así que cae en el check verde.
  */
 function EstadoEvento({ evento }: { evento: EventRow }) {
   if (evento.failed > 0) return <X className="mt-0.5 h-[18px] w-[18px] shrink-0 text-destructive" />

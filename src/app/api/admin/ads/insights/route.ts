@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { getMarketingToken } from "@/lib/meta/marketing-token"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -22,7 +23,11 @@ export async function GET(req: NextRequest) {
   }
 
   const accountId = process.env.META_AD_ACCOUNT_ID
-  const accessToken = process.env.META_MARKETING_API_TOKEN ?? process.env.META_CAPI_TOKEN
+  // La llave de lectura se busca primero donde la guarda el equipo desde Ads, Ajustes.
+  // Si no hay, cae al fichero de entorno, y en último caso a la de conversiones (que NO
+  // sirve para leer, pero deja que el mensaje de error explique exactamente qué falta).
+  const accessToken =
+    (await getMarketingToken()) ?? process.env.META_CAPI_TOKEN
   if (!accountId || !accessToken) {
     return NextResponse.json({
       configured: false,

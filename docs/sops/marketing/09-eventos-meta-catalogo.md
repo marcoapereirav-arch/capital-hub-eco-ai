@@ -53,6 +53,13 @@ Se dispara **solo**, en cada página, en cuanto el píxel carga. No hay que prog
 No significa nada por sí mismo: solo dice "alguien pasó por aquí". Sirve para que Meta
 sepa que la persona existe y para poder perseguirla con anuncios después.
 
+**Ojo con cómo se lee en pantalla.** `PageView` sale del píxel dentro del navegador y
+**nunca pasa por nuestro servidor**, así que jamás aparece en el registro de envíos. Eso
+no significa que no funcione. Por eso en las pantallas va marcado como **automático** y en
+verde, no como "sin estrenar": estar sin registro es su comportamiento normal, no un
+fallo. Todo lo demás sí lo mandamos nosotros y sí queda registrado con su número de
+envíos.
+
 ### 2. `ViewContent` — vio la página que nos importa
 
 Esta la disparamos nosotros **a mano**, solo en las páginas que valen.
@@ -227,6 +234,32 @@ dos caminos.
 **Segundo bug de la misma pasada:** un evento estándar mandado como si fuera nuestro. Meta
 distingue `fbq("track", ...)` de `fbq("trackCustom", ...)`; si un estándar se manda como
 custom, Meta lo trata como un nombre inventado y no optimiza con él.
+
+### La llave para leer las campañas se pega en pantalla
+
+En **Ads → Ajustes**, arriba del todo, hay un campo donde se pega la llave de Meta que
+LEE el gasto de las campañas (permiso `ads_read`). Es distinta de la de conversiones: esa
+escribe eventos, esta lee rendimiento.
+
+**Antes esto solo se podía poner editando el fichero del proyecto y desplegando**, o sea,
+dependía de un desarrollador. Ya no.
+
+Al guardar, el servidor hace tres cosas solo:
+
+1. **La alarga.** Una llave sacada a mano dura un par de horas; se cambia por una de unos
+   60 días usando el identificador y el secreto de la app. Las de usuario del sistema no
+   caducan y Meta rechaza el cambio: entonces se guarda la original, que es lo correcto.
+2. **La prueba de verdad** contra la cuenta publicitaria. Guardar una llave rota es peor
+   que no guardar nada: parece resuelto y el fallo sale días después.
+3. **Solo la guarda si funciona.** Si Meta la rechaza, se dice el motivo y no se guarda.
+
+**Dónde vive:** tabla `app_settings`, clave `meta_marketing_token`. Esa tabla tiene
+seguridad a nivel de fila activada y **cero políticas**, así que ningún usuario logueado
+puede leerla: solo el servidor con la llave de administración. A la pantalla solo se le
+manda una versión tapada, nunca la llave entera.
+
+**Orden de búsqueda:** primero la guardada desde la pantalla, y si no hay, la del fichero
+de entorno. Así se puede cambiar sin tocar código ni desplegar.
 
 ### El interruptor de medición
 
