@@ -139,7 +139,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
   if (guardado) {
     return enElBody(
       <div className="fixed inset-0 z-50 flex items-end justify-center overscroll-none bg-black/70 p-0 md:items-center md:p-4">
-        <div className="w-full max-w-md space-y-3 rounded-xl border border-border bg-background p-6 text-center">
+        <div className="w-full min-w-0 max-w-md space-y-3 rounded-xl border border-border bg-background p-6 text-center">
           <Check className="mx-auto h-12 w-12 text-primary" />
           <h2 className="text-xl font-semibold text-foreground">Actividad registrada</h2>
           <p className="text-[15px] text-muted-foreground">{fechaLarga(fecha)}</p>
@@ -150,9 +150,15 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
 
   return enElBody(
     <div className="fixed inset-0 z-50 flex items-end justify-center overscroll-none bg-black/70 p-0 md:items-center md:p-4">
+      {/* `min-w-0` es un seguro, no el arreglo principal (ese esta abajo, en la caja que
+          se desplaza). El velo de arriba es `flex`, y un hijo flexible nace con
+          `min-width: auto`: su ancho MINIMO es el de su contenido, asi que no encoge por
+          debajo de el. Hoy el contenido si encoge, pero el dia que alguien meta aqui algo
+          que no se pueda partir en dos lineas, sin esta clase el formulario saldria mas
+          ancho que la pantalla. */}
       <form
         onSubmit={guardar}
-        className="flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-xl border border-border bg-background md:max-h-[85dvh] md:rounded-xl"
+        className="flex max-h-[92dvh] w-full min-w-0 max-w-md flex-col rounded-t-xl border border-border bg-background md:max-h-[85dvh] md:rounded-xl"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h2 className="text-base font-semibold text-foreground">Registrar actividad</h2>
@@ -166,15 +172,42 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="no-overscroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
-          <label className="block">
+        {/* AQUI ESTABA EL DESPLAZAMIENTO LATERAL que reporto Marco el 2026-08-08:
+            "cuando toco registrar actividad, hay un scroll horizontal que no deberia
+            estar".
+
+            Regla de CSS que casi nadie tiene presente: en cuanto UN eje deja de ser
+            `visible`, el OTRO deja de serlo tambien y pasa a `auto` el solo. O sea que
+            escribir unicamente `overflow-y-auto` convertia esta caja en un carrusel
+            lateral sin que nadie lo pidiera. Medido en el navegador: `overflow-x` salia
+            en `auto`, no en `visible`.
+
+            Con eso puesto, basta con que UN hijo sea un pelo mas ancho que la caja para
+            que el modal se arrastre de lado. Y hay un hijo que puede serlo: el campo de
+            fecha de abajo (ver su comentario). Prueba A/B del 2026-08-08 con un control
+            de fecha de 520 puntos: sin estas clases el modal se arrastraba 148 puntos de
+            lado; con ellas, 0.
+
+            Declarando los DOS ejes, esta caja se desplaza hacia abajo y NUNCA de lado. */}
+        <div className="no-overscroll min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain p-4">
+          {/* EL SOSPECHOSO. Es el unico control NATIVO del formulario: lo dibuja el
+              navegador, no nosotros, y trae ancho propio. Medido el 2026-08-08 con el
+              modal abierto, el suelo de ancho de todo el modal era de 177 puntos y 143
+              los ponia este campo el solo; los demas campos son texto y se parten en dos
+              lineas, este no. En un navegador de escritorio ese ancho propio es pequeno y
+              cabe, por eso el fallo no se veia ahi; en el telefono es bastante mayor.
+
+              `min-w-0` le quita el derecho a pedir mas sitio del que tiene su caja y
+              `max-w-full` remata: pase lo que pase, este campo no puede ser mas ancho que
+              el modal. Se le recorta a el, en vez de empujar la pantalla de lado. */}
+          <label className="block min-w-0">
             <span className="text-sm font-medium text-muted-foreground">Día</span>
             <input
               type="date"
               value={fecha}
               max={hoy || undefined}
               onChange={(e) => cambiarFecha(e.target.value)}
-              className="mt-1.5 h-11 w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
+              className="mt-1.5 h-11 w-full min-w-0 max-w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"
             />
           </label>
 
@@ -186,7 +219,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
           )}
 
           {CAMPOS.map((c) => (
-              <label key={c.clave} className="block">
+              <label key={c.clave} className="block min-w-0">
                 <span className="text-[15px] font-medium text-foreground">{c.etiqueta}</span>
                 <span className="mt-0.5 block text-sm text-muted-foreground">{c.ayuda}</span>
                 <input
@@ -198,7 +231,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) =>
                     setValores((v) => ({ ...v, [c.clave]: Math.max(0, Math.floor(Number(e.target.value) || 0)) }))
                   }
-                  className="mt-1.5 h-11 w-full rounded-lg border border-border bg-card px-3 text-base tabular-nums text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                  className="mt-1.5 h-11 w-full min-w-0 max-w-full rounded-lg border border-border bg-card px-3 text-base tabular-nums text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                   disabled={cargando}
                 />
               </label>

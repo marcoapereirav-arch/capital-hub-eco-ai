@@ -203,3 +203,53 @@ Consecuencia: `calc(3.5rem + var(--sab) + 1rem)` es inválido, **el navegador ti
 **Pendiente, y afecta a más pantallas:** hay ~10 sitios más con el mismo patrón (`mobile-shell`, `mobile-header`, `contact-detail`, `pipelines-kanban`, `KnowledgeEditorClient`, `KnowledgeBrain`, `PushNotificationPrompt`, `UpdateNotifier`). Todos están silenciosamente rotos en el teléfono mientras `--sab` y `--sat` no lleguen. **Lo que hay que arreglar es la causa: por qué esas variables no llegan.** No se tocó aquí por no salir del encargo.
 
 **Regla derivada:** una medida que depende de una variable CSS se cae ENTERA si la variable falta, y no avisa. Se comprueba en el navegador con `getComputedStyle`, no leyendo el código.
+
+---
+
+## 2026-08-08 (segunda pasada) · Los números no cuadraban con el CRM
+
+Marco: *"hay 23 DMs y 23 leads, ¿por qué dices que hay 23 DMs?... en el CRM sale otra cosa"*.
+
+### El dinero se apuntaba al mes equivocado
+
+`Facturado` y `Cobrado` salían de `contacts.total_revenue` de los contactos **creados** en el periodo. Es decir: una venta cerrada en agosto a un lead que entró en julio **no contaba en agosto**. El dinero se apuntaba al mes en que entró la persona, no al mes en que se cobró.
+
+**Arreglo:** el dinero, las ventas y el ticket medio salen ahora de `contact_journey_events` con `type='sale'`, que es la fuente de verdad del SOP `ventas/02` y lleva **su propia fecha**. Cada venta registrada con el botón verde escribe ese evento con `revenue`, `cash_collected` y `closer_name`.
+
+Con una sola venta de prueba en toda la base (18-jun, 3.000 €) el fallo no se veía. Con ventas de verdad, los números habrían sido falsos.
+
+### El embudo del CRM inventaba gente
+
+Detalle y regla derivada en [`producto/04`](04-protocolo-trabajo-agente.md), **REGLA #28**. Resumen: cada escalón sumaba los siguientes, dando por hecho que quien está en "Agendado" pasó por "Lead" y por "DM". Al webinar se entra **directo en Lead**. El panel decía 23 en DM con **cero** en DM.
+
+Ahora los embudos tienen dos modos: **recorrido** (embudo de verdad, con las caídas dibujadas) y **reparto** (dónde está cada persona ahora, con su porcentaje del total y sin caídas inventadas). Los pipelines del CRM van en modo reparto y cuadran al dedillo con el kanban: Webinar 34 en total, DM 0, Lead 19, Agendado 4, Seguimiento 10, Perdido 1.
+
+### El lenguaje de cada métrica
+
+Marco: *"¿Qué carajo es vinieron?"*. Regla nueva en `producto/04`, **REGLA #27**. Cambios aplicados:
+
+| Antes | Ahora |
+|---|---|
+| Facturación del periodo | **Facturado** |
+| Cash collected | **Cobrado** |
+| Ventas | **Ventas cerradas** |
+| Contactos nuevos | **Personas nuevas** |
+| Llamadas hechas · "De 8 agendadas · 3 por venir" | **Llamadas celebradas** · "Se reservaron 8. Quedan 3 por celebrar" |
+| Show rate · "5 vinieron, 0 no" | **Asistencia a las llamadas** · "5 se conectaron · 0 no se presentaron" |
+| Conversión llamada a venta | **De llamada a venta** · "0 ventas de 5 llamadas celebradas" |
+| No vinieron | **No se presentaron** |
+| Vinieron (paso del embudo) | **Se conectaron a la llamada** |
+
+### Quién movió a los contactos
+
+Los 10 pases a "Seguimiento" del webinar los hizo **una persona a mano**, uno por uno, el 7 de agosto entre las 10:46 y las 14:55. Queda registrado el cambio, pero **no quién lo hizo**: `contact_journey_events` guarda `{from, to}` y no el usuario. Vale la pena añadirlo.
+
+### Por qué el OS iba lento (medido)
+
+Cada pantalla se para ~500 ms antes de cargar nada, porque el marco del OS hace **tres viajes en cadena** a Supabase (quién eres, qué permisos hay, tu perfil) y ninguno empieza hasta que acaba el anterior. Prueba limpia: `/login`, fuera del marco, responde en 83 ms; `/perfil`, dentro y casi vacía, tarda 586 ms.
+
+No es la base (todas las consultas por debajo de 1 ms), ni faltan índices, ni es RLS, ni es el volumen (40 contactos).
+
+**Aplicado aquí:** el menú apunta a `/crm/contactos` en vez de a `/crm`. `/crm` solo hacía un desvío, y el marco se ejecutaba **entero dos veces**: medido, **746 ms tirados** antes de empezar a cargar la página buena.
+
+**Pendiente (no tocado, fuera del encargo):** poner esos tres viajes en paralelo y guardar en memoria los permisos por rol (hoy se releen con `no-store` en cada navegación, 29 filas que casi nunca cambian). Ahorro estimado ~175 ms en TODAS las pantallas.

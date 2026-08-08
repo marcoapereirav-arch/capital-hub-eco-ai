@@ -35,7 +35,12 @@ export const navSections: NavSection[] = [
   {
     label: "Marketing",
     items: [
-      { title: "CRM", href: "/crm", icon: Users, mobilePrimary: true },
+      /* Apunta a /crm/contactos, NO a /crm.
+      Medido el 2026-08-08: /crm solo hace un desvio a /crm/contactos, pero el
+      marco del OS (quien eres, que puedes ver) se ejecuta ENTERO dos veces, una
+      para el desvio y otra para el destino. El desvio solo costaba 746 ms antes
+      de que empezara a cargar la pagina buena. */
+      { title: "CRM", href: "/crm/contactos", icon: Users, mobilePrimary: true },
       { title: "Calendario", href: "/calendario", icon: CalendarCheck },
       { title: "Email Marketing", href: "/email-marketing", icon: Mail },
       { title: "Webs", href: "/webs", icon: Globe },
@@ -72,7 +77,7 @@ export const navAll = navSections.flatMap((s) => s.items)
  * lo primero de la barra es lo que mas se usa, y eso no tiene por que coincidir
  * con como estan agrupadas las secciones en el escritorio.
  */
-const ORDEN_BARRA_MOVIL = ["/dashboard", "/crm", "/ads", "/instagram"]
+const ORDEN_BARRA_MOVIL = ["/dashboard", "/crm/contactos", "/ads", "/instagram"]
 
 export const navPrimary = navAll
   .filter((i) => i.mobilePrimary)

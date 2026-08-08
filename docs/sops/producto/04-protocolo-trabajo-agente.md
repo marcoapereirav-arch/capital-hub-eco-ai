@@ -639,3 +639,48 @@ apuntando a lo borrado.
 - **Los números se pueden abrir:** al tocar una barra se ve quién hay dentro. Un número que obliga a irse a otra pantalla a buscar el detalle está a medias.
 
 **Why:** 2026-08-08. El dashboard tenía **siete gráficos** y Marco no entendía ninguno: *"no entiendo ninguno de los gráficos... TU OBJETIVO ES CLARIDAD"*. Cada uno estaba dibujado de una forma distinta, con diagonales que no significaban nada y porcentajes sueltos. Se quedaron **tres**, con un solo idioma.
+
+---
+
+## REGLA #26: Toda lista se abre en VENTANA y nunca enseña más de 20
+
+> Marco, 2026-08-08: *"cuando toco una barra, no quiero que esa vaina se despliegue hacia abajo. Quiero ver un pop-up donde me muestre todos los contactos y recuerda siempre: nunca me muestras más de veinte contactos. Si hay más de veinte, se mueve con una flecha en la otra. Eso anótalo como regla para no estar repitiéndotelo cada rato."*
+
+**Por defecto, en todo el OS, sin que haga falta pedirlo:**
+
+- Al tocar algo que representa un grupo de personas (una barra, una etapa, un número), la lista se abre en una **ventana**, no desplegándose hacia abajo y empujando lo demás.
+- **Máximo 20 filas a la vez. Siempre.** Con más, se pasa de página con **una flecha atrás y una flecha adelante**, y se dice en qué punto estás ("21 a 40 de 132").
+- El tamaño de página es una **constante única del OS**, no un parámetro por pantalla: el día que cambie, cambia en todos lados a la vez.
+- En el teléfono la ventana entra desde abajo; en el ordenador, centrada. El lado se decide con clases, nunca con JavaScript.
+- Mientras la ventana está abierta, la página de detrás **no se mueve**.
+
+Componentes: `<ListaEnVentana>` (`src/components/ui/lista-en-ventana.tsx`) para la ventana, y `<ListaPaginada>` para listas en línea dentro de una pantalla.
+
+---
+
+## REGLA #27: Un número que se enseña tiene que poder explicarse en una frase
+
+> Marco, 2026-08-08: *"¿Cómo que vinieron? ¿Qué carajo es vinieron, bro? Habla específicamente con el lenguaje exacto que es."*
+
+**Antes de escribir el rótulo de una métrica, hay que poder terminar esta frase: "esto cuenta ___ , medido desde ___ , en el periodo ___".** Si no se puede, la métrica no está lista para salir a pantalla.
+
+**How to apply:**
+
+- **Nada de verbos vagos.** "Vinieron" no significa nada: es **"se conectaron a la llamada"**. "Llamadas hechas" es **"llamadas celebradas"**. "No vinieron" es **"no se presentaron"**.
+- **El pie de cada número dice de dónde sale**, con las dos cantidades: no "de 8 agendadas, 3 por venir", sino **"se reservaron 8. Quedan 3 por celebrar"**.
+- **Un porcentaje dice siempre de qué es**: no "0%", sino "0 ventas de 5 llamadas celebradas".
+- Si el rótulo no cabe, se acorta el rótulo, **nunca el significado**.
+
+---
+
+## REGLA #28: Un embudo solo se dibuja como embudo si de verdad lo es
+
+**Un embudo supone que cada paso es un subconjunto del anterior.** Si no lo es, dibujarlo como embudo es mentir.
+
+**How to apply:**
+
+- **Recorrido** (cada paso sale del anterior): se dibuja como embudo, con la caída entre paso y paso.
+- **Reparto** (dónde está cada persona ahora): se dibuja como barras con su porcentaje del total. **Sin caídas**, porque nadie se ha caído: están repartidos.
+- **Nunca se deduce por dónde pasó alguien a partir de dónde está ahora.** Eso solo lo sabe su historial.
+
+**Why:** 2026-08-08. El panel decía **"23 en DM"** en el embudo del webinar cuando en DM no había **nadie**, y "23 en Lead" cuando había 19. El cálculo sumaba a cada escalón todos los siguientes, dando por hecho que quien está en "Agendado" pasó antes por "Lead" y antes por "DM". Falso: al webinar se entra directamente en "Lead" al dejar los datos. **El CRM decía la verdad y el panel otra cosa**, y lo cazó Marco.
