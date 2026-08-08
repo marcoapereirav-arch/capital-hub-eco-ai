@@ -56,6 +56,10 @@ export function PeriodFilter({
   const [customFrom, setCustomFrom] = useState<string>("")
   const [customTo, setCustomTo] = useState<string>("")
   const containerRef = useRef<HTMLDivElement>(null)
+  /* El desplegable se dibuja en el `body` (portal) para que ningun contenedor
+     con recorte lo corte. Por eso hace falta su PROPIA referencia: sin ella,
+     "tocar fuera" lo consideraba fuera de si mismo. */
+  const popoverRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [mounted, setMounted] = useState(false)
   const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null)
@@ -104,12 +108,23 @@ export function PeriodFilter({
     }
   }, [])
 
-  // Cerrar al click fuera
+  /* Cerrar al tocar fuera.
+     ============================================================================
+     EL FALLO QUE ESTO ARREGLA (2026-08-08). El desplegable vive en el `body` por
+     el portal, asi que NO esta dentro de `containerRef`. Al pulsar una opcion,
+     este mismo manejador lo consideraba "fuera", cerraba el desplegable en el
+     `mousedown`, React lo quitaba del documento, y el `click` posterior ya no
+     encontraba boton al que llegar: `selectPreset` NUNCA se ejecutaba.
+     Resultado: el filtro se abria, se elegia un periodo y no pasaba nada. En
+     TODAS las pantallas del OS que lo usan, no solo en el panel.
+     La cuenta que faltaba: mirar tambien dentro del propio desplegable.
+     ============================================================================ */
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const destino = e.target as Node
+      const dentroDelBoton = containerRef.current?.contains(destino)
+      const dentroDelDesplegable = popoverRef.current?.contains(destino)
+      if (!dentroDelBoton && !dentroDelDesplegable) setOpen(false)
     }
     if (open) document.addEventListener("mousedown", onDocClick)
     return () => document.removeEventListener("mousedown", onDocClick)
@@ -142,10 +157,14 @@ export function PeriodFilter({
     setOpen(false)
   }
 
+  /* Lo que se lee en el boton. Si el padre no pasa `value`, esto se queda
+     clavado en la etiqueta por defecto elijas lo que elijas: parece roto aunque
+     los datos cambien. Por eso TODA pantalla tiene que pasar `value`. */
   const currentLabel = value?.label ?? PRESETS.find((p) => p.value === defaultPreset)?.label ?? "Período"
 
   const popover = open && mounted && popoverPos ? (
     <div
+      ref={popoverRef}
       style={{ position: "fixed", top: popoverPos.top, left: popoverPos.left, zIndex: 9999 }}
       className="w-[min(16rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-lg"
     >
@@ -206,6 +225,9 @@ export function PeriodFilter({
       <button
         ref={buttonRef}
         onClick={() => setOpen((s) => !s)}
+        aria-label="Cambiar el periodo"
+        aria-haspopup="listbox"
+        aria-expanded={open}
         className="inline-flex h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 text-[15px] text-foreground transition-colors active:bg-muted md:h-9 md:text-sm"
       >
         <Calendar className="h-4 w-4 text-muted-foreground" />

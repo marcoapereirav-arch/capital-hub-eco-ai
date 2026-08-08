@@ -169,3 +169,37 @@ Están en [`producto/04`](04-protocolo-trabajo-agente.md): **REGLA #23** (horas 
 - `dashboard-embudo.tsx` (el embudo + su desplegable)
 - `dashboard-como-va.tsx` (el gráfico de tiempo, con las barras abribles)
 - `dashboard-kpis.tsx` (los 4 números de prospección)
+
+---
+
+## 2026-08-08 · Tres fallos encontrados auditando el dashboard con el navegador
+
+Marco: *"el filtro de fecha NO funciona... tienes terminantemente prohibido decirme que ya está listo si aún no has verificado cada detalle"*. Se escribió una auditoría que toca CADA control y comprueba que hace algo: `.test-artifacts/auditar-dashboard.mjs` (71 comprobaciones, ordenador y teléfono). Salieron tres fallos reales, dos de ellos de TODO el OS y no solo del panel.
+
+### 1. El filtro de fechas no aplicaba nada. En ninguna pantalla
+
+`PeriodFilter` dibuja su desplegable en el `body` (portal) para que ningún contenedor con recorte lo corte. Pero el manejador de "cerrar al tocar fuera" solo miraba dentro de `containerRef`, que es el botón. **El desplegable quedaba fuera de sí mismo**: al pulsar una opción se cerraba en el `mousedown`, React lo quitaba del documento, y el `click` posterior no encontraba botón. `selectPreset` **nunca se ejecutaba**.
+
+Se abría el filtro, elegías periodo, y no pasaba nada. En el dashboard, en Ads, en Calendario, en Email Marketing y en ManyChat.
+
+**Arreglo:** el desplegable tiene su propia referencia y "tocar fuera" mira las dos.
+
+**Regla derivada:** cuando un desplegable se dibuja con portal, el "cerrar al tocar fuera" tiene que conocer AMBOS nodos. Si no, el componente se cierra a sí mismo antes de poder usarse.
+
+### 2. La etiqueta del filtro se quedaba clavada
+
+`PeriodFilter` pinta su etiqueta con `value?.label`. El dashboard no le pasaba `value`, así que ponía siempre "Últimos 30 días" eligieras lo que eligieras. **Toda pantalla tiene que pasar `value`**, como ya documenta la skill del brandkit.
+
+**Pendiente:** `src/features/manychat/components/manychat-period-kpis.tsx` tiene el mismo fallo (no pasa `value`). No se tocó por no salir del encargo.
+
+### 3. Las variables de zona segura llegan VACÍAS, y tumban las medidas que las usan
+
+Medido en el navegador: `getComputedStyle(document.documentElement).getPropertyValue('--sab')` devuelve **cadena vacía**, igual que `--sat`. Están declaradas en `html { }` dentro de `@layer base` de `globals.css`, pero no llegan.
+
+Consecuencia: `calc(3.5rem + var(--sab) + 1rem)` es inválido, **el navegador tira la declaración entera**, y un elemento "fijo abajo" se queda en su posicion natural: **arriba del todo**. El botón flotante del OS salía en `y=0` y tapado: no se podía pulsar en el teléfono.
+
+**Arreglo aplicado al botón flotante:** la altura se pone en `style` con `env(safe-area-inset-bottom, 0px)` directo, sin variable que pueda faltar.
+
+**Pendiente, y afecta a más pantallas:** hay ~10 sitios más con el mismo patrón (`mobile-shell`, `mobile-header`, `contact-detail`, `pipelines-kanban`, `KnowledgeEditorClient`, `KnowledgeBrain`, `PushNotificationPrompt`, `UpdateNotifier`). Todos están silenciosamente rotos en el teléfono mientras `--sab` y `--sat` no lleguen. **Lo que hay que arreglar es la causa: por qué esas variables no llegan.** No se tocó aquí por no salir del encargo.
+
+**Regla derivada:** una medida que depende de una variable CSS se cae ENTERA si la variable falta, y no avisa. Se comprueba en el navegador con `getComputedStyle`, no leyendo el código.

@@ -26,7 +26,7 @@ type Accion = "venta" | "parte"
 
 const ETIQUETA: Record<Accion, string> = {
   venta: "Registrar venta",
-  parte: "Parte del día",
+  parte: "Registrar actividad",
 }
 
 export function RegistrarVentaWidget({ rol }: { rol: string | null }) {
@@ -68,7 +68,15 @@ export function RegistrarVentaWidget({ rol }: { rol: string | null }) {
     <>
       <div
         ref={caja}
-        className="fixed right-4 z-40 bottom-[calc(3.5rem+var(--sab)+1rem)] md:bottom-6 md:right-6"
+/* La altura se pone AQUI, no en una clase.
+            Motivo medido en el navegador el 2026-08-08: las variables de zona
+            segura (`--sab`) llegan VACIAS, asi que `calc(... + var(--sab) + ...)`
+            es invalido, el navegador tira la regla entera y este boton "fijo
+            abajo" acababa pegado ARRIBA del todo y tapado por otra cosa: no se
+            podia pulsar en el telefono. Con `env()` directo no hay variable que
+            pueda faltar. */
+        style={{ bottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px) + 1rem)" }}
+        className="fixed right-4 z-40 md:!bottom-6 md:right-6"
       >
         {/* El menu, encima del boton. Se sale hacia arriba para no meterse
             debajo de la barra de abajo del telefono. */}
@@ -100,7 +108,7 @@ export function RegistrarVentaWidget({ rol }: { rol: string | null }) {
           onClick={() => (unaSola ? setAbierto(acciones[0]) : setMenuAbierto((v) => !v))}
           aria-haspopup={unaSola ? undefined : "menu"}
           aria-expanded={unaSola ? undefined : menuAbierto}
-          title={unaSola ? ETIQUETA[acciones[0]] : "Registrar venta o parte del día"}
+          title={unaSola ? ETIQUETA[acciones[0]] : "Registrar venta o actividad"}
           className={cn(
             // El verde y la tinta salen del tema, no de los verdes crudos de
             // Tailwind: si un dia cambia la marca, este boton cambia con ella.

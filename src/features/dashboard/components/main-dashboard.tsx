@@ -954,7 +954,7 @@ export function MainDashboard() {
             leyenda que explica, una sola vez, que significa lo gris y lo fino
             del resto de la pagina. */}
         <div className="hud-in flex flex-wrap items-center gap-3">
-          <PeriodFilter onChange={setRange} defaultPreset="30d" />
+          <PeriodFilter value={range ?? undefined} onChange={setRange} defaultPreset="30d" />
         </div>
         {leyenda && (
           <p className="hud-in mt-2 text-sm text-muted-foreground" style={{ animationDelay: "40ms" }}>

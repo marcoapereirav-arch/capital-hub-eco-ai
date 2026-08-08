@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { X, Check, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LoadingScreen } from "@/components/ui/loading-screen"
 
 /**
  * El parte diario. Cuatro numeros, hecho para el pulgar.
@@ -52,6 +51,18 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [guardado, setGuardado] = useState(false)
+
+  /* Mientras el modal esta abierto, la pagina de detras NO se mueve.
+     Sin esto, al llegar al final de la lista el dedo sigue empujando y lo que
+     baja es el dashboard: parece que el modal se ha ido. */
+  useEffect(() => {
+    const body = document.body
+    const antes = body.style.overflow
+    body.style.overflow = "hidden"
+    return () => {
+      body.style.overflow = antes
+    }
+  }, [])
 
   // Carga inicial: el parte de hoy, si lo hay.
   useEffect(() => {
@@ -127,10 +138,10 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
 
   if (guardado) {
     return enElBody(
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4">
+      <div className="fixed inset-0 z-50 flex items-end justify-center overscroll-none bg-black/70 p-0 md:items-center md:p-4">
         <div className="w-full max-w-md space-y-3 rounded-xl border border-border bg-background p-6 text-center">
           <Check className="mx-auto h-12 w-12 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Parte guardado</h2>
+          <h2 className="text-xl font-semibold text-foreground">Actividad registrada</h2>
           <p className="text-[15px] text-muted-foreground">{fechaLarga(fecha)}</p>
         </div>
       </div>,
@@ -138,13 +149,13 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
   }
 
   return enElBody(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overscroll-none bg-black/70 p-0 md:items-center md:p-4">
       <form
         onSubmit={guardar}
         className="flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-xl border border-border bg-background md:max-h-[85dvh] md:rounded-xl"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h2 className="text-base font-semibold text-foreground">Parte del día</h2>
+          <h2 className="text-base font-semibold text-foreground">Registrar actividad</h2>
           <button
             type="button"
             onClick={onClose}
@@ -155,7 +166,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="no-overscroll min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="no-overscroll min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
           <label className="block">
             <span className="text-sm font-medium text-muted-foreground">Día</span>
             <input
@@ -174,12 +185,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
             </p>
           )}
 
-          {cargando ? (
-            <div className="relative h-56">
-              <LoadingScreen fullscreen={false} className="absolute inset-0 bg-transparent" />
-            </div>
-          ) : (
-            CAMPOS.map((c) => (
+          {CAMPOS.map((c) => (
               <label key={c.clave} className="block">
                 <span className="text-[15px] font-medium text-foreground">{c.etiqueta}</span>
                 <span className="mt-0.5 block text-sm text-muted-foreground">{c.ayuda}</span>
@@ -192,11 +198,11 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) =>
                     setValores((v) => ({ ...v, [c.clave]: Math.max(0, Math.floor(Number(e.target.value) || 0)) }))
                   }
-                  className="mt-1.5 h-11 w-full rounded-lg border border-border bg-card px-3 text-base tabular-nums text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="mt-1.5 h-11 w-full rounded-lg border border-border bg-card px-3 text-base tabular-nums text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                  disabled={cargando}
                 />
               </label>
-            ))
-          )}
+          ))}
 
           {error && (
             <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-2.5 text-sm text-destructive">
@@ -214,7 +220,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
             disabled={guardando || cargando}
             className="h-11 w-full rounded-lg bg-primary text-[15px] font-semibold text-primary-foreground disabled:opacity-50"
           >
-            {guardando ? "Guardando…" : "Guardar el parte"}
+            {guardando ? "Guardando…" : "Guardar"}
           </button>
         </div>
       </form>
