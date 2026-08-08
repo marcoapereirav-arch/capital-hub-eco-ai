@@ -13,6 +13,14 @@ import { useEffect } from "react"
  */
 export function DiagMovil() {
   useEffect(() => {
+    // SOLO desde un telefono. La primera vez midio desde el Mac de Marco y piso
+    // la medida buena: en el ordenador las zonas seguras tambien valen cero, asi
+    // que ese dato no sirve para nada y encima tapaba el que hacia falta.
+    const esTelefono =
+      window.matchMedia("(max-width: 767px)").matches ||
+      window.matchMedia("(display-mode: standalone)").matches
+    if (!esTelefono) return
+
     if (sessionStorage.getItem("diag-enviado")) return
     sessionStorage.setItem("diag-enviado", "1")
 
