@@ -86,7 +86,7 @@ export default async function MainLayout({
 
       <PushNotificationPrompt userId={user.id} />
       <UpdateNotifier />
-      <RegistrarVentaWidget />
+      <RegistrarVentaWidget rol={realRole} />
       {/* TEMPORAL: manda las medidas del telefono para poder arreglar la franja. */}
       <DiagMovil />
     </SidebarProvider>

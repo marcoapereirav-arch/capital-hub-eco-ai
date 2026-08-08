@@ -158,3 +158,30 @@ Calendly daba la entrega por buena, **no reintentaba**, y no saltaba ninguna ala
 ### Pendiente
 
 Endurecer el receptor para que **deje de devolver 200 cuando falla**: registrar el fallo, contestar 500 para que Calendly reintente (lo hace 24 h) y avisar al equipo.
+
+### 2026-08-08 · El receptor deja de mentir (arreglo de raíz)
+
+`src/app/api/webhooks/calendly/route.ts` reescrito. Las tres reglas que ahora cumple:
+
+1. **Todo lo que entra queda registrado** en `calendly_webhook_log` antes de procesarse, incluido lo rechazado por firma. Sin registro se investiga a ciegas, que es lo que pasó.
+2. **Si algo falla al guardar, responde 500.** Calendly reintenta durante 24 horas y salta un aviso al equipo (como mucho uno por hora, para no hacer ruido). **Nunca se responde 200 sin haber guardado.**
+3. **Lo que legítimamente no interesa responde 200 con `ignored`.** Esa distinción evita una tormenta de reintentos por algo que da igual.
+
+Además: guarda las 9 respuestas del formulario, rellena teléfono e Instagram del contacto **solo si están vacíos**, y **solo la agenda de venta toca el CRM**. Los avisos y el correo van después de guardar y en su propio `try`: si falla un correo, la reserva ya está guardada y Calendly no debe reintentarla.
+
+**Regla derivada:** un `catch` que devuelve 200 es un fallo mudo. En cualquier receptor de webhooks, un fallo se responde con error.
+
+---
+
+## 2026-08-08 · El parte diario
+
+Tabla `setter_daily_reports`, **una fila por persona y día** (lo garantiza el `UNIQUE (profile_id, report_date)`, no la pantalla).
+
+- Se rellena desde el **botón verde** del OS, que ahora abre un menú: **Registrar venta** o **Parte del día**. Cada rol ve lo suyo: super_admin las dos, closer solo la venta, setter solo el parte.
+- Cuatro números: conversaciones nuevas abiertas, follow-ups nuevos, ofertas de llamada tiradas y llamadas agendadas.
+- Si se vuelve a abrir el mismo día, **los números salen ya escritos** y se corrigen encima. La pantalla lo dice.
+- El día es el de **Europe/Madrid**, no el de UTC: si no, a partir de las 22:00 el parte se iría al día siguiente.
+- **Sin avisos al móvil** (Marco los quitó expresamente).
+- `profile_id` sale **siempre de la sesión**, nunca del cuerpo de la petición. Si no se puede comprobar el permiso, es un NO.
+
+Endpoint: `src/app/api/setter/report/route.ts`. Pantalla: `src/features/setter/components/parte-diario-modal.tsx`.
