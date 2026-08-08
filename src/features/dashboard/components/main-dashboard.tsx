@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { usePipelines, useActivePipelineId } from "@/features/pipelines/hooks/use-pipelines"
 import { RegistrarVentaModal } from "@/features/sales/components/registrar-venta-modal"
-import { DashboardFunnel } from "./dashboard-funnel"
-import { DashboardChain } from "./dashboard-chain"
-import { DashboardPulse } from "./dashboard-pulse"
 import { DashboardPendingSales, type VentaPorCompletar } from "./dashboard-pending-sales"
 import { DashboardActivity } from "./dashboard-activity"
+import { DashboardKpis, type Kpi } from "./dashboard-kpis"
+import { DashboardMetricas, type Metrica } from "./dashboard-metricas"
+import { DashboardEmbudo, SelectorEmbudo, type OpcionEmbudo } from "./dashboard-embudo"
+import { DashboardComoVa } from "./dashboard-como-va"
 import {
-  construirCadena,
-  construirPulso,
+  MS_DIA,
   diaMes,
   eur,
   plural,
@@ -29,6 +29,7 @@ import {
 
 type ContactRow = {
   id: string
+  pipeline_id?: string | null
   full_name: string | null
   stage: string
   origin: string | null
@@ -48,10 +49,34 @@ type StudentInviteRow = {
   created_at: string
 }
 
-type CalendarBookingRow = {
-  id: string
-  start_at: string
+/**
+ * Una reserva de Calendly.
+ *
+ * ANTES esto salia de `calendar_bookings`, la tabla del calendario propio del OS,
+ * que tiene CERO filas porque nadie lo usa, y encima se filtraba por el estado
+ * "completed", que no existe en su lista de valores. Resultado: llamadas hechas,
+ * show rate, no-shows y conversion a venta salian SIEMPRE en cero, pasara lo que
+ * pasara. Cuatro de las cinco metricas que pidio Adrian.
+ *
+ * Las llamadas de verdad estan en Calendly, y solo cuentan las de la agenda de
+ * VENTA: en la cuenta hay tambien la de arranque de clientes y una personal, y
+ * mezclarlas ensuciaba cualquier numero de ventas.
+ */
+type ReservaRow = {
+  uri: string
+  start_time: string
   status: string | null
+  invitee_name: string | null
+  invitee_email: string | null
+}
+
+type ReporteSetterRow = {
+  profile_id: string
+  report_date: string
+  conversaciones: number
+  followups: number
+  ofertas: number
+  agendadas: number
 }
 
 // =============================================================================
@@ -155,7 +180,10 @@ export function MainDashboard() {
   const [previousContacts, setPreviousContacts] = useState<ContactRow[]>([])
   const [invites, setInvites] = useState<StudentInviteRow[]>([])
   const [previousInvites, setPreviousInvites] = useState<StudentInviteRow[]>([])
-  const [bookings, setBookings] = useState<CalendarBookingRow[]>([])
+  const [bookings, setBookings] = useState<ReservaRow[]>([])
+  const [previousBookings, setPreviousBookings] = useState<ReservaRow[]>([])
+  const [reportesSetter, setReportesSetter] = useState<ReporteSetterRow[]>([])
+  const [embudoElegido, setEmbudoElegido] = useState("venta")
   const [loading, setLoading] = useState(true)
   /* La serie de 30 dias se sigue cargando exactamente igual (la carga de datos no
      se toca), pero el pulso mide el PERIODO elegido en el filtro, asi que sus
@@ -222,6 +250,27 @@ export function MainDashboard() {
       const series30dStart = new Date(range.to.getTime() - 30 * 24 * 60 * 60 * 1000)
       const series30dStartIso = series30dStart.toISOString()
 
+      /* Que agendas cuentan como VENTA. Se pregunta primero y se filtra por esa
+         lista: la agenda de arranque de clientes y la personal de Adrian no
+         pueden contaminar ni un numero de ventas. Una agenda nueva entra como
+         "sin clasificar" y tampoco cuenta hasta que se le diga que es. */
+      const { data: tiposVenta } = await supabase
+        .from("calendly_event_types")
+        .select("uri")
+        .eq("purpose", "venta")
+      const urisVenta = (tiposVenta ?? []).map((t: { uri: string }) => t.uri)
+
+      /* Hasta donde se miran las reservas.
+         Si el periodo llega hasta hoy, se estira 60 dias hacia adelante para
+         recoger LAS QUE YA ESTAN PUESTAS y todavia no han ocurrido. Sin esto,
+         "agendadas" solo contaba las pasadas, o sea exactamente lo mismo que
+         "hechas", y el primer salto del embudo salia siempre 100%: inutil. Y
+         peor: Adrian veia 3 aqui y 7 en Calendly. */
+      const hoy = Date.now()
+      const topeReservas = new Date(
+        range.to.getTime() >= hoy - MS_DIA ? Math.max(range.to.getTime(), hoy + 60 * MS_DIA) : range.to.getTime(),
+      ).toISOString()
+
       const [
         contactsRes,
         allContactsRes,
@@ -229,6 +278,8 @@ export function MainDashboard() {
         invitesRes,
         prevInvitesRes,
         bookingsRes,
+        prevBookingsRes,
+        reportesRes,
         seriesRes,
         pendingSalesRes,
       ] = await Promise.all([
@@ -238,7 +289,7 @@ export function MainDashboard() {
           .gte("created_at", fromIso)
           .lte("created_at", toIso)
           .order("created_at", { ascending: false }),
-        supabase.from("contacts").select("id, stage, total_revenue, total_cash_collected, origin"),
+        supabase.from("contacts").select("id, stage, total_revenue, total_cash_collected, origin, pipeline_id"),
         supabase
           .from("contacts")
           .select("id, total_revenue, total_cash_collected")
@@ -258,10 +309,22 @@ export function MainDashboard() {
           .lte("created_at", prevToIso)
           .not("contact_id", "is", null),
         supabase
-          .from("calendar_bookings")
-          .select("id, start_at, status")
-          .gte("start_at", fromIso)
-          .lte("start_at", toIso),
+          .from("calendly_scheduled_events")
+          .select("uri, start_time, status, invitee_name, invitee_email")
+          .in("event_type_uri", urisVenta.length > 0 ? urisVenta : ["__ninguna__"])
+          .gte("start_time", fromIso)
+          .lte("start_time", topeReservas),
+        supabase
+          .from("calendly_scheduled_events")
+          .select("uri, start_time, status, invitee_name, invitee_email")
+          .in("event_type_uri", urisVenta.length > 0 ? urisVenta : ["__ninguna__"])
+          .gte("start_time", prevFromIso)
+          .lte("start_time", prevToIso),
+        supabase
+          .from("setter_daily_reports")
+          .select("profile_id, report_date, conversaciones, followups, ofertas, agendadas")
+          .gte("report_date", ymd(range.from))
+          .lte("report_date", ymd(range.to)),
         supabase
           .from("contacts")
           .select("created_at, total_revenue")
@@ -281,7 +344,9 @@ export function MainDashboard() {
       setPreviousContacts((prevContactsRes.data ?? []) as ContactRow[])
       setInvites((invitesRes.data ?? []) as StudentInviteRow[])
       setPreviousInvites((prevInvitesRes.data ?? []) as unknown as StudentInviteRow[])
-      setBookings((bookingsRes.data ?? []) as CalendarBookingRow[])
+      setBookings((bookingsRes.data ?? []) as ReservaRow[])
+      setPreviousBookings((prevBookingsRes.data ?? []) as ReservaRow[])
+      setReportesSetter((reportesRes.data ?? []) as ReporteSetterRow[])
       setPendingSales((pendingSalesRes.data ?? []) as VentaPorCompletar[])
 
       const seriesMap = new Map<string, number>()
@@ -308,66 +373,111 @@ export function MainDashboard() {
   // KPIs REALES (negocio completo del periodo, sin sesgo de pipeline)
   // ---------------------------------------------------------------------------
   const kpis = useMemo(() => {
+    const ahora = Date.now()
+
+    /* Como se cuenta una llamada. Definiciones cerradas con Marco el 2026-08-07:
+         agendadas = todas las reservas de venta del periodo, en cualquier estado
+         canceladas = la persona la anulo
+         no shows   = tenia cita y no aparecio
+         hechas     = ya paso su hora y no se cancelo ni se marco no show
+       Una llamada que todavia no ha ocurrido NO es una llamada hecha: contarla
+       inflaria el show rate cada manana y lo haria bajar solo al pasar el dia. */
+    const contarReservas = (filas: ReservaRow[]) => {
+      const agendadas = filas.length
+      const canceladas = filas.filter((b) => b.status === "canceled").length
+      const noShows = filas.filter((b) => b.status === "no_show").length
+      const hechas = filas.filter(
+        (b) => b.status !== "canceled" && b.status !== "no_show" && new Date(b.start_time).getTime() <= ahora,
+      ).length
+      const porVenir = filas.filter(
+        (b) => b.status !== "canceled" && b.status !== "no_show" && new Date(b.start_time).getTime() > ahora,
+      ).length
+      return { agendadas, canceladas, noShows, hechas, porVenir }
+    }
+
+    const r = contarReservas(bookings)
+    const rPrev = contarReservas(previousBookings)
+
     const revenue = contacts.reduce((s, c) => s + (c.total_revenue ?? 0), 0)
     const prevRevenue = previousContacts.reduce((s, c) => s + (c.total_revenue ?? 0), 0)
     const revenueDelta = revenue - prevRevenue
 
     const cashCollected = contacts.reduce((s, c) => s + (c.total_cash_collected ?? 0), 0)
+    const prevCash = previousContacts.reduce((s, c) => s + (c.total_cash_collected ?? 0), 0)
 
     const ventas = invites.length
     const prevVentas = previousInvites.length
 
-    const llamadasCompletadas = bookings.filter((b) => b.status === "completed").length
-
     const contactosNuevos = contacts.length
     const prevContactos = previousContacts.length
-    const llamadas = bookings.length
-    const noShows = bookings.filter((b) => b.status === "no_show").length
-    const showRate = llamadas > 0 ? Math.round((llamadasCompletadas / llamadas) * 100) : 0
 
-    const ticketMedio = ventas > 0 ? Math.round(revenue / ventas) : 0
+    /* Un porcentaje sin base NO es cero: es que no se puede calcular. Por eso
+       estos tres son null y no 0. Escribir "0%" cuando no hubo ni una llamada
+       se lee como "vamos fatal", y es mentira. */
+    const baseShow = r.hechas + r.noShows
+    const showRate = baseShow > 0 ? Math.round((r.hechas / baseShow) * 100) : null
+    const conversion = r.hechas > 0 ? Math.round((ventas / r.hechas) * 100) : null
+    const ticketMedio = ventas > 0 ? Math.round(revenue / ventas) : null
+
+    const pct = (actual: number, anterior: number) =>
+      anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
 
     return {
       revenue,
       prevRevenue,
       revenueDelta,
+      revenuePct: pct(revenue, prevRevenue),
       cashCollected,
+      cashPct: pct(cashCollected, prevCash),
       ventas,
       prevVentas,
+      ventasDelta: ventas - prevVentas,
       contactosNuevos,
       prevContactos,
-      llamadas,
-      llamadasCompletadas,
-      noShows,
+      contactosDelta: contactosNuevos - prevContactos,
+      llamadas: r.agendadas,
+      llamadasCompletadas: r.hechas,
+      canceladas: r.canceladas,
+      noShows: r.noShows,
+      llamadasPrev: rPrev.agendadas,
+      porVenir: r.porVenir,
       showRate,
+      conversion,
       ticketMedio,
     }
-  }, [contacts, previousContacts, invites, previousInvites, bookings])
+  }, [contacts, previousContacts, invites, previousInvites, bookings, previousBookings])
+
+  // ---------------------------------------------------------------------------
+  // EL SETTER: sus cuatro numeros del periodo, sumados de sus partes diarias.
+  // ---------------------------------------------------------------------------
+  const setter = useMemo(() => {
+    const suma = (campo: keyof ReporteSetterRow) =>
+      reportesSetter.reduce((s, r) => s + (Number(r[campo]) || 0), 0)
+    const conversaciones = suma("conversaciones")
+    const followups = suma("followups")
+    const ofertas = suma("ofertas")
+    const agendadas = suma("agendadas")
+    const hayDatos = reportesSetter.length > 0
+
+    return {
+      hayDatos,
+      dias: reportesSetter.length,
+      conversaciones,
+      followups,
+      ofertas,
+      agendadas,
+      /* Los mismos guiones que arriba: sin base no hay porcentaje. */
+      deConversacionAOferta: conversaciones > 0 ? Math.round((ofertas / conversaciones) * 100) : null,
+      deOfertaAAgendada: ofertas > 0 ? Math.round((agendadas / ofertas) * 100) : null,
+      deConversacionAAgendada: conversaciones > 0 ? Math.round((agendadas / conversaciones) * 100) : null,
+      /* La pregunta de Adrian: cuanto trae el setter y cuanto entra por otro lado. */
+      cuotaSobreCalendly:
+        kpis.llamadas > 0 ? Math.min(100, Math.round((agendadas / kpis.llamadas) * 100)) : null,
+    }
+  }, [reportesSetter, kpis.llamadas])
 
   const facturadoAnimado = useCountUp(loading ? 0 : kpis.revenue, 1200, 200)
 
-  // ---------------------------------------------------------------------------
-  // LA CADENA: contactos -> llamadas -> ventas, con el dinero colgando arriba.
-  // Todo sale de datos que ya se cargan hoy.
-  // ---------------------------------------------------------------------------
-  const cadena = useMemo(
-    () =>
-      construirCadena({
-        contactos: kpis.contactosNuevos,
-        contactosAnterior: kpis.prevContactos,
-        llamadas: kpis.llamadas,
-        llamadasHechas: kpis.llamadasCompletadas,
-        noShows: kpis.noShows,
-        showRate: kpis.showRate,
-        ventas: kpis.ventas,
-        ventasAnterior: kpis.prevVentas,
-        facturado: kpis.revenue,
-        ticketMedio: kpis.ticketMedio,
-        ultimoContacto: contacts[0]?.created_at ?? null,
-        hayVentasPendientes: pendingSales.length > 0,
-      }),
-    [kpis, contacts, pendingSales.length],
-  )
 
   const comparacionDinero = useMemo(() => {
     if (loading || kpis.prevRevenue <= 0) return null
@@ -405,20 +515,332 @@ export function MainDashboard() {
     return `Comparado con ${diaMes(prev.from)} al ${diaMes(prev.to)}. La marca fina de cada barra es donde llegó entonces.`
   }, [range])
 
+
   // ---------------------------------------------------------------------------
-  // EL PULSO: tramos del PERIODO elegido, midiendo PERSONAS.
-  //
-  // Mide personas y no dinero a proposito: es lo unico que se mueve cuando la
-  // facturacion esta a cero, que es como se abre el panel hoy. El dinero se
-  // marca encima de la columna en la que entro.
+  // LAS 8 METRICAS DEL NEGOCIO. Estaban y se borraron: vuelven con su nombre y su
+  // numero propio, y NO se esconde ninguna aunque el periodo venga vacio.
   // ---------------------------------------------------------------------------
-  const pulso = useMemo(
-    () =>
-      range
-        ? construirPulso(range.from, range.to, contacts)
-        : { tramos: [], unidad: "Día", desde: "", hasta: "" },
-    [range, contacts],
+  const kpisNegocio: Kpi[] = useMemo(() => {
+    const signo = (n: number) => (n > 0 ? `+${n}` : String(n))
+    return [
+      {
+        clave: "revenue",
+        etiqueta: "Revenue",
+        valor: kpis.revenue,
+        formato: "euro",
+        delta: kpis.revenuePct !== null ? { texto: `${signo(kpis.revenuePct)}%`, sube: kpis.revenuePct >= 0 } : null,
+        ayuda: "Facturado en el periodo",
+      },
+      {
+        clave: "cash",
+        etiqueta: "Cash collected",
+        valor: kpis.cashCollected,
+        formato: "euro",
+        delta: kpis.cashPct !== null ? { texto: `${signo(kpis.cashPct)}%`, sube: kpis.cashPct >= 0 } : null,
+        ayuda: "Lo que entró de verdad en caja",
+      },
+      {
+        clave: "ventas",
+        etiqueta: "Ventas",
+        valor: kpis.ventas,
+        formato: "numero",
+        delta: kpis.ventasDelta !== 0 ? { texto: signo(kpis.ventasDelta), sube: kpis.ventasDelta >= 0 } : null,
+        ayuda: "Cierres del periodo",
+      },
+      {
+        clave: "conversion",
+        etiqueta: "Conversión llamada a venta",
+        valor: kpis.conversion,
+        formato: "porcentaje",
+        ayuda: kpis.conversion === null ? "Sin llamadas hechas todavía" : `${kpis.ventas} de ${kpis.llamadasCompletadas} llamadas`,
+      },
+      {
+        clave: "contactos",
+        etiqueta: "Contactos nuevos",
+        valor: kpis.contactosNuevos,
+        formato: "numero",
+        delta:
+          kpis.contactosDelta !== 0
+            ? { texto: signo(kpis.contactosDelta), sube: kpis.contactosDelta >= 0 }
+            : null,
+        ayuda: "Entraron en el periodo",
+      },
+      {
+        clave: "llamadas",
+        etiqueta: "Llamadas hechas",
+        valor: kpis.llamadasCompletadas,
+        formato: "numero",
+        ayuda:
+          kpis.porVenir > 0
+            ? `De ${kpis.llamadas} agendadas · ${kpis.porVenir} por venir`
+            : `De ${kpis.llamadas} agendadas`,
+      },
+      {
+        clave: "showrate",
+        etiqueta: "Show rate",
+        valor: kpis.showRate,
+        formato: "porcentaje",
+        ayuda: kpis.showRate === null ? "Sin llamadas que contar" : `${kpis.noShows} no vinieron`,
+      },
+      {
+        clave: "ticket",
+        etiqueta: "Ticket medio",
+        valor: kpis.ticketMedio,
+        formato: "euro",
+        ayuda: kpis.ticketMedio === null ? "Sin ventas todavía" : "Por venta",
+      },
+    ]
+  }, [kpis])
+
+  // Los cuatro del setter, con la misma gramatica.
+  const kpisSetter: Kpi[] = useMemo(
+    () => [
+      {
+        clave: "s-conversaciones",
+        etiqueta: "Conversaciones nuevas",
+        valor: setter.hayDatos ? setter.conversaciones : null,
+        formato: "numero",
+        ayuda: setter.hayDatos ? "Abiertas en el periodo" : "Sin partes todavía",
+      },
+      {
+        clave: "s-followups",
+        etiqueta: "Follow-ups",
+        valor: setter.hayDatos ? setter.followups : null,
+        formato: "numero",
+        ayuda: setter.hayDatos ? "Seguimientos nuevos" : "Sin partes todavía",
+      },
+      {
+        clave: "s-ofertas",
+        etiqueta: "Ofertas de llamada",
+        valor: setter.hayDatos ? setter.ofertas : null,
+        formato: "numero",
+        ayuda: setter.hayDatos ? "Veces que ofreció la llamada" : "Sin partes todavía",
+      },
+      {
+        clave: "s-agendadas",
+        etiqueta: "Llamadas agendadas",
+        valor: setter.hayDatos ? setter.agendadas : null,
+        formato: "numero",
+        ayuda: setter.hayDatos ? `De ${kpis.llamadas} en total` : "Sin partes todavía",
+      },
+    ],
+    [setter, kpis.llamadas],
   )
+
+  // Embudo del setter: conversacion -> oferta -> agendada.
+  const embudoSetter = useMemo(
+    () => [
+      {
+        clave: "conversaciones",
+        etiqueta: "Conversaciones",
+        valor: setter.conversaciones,
+        lectura: `${setter.conversaciones} conversaciones nuevas abiertas en el periodo`,
+      },
+      {
+        clave: "ofertas",
+        etiqueta: "Ofertas de llamada",
+        valor: setter.ofertas,
+        lectura: `${setter.ofertas} veces ofreció la llamada`,
+      },
+      {
+        clave: "agendadas",
+        etiqueta: "Agendadas",
+        valor: setter.agendadas,
+        lectura: `${setter.agendadas} llamadas quedaron agendadas`,
+      },
+    ],
+    [setter],
+  )
+
+  // Embudo de la venta: agendada -> hecha -> venta.
+  const embudoVenta = useMemo(
+    () => [
+      {
+        clave: "agendadas",
+        etiqueta: "Agendadas",
+        valor: kpis.llamadas,
+        lectura:
+          kpis.porVenir > 0
+            ? `${kpis.llamadas} llamadas reservadas, de las que ${kpis.porVenir} todavía no han ocurrido`
+            : `${kpis.llamadas} llamadas se reservaron en el periodo`,
+      },
+      {
+        clave: "hechas",
+        etiqueta: "Hechas",
+        valor: kpis.llamadasCompletadas,
+        lectura: `${kpis.llamadasCompletadas} llamadas se celebraron de verdad${kpis.porVenir > 0 ? `. Quedan ${kpis.porVenir} por delante` : ""}`,
+      },
+      {
+        clave: "ventas",
+        etiqueta: "Ventas",
+        valor: kpis.ventas,
+        lectura: `${kpis.ventas} de esas llamadas acabaron en venta`,
+      },
+    ],
+    [kpis],
+  )
+
+  /* La curva del dinero que vive DENTRO de la pieza grande (grafico 1). */
+  const curvaDinero = useMemo(() => {
+    if (!range) return []
+    const dias: Date[] = []
+    for (let d = new Date(range.from); d <= range.to; d.setDate(d.getDate() + 1)) dias.push(new Date(d))
+    const paso = Math.max(1, Math.ceil(dias.length / 14))
+    const salida: { etiqueta: string; etiquetaLarga: string; valor: number }[] = []
+    for (let i = 0; i < dias.length; i += paso) {
+      const desde = dias[i]
+      const hasta = dias[Math.min(i + paso - 1, dias.length - 1)]
+      const valor = contacts
+        .filter((c) => ymd(new Date(c.created_at)) >= ymd(desde) && ymd(new Date(c.created_at)) <= ymd(hasta))
+        .reduce((sum, c) => sum + (c.total_revenue ?? 0), 0)
+      salida.push({
+        etiqueta: diaMes(desde),
+        etiquetaLarga: paso === 1 ? diaMes(desde) : `${diaMes(desde)} al ${diaMes(hasta)}`,
+        valor,
+      })
+    }
+    return salida
+  }, [range, contacts])
+
+  /* Las piezas pequeñas del mosaico: los conteos. */
+  const piezas: Metrica[] = useMemo(() => {
+    const signo = (n: number) => (n > 0 ? `+${n}` : String(n))
+    return [
+      {
+        clave: "cash",
+        etiqueta: "Cash collected",
+        valor: kpis.cashCollected,
+        formato: "euro",
+        delta: kpis.cashPct !== null ? { texto: `${signo(kpis.cashPct)}%`, sube: kpis.cashPct >= 0 } : null,
+        pie: "Lo que entró en caja",
+      },
+      {
+        clave: "ventas",
+        etiqueta: "Ventas",
+        valor: kpis.ventas,
+        formato: "numero",
+        delta: kpis.ventasDelta !== 0 ? { texto: signo(kpis.ventasDelta), sube: kpis.ventasDelta >= 0 } : null,
+        pie: "Cierres del periodo",
+      },
+      {
+        clave: "ticket",
+        etiqueta: "Ticket medio",
+        valor: kpis.ticketMedio,
+        formato: "euro",
+        pie: kpis.ticketMedio === null ? "Sin ventas todavía" : "Por venta",
+      },
+      {
+        clave: "contactos",
+        etiqueta: "Contactos nuevos",
+        valor: kpis.contactosNuevos,
+        formato: "numero",
+        delta:
+          kpis.contactosDelta !== 0 ? { texto: signo(kpis.contactosDelta), sube: kpis.contactosDelta >= 0 } : null,
+        pie: "Entraron en el periodo",
+      },
+      {
+        clave: "llamadas",
+        etiqueta: "Llamadas hechas",
+        valor: kpis.llamadasCompletadas,
+        formato: "numero",
+        pie:
+          kpis.porVenir > 0
+            ? `De ${kpis.llamadas} agendadas · ${kpis.porVenir} por venir`
+            : `De ${kpis.llamadas} agendadas`,
+      },
+      {
+        clave: "noshow",
+        etiqueta: "No vinieron",
+        valor: kpis.noShows,
+        formato: "numero",
+        pie: "De las que ya pasaron",
+      },
+    ]
+  }, [kpis])
+
+  // ---------------------------------------------------------------------------
+  // GRAFICO 3: COMO VA EL MES. Un solo grafico de tiempo con tres series.
+  // Como maximo 14 columnas: mas que eso en un telefono es una raya.
+  // ---------------------------------------------------------------------------
+  const comoVa = useMemo(() => {
+    if (!range) return { tramos: [], series: [] }
+
+    const dias: Date[] = []
+    for (let d = new Date(range.from); d <= range.to; d.setDate(d.getDate() + 1)) dias.push(new Date(d))
+    const paso = Math.max(1, Math.ceil(dias.length / 14))
+    const cortes: { desde: Date; hasta: Date }[] = []
+    for (let i = 0; i < dias.length; i += paso) {
+      cortes.push({ desde: dias[i], hasta: dias[Math.min(i + paso - 1, dias.length - 1)] })
+    }
+
+    const dentro = (iso: string, c: { desde: Date; hasta: Date }) => {
+      const k = ymd(new Date(iso))
+      return k >= ymd(c.desde) && k <= ymd(c.hasta)
+    }
+
+    const tramos = cortes.map((c, i) => ({
+      clave: `t-${i}`,
+      corta: diaMes(c.desde),
+      larga: paso === 1 ? diaMes(c.desde) : `${diaMes(c.desde)} al ${diaMes(c.hasta)}`,
+    }))
+
+    /* La hora se saca del dato ya convertido a la zona del negocio. Marco,
+       2026-08-07: las horas que se enseñan tienen que ser las horas reales. */
+    const hora = (iso: string) =>
+      new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })
+
+    const porTramo = <T,>(fn: (c: { desde: Date; hasta: Date }) => T[]) => cortes.map(fn)
+
+    const contactosPorTramo = porTramo((c) => contacts.filter((x) => dentro(x.created_at, c)))
+    const llamadasPorTramo = porTramo((c) => bookings.filter((b) => dentro(b.start_time, c)))
+    const ventasPorTramo = porTramo((c) => invites.filter((x) => dentro(x.created_at, c)))
+
+    const etiquetaEstado = (stage: string) => STAGE_LABELS[stage] ?? stage
+
+    return {
+      tramos,
+      series: [
+        {
+          clave: "contactos",
+          nombre: "Contactos",
+          valores: contactosPorTramo.map((f) => f.length),
+          filas: contactosPorTramo.map((f) =>
+            f.map((x) => ({
+              id: x.id,
+              nombre: x.full_name ?? "Contacto sin nombre",
+              detalle: `${etiquetaEstado(x.stage)} · entró por ${x.origin ?? "sin origen"} a las ${hora(x.created_at)}`,
+            })),
+          ),
+        },
+        {
+          clave: "llamadas",
+          nombre: "Llamadas",
+          valores: llamadasPorTramo.map((f) => f.length),
+          filas: llamadasPorTramo.map((f) =>
+            f.map((b) => ({
+              id: b.uri,
+              nombre: b.invitee_name ?? b.invitee_email ?? "Sin nombre",
+              detalle: `${diaMes(new Date(b.start_time))} a las ${hora(b.start_time)} · ${
+                b.status === "canceled" ? "cancelada" : b.status === "no_show" ? "no vino" : "agendada"
+              }`,
+            })),
+          ),
+        },
+        {
+          clave: "ventas",
+          nombre: "Ventas",
+          valores: ventasPorTramo.map((f) => f.length),
+          filas: ventasPorTramo.map((f) =>
+            f.map((x) => ({
+              id: x.id,
+              nombre: x.full_name || x.email,
+              detalle: `${x.products?.join(", ") || "sin producto"} · ${hora(x.created_at)}`,
+            })),
+          ),
+        },
+      ],
+    }
+  }, [range, contacts, bookings, invites, STAGE_LABELS])
 
   // ---------------------------------------------------------------------------
   // Embudo REAL (acumulado total, pipeline activo)
@@ -441,6 +863,65 @@ export function MainDashboard() {
     }))
     return { main, branches }
   }, [allContacts, FUNNEL_ORDER, FUNNEL_BRANCHES, STAGE_LABELS])
+
+  // ---------------------------------------------------------------------------
+  // GRAFICO 2: los embudos que se pueden elegir en el desplegable.
+  //
+  // Todos hablan el mismo idioma: pasos con su numero, y entre paso y paso la
+  // gente que se cae. El de la venta va primero porque es el que se mira.
+  // ---------------------------------------------------------------------------
+  const embudos: OpcionEmbudo[] = useMemo(() => {
+    const lista: OpcionEmbudo[] = [
+      {
+        id: "venta",
+        nombre: "Embudo de la venta",
+        pasos: [
+          { clave: "contactos", etiqueta: "Contactos", valor: kpis.contactosNuevos },
+          { clave: "agendaron", etiqueta: "Agendaron", valor: kpis.llamadas },
+          { clave: "vinieron", etiqueta: "Vinieron", valor: kpis.llamadasCompletadas },
+          { clave: "compraron", etiqueta: "Compraron", valor: kpis.ventas },
+        ],
+      },
+    ]
+
+    if (setter.hayDatos) {
+      lista.push({
+        id: "conversacion",
+        nombre: "De conversación a llamada",
+        pasos: [
+          { clave: "conversaciones", etiqueta: "Conversaciones", valor: setter.conversaciones },
+          { clave: "ofertas", etiqueta: "Ofertas de llamada", valor: setter.ofertas },
+          { clave: "agendadas", etiqueta: "Agendadas", valor: setter.agendadas },
+        ],
+      })
+    }
+
+    /* Los embudos del CRM: donde esta cada persona AHORA. Uno por pipeline, con
+       sus etapas de avance. Las salidas (seguimiento, no show, perdido) no son
+       un paso del recorrido, asi que no entran en la cadena. */
+    for (const p of pipelines) {
+      const avance = p.stages.filter((st) => st.kind === "active" || st.kind === "won")
+      if (avance.length === 0) continue
+      const delPipeline = allContacts.filter((c) => c.pipeline_id === p.id)
+      const cuenta = new Map<string, number>()
+      for (const c of delPipeline) cuenta.set(c.stage, (cuenta.get(c.stage) ?? 0) + 1)
+
+      /* Cada escalon lleva los que estan EN el, mas todos los que ya lo pasaron:
+         si alguien esta en "Alumno", en su dia paso por "Agendado". Sin esto el
+         embudo saldria al reves, con mas gente al final que al principio. */
+      lista.push({
+        id: `pipeline-${p.id}`,
+        nombre: p.name,
+        pasos: avance.map((st, i) => ({
+          clave: st.key,
+          etiqueta: st.name,
+          valor: avance.slice(i).reduce((sum, posterior) => sum + (cuenta.get(posterior.key) ?? 0), 0),
+        })),
+      })
+    }
+
+    return lista
+  }, [kpis, setter, pipelines, allContacts])
 
   // ---------------------------------------------------------------------------
   // Render
@@ -481,26 +962,78 @@ export function MainDashboard() {
           </p>
         )}
 
-        {/* BLOQUE 1: LA CADENA */}
-        <Card delay={80} className="mt-4">
-          {loading ? (
-            <CargandoBloque alto="h-[420px]" />
-          ) : (
-            <DashboardChain
-              facturado={eur(Math.round(facturadoAnimado))}
-              comparacion={comparacionDinero}
-              cobro={cobro}
-              eslabones={cadena.eslabones}
-              conectores={cadena.conectores}
-              lecturaPorDefecto={cadena.lecturaPorDefecto}
-              enlacePorDefecto={cadena.enlacePorDefecto}
-              botonPrincipal={cadena.botonPrincipal}
-              pie={pieInvitaciones}
-            />
-          )}
+        {/* BLOQUE 1: LOS 8 NUMEROS DEL NEGOCIO.
+            Van los primeros a proposito: es lo que Marco abre a mirar. Y estan
+            SIEMPRE los ocho, aunque el periodo venga vacio. */}
+        <div className="mt-4">
+          <DashboardMetricas
+            titular={{
+              etiqueta: "Facturación del periodo",
+              valor: kpis.revenue,
+              delta:
+                kpis.revenuePct !== null
+                  ? { texto: `${kpis.revenuePct > 0 ? "+" : ""}${kpis.revenuePct}%`, sube: kpis.revenuePct >= 0 }
+                  : null,
+              pie: `${kpis.ventas} ${plural(kpis.ventas, "venta", "ventas")} en el periodo`,
+            }}
+            anillos={[
+              {
+                clave: "showrate",
+                etiqueta: "Show rate",
+                pct: kpis.showRate,
+                pie:
+                  kpis.showRate === null
+                    ? "Sin llamadas que contar"
+                    : `${kpis.llamadasCompletadas} vinieron, ${kpis.noShows} no`,
+              },
+              {
+                clave: "conversion",
+                etiqueta: "Conversión llamada a venta",
+                pct: kpis.conversion,
+                pie:
+                  kpis.conversion === null
+                    ? "Sin llamadas hechas todavía"
+                    : `${kpis.ventas} de ${kpis.llamadasCompletadas} llamadas`,
+              },
+            ]}
+            piezas={piezas}
+            curva={curvaDinero}
+            cargando={loading}
+            eur={eur}
+          />
+        </div>
+
+        {/* Los cuatro numeros de la prospeccion. SIN TITULO: Marco lo pidio asi
+            el 2026-08-08 ("no le pongas una verga, ponle un separador y ya"). */}
+        <div className="mt-6 border-t border-border pt-6">
+          <DashboardKpis kpis={kpisSetter} cargando={loading} eur={eur} />
+        </div>
+
+        {/* GRAFICO 2: EL EMBUDO, con desplegable para elegir cual se mira.
+            Sustituye a los dos embudos sueltos que habia y al del CRM. */}
+        <Card
+          delay={120}
+          title="El embudo"
+          className="mt-4"
+          right={
+            <SelectorEmbudo opciones={embudos} valor={embudoElegido} onChange={setEmbudoElegido} />
+          }
+        >
+          <DashboardEmbudo
+            opciones={embudos}
+            seleccionado={embudoElegido}
+            onSeleccionar={setEmbudoElegido}
+            cargando={loading}
+          />
         </Card>
 
-        {/* BLOQUE 2: VENTAS POR COMPLETAR (solo si hay algo que cerrar) */}
+        {/* GRAFICO 3: COMO VA EL MES. Sustituye a los cuatro graficos de dias
+            que habia sueltos. */}
+        <Card delay={160} title="Cómo va el mes" className="mt-4">
+          <DashboardComoVa tramos={comoVa.tramos} series={comoVa.series} cargando={loading} />
+        </Card>
+
+        {/* BLOQUE 6a: VENTAS POR COMPLETAR (solo si hay algo que cerrar) */}
         {pendingSales.length > 0 && (
           <Card delay={120} title="Ventas por completar" count={pendingSales.length} className="mt-4">
             <DashboardPendingSales
@@ -518,57 +1051,6 @@ export function MainDashboard() {
             />
           </Card>
         )}
-
-        {/* BLOQUE 3: EL PULSO */}
-        <Card
-          delay={160}
-          title={`Qué pasó cada ${pulso.unidad.toLowerCase()}`}
-          className="mt-4"
-        >
-          {loading ? (
-            <CargandoBloque alto="h-[280px]" />
-          ) : (
-            <DashboardPulse
-              tramos={pulso.tramos}
-              unidad={pulso.unidad}
-              desde={pulso.desde}
-              hasta={pulso.hasta}
-              formatoEuro={eur}
-            />
-          )}
-        </Card>
-
-        {/* BLOQUE 4: DONDE ESTA LA GENTE AHORA (acumulado, no del periodo) */}
-        <Card
-          delay={200}
-          title="Embudo de conversión"
-          className="mt-4"
-          right={
-            pipelines.length > 1 ? (
-              <select
-                value={activePipelineId ?? ""}
-                onChange={(e) => setActivePipelineId(e.target.value)}
-                className="h-11 max-w-full rounded-lg border border-border bg-card px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring md:h-8 md:px-2.5 md:text-sm"
-                aria-label="Cambiar de embudo"
-              >
-                {pipelines.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            ) : undefined
-          }
-        >
-          <p className="px-4 pt-2 text-sm text-muted-foreground md:px-5">
-            {activePipeline?.name ?? "Pipeline"} {"·"} acumulado total
-          </p>
-          {loading ? (
-            <CargandoBloque alto="h-[240px]" />
-          ) : (
-            <DashboardFunnel main={funnelData.main} branches={funnelData.branches} colorOf={colorOf} />
-          )}
-        </Card>
 
         {/* Lo que va pasando dentro del sistema. Marco lo quiere de vuelta con la
             hora exacta y por donde entro cada lead (2026-08-07). */}

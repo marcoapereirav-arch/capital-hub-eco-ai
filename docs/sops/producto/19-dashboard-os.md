@@ -114,3 +114,58 @@ El dashboard de proyectos/tareas descrito arriba fue SUSTITUIDO en `/dashboard` 
 - En la card del embudo se usa un `select` nativo limpio para SOLO cambiar de embudo. Se quito el `PipelineSelector` (con su boton "Configurar" que abria el gestor de pipelines viejo dentro del dashboard). Ese gestor sigue existiendo en el CRM (vista kanban de contactos), que es su sitio.
 
 > Pendiente: reescribir el cuerpo de este SOP (arriba describe el dashboard viejo de tareas/foco). Se conserva por historico hasta la reescritura.
+
+---
+
+## 2026-08-08 · El dashboard reconstruido: 3 gráficos, no 7
+
+Origen: llamada Marco + Adrián del 6 de agosto, y la revisión de Marco del 7 y 8.
+
+### Qué había roto
+
+1. **Las 8 métricas se habían borrado.** El barrido de móvil del 7 de agosto (`6416d1b`) dejó `main-dashboard.tsx` de 1047 a 595 líneas y quitó la fila de tarjetas. Los números se seguían calculando y no se pintaban.
+2. **El dinero se escondía solo.** `revenue` y `cash collected` estaban dentro de `if (kpis.revenue <= 0) return null`. Sin ventas en el periodo, la pantalla no enseñaba nada de dinero.
+3. **Las llamadas se contaban en una tabla vacía.** Se leía `calendar_bookings` (el calendario propio, 0 filas, nadie lo usa) y se filtraba por `status === "completed"`, un valor que no existe en su CHECK. Llamadas hechas, show rate, no-shows y conversión salían siempre en cero.
+4. **Siete gráficos, ninguno legible.** Cada uno con su propio dibujo.
+
+### Cómo quedó
+
+**Orden de la pantalla:** mosaico de métricas · separador · los 4 números de prospección (sin título) · el embudo · cómo va el mes · ventas por completar · actividad.
+
+**Los 3 gráficos y qué contesta cada uno:**
+
+| Gráfico | Pregunta |
+|---|---|
+| Facturación en el tiempo (dentro de la pieza grande) | ¿Cuánto dinero y cómo voy? |
+| **El embudo** (con desplegable) | ¿Dónde se me cae la gente? |
+| **Cómo va el mes** | ¿Entra gente, se agenda, se cierra? |
+
+**Borrados por decir lo mismo desde seis sitios:** `dashboard-chain`, `dashboard-pulse`, `dashboard-funnel`, y los tres de día a día. También se recortó `dashboard-lecturas.ts` (`construirCadena` y `construirPulso` ya no existen).
+
+### Definiciones cerradas de las métricas de llamadas
+
+Salen de `calendly_scheduled_events`, filtrando **solo las agendas con `purpose = 'venta'`** en `calendly_event_types`.
+
+| Métrica | Cómo se cuenta |
+|---|---|
+| Llamadas agendadas | reservas de venta del periodo, en cualquier estado, **incluidas las que aún no han ocurrido** |
+| Canceladas | `status = 'canceled'` |
+| No shows | `status = 'no_show'` |
+| Llamadas hechas | ya pasó su hora, y no está cancelada ni marcada no show |
+| Show rate | hechas / (hechas + no shows). Sin base: **guion** |
+| Conversión llamada a venta | ventas / hechas. Sin base: **guion** |
+| Ticket medio | revenue / ventas. Sin ventas: **guion** |
+
+**Por qué "agendadas" incluye las futuras:** si solo contara las pasadas sería idéntico a "hechas", el primer salto del embudo saldría siempre 100% y Adrián vería 3 aquí y 8 en Calendly.
+
+### Reglas que nacen de aquí
+
+Están en [`producto/04`](04-protocolo-trabajo-agente.md): **REGLA #23** (horas reales), **REGLA #24** (todas las métricas siempre, guion nunca cero) y **REGLA #25** (un gráfico que no se explica solo, no sube).
+
+### Archivos
+
+- `src/features/dashboard/components/main-dashboard.tsx` (compone y calcula)
+- `dashboard-metricas.tsx` (el mosaico: pieza grande, anillos, piezas)
+- `dashboard-embudo.tsx` (el embudo + su desplegable)
+- `dashboard-como-va.tsx` (el gráfico de tiempo, con las barras abribles)
+- `dashboard-kpis.tsx` (los 4 números de prospección)

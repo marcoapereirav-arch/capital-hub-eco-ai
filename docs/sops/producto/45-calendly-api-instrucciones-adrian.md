@@ -119,3 +119,42 @@ Mejoras aplicadas en `booking-embed.tsx` + `reservar/page.tsx`:
 ### Pendiente de Adrián — quitar "Desarrollado por Calendly"
 El banner "Desarrollado por Calendly" va DENTRO del iframe de Calendly; no se puede quitar desde nuestro código (cross-origin). Adrián lo desactiva desde su cuenta:
 **Calendly → Account / Admin Management → Settings → "Remove Calendly branding"** (o en el evento: Share → Add to website → opción de quitar branding). Requiere plan de pago (Standard/Teams). Una vez activado, el banner desaparece en el embed sin tocar nada más.
+
+---
+
+## 2026-08-07 · Diez días perdiendo llamadas en silencio
+
+### Qué pasó
+
+Del **27 de julio al 7 de agosto no entró ni una reserva al OS**. En Calendly había 12 (luego 14); en el OS, 5. Faltaban 7 personas reales, con llamadas ese mismo día y el siguiente. Nadie recibió aviso y en Calendly la conexión seguía marcada como sana.
+
+### La causa raíz
+
+`src/app/api/webhooks/calendly/route.ts` **devolvía 200 aunque no hubiera guardado nada**:
+
+- si el mensaje no traía `scheduled_event`, hacía `return { ok: true, skipped: true }`
+- el `catch` final devolvía 200 con el error dentro
+
+Calendly daba la entrega por buena, **no reintentaba**, y no saltaba ninguna alarma. Un fallo mudo.
+
+### Lo que se arregló
+
+- **`scripts/calendly-backfill.mjs`**: trae de Calendly todo el histórico. **No manda ni un correo ni una notificación** (decisión de Marco: las llamadas ya estaban agendadas, avisar era ruido). Solo la agenda de venta toca el CRM, y solo si la llamada sigue viva (30 días).
+- **Se guardan las 9 respuestas del formulario.** El teléfono **no** viene en `text_reminder_number` (llega null): está en `questions_and_answers`, en la pregunta "Teléfono (con prefijo de tu país)". El Instagram, en "@ de instagram". Se buscan por texto con tolerancia, nunca por posición.
+- **`calendly_event_types.purpose`** (`venta` / `onboarding` / `personal` / `sin_clasificar`): en la cuenta hay tres agendas y solo la de venta cuenta en los números. Una agenda nueva entra sin contar hasta clasificarla.
+- **`calendly_webhook_log`**: registro crudo de todo lo que entra, incluido lo rechazado por firma.
+
+### Datos verificados de la cuenta
+
+| | |
+|---|---|
+| Zona horaria de la cuenta de Adrián | **Asia/Dubái** (no España) |
+| Asientos de Calendly | 1 |
+| Agenda de venta | "Sesión de orientación profesional" |
+| Suscripción webhook | activa, ámbito organización, 3 eventos |
+
+**Ojo con la zona:** la cuenta va en Dubái y el negocio en Madrid. Toda hora que se enseñe se convierte antes (REGLA #23 del protocolo del agente).
+
+### Pendiente
+
+Endurecer el receptor para que **deje de devolver 200 cuando falla**: registrar el fallo, contestar 500 para que Calendly reintente (lo hace 24 h) y avisar al equipo.

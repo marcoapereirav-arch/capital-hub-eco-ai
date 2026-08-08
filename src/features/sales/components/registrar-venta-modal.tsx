@@ -211,13 +211,25 @@ export function RegistrarVentaModal({
         </div>
 
         <div className="p-4 space-y-5">
-          {/* Tipo cierre */}
+          {/* QUIEN CERRO va lo primero: es el dato que Marco mira. */}
           <section>
-            <Label required>Tipo de cierre</Label>
+            <Label required>Quién cerró</Label>
+            <CloserPicker
+              closers={config?.closers ?? []}
+              value={form.closer_user_id}
+              onPick={pickCloser}
+            />
+          </section>
+
+          {/* Como se cerro, en palabras normales.
+              Antes ponia "Tras llamada" y "Direct close": Marco, 2026-08-07,
+              "eso no se entiende una mierda". El dato que se guarda es el mismo. */}
+          <section>
+            <Label required>¿Cómo se cerró?</Label>
             <div className="grid grid-cols-2 gap-2 mt-1.5">
               {([
-                ["sales_call", "Tras llamada", "Lead reservó y vino al Zoom"],
-                ["direct", "Direct close", "Sin llamada previa (DM, referral)"],
+                ["sales_call", "En una llamada", "Reservó agenda y vino"],
+                ["direct", "Por mensaje", "Sin llamada: DM, WhatsApp o recomendación"],
               ] as const).map(([v, label, desc]) => (
                 <button
                   key={v}
@@ -289,16 +301,6 @@ export function RegistrarVentaModal({
               placeholder="Método de pago"
               className="mt-2"
               required
-            />
-          </section>
-
-          {/* Cerró */}
-          <section>
-            <Label required>Quién cerró</Label>
-            <CloserPicker
-              closers={config?.closers ?? []}
-              value={form.closer_user_id}
-              onPick={pickCloser}
             />
           </section>
 

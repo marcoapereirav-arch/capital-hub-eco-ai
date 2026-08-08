@@ -40,6 +40,17 @@ Marco añadió: que sea **el mismo widget** que el de Registrar venta, que al to
 
 ---
 
+## Qué voy a hacer
+
+- Devolver al panel las **8 métricas** que tenía y se borraron: Revenue, Cash collected, Ventas, Conversión llamada a venta, Contactos nuevos, Llamadas hechas, Show rate y Ticket medio. Cada una con su nombre y su número propio a la vista.
+- Añadir las **4 del setter**: conversaciones nuevas, follow-ups, ofertas de llamada y llamadas agendadas por él.
+- Enseñar **el porcentaje entre paso y paso** en los tres embudos: el del setter, el de la venta y el del CRM.
+- Poner **gráficos de todo**: ingresos, llamadas, contactos y actividad del setter, día a día.
+- Arreglar que las llamadas se contaban en una tabla vacía: pasan a salir de Calendly.
+- Que **ninguna métrica se esconda** cuando no hay datos: si no se puede calcular, va un guion, nunca desaparece.
+- Que la entrada de reservas de Calendly deje de fallar en silencio.
+- Que el botón verde de abajo dé a elegir entre Registrar venta y Reporte setter.
+
 ## Lo que encontré al mirar la cuenta real
 
 - **Se están perdiendo llamadas ahora mismo.** En Calendly hay 12 reservas. En el OS solo hay 5. Faltan 5 personas reales (Diego Silva, Aroon, Susana Aguirre, Kenneth, Meritxell Martí) reservadas entre el 4 y el 6 de agosto. **Dos de esas llamadas son hoy y dos mañana.** No están en el CRM y nadie recibió aviso.

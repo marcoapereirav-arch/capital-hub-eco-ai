@@ -581,3 +581,48 @@ ya se disparo).
 **Why:** 2026-08-07, retirando los lead magnets y la agenda propia. Los dos borrados eran
 correctos; lo que casi sale mal fueron las cosas que se llamaban igual y las que quedaron
 apuntando a lo borrado.
+
+---
+
+## REGLA #23: Las horas que se enseñan son las horas REALES
+
+**Toda hora que se le enseñe a Marco, en chat o en pantalla, tiene que ser la hora real de lo que pasó.**
+
+**How to apply:**
+
+- Las APIs devuelven UTC. **Nunca se le pasa a Marco el texto crudo de una API.**
+- La hora se saca de la base de datos ya convertida, o se convierte antes de escribirla.
+- Antes de decir una hora: comprobarla contra la base de datos, no contra la respuesta de la API.
+
+**Why:** 2026-08-07. Le pasé a Marco cinco horas de llamadas leídas en UTC, con **dos horas de error**. Se lo corrigió su equipo en una reunión. Y de paso salió que la cuenta de Calendly de Adrián está en **Asia/Dubái**, así que ni la API ni lo que ve Adrián coinciden con la hora del negocio.
+
+---
+
+## REGLA #24: Todas las métricas se enseñan SIEMPRE
+
+**Ninguna métrica desaparece de la pantalla porque no tenga datos.** Todas se pintan siempre, con su nombre y su número propio.
+
+**How to apply:**
+
+- Un **conteo** vacío es `0`. Cero contactos es un dato: se escribe 0.
+- Un **porcentaje o una media sin divisor** no es 0: es que no se puede calcular. Ahí va un **guion**. Escribir "0%" cuando no hubo ni una llamada es mentir.
+- **Prohibido** el patrón `if (valor <= 0) return null` en una métrica. Eso es lo que rompió el dashboard.
+
+**Why:** 2026-08-07. El revenue y el cash collected estaban escritos para NO pintarse si no había dinero. Como el periodo venía sin ventas, la pantalla no enseñaba nada de dinero y Marco no entendía qué estaba mirando: *"siempre tienen que estar mostrando todas las fichas, todas las métricas, independientemente de si hay o no haya"*.
+
+---
+
+## REGLA #25: Un gráfico que no se explica solo, no sube
+
+**Si un dibujo necesita que alguien lo explique, está mal hecho y no entra en el producto.**
+
+**How to apply:**
+
+- **El número va escrito**, siempre, encima o dentro del dibujo. En un teléfono no hay ratón: un dato que solo aparece al pasar por encima **no existe**.
+- **Lo que se pierde se dibuja, no se cuenta.** En un embudo, la caída entre paso y paso es una forma con su número dentro, no un porcentaje flotando.
+- **Un solo idioma visual** para todo el panel: los embudos se dibujan todos igual, y los gráficos de tiempo también. Si cada uno es distinto, hay que aprender a leer cada uno.
+- **Colores con significado fijo:** verde avanza, gris no avanzó, **ámbar solo donde se pierde más** y en ningún otro sitio.
+- **Cero diagonales, sombras o trozos de color sin rótulo.**
+- **Los números se pueden abrir:** al tocar una barra se ve quién hay dentro. Un número que obliga a irse a otra pantalla a buscar el detalle está a medias.
+
+**Why:** 2026-08-08. El dashboard tenía **siete gráficos** y Marco no entendía ninguno: *"no entiendo ninguno de los gráficos... TU OBJETIVO ES CLARIDAD"*. Cada uno estaba dibujado de una forma distinta, con diagonales que no significaban nada y porcentajes sueltos. Se quedaron **tres**, con un solo idioma.
