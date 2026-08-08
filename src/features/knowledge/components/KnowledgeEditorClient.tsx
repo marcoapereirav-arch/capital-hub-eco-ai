@@ -277,7 +277,7 @@ export function KnowledgeEditorClient({ sop, folders }: { sop: SopRow; folders: 
             desplaza. Con `fixed` el teclado la tapa justo cuando hace falta.
             Se ancla POR ENCIMA de la barra de abajo (56 puntos + la franja de
             gestos): pegada a bottom-0 quedaria justo detras del menu. */}
-        <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 -mx-4 border-t border-border bg-background px-4 py-3 md:hidden">
+        <div className="sticky bottom-[calc(3.5rem+var(--sab))] z-30 -mx-4 border-t border-border bg-background px-4 py-3 md:hidden">
           <Button onClick={onSave} disabled={!dirty || isPending} className="w-full">
             {isPending ? 'Guardando…' : dirty ? 'Guardar' : 'Guardado'}
           </Button>

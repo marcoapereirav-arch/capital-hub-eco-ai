@@ -16,6 +16,7 @@ import {
   Repeat2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ListaPaginada } from "@/components/ui/lista-paginada"
 import {
   Sheet,
   SheetContent,
@@ -152,20 +153,32 @@ export function NotificationsBell() {
         </button>
       </SheetTrigger>
 
-      {/* Los cinco `!` son obligatorios: sheet.tsx coloca la hoja inferior con
+      {/* Los `!` son obligatorios: sheet.tsx coloca la hoja inferior con
           `data-[side=bottom]:...`, que compila a `.clase[data-side=bottom]` y
-          le gana en especificidad a cualquier `md:`. Sin ellos la campana salia
-          por la IZQUIERDA en monitor, con el borde en el lado equivocado. */}
+          le gana en especificidad a cualquier clase suelta o `md:`. Sin ellos
+          la campana salia por la IZQUIERDA en monitor, con el borde en el lado
+          equivocado.
+
+          `overflow-hidden!` apaga el `data-[side=bottom]:overflow-y-auto` de la
+          base por el mismo motivo. Sin el habia DOS sitios desplazandose a la
+          vez (la hoja entera y el listado de dentro) peleandose por el dedo, y
+          ademas el boton de cerrar, que va `absolute` dentro de la hoja, se iba
+          hacia arriba al desplazar y dejaba la ventana sin salida a la vista.
+          Ahora se desplaza UNA sola cosa: el listado. */}
       <SheetContent
         side="bottom"
-        className="max-h-[85dvh] w-full gap-0 rounded-t-xl p-0 pb-safe md:inset-y-0! md:right-0! md:left-auto! md:h-full! md:max-h-none! md:w-full md:max-w-md md:rounded-t-none md:border-l"
+        className="max-h-[85dvh] w-full gap-0 overflow-hidden! rounded-t-xl p-0 pb-safe md:inset-y-0! md:right-0! md:left-auto! md:h-full! md:max-h-none! md:w-full md:max-w-md md:rounded-t-none md:border-l"
       >
         <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
 
         {/* Header. Va shrink-0 y el que se desplaza es SOLO el listado de abajo:
             si el desplazamiento lo hace la hoja entera, con muchos avisos el
             titulo y "Marcar leidas" se van hacia arriba y hay que subir del todo
-            para volver a alcanzarlos. */}
+            para volver a alcanzarlos.
+
+            El `pr-12` reserva el hueco de la salida: el boton de cerrar de
+            <Sheet>, arriba a la derecha, que mide 44 puntos en telefono
+            (`icon-sm` = `size-11 md:size-7`). Tocar el fondo tambien cierra. */}
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border p-4 pr-12">
           <div className="flex min-w-0 items-center gap-2">
             <Bell className="size-4 shrink-0 text-muted-foreground" />
@@ -196,34 +209,53 @@ export function NotificationsBell() {
             </p>
           </div>
         ) : (
-          <div className="no-overscroll min-h-0 flex-1 overflow-y-auto">
-            {items.map((n) => {
-              const meta = TYPE_ICONS[n.type] ?? TYPE_ICONS.default
-              const Icon = meta.icon
-              const hasUrl = typeof n.data?.url === "string"
-              return (
-                <button
-                  key={n.id}
-                  onClick={() => openNotification(n)}
-                  className={cn(
-                    "flex w-full min-h-14 items-start gap-2.5 border-b border-border px-4 py-3 text-left transition-colors",
-                    hasUrl ? "cursor-pointer active:bg-muted" : "cursor-default",
-                    !n.read && "bg-muted/40"
-                  )}
-                >
-                  <Icon className={cn("mt-0.5 size-4 shrink-0", meta.color)} />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[15px] text-foreground">{n.title}</div>
-                    {n.body && <div className="mt-0.5 text-sm text-muted-foreground">{n.body}</div>}
-                    <div className="mt-1 text-sm tabular-nums text-muted-foreground">
-                      {timeAgo(n.created_at)}
+          /* NINGUNA lista se pinta entera: maximo 20 por pagina, y el limite lo
+             pone <ListaPaginada>, no esta pantalla. Antes se pintaban de golpe
+             los 50 avisos que devuelve el API. La clave de filtros es el estado
+             de la hoja: al volver a abrir la campana se empieza por la pagina 1,
+             que es donde estan los avisos nuevos. */
+          <ListaPaginada
+            items={items}
+            claveDeFiltros={String(open)}
+            className="min-h-0 flex-1"
+            nombreSingular="aviso"
+            nombrePlural="avisos"
+            // Hoja de alto fijo: aqui la lista SI se desplaza por dentro.
+            propioScroll
+          >
+            {(pagina) =>
+              pagina.map((n) => {
+                const meta = TYPE_ICONS[n.type] ?? TYPE_ICONS.default
+                const Icon = meta.icon
+                const hasUrl = typeof n.data?.url === "string"
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => openNotification(n)}
+                    className={cn(
+                      "flex w-full min-h-14 items-start gap-2.5 border-b border-border px-4 py-3 text-left transition-colors",
+                      hasUrl ? "cursor-pointer active:bg-muted" : "cursor-default",
+                      !n.read && "bg-muted/40"
+                    )}
+                  >
+                    <Icon className={cn("mt-0.5 size-4 shrink-0", meta.color)} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[15px] text-foreground">{n.title}</div>
+                      {n.body && (
+                        <div className="mt-0.5 text-sm text-muted-foreground">{n.body}</div>
+                      )}
+                      <div className="mt-1 text-sm tabular-nums text-muted-foreground">
+                        {timeAgo(n.created_at)}
+                      </div>
                     </div>
-                  </div>
-                  {!n.read && <span className="mt-1 size-2 shrink-0 rounded-full bg-destructive" />}
-                </button>
-              )
-            })}
-          </div>
+                    {!n.read && (
+                      <span className="mt-1 size-2 shrink-0 rounded-full bg-destructive" />
+                    )}
+                  </button>
+                )
+              })
+            }
+          </ListaPaginada>
         )}
       </SheetContent>
     </Sheet>

@@ -155,10 +155,28 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Journey event
+  //    Se guarda TAMBIÉN quién trajo a esta persona. El dato ya vivía en el contacto,
+  //    pero para saber de qué afiliado venía una venta había que ir a buscarlo a mano.
+  //    Aquí queda escrito en la propia venta, con su fecha, que es lo que lee el
+  //    dashboard de Afiliados para repartir los ingresos por periodo.
+  const { data: quienLoTrajo } = await admin
+    .from("contacts")
+    .select("affiliate_slug, funnel_slug")
+    .eq("id", contactId)
+    .maybeSingle()
+
+  const afiliadoSlug = (quienLoTrajo?.affiliate_slug as string | null) ?? null
+  const { data: afiliado } = afiliadoSlug
+    ? await admin.from("affiliates").select("name").eq("slug", afiliadoSlug).maybeSingle()
+    : { data: null }
+  const afiliadoNombre = (afiliado?.name as string | undefined) ?? afiliadoSlug
+
   await admin.from("contact_journey_events").insert({
     contact_id: contactId,
     type: "sale",
-    title: `Venta cerrada · ${data.products.join(" + ")} · ${data.revenue.toFixed(2)}€`,
+    title: afiliadoNombre
+      ? `Venta cerrada · ${data.products.join(" + ")} · ${data.revenue.toFixed(2)}€ · vino de ${afiliadoNombre}`
+      : `Venta cerrada · ${data.products.join(" + ")} · ${data.revenue.toFixed(2)}€`,
     description: data.notes ?? null,
     data: {
       revenue: data.revenue,
@@ -167,6 +185,9 @@ export async function POST(req: NextRequest) {
       close_type: data.close_type,
       closer_name: data.closer_name,
       products: data.products,
+      affiliate_slug: afiliadoSlug,
+      affiliate_name: afiliadoNombre,
+      funnel_slug: (quienLoTrajo?.funnel_slug as string | null) ?? null,
     },
     created_by_user_id: user.id,
   })
@@ -250,10 +271,12 @@ export async function POST(req: NextRequest) {
   // Push + in-app al equipo (además del email de notifyMarcoPurchase).
   await notifyAdmins(admin, {
     title: "Venta registrada",
-    body: `${data.full_name} · ${data.products.join(" + ")} · ${data.revenue.toFixed(0)} €`,
+    body: afiliadoNombre
+      ? `${data.full_name} · ${data.products.join(" + ")} · ${data.revenue.toFixed(0)} € · vino de ${afiliadoNombre}`
+      : `${data.full_name} · ${data.products.join(" + ")} · ${data.revenue.toFixed(0)} €`,
     type: "venta",
     url: contactId ? `/crm/contactos/${contactId}` : "/crm/pipeline",
-    data: { contact_id: contactId, email, revenue: data.revenue },
+    data: { contact_id: contactId, email, revenue: data.revenue, affiliate_slug: afiliadoSlug },
   })
 
   return NextResponse.json({

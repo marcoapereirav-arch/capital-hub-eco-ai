@@ -6,6 +6,7 @@ import { FUNNEL_RESERVAR } from "../config"
 import { LoadingScreen } from "@/components/ui/loading-screen"
 import { track } from "@/lib/meta/pixel-client"
 import { useViewContent } from "@/lib/meta/use-view-content"
+import { getStoredUtms } from "@/lib/utm/utm-capture"
 
 /**
  * Página /reservar — Calendly INLINE (online-coffee) como tarjeta blanca limpia sobre
@@ -41,6 +42,14 @@ export function BookingEmbed() {
     u.searchParams.set("hide_gdpr_banner", "1")
     if (name) u.searchParams.set("name", name)
     if (email) u.searchParams.set("email", email)
+    // Quien lo trajo viaja DENTRO de la reserva. Sin esto, una persona que entra con el
+    // link de un afiliado y agenda aqui llega al CRM sin fuente: el afiliado se queda sin
+    // su lead. Se lee de las UTMs guardadas (first touch), no solo de la URL de ahora.
+    const utms = getStoredUtms()
+    for (const clave of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const) {
+      const valor = utms?.[clave]
+      if (valor) u.searchParams.set(clave, valor)
+    }
     return u.toString()
   })()
 

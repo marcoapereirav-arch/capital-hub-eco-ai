@@ -543,7 +543,7 @@ export function DriveView({
   if (view.level === 'overview') {
     return (
       <DndContext sensors={sensors} onDragStart={(e) => setDragPreview(e.active.data.current as DragData)} onDragEnd={handleDragEnd}>
-        <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-6">
+        <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,var(--sal))] pr-[max(1rem,var(--sar))] md:px-6">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {data.map((q) => (
               <QuadrantCard
@@ -565,7 +565,7 @@ export function DriveView({
     if (!q) return null
     return (
       <DndContext sensors={sensors} onDragStart={(e) => setDragPreview(e.active.data.current as DragData)} onDragEnd={handleDragEnd}>
-        <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-6">
+        <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,var(--sal))] pr-[max(1rem,var(--sar))] md:px-6">
           <Breadcrumb
             quadrantLabel={q.label}
             quadrantKey={q.key}
@@ -602,7 +602,7 @@ export function DriveView({
   const currentFolder = path[path.length - 1]
   return (
     <DndContext sensors={sensors} onDragStart={(e) => setDragPreview(e.active.data.current as DragData)} onDragEnd={handleDragEnd}>
-      <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:px-6">
+      <div className="mx-auto max-w-4xl py-6 pl-[max(1rem,var(--sal))] pr-[max(1rem,var(--sar))] md:px-6">
         <Breadcrumb
           quadrantLabel={q.label}
           quadrantKey={q.key}

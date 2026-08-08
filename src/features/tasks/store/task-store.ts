@@ -1,434 +1,147 @@
 import { create } from "zustand"
-import type { Task, ParaItem, Focus, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
 import { tasksService, subscribeRealtime } from "../services/tasks-service"
-import { focusesService } from "../services/focuses-service"
-import { getCurrentAssignee } from "../lib/current-assignee"
+import {
+  DEFAULT_FILTERS,
+  PRIORITY_RANK,
+  type Filters,
+  type OsUser,
+  type SortBy,
+  type Task,
+} from "../types/task"
 
-export type DueRange = "all" | "overdue" | "today" | "week" | "month" | "no_date"
-export type SortBy = "priority" | "due_asc" | "due_desc" | "status" | "assignee" | "created_desc" | "created_asc" | "alpha"
-
-type TaskFilters = {
-  status: GTDStatus | "all"
-  assignee: Assignee | "all"
-  priority: Priority | "all"
-  paraId: string | null
-  paraType: string | null
-  areaId: string | null
-  dueRange: DueRange
-  search: string
-  sortBy: SortBy
-}
-
-type TaskStore = {
+type State = {
   tasks: Task[]
-  paraItems: ParaItem[]
-  focuses: Focus[]
-  filters: TaskFilters
-  selectedTaskId: string | null
-  viewMode: "board" | "list"
-
-  initialized: boolean
+  users: OsUser[]
   loading: boolean
   error: string | null
+  initialized: boolean
+  filters: Filters
+  sortBy: SortBy
+  selectedId: string | null
 
-  // Lifecycle
   init: () => Promise<void>
-  cleanup: () => void
+  setFilters: (patch: Partial<Filters>) => void
+  resetFilters: () => void
+  setSortBy: (s: SortBy) => void
+  select: (id: string | null) => void
 
-  // Task CRUD
-  addTask: (task: Omit<Task, "id" | "createdAt" | "completedAt">) => Promise<void>
+  addTask: (input: { title: string; priority?: Task["priority"]; assigneeId?: string | null }) => Promise<void>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
   deleteTask: (id: string) => Promise<void>
-  moveTask: (id: string, status: GTDStatus) => Promise<void>
-  quickCapture: (title: string) => Promise<void>
-
-  // PARA CRUD
-  addParaItem: (item: { name: string; type: ParaType; status?: ParaStatus; parentId?: string | null }) => Promise<void>
-  updateParaItem: (id: string, updates: Partial<ParaItem>) => Promise<void>
-  deleteParaItem: (id: string) => Promise<void>
-
-  // UI State
-  setFilters: (filters: Partial<TaskFilters>) => void
-  resetFilters: () => void
-  setSelectedTask: (id: string | null) => void
-  setViewMode: (mode: "board" | "list") => void
-
-  // Computed
-  getFilteredTasks: () => Task[]
-  getTasksByParaId: (paraId: string) => Task[]
-  getInboxCount: () => number
-  getParaItemsByType: (type: string) => ParaItem[]
 }
 
-const defaultFilters: TaskFilters = {
-  // Default: ocultar tareas done. El usuario las ve solo si cambia el filtro
-  // expreso a "done" o "all". Antes era "all" y veia las tachadas, confundiendo
-  // claridad. Si quieres ver done, cambia el dropdown.
-  status: "next",
-  assignee: "all",
-  priority: "all",
-  paraId: null,
-  paraType: null,
-  areaId: null,
-  dueRange: "all",
-  search: "",
-  sortBy: "priority",
-}
+let desuscribir: (() => void) | null = null
 
-const PRIORITY_RANK: Record<Priority, number> = { urgent: 0, high: 1, normal: 2, low: 3 }
-const STATUS_RANK: Record<GTDStatus, number> = { inbox: 0, next: 1, waiting: 2, someday: 3, done: 4 }
-
-function inDueRange(task: Task, range: DueRange): boolean {
-  if (range === "all") return true
-  if (range === "no_date") return !task.dueDate
-  if (!task.dueDate) return false
-  const due = new Date(task.dueDate)
-  // Use 2026-06-03 as anchor (today is set in CLAUDE env); avoid Date.now for purity
-  const now = new Date()
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const startOfTomorrow = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000)
-  if (range === "overdue") return due < startOfToday
-  if (range === "today") return due >= startOfToday && due < startOfTomorrow
-  if (range === "week") {
-    const endOfWeek = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000)
-    return due >= startOfToday && due < endOfWeek
-  }
-  if (range === "month") {
-    const endOfMonth = new Date(startOfToday.getTime() + 30 * 24 * 60 * 60 * 1000)
-    return due >= startOfToday && due < endOfMonth
-  }
-  return true
-}
-
-let unsubscribeRealtime: (() => void) | null = null
-let pollInterval: ReturnType<typeof setInterval> | null = null
-
-/**
- * REGLA #6 del Knowledge: el sistema de tareas SIEMPRE debe estar en LIVE.
- * Realtime de Supabase cubre updates en caliente. PERO si la fila se inserta
- * desde otra sesión / Management API / cron (no via cliente conectado),
- * Realtime puede no dispararse. Por eso añadimos poll cada 30s como red de
- * seguridad para garantizar que el OS nunca está desactualizado más de 30s.
- */
-const POLL_INTERVAL_MS = 30_000
-
-export const useTaskStore = create<TaskStore>((set, get) => ({
+export const useTaskStore = create<State>((set, get) => ({
   tasks: [],
-  paraItems: [],
-  focuses: [],
-  filters: defaultFilters,
-  selectedTaskId: null,
-  viewMode: "board",
-
-  initialized: false,
+  users: [],
   loading: false,
   error: null,
+  initialized: false,
+  filters: DEFAULT_FILTERS,
+  sortBy: "prioridad",
+  selectedId: null,
 
-  init: async () => {
+  async init() {
     if (get().initialized || get().loading) return
     set({ loading: true, error: null })
     try {
-      const [tasks, paraItems, focuses] = await Promise.all([
+      const [tasks, users] = await Promise.all([
         tasksService.listTasks(),
-        tasksService.listParaItems(),
-        focusesService.listFocuses().catch(() => []),
+        tasksService.listOsUsers(),
       ])
-      set({ tasks, paraItems, focuses, initialized: true, loading: false })
+      set({ tasks, users, loading: false, initialized: true })
 
-      if (unsubscribeRealtime) unsubscribeRealtime()
-      unsubscribeRealtime = subscribeRealtime({
-        onTaskInsert: (task) => {
-          set((state) =>
-            state.tasks.some((t) => t.id === task.id)
-              ? state
-              : { tasks: [task, ...state.tasks] }
-          )
-        },
-        onTaskUpdate: (task) => {
-          set((state) => ({
-            tasks: state.tasks.map((t) => (t.id === task.id ? task : t)),
-          }))
-        },
-        onTaskDelete: (id) => {
-          set((state) => ({
-            tasks: state.tasks.filter((t) => t.id !== id),
-            selectedTaskId: state.selectedTaskId === id ? null : state.selectedTaskId,
-          }))
-        },
-        onParaInsert: (item) => {
-          set((state) =>
-            state.paraItems.some((p) => p.id === item.id)
-              ? state
-              : { paraItems: [...state.paraItems, item] }
-          )
-        },
-        onParaUpdate: (item) => {
-          set((state) => ({
-            paraItems: state.paraItems.map((p) => (p.id === item.id ? item : p)),
-          }))
-        },
-        onParaDelete: (id) => {
-          set((state) => ({
-            paraItems: state.paraItems.filter((p) => p.id !== id),
-            tasks: state.tasks.map((t) => (t.paraId === id ? { ...t, paraId: null } : t)),
-          }))
-        },
+      desuscribir?.()
+      desuscribir = subscribeRealtime({
+        onInsert: (t) =>
+          set((s) => (s.tasks.some((x) => x.id === t.id) ? s : { tasks: [t, ...s.tasks] })),
+        onUpdate: (t) => set((s) => ({ tasks: s.tasks.map((x) => (x.id === t.id ? t : x)) })),
+        onDelete: (id) =>
+          set((s) => ({
+            tasks: s.tasks.filter((x) => x.id !== id),
+            selectedId: s.selectedId === id ? null : s.selectedId,
+          })),
       })
-
-      // REGLA #6: auto-refresh cada 30s como red de seguridad
-      if (pollInterval) clearInterval(pollInterval)
-      pollInterval = setInterval(async () => {
-        try {
-          const [tasks, paraItems] = await Promise.all([
-            tasksService.listTasks(),
-            tasksService.listParaItems(),
-          ])
-          set({ tasks, paraItems })
-        } catch {
-          // silencio en background poll
-        }
-      }, POLL_INTERVAL_MS)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error cargando tareas"
-      set({ loading: false, error: msg })
+      set({
+        loading: false,
+        error: e instanceof Error ? e.message : "No se pudo cargar la lista",
+      })
     }
   },
 
-  cleanup: () => {
-    if (unsubscribeRealtime) {
-      unsubscribeRealtime()
-      unsubscribeRealtime = null
-    }
-    if (pollInterval) {
-      clearInterval(pollInterval)
-      pollInterval = null
-    }
+  setFilters(patch) {
+    set((s) => ({ filters: { ...s.filters, ...patch } }))
   },
 
-  addTask: async (taskData) => {
+  resetFilters() {
+    set({ filters: DEFAULT_FILTERS })
+  },
+
+  setSortBy(sortBy) {
+    set({ sortBy })
+  },
+
+  select(selectedId) {
+    set({ selectedId })
+  },
+
+  async addTask(input) {
+    const creada = await tasksService.addTask(input)
+    set((s) => (s.tasks.some((x) => x.id === creada.id) ? s : { tasks: [creada, ...s.tasks] }))
+  },
+
+  async updateTask(id, updates) {
+    const antes = get().tasks
+    // Optimista: la lista responde al instante y realtime confirma despues.
+    set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...updates } : t)) }))
     try {
-      await tasksService.addTask(taskData)
-      // Realtime INSERT lo mete al state
+      const t = await tasksService.updateTask(id, updates)
+      set((s) => ({ tasks: s.tasks.map((x) => (x.id === id ? t : x)) }))
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Error creando tarea"
-      set({ error: msg })
-      throw e
+      set({ tasks: antes, error: e instanceof Error ? e.message : "No se pudo guardar" })
     }
   },
 
-  updateTask: async (id, updates) => {
-    const prev = get().tasks.find((t) => t.id === id)
-    if (!prev) return
-
-    const finalUpdates = { ...updates }
-    if (updates.status === "done" && !prev.completedAt) {
-      finalUpdates.completedAt = new Date().toISOString()
-    }
-    if (updates.status && updates.status !== "done") {
-      finalUpdates.completedAt = null
-    }
-
-    // Optimistic
-    set((state) => ({
-      tasks: state.tasks.map((t) => (t.id === id ? { ...t, ...finalUpdates } : t)),
+  async deleteTask(id) {
+    const antes = get().tasks
+    set((s) => ({
+      tasks: s.tasks.filter((t) => t.id !== id),
+      selectedId: s.selectedId === id ? null : s.selectedId,
     }))
-
-    try {
-      await tasksService.updateTask(id, finalUpdates)
-    } catch (e) {
-      // Revert
-      set((state) => ({
-        tasks: state.tasks.map((t) => (t.id === id ? prev : t)),
-        error: e instanceof Error ? e.message : "Error actualizando tarea",
-      }))
-      throw e
-    }
-  },
-
-  deleteTask: async (id) => {
-    const prev = get().tasks.find((t) => t.id === id)
-    if (!prev) return
-
-    // Optimistic
-    set((state) => ({
-      tasks: state.tasks.filter((t) => t.id !== id),
-      selectedTaskId: state.selectedTaskId === id ? null : state.selectedTaskId,
-    }))
-
     try {
       await tasksService.deleteTask(id)
     } catch (e) {
-      set((state) => ({
-        tasks: [prev, ...state.tasks],
-        error: e instanceof Error ? e.message : "Error eliminando tarea",
-      }))
-      throw e
+      set({ tasks: antes, error: e instanceof Error ? e.message : "No se pudo eliminar" })
     }
-  },
-
-  moveTask: async (id, status) => {
-    await get().updateTask(id, { status })
-  },
-
-  quickCapture: async (title) => {
-    const assignee = await getCurrentAssignee()
-    await get().addTask({
-      title,
-      description: "",
-      status: "inbox",
-      priority: "normal",
-      assignee,
-      paraId: null,
-      dueDate: null,
-    })
-  },
-
-  addParaItem: async (itemData) => {
-    try {
-      await tasksService.addParaItem(itemData)
-      // Realtime INSERT
-    } catch (e) {
-      set({ error: e instanceof Error ? e.message : "Error creando PARA item" })
-      throw e
-    }
-  },
-
-  updateParaItem: async (id, updates) => {
-    const prev = get().paraItems.find((p) => p.id === id)
-    if (!prev) return
-
-    // Optimistic
-    set((state) => ({
-      paraItems: state.paraItems.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    }))
-
-    try {
-      await tasksService.updateParaItem(id, updates)
-    } catch (e) {
-      set((state) => ({
-        paraItems: state.paraItems.map((p) => (p.id === id ? prev : p)),
-        error: e instanceof Error ? e.message : "Error actualizando PARA item",
-      }))
-      throw e
-    }
-  },
-
-  deleteParaItem: async (id) => {
-    const prev = get().paraItems.find((p) => p.id === id)
-    if (!prev) return
-
-    // Optimistic
-    set((state) => ({
-      paraItems: state.paraItems.filter((p) => p.id !== id),
-      tasks: state.tasks.map((t) => (t.paraId === id ? { ...t, paraId: null } : t)),
-    }))
-
-    try {
-      await tasksService.deleteParaItem(id)
-    } catch (e) {
-      set((state) => ({
-        paraItems: [...state.paraItems, prev],
-        error: e instanceof Error ? e.message : "Error eliminando PARA item",
-      }))
-      throw e
-    }
-  },
-
-  setFilters: (newFilters) => {
-    set((state) => ({ filters: { ...state.filters, ...newFilters } }))
-  },
-
-  resetFilters: () => {
-    set({ filters: defaultFilters })
-  },
-
-  setSelectedTask: (id) => {
-    set({ selectedTaskId: id })
-  },
-
-  setViewMode: (mode) => {
-    set({ viewMode: mode })
-  },
-
-  getFilteredTasks: () => {
-    const { tasks, filters, paraItems } = get()
-    const filtered = tasks.filter((task) => {
-      if (filters.status !== "all" && task.status !== filters.status) return false
-      if (filters.assignee !== "all" && task.assignee !== filters.assignee) return false
-      if (filters.priority !== "all" && task.priority !== filters.priority) return false
-      if (filters.paraId && task.paraId !== filters.paraId) return false
-      if (filters.paraType) {
-        if (filters.paraType === "inbox") {
-          if (task.status !== "inbox") return false
-        } else {
-          const paraItem = paraItems.find((p) => p.id === task.paraId)
-          if (!paraItem || paraItem.type !== filters.paraType) return false
-        }
-      }
-      if (filters.areaId) {
-        // Match tasks que pertenecen al area directamente o via proyecto hijo
-        const ownerPara = paraItems.find((p) => p.id === task.paraId)
-        if (!ownerPara) return false
-        if (ownerPara.id === filters.areaId) {
-          /* directa */
-        } else if (ownerPara.parentId === filters.areaId) {
-          /* via proyecto hijo */
-        } else {
-          return false
-        }
-      }
-      if (!inDueRange(task, filters.dueRange)) return false
-      if (filters.search) {
-        const q = filters.search.toLowerCase()
-        if (
-          !task.title.toLowerCase().includes(q) &&
-          !task.description.toLowerCase().includes(q)
-        )
-          return false
-      }
-      return true
-    })
-
-    const sorted = [...filtered].sort((a, b) => {
-      switch (filters.sortBy) {
-        case "priority":
-          return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
-        case "due_asc":
-          if (!a.dueDate && !b.dueDate) return 0
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          return a.dueDate.localeCompare(b.dueDate)
-        case "due_desc":
-          if (!a.dueDate && !b.dueDate) return 0
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          return b.dueDate.localeCompare(a.dueDate)
-        case "status":
-          return STATUS_RANK[a.status] - STATUS_RANK[b.status]
-        case "assignee":
-          return a.assignee.localeCompare(b.assignee)
-        case "created_desc":
-          return b.createdAt.localeCompare(a.createdAt)
-        case "created_asc":
-          return a.createdAt.localeCompare(b.createdAt)
-        case "alpha":
-          return a.title.localeCompare(b.title)
-        default:
-          return 0
-      }
-    })
-    return sorted
-  },
-
-  getTasksByParaId: (paraId) => {
-    return get().tasks.filter((t) => t.paraId === paraId)
-  },
-
-  getInboxCount: () => {
-    return get().tasks.filter((t) => t.status === "inbox").length
-  },
-
-  getParaItemsByType: (type) => {
-    return get().paraItems.filter((p) => p.type === type)
   },
 }))
+
+/** Aplica filtros y orden. Fuera del store para que sea facil de probar y de leer. */
+export function filtrarYOrdenar(tasks: Task[], filters: Filters, sortBy: SortBy): Task[] {
+  const texto = filters.search.trim().toLowerCase()
+
+  const out = tasks.filter((t) => {
+    if (filters.status !== "todas" && t.status !== filters.status) return false
+    if (filters.priority !== "todas" && t.priority !== filters.priority) return false
+    if (filters.assigneeId === "sin" && t.assigneeId !== null) return false
+    if (
+      filters.assigneeId !== "todos" &&
+      filters.assigneeId !== "sin" &&
+      t.assigneeId !== filters.assigneeId
+    )
+      return false
+    if (texto && !`${t.title} ${t.description}`.toLowerCase().includes(texto)) return false
+    return true
+  })
+
+  const porFecha = (a: Task, b: Task) => +new Date(b.createdAt) - +new Date(a.createdAt)
+
+  return out.sort((a, b) => {
+    if (sortBy === "recientes") return porFecha(a, b)
+    if (sortBy === "antiguas") return -porFecha(a, b)
+    const p = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]
+    return p !== 0 ? p : porFecha(a, b)
+  })
+}

@@ -1,117 +1,104 @@
-export type GTDStatus = "inbox" | "next" | "waiting" | "someday" | "done"
-export type Priority = "urgent" | "high" | "normal" | "low"
-export type ParaType = "project" | "area" | "resource" | "archive"
-export type ParaStatus = "active" | "paused" | "completed"
+/**
+ * Operaciones = UNA lista de tareas. Un solo nivel.
+ *
+ * Marco (2026-08-07): "Solo va a existir un nivel de tareas y ya esta. Sera una lista
+ * de todo las tareas y a partir de ahi ya iremos viendo si lo ponemos mas complejo".
+ *
+ * La tarea tiene CUATRO cosas y ni una mas: titulo, descripcion, prioridad y
+ * responsable. Mas su estado. No hay proyectos, ni areas, ni focos, ni fechas limite,
+ * ni dependencias. Si algo de eso hace falta algun dia, se anade entonces.
+ */
 
-export const PARA_STATUS_LABELS: Record<ParaStatus, string> = {
-  active: "En progreso",
-  paused: "En pausa",
-  completed: "Completados",
-}
-export type Assignee = "marco" | "adrian" | "equipo" | "ai"
+export type Priority = "P1" | "P2" | "P3"
+export type TaskStatus = "pendiente" | "hecha" | "archivada"
 
-export type ParaPriority = "urgent" | "important" | "normal" | "low"
+export const PRIORITIES: Priority[] = ["P1", "P2", "P3"]
+export const STATUSES: TaskStatus[] = ["pendiente", "hecha", "archivada"]
 
-export type ParaItem = {
-  id: string
-  name: string
-  type: ParaType
-  status: ParaStatus
-  parentId: string | null
-  focusId: string | null
-  displayOrder?: number | null
-  priority?: ParaPriority | null
+export const PRIORITY_LABELS: Record<Priority, string> = {
+  P1: "P1",
+  P2: "P2",
+  P3: "P3",
 }
 
-export const PARA_PRIORITY_RANK: Record<ParaPriority, number> = {
-  urgent: 1,
-  important: 2,
-  normal: 3,
-  low: 4,
+/** Se ensena al elegir prioridad, para que nadie tenga que adivinar que es P2. */
+export const PRIORITY_HINTS: Record<Priority, string> = {
+  P1: "Lo primero",
+  P2: "Normal",
+  P3: "Cuando haya hueco",
 }
 
-export const PARA_PRIORITY_LABELS: Record<ParaPriority, string> = {
-  urgent: "Urgente",
-  important: "Importante",
-  normal: "Normal",
-  low: "Baja",
+export const STATUS_LABELS: Record<TaskStatus, string> = {
+  pendiente: "Pendiente",
+  hecha: "Hecha",
+  archivada: "Archivada",
 }
 
-// Los cuatro niveles se pintan con los tokens del tema, no con familias sueltas de
-// Tailwind: rojo de error para lo urgente, ambar de aviso para lo importante y
-// grises de la marca para el resto. Antes eran red/amber/cyan/zinc, o sea cuatro
-// colores que no existen en el brandkit de Capital Hub.
-export const PARA_PRIORITY_COLORS: Record<ParaPriority, string> = {
-  urgent: "border-destructive/40 text-destructive bg-destructive/10",
-  important: "border-warn/40 text-warn bg-warn/10",
-  normal: "border-border text-foreground bg-muted",
-  low: "border-border text-muted-foreground bg-muted",
-}
-
-export type Focus = {
-  id: string
-  name: string
-  description: string | null
-  startDate: string | null
-  endDate: string | null
-  color: string
-  active: boolean
-  sortOrder: number
-}
-
-// IDs deterministas de las 4 áreas raíz (deben existir en BD via migration 0024)
-export const AREA_IDS = {
-  MARKETING: "area_marketing",
-  PRODUCTO: "area_producto",
-  VENTAS: "area_ventas",
-  FINANZAS: "area_finanzas",
-} as const
-
-export const ROOT_AREAS: { id: string; name: string }[] = [
-  { id: AREA_IDS.MARKETING, name: "Marketing" },
-  { id: AREA_IDS.PRODUCTO, name: "Producto" },
-  { id: AREA_IDS.VENTAS, name: "Ventas" },
-  { id: AREA_IDS.FINANZAS, name: "Finanzas" },
-]
+/** Orden de urgencia para ordenar la lista. */
+export const PRIORITY_RANK: Record<Priority, number> = { P1: 1, P2: 2, P3: 3 }
 
 export type Task = {
   id: string
   title: string
   description: string
-  status: GTDStatus
   priority: Priority
-  assignee: Assignee
-  paraId: string | null
-  dueDate: string | null
+  status: TaskStatus
+  /** id del perfil del OS responsable. null = sin responsable. */
+  assigneeId: string | null
   createdAt: string
   completedAt: string | null
 }
 
-export const GTD_LABELS: Record<GTDStatus, string> = {
-  inbox: "Inbox",
-  next: "Next Action",
-  waiting: "Waiting For",
-  someday: "Someday",
-  done: "Done",
+/** Una persona del OS. Sale de `profiles`, no de una lista escrita a mano. */
+export type OsUser = {
+  id: string
+  name: string
+  email: string
 }
 
-export const PRIORITY_LABELS: Record<Priority, string> = {
-  urgent: "Urgente",
-  high: "Alta",
-  normal: "Normal",
-  low: "Baja",
+export type SortBy = "prioridad" | "recientes" | "antiguas"
+
+export const SORT_LABELS: Record<SortBy, string> = {
+  prioridad: "Prioridad",
+  recientes: "Más recientes",
+  antiguas: "Más antiguas",
 }
 
-export const PARA_TYPE_LABELS: Record<ParaType, string> = {
-  project: "Proyectos",
-  area: "Areas",
-  resource: "Recursos",
-  archive: "Archivo",
+export type Filters = {
+  status: TaskStatus | "todas"
+  priority: Priority | "todas"
+  assigneeId: string | "todos" | "sin"
+  search: string
 }
 
-export const ASSIGNEE_LABELS: Record<Assignee, string> = {
-  marco: "Marco Antonio",
-  adrian: "Adrian",
-  equipo: "Equipo",
-  ai: "AI · Agente",
+export const DEFAULT_FILTERS: Filters = {
+  status: "pendiente",
+  priority: "todas",
+  assigneeId: "todos",
+  search: "",
+}
+
+/** Cuantos filtros ha tocado el usuario. Se ensena en el boton "Filtros". */
+export function countActiveFilters(f: Filters): number {
+  let n = 0
+  if (f.status !== DEFAULT_FILTERS.status) n++
+  if (f.priority !== "todas") n++
+  if (f.assigneeId !== "todos") n++
+  if (f.search.trim()) n++
+  return n
+}
+
+export function nombreDe(users: OsUser[], id: string | null): string | null {
+  if (!id) return null
+  return users.find((u) => u.id === id)?.name ?? null
+}
+
+/** Iniciales para el avatar. "Marco Antonio" -> "MA". */
+export function inicialesDe(nombre: string): string {
+  return nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("")
 }

@@ -270,7 +270,7 @@ export function WebinarLanding({
 
       <style>{`
         .cta-fijo { position: fixed; left: 0; right: 0; bottom: var(--cta-fijo-abajo, 0px); z-index: 90;
-          padding: 0.75rem 1.25rem calc(env(safe-area-inset-bottom) + 0.75rem);
+          padding: 0.75rem 1.25rem calc(var(--sab) + 0.75rem);
           background: linear-gradient(180deg, rgba(15,15,18,0) 0%, rgba(15,15,18,0.92) 38%, #0F0F12 100%);
           backdrop-filter: blur(10px);
           transform: translateY(115%); opacity: 0; pointer-events: none;

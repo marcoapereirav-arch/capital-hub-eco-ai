@@ -27,6 +27,22 @@ const nextConfig: NextConfig = {
     'fluent-ffmpeg',
   ],
 
+  // Operaciones dejo de tener subpestañas el 2026-08-07: ahora es UNA lista en
+  // /operaciones. Quien tenga guardado un enlace viejo (o la app instalada abierta en
+  // esa ruta) aterriza en la lista, no en un 404. Mision se retiro entera.
+  async redirects() {
+    return [
+      { source: '/overview', destination: '/operaciones', permanent: true },
+      { source: '/tasks', destination: '/operaciones', permanent: true },
+      { source: '/board', destination: '/operaciones', permanent: true },
+      { source: '/projects', destination: '/operaciones', permanent: true },
+      { source: '/projects/:id', destination: '/operaciones', permanent: true },
+      { source: '/areas', destination: '/operaciones', permanent: true },
+      { source: '/areas/:id', destination: '/operaciones', permanent: true },
+      { source: '/mision', destination: '/operaciones', permanent: true },
+    ]
+  },
+
   async headers() {
     return [
       {

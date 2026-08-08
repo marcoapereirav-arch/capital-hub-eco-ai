@@ -379,7 +379,7 @@ function OptinModal({ onClose }: { onClose: () => void }) {
       aria-modal="true"
     >
       <div
-        className="tp-modal relative max-h-[90dvh] w-full overflow-y-auto border-t border-[#2A2D34] bg-[#0F0F12] px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-6 sm:max-w-md sm:rounded-none sm:border sm:p-7"
+        className="tp-modal relative max-h-[90dvh] w-full overflow-y-auto border-t border-[#2A2D34] bg-[#0F0F12] px-5 pb-[calc(var(--sab)+1.5rem)] pt-6 sm:max-w-md sm:rounded-none sm:border sm:p-7"
         style={{ fontFamily: "'Inter', sans-serif" }}
         onClick={(e) => e.stopPropagation()}
       >

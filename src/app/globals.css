@@ -135,18 +135,18 @@
        ============================================ */
 
     /* BG: #0F0F12 Negro Carbon (60%) */
-    --background: oklch(0.113 0.005 265);
+    --background: #0F0F12;
 
     /* TEXT: #F5F6F7 Blanco Roto (10%) */
     --foreground: oklch(0.97 0.001 250);
 
     /* CARDS: superficie elevada — DEBE separarse claramente del fondo (#0F0F12).
        Subido de 0.153 a 0.185 para que las fichas/cajas tengan contraste real. */
-    --card: oklch(0.185 0.004 265);
+    --card: #131318;
     --card-foreground: oklch(0.97 0.001 250);
 
     /* POPOVERS/menús/sheets: capa por encima de las cards → un punto más claro */
-    --popover: oklch(0.205 0.004 265);
+    --popover: #16161B;
     --popover-foreground: oklch(0.97 0.001 250);
 
     /* ACCION PRINCIPAL: verde de marca #22C55E con tinta #08130C encima.
@@ -207,7 +207,7 @@
     --chart-5: oklch(0.24 0.012 260);
 
     /* SIDEBAR (menu de la izquierda) */
-    --sidebar: oklch(0.113 0.005 265);
+    --sidebar: #0F0F12;
     --sidebar-foreground: oklch(0.97 0.001 250);
     --sidebar-primary: #22C55E;
     --sidebar-primary-foreground: #08130C;
@@ -225,6 +225,29 @@
   }
   html {
     @apply font-sans;
+    /* El LIENZO del navegador, no la pagina. En el iPhone de Marco la ventana se
+       queda 62 puntos por encima del borde de la pantalla (medido en su captura:
+       la barra acaba ahi y debajo quedaba el fondo a secas). Esos 62 puntos los
+       pinta el lienzo, que toma su color de AQUI. Con el color de la barra, esa
+       franja se lee como continuacion de la barra y desaparece la banda negra.
+       Donde la ventana si llega al borde, este color no se ve jamas. */
+    background-color: var(--popover);
+
+    /* LAS ZONAS SEGURAS DEL TELEFONO, EN VARIABLES.
+       Motivo: `env(safe-area-inset-*)` vale CERO en un navegador sin pantalla, asi
+       que todo lo que dependa de ella sale limpio en las mediciones aunque este
+       roto en el iPhone. Paso dos veces seguidas con la franja de abajo.
+       Al meterlas en variables, una prueba puede darles un valor y VER el
+       resultado. En el telefono siguen valiendo lo que diga el sistema. */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    /* El fondo va TAMBIEN en el html, no solo en el body. Si por lo que sea la
+       app no llega a cubrir la pantalla entera (la franja de gestos del iPhone,
+       un rebote, el teclado abriendose), lo que asoma por debajo es el fondo de
+       la app y no el negro del sistema. Marco veia justo eso: una banda negra
+       pegada abajo que no encajaba. */
     /* La app es SIEMPRE dark (html.dark). Declararlo a nivel de documento hace
        que el navegador renderice autofill, scrollbars y controles nativos en
        modo oscuro — sin esto, el autofill de Chrome/Safari pinta un fondo claro
@@ -286,25 +309,25 @@
    ============================================ */
 @layer utilities {
   /* Safe-area insets para notch + home indicator */
-  .pt-safe { padding-top: env(safe-area-inset-top); }
-  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-  .pl-safe { padding-left: env(safe-area-inset-left); }
-  .pr-safe { padding-right: env(safe-area-inset-right); }
+  .pt-safe { padding-top: var(--sat); }
+  .pb-safe { padding-bottom: var(--sab); }
+  .pl-safe { padding-left: var(--sal); }
+  .pr-safe { padding-right: var(--sar); }
   .px-safe {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left: var(--sal);
+    padding-right: var(--sar);
   }
   .py-safe {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: var(--sat);
+    padding-bottom: var(--sab);
   }
   /* Padding combinado: safe + valor base */
-  .pb-safe-4 { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
-  .pb-safe-6 { padding-bottom: calc(env(safe-area-inset-bottom) + 1.5rem); }
-  .pt-safe-4 { padding-top: calc(env(safe-area-inset-top) + 1rem); }
+  .pb-safe-4 { padding-bottom: calc(var(--sab) + 1rem); }
+  .pb-safe-6 { padding-bottom: calc(var(--sab) + 1.5rem); }
+  .pt-safe-4 { padding-top: calc(var(--sat) + 1rem); }
   /* Margenes safe-area */
-  .mt-safe { margin-top: env(safe-area-inset-top); }
-  .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
+  .mt-safe { margin-top: var(--sat); }
+  .mb-safe { margin-bottom: var(--sab); }
 
   /* Prevenir overscroll vertical (rebote) — usar en contenedores con scroll propio */
   .no-overscroll { overscroll-behavior: contain; }
@@ -315,7 +338,7 @@
   /* Espacio reservado para que el bottom-tab-bar no tape contenido en movil.
      En desktop no hay bottom nav -> 0. */
   .pb-mobile-nav {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(3.5rem + var(--sab));
   }
   @media (min-width: 768px) {
     .pb-mobile-nav { padding-bottom: 0; }
@@ -323,9 +346,9 @@
 
   /* Altura util en movil descontando MobileHeader (56px+safe-top) y BottomNav (56px+safe-bottom) */
   .h-mobile-content {
-    height: calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    height: calc(100dvh - 7rem - var(--sat) - var(--sab));
   }
   .min-h-mobile-content {
-    min-height: calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: calc(100dvh - 7rem - var(--sat) - var(--sab));
   }
 }

@@ -7,6 +7,7 @@ import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { PushNotificationPrompt } from "@/features/notifications/components/PushNotificationPrompt"
 import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { RegistrarVentaWidget } from "@/features/sales/components/registrar-venta-widget"
+import { DiagMovil } from "@/features/shell/components/diag-movil"
 import { TopBar } from "@/features/shell/components/top-bar"
 import { ViewAsRoleBanner } from "@/features/shell/components/view-as-role-banner"
 import { createClient } from "@/lib/supabase/server"
@@ -86,6 +87,8 @@ export default async function MainLayout({
       <PushNotificationPrompt userId={user.id} />
       <UpdateNotifier />
       <RegistrarVentaWidget />
+      {/* TEMPORAL: manda las medidas del telefono para poder arreglar la franja. */}
+      <DiagMovil />
     </SidebarProvider>
   )
 }

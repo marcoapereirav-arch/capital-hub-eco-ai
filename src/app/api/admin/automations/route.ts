@@ -188,6 +188,17 @@ export async function GET() {
     .select("*", { count: "exact", head: true })
     .eq("sale_pending", true)
 
+  // Stats del traqueo de links de afiliado
+  const { count: visitasAfiliados } = await admin
+    .from("affiliate_visits")
+    .select("*", { count: "exact", head: true })
+  const { data: ultimaVisitaAfiliado } = await admin
+    .from("affiliate_visits")
+    .select("created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   // Stats Calendly
   const { count: calendlyCount } = await admin
     .from("calendly_scheduled_events")
@@ -611,6 +622,7 @@ export async function GET() {
         "Upsert calendly_scheduled_events (created/canceled/no_show)",
         "Matchea contacto por email → mueve stage con guarda no-retroceso",
         "invitee.created sin contacto → crea contacto stage=agendado (pipeline Test Personalidad)",
+        "Atribución: lee tracking.utm_source de Calendly → affiliate_slug + tags fuente/origen (first-touch)",
         "invitee.created → envía al lead la confirmación de agenda con nuestra marca (template agenda_confirmed, .ics + link de la reunión)",
         "Inserta contact_journey_event (call_booked/call_cancelled/call_no_show)",
       ],
@@ -672,6 +684,28 @@ export async function GET() {
       lastRun: null,
       lastRunHoursAgo: null,
       totalExecutions: videosArchivados ?? 0,
+    },
+    {
+      id: "afiliados_visitas",
+      category: "crm",
+      label: "Traqueo de los links de afiliado (visitas)",
+      description:
+        "Cuando alguien abre una página pública con ?utm_source=<afiliado>, se registra la visita con el funnel al que entró. Vive en el layout público, así que un funnel nuevo queda medido el día que se crea, sin enchufarlo a mano. Es lo que permite ver un link que se repartió y no trajo a nadie: sin esto, un funnel sin formulario (LT8, MIFGE) sería invisible del todo. Solo cuenta los utm_source que corresponden a un afiliado dado de alta, y una vez por navegador, funnel y día.",
+      trigger: "POST /api/afiliados/visita (desde el layout público, al cargar la página)",
+      actions: [
+        "Comprueba que el utm_source es un afiliado real (si no, la ignora)",
+        "Saca el funnel de la ruta usando el catálogo único del OS",
+        "Inserta en affiliate_visits (una por navegador, funnel y día)",
+      ],
+      relatedTables: ["affiliate_visits", "affiliates", "webs"],
+      status: (visitasAfiliados ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (visitasAfiliados ?? 0) > 0
+          ? `Midiendo · ${visitasAfiliados} visitas registradas`
+          : "Listo · todavía nadie ha entrado por un link de afiliado",
+      lastRun: ultimaVisitaAfiliado?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(ultimaVisitaAfiliado?.created_at),
+      totalExecutions: visitasAfiliados ?? 0,
     },
   ]
 

@@ -16,11 +16,31 @@ import type { Carpeta } from "../types"
  * equivocado y luego salta.
  *
  * Antes era una ventana a mano con `fixed inset-0`: al escribir, el teclado del
- * telefono tapaba el campo y el boton de guardar.
+ * telefono tapaba el campo y el boton de guardar. Al pasarla a hoja quedaban
+ * todavia tres fallos, que son los que arregla esta version:
+ *
+ * 1. Se desplazaba la hoja ENTERA. El boton de cerrar del kit va anclado arriba
+ *    a la derecha DENTRO de esa caja, asi que al bajar por una lista larga la
+ *    salida se iba con el contenido y te quedabas dentro sin poder salir.
+ *    Ahora la hoja no se mueve (`overflow-hidden`) y solo se desplaza el cuerpo.
+ * 2. En el panel de mover habia DOS sitios desplazandose a la vez (la hoja y la
+ *    lista, con su alto clavado) y se peleaban con el dedo. Ahora hay uno solo.
+ * 3. La franja de gestos del iPhone la reservaban la caja Y el contenido, o sea
+ *    dos veces: quedaba un hueco muerto grande debajo de los botones. Ahora la
+ *    reserva unicamente el pie.
  */
 function Marco({
-  titulo, pie, onCerrar, children,
-}: { titulo: string; pie?: string; onCerrar: () => void; children: React.ReactNode }) {
+  titulo, pie, error, acciones, onCerrar, children,
+}: {
+  titulo: string
+  pie?: string
+  /** Lo que fallo al guardar. Va en el pie fijo para que no se pierda al desplazar. */
+  error?: string | null
+  /** Los botones. Viven en el pie fijo: siempre a la vista, se desplace o no el cuerpo. */
+  acciones: React.ReactNode
+  onCerrar: () => void
+  children: React.ReactNode
+}) {
   return (
     <Sheet
       open
@@ -34,18 +54,37 @@ function Marco({
         // si no, avisa por consola de que le falta. No se inventa texto nuevo.
         {...(pie ? {} : { "aria-describedby": undefined })}
         className={cn(
-          "rounded-t-xl",
+          "gap-0 rounded-t-xl",
+          // Cabecera, cuerpo y pie son tres filas de una columna: las dos de los
+          // extremos fijas y la del medio la unica que se desplaza.
+          "data-[side=bottom]:overflow-hidden data-[side=bottom]:pb-0",
           // Se repite la condicion del lado porque las clases del kit (`data-[side=bottom]:...`)
           // pesan mas que un `md:` suelto; sin repetirla el cajon sale por la izquierda.
-          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-md md:border-l md:pb-0",
+          "md:data-[side=bottom]:inset-y-0 md:right-0 md:data-[side=bottom]:left-auto md:data-[side=bottom]:h-full md:data-[side=bottom]:max-h-none md:w-full md:max-w-md md:border-l",
         )}
       >
-        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
-        <SheetHeader>
-          <SheetTitle className="text-[17px] font-semibold">{titulo}</SheetTitle>
-          {pie ? <SheetDescription className="truncate">{pie}</SheetDescription> : null}
-        </SheetHeader>
-        <div className="space-y-4 px-4 pb-safe-4">{children}</div>
+        {/* Cabecera fija. El hueco de la derecha es para la salida del kit, que
+            mide 44 puntos y va anclada ahi: sin el, el titulo se le mete debajo. */}
+        <div className="shrink-0 border-b border-border">
+          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-border md:hidden" />
+          <SheetHeader className="p-4 pt-3 pr-14 md:pt-4">
+            <SheetTitle className="text-[17px] font-semibold">{titulo}</SheetTitle>
+            {pie ? <SheetDescription className="truncate">{pie}</SheetDescription> : null}
+          </SheetHeader>
+        </div>
+
+        {/* UN solo sitio que se desplaza. */}
+        <div className="no-overscroll min-h-0 flex-1 space-y-4 overflow-y-auto p-4">{children}</div>
+
+        {/* Pie fijo, con sitio para la franja de gestos del telefono. */}
+        <div className="shrink-0 space-y-3 border-t border-border bg-popover p-4 pb-[calc(1rem+var(--sab))] md:pb-4">
+          {error ? (
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex gap-2">{acciones}</div>
+        </div>
       </SheetContent>
     </Sheet>
   )
@@ -78,7 +117,20 @@ export function PanelNombre({
   }
 
   return (
-    <Marco titulo={titulo} pie={pie} onCerrar={onCerrar}>
+    <Marco
+      titulo={titulo}
+      pie={pie}
+      error={error}
+      onCerrar={onCerrar}
+      acciones={
+        <>
+          <Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>
+          <Button onClick={guardar} disabled={!valor.trim() || guardando} className="flex-1">
+            {guardando ? "Guardando…" : accion}
+          </Button>
+        </>
+      }
+    >
       <div>
         <label htmlFor="nombre-panel" className="mb-1.5 block text-[15px] font-medium text-muted-foreground">
           {etiqueta}
@@ -93,17 +145,6 @@ export function PanelNombre({
           placeholder="Closers"
           className="bg-background"
         />
-      </div>
-      {error ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>
-        <Button onClick={guardar} disabled={!valor.trim() || guardando} className="flex-1">
-          {guardando ? "Guardando…" : accion}
-        </Button>
       </div>
     </Marco>
   )
@@ -145,8 +186,16 @@ export function PanelMover({
   }
 
   return (
-    <Marco titulo={titulo} pie="Elige dónde quieres ponerlo" onCerrar={onCerrar}>
-      <div className="max-h-72 space-y-1 overflow-y-auto no-overscroll">
+    <Marco
+      titulo={titulo}
+      pie="Elige dónde quieres ponerlo"
+      error={error}
+      onCerrar={onCerrar}
+      acciones={<Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>}
+    >
+      {/* Sin alto clavado ni desplazamiento propio: la lista crece y quien se
+          desplaza es el cuerpo del panel, uno solo. */}
+      <div className="space-y-1">
         <button
           type="button"
           disabled={actual === null || moviendo}
@@ -179,12 +228,6 @@ export function PanelMover({
           )
         })}
       </div>
-      {error ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-      <Button variant="secondary" onClick={onCerrar} className="w-full">Cancelar</Button>
     </Marco>
   )
 }
@@ -228,7 +271,19 @@ export function PanelBorrar({
   }
 
   return (
-    <Marco titulo={tieneCosas ? "Borrar la carpeta y todo lo de dentro" : "Borrar"} onCerrar={onCerrar}>
+    <Marco
+      titulo={tieneCosas ? "Borrar la carpeta y todo lo de dentro" : "Borrar"}
+      error={error}
+      onCerrar={onCerrar}
+      acciones={
+        <>
+          <Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>
+          <Button variant="destructive" onClick={borrar} disabled={!puede} className="flex-1">
+            {borrando ? "Borrando…" : tieneCosas ? "Borrar todo" : "Borrar"}
+          </Button>
+        </>
+      }
+    >
       <div className="flex items-start gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
         <p className="text-sm leading-relaxed text-destructive">
@@ -254,19 +309,6 @@ export function PanelBorrar({
           />
         </div>
       ) : null}
-
-      {error ? (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={onCerrar} className="flex-1">Cancelar</Button>
-        <Button variant="destructive" onClick={borrar} disabled={!puede} className="flex-1">
-          {borrando ? "Borrando…" : tieneCosas ? "Borrar todo" : "Borrar"}
-        </Button>
-      </div>
     </Marco>
   )
 }

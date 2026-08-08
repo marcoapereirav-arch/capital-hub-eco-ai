@@ -9,6 +9,15 @@ import { whatsappLink } from "@/features/funnel-webinar/config"
 import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
 import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/notify-admins"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
+import {
+  camposAtribucionExistente,
+  camposAtribucionNuevo,
+  etiquetarAtribucion,
+  normalizarFuente,
+} from "@/lib/atribucion/atribucion"
+
+/** Este funnel, en el catalogo unico. La atribucion se cuelga de aqui. */
+const FUNNEL_SLUG = "webinar"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -68,34 +77,14 @@ export async function POST(req: Request) {
   )
 
   const { full_name, email, phone } = parsed.data
-  const source = parsed.data.utm_source ? slugify(parsed.data.utm_source) : null
+  // Quien lo trajo. La normalización vive en la pieza única de atribución.
+  const source = normalizarFuente(parsed.data.utm_source)
   const mcId = parsed.data.mc_id ?? null
-
-  // Crea el tag si no existe y devuelve su id. Colores del brandkit (neutros).
-  const ensureTag = async (name: string, color: string, description: string): Promise<string | null> => {
-    const { data: existing } = await admin.from("tags").select("id").eq("name", name).maybeSingle()
-    if (existing?.id) return existing.id as string
-    const { data: created } = await admin
-      .from("tags")
-      .insert({ name, color, description })
-      .select("id")
-      .single()
-    return (created?.id as string) ?? null
-  }
 
   // Pipeline contextual de este funnel: Webinar
   const { data: pipeline } = await admin
     .from("pipelines").select("id").eq("slug", "webinar").maybeSingle()
   const pipelineId = pipeline?.id ?? null
-
-  const origenTagId = await ensureTag(
-    "origen:webinar",
-    "#2A2D34",
-    "Lead que entró por la landing del webinar",
-  )
-  const fuenteTagId = source
-    ? await ensureTag(`fuente:${source}`, "#3F3F46", `Lead atribuido a la fuente '${source}'`)
-    : null
 
   // Upsert contacto por email
   let contactId: string | null = null
@@ -110,6 +99,7 @@ export async function POST(req: Request) {
       stage: string | null
       pipeline_id: string | null
       affiliate_slug: string | null
+      funnel_slug: string | null
       email: string | null
       manychat_subscriber_id: string | null
       slug: string | null
@@ -118,7 +108,7 @@ export async function POST(req: Request) {
     if (mcId) {
       const { data } = await admin
         .from("contacts")
-        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id, slug")
+        .select("id, stage, pipeline_id, affiliate_slug, funnel_slug, email, manychat_subscriber_id, slug")
         .eq("manychat_subscriber_id", mcId)
         .maybeSingle()
       existing = (data as ExistingContact | null) ?? null
@@ -126,7 +116,7 @@ export async function POST(req: Request) {
     if (!existing) {
       const { data } = await admin
         .from("contacts")
-        .select("id, stage, pipeline_id, affiliate_slug, email, manychat_subscriber_id, slug")
+        .select("id, stage, pipeline_id, affiliate_slug, funnel_slug, email, manychat_subscriber_id, slug")
         .ilike("email", email)
         .maybeSingle()
       existing = (data as ExistingContact | null) ?? null
@@ -143,7 +133,8 @@ export async function POST(req: Request) {
       const nextStage = resolveAutoStage(existing.stage, "lead")
       if (nextStage !== existing.stage) update.stage = nextStage
       if (!existing.pipeline_id && pipelineId) update.pipeline_id = pipelineId
-      if (!existing.affiliate_slug && source) update.affiliate_slug = source
+      // Atribución (fuente + funnel), first-touch. Decidida en un solo sitio.
+      Object.assign(update, camposAtribucionExistente(existing, { source, funnelSlug: FUNNEL_SLUG }))
       if (mcId && !existing.manychat_subscriber_id) update.manychat_subscriber_id = mcId
       // El contacto pudo crearse en el comentario sin email real: ahora lo tenemos.
       if (!existing.email) update.email = email
@@ -164,8 +155,7 @@ export async function POST(req: Request) {
         stage: "lead",
         pipeline_id: pipelineId,
         origin: "landing_webinar",
-        source: source ?? "landing_webinar",
-        affiliate_slug: source,
+        ...camposAtribucionNuevo({ source, funnelSlug: FUNNEL_SLUG }),
         manychat_subscriber_id: mcId,
       }).select("id").single()
       if (cErr) {
@@ -178,10 +168,7 @@ export async function POST(req: Request) {
 
   // Asignar tags (origen + fuente). Ignora 23505 (ya asignado).
   if (contactId) {
-    const tagRows = [origenTagId, fuenteTagId]
-      .filter((id): id is string => !!id)
-      .map((tag_id) => ({ contact_id: contactId as string, tag_id }))
-    if (tagRows.length) await admin.from("contact_tags").insert(tagRows)
+    await etiquetarAtribucion(admin, contactId, { source, funnelSlug: FUNNEL_SLUG })
   }
 
   // Journey event

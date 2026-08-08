@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { X, Check, Loader2, AlertCircle, Phone, ShoppingBag, ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -42,6 +43,19 @@ const emptyForm: Form = {
   closer_user_id: "",
   closer_name: "",
   notes: "",
+}
+
+/**
+ * Pinta la ventana en el `body`, nunca anidada donde vive el boton.
+ *
+ * Por que: si un padre tiene desenfoque o `transform`, por norma de CSS pasa a ser
+ * el marco de referencia de todo lo que es `fixed`, y la ventana deja de cubrir la
+ * pantalla: se encoge y se descoloca. Es el fallo recurrente de la SOP 47 (causa
+ * raiz 3), y es exactamente lo que le pasaba a Marco en el telefono el 2026-08-08.
+ */
+function enElBody(nodo: React.ReactNode) {
+  if (typeof document === "undefined") return null
+  return createPortal(nodo, document.body)
 }
 
 export function RegistrarVentaModal({
@@ -134,13 +148,13 @@ export function RegistrarVentaModal({
 
   if (success) {
     const emailFailed = success.email_sent === false
-    return (
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    return enElBody(
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4">
         <div className={cn(
           "bg-background border rounded-lg p-6 max-w-md w-full text-center space-y-4",
           emailFailed ? "border-amber-500/50" : "border-green-500/40"
         )}>
-          <Check className={cn("h-12 w-12 mx-auto", emailFailed ? "text-amber-400" : "text-green-400")} />
+          <Check className={cn("h-12 w-12 mx-auto", emailFailed ? "text-amber-400" : "text-primary")} />
           <div>
             <h2 className="text-xl font-semibold">Venta registrada ✓</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -154,41 +168,41 @@ export function RegistrarVentaModal({
           </div>
 
           {emailFailed && success.email_error && (
-            <div className="rounded-sm bg-amber-500/[0.08] border border-amber-500/30 p-3 text-left">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-amber-300">Error Resend</p>
+            <div className="rounded-lg bg-amber-500/[0.08] border border-amber-500/30 p-3 text-left">
+              <p className="text-sm font-semibold text-warn">Error Resend</p>
               <p className="text-xs text-amber-200/80 mt-0.5">{success.email_error}</p>
             </div>
           )}
 
           {(emailFailed || showMagicLink) ? (
-            <div className="rounded-sm bg-card/40 border border-border p-3 text-left space-y-1">
+            <div className="rounded-lg bg-card/40 border border-border p-3 text-left space-y-1">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Magic link</p>
+                <p className="text-sm text-muted-foreground">Magic link</p>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(success.invite_url)}
-                  className="text-[10px] font-mono uppercase tracking-wider text-green-400 hover:text-green-300"
+                  className="text-sm font-semibold text-primary"
                 >
                   Copiar
                 </button>
               </div>
-              <p className="text-xs font-mono break-all text-muted-foreground">{success.invite_url}</p>
+              <p className="text-sm font-mono break-all text-muted-foreground">{success.invite_url}</p>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => setShowMagicLink(true)}
-              className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground"
+              className="text-sm text-muted-foreground hover:text-foreground"
             >
               Ver magic link (debug)
             </button>
           )}
 
           <div className="flex gap-2">
-            <button onClick={onClose} className="flex-1 rounded-sm bg-foreground text-background px-3 py-2 text-xs font-mono uppercase tracking-wider">
+            <button onClick={onClose} className="flex-1 inline-flex min-h-11 items-center justify-center rounded-lg bg-primary text-primary-foreground px-3 text-sm font-semibold">
               Cerrar
             </button>
-            <a href={`/contactos`} className="flex-1 rounded-sm border border-border px-3 py-2 text-xs font-mono uppercase tracking-wider text-center hover:bg-card">
+            <a href={`/contactos`} className="flex-1 inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 text-sm font-semibold text-center hover:bg-card">
               Ver contactos
             </a>
           </div>
@@ -197,20 +211,40 @@ export function RegistrarVentaModal({
     )
   }
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4 overflow-y-auto" onClick={onClose}>
-      <form onClick={(e) => e.stopPropagation()} onSubmit={submit} className="bg-background border border-border rounded-t-lg md:rounded-lg w-full max-w-2xl my-auto md:my-0 max-h-[95vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-background border-b border-border px-4 py-3 flex items-center justify-between z-10">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4 text-green-400" /> Registrar venta
+  return enElBody(
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 md:items-center md:p-4"
+      onClick={onClose}
+    >
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+        className={cn(
+          "flex w-full min-h-0 max-w-2xl flex-col overflow-hidden border border-border bg-background",
+          // El alto deja fuera la zona del reloj: con `vh` la cabecera se metia
+          // debajo del reloj del iPhone y la X no se podia tocar.
+          "max-h-[calc(100dvh-var(--sat)-2rem)] rounded-t-xl",
+          "md:max-h-[85dvh] md:rounded-xl"
+        )}
+      >
+        {/* Cabecera fija, con la salida SIEMPRE a la vista y a 44 puntos. */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-foreground">
+            <ShoppingBag className="h-5 w-5 text-primary" aria-hidden /> Registrar venta
           </h2>
-          <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="tap-target -mr-2 inline-flex items-center justify-center rounded-lg text-muted-foreground transition-colors active:bg-secondary active:text-foreground"
+          >
+            <X className="h-5 w-5" strokeWidth={2} />
           </button>
         </div>
 
-        <div className="p-4 space-y-5">
+        {/* UN solo sitio que se desplaza. Antes se desplazaban el fondo y el
+            formulario a la vez y se peleaban. */}
+        <div className="no-overscroll min-h-0 flex-1 overflow-y-auto p-4 space-y-5">
           {/* QUIEN CERRO va lo primero: es el dato que Marco mira. */}
           <section>
             <Label required>Quién cerró</Label>
@@ -236,12 +270,12 @@ export function RegistrarVentaModal({
                   type="button"
                   onClick={() => setForm({ ...form, close_type: v })}
                   className={cn(
-                    "rounded-sm border p-2.5 text-left transition-all",
+                    "rounded-lg border p-2.5 text-left transition-all",
                     form.close_type === v ? "border-green-500/60 bg-green-500/[0.06]" : "border-border hover:border-border"
                   )}
                 >
                   <div className="text-sm font-medium">{label}</div>
-                  <div className="text-[10px] text-muted-foreground">{desc}</div>
+                  <div className="text-sm text-muted-foreground">{desc}</div>
                 </button>
               ))}
             </div>
@@ -270,11 +304,11 @@ export function RegistrarVentaModal({
                     type="button"
                     onClick={() => toggleProduct(p)}
                     className={cn(
-                      "flex items-center gap-2 rounded-sm border p-2.5 text-left transition-all",
+                      "flex items-center gap-2 rounded-lg border p-2.5 text-left transition-all",
                       checked ? "border-green-500/60 bg-green-500/[0.06] text-foreground" : "border-border text-muted-foreground hover:border-border"
                     )}
                   >
-                    <div className={cn("h-4 w-4 rounded-sm border flex items-center justify-center shrink-0", checked && "bg-green-500 border-green-500")}>
+                    <div className={cn("h-4 w-4 rounded-lg border flex items-center justify-center shrink-0", checked && "bg-green-500 border-green-500")}>
                       {checked && <Check className="h-3 w-3 text-black" />}
                     </div>
                     <span className="text-sm">{p}</span>
@@ -282,7 +316,7 @@ export function RegistrarVentaModal({
                 )
               })}
             </div>
-            <p className="text-[10px] font-mono text-muted-foreground mt-2">
+            <p className="mt-2 text-sm text-muted-foreground">
               Por norma el alumno compra solo 1. La UI permite varios por flexibilidad.
             </p>
           </section>
@@ -317,28 +351,28 @@ export function RegistrarVentaModal({
           </section>
 
           {error && (
-            <div className="flex items-center gap-2 text-red-400 text-xs rounded-sm border border-red-500/30 bg-red-500/[0.06] p-2">
+            <div className="flex items-center gap-2 text-red-400 text-xs rounded-lg border border-red-500/30 bg-red-500/[0.06] p-2">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               {error}
             </div>
           )}
         </div>
 
-        {/* Footer sticky */}
-        <div className="sticky bottom-0 bg-background border-t border-border p-3 flex gap-2">
+        {/* Pie fijo de la hoja, con sitio para la franja de gestos del telefono. */}
+        <div className="flex shrink-0 gap-2 border-t border-border bg-background p-3 pb-[calc(0.75rem+var(--sab))] md:pb-3">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-sm border border-border px-4 py-2 text-xs font-mono uppercase tracking-wider hover:bg-card"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold text-foreground transition-colors active:bg-muted"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={submitting || !form.full_name || !form.email}
-            className="flex-1 rounded-sm bg-gradient-to-br from-green-500 to-green-600 text-black px-4 py-2.5 text-xs font-mono uppercase tracking-wider font-bold disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-all disabled:cursor-not-allowed disabled:opacity-30"
           >
-            {submitting ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Registrando…</> : <>Registrar venta y enviar acceso <ChevronRight className="h-3.5 w-3.5" /></>}
+            {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Registrando…</> : <>Registrar venta y enviar acceso <ChevronRight className="h-4 w-4" /></>}
           </button>
         </div>
       </form>
@@ -348,16 +382,16 @@ export function RegistrarVentaModal({
 
 function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="block text-[11px] font-mono uppercase tracking-wider text-foreground/90">
+    <label className="block text-sm font-semibold text-muted-foreground">
       {children}
       {required && <span className="text-red-400 ml-1">*</span>}
     </label>
   )
 }
 
-const fieldBase = "w-full rounded-sm border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:border-green-500/70 focus:bg-secondary"
+const fieldBase = "w-full min-h-11 rounded-lg border px-3 py-2.5 text-base md:text-sm transition-colors focus:outline-none focus:border-ring focus:bg-secondary"
 const fieldOk = "border-border bg-card hover:bg-secondary hover:border-foreground/40 text-foreground placeholder:text-muted-foreground"
-const fieldRequiredEmpty = "border-red-500/60 bg-red-500/[0.10] hover:bg-red-500/[0.14] text-foreground placeholder:text-red-300/70"
+const fieldRequiredEmpty = "border-destructive/60 bg-destructive/10 hover:bg-destructive/[0.14] text-foreground placeholder:text-destructive/80"
 
 function Input({
   value,
@@ -399,7 +433,7 @@ function NumberInput({ value, onChange, placeholder, required }: { value: string
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={cn(fieldBase, "font-mono", empty ? fieldRequiredEmpty : fieldOk)}
+      className={cn(fieldBase, empty ? fieldRequiredEmpty : fieldOk)}
     />
   )
 }
@@ -522,16 +556,16 @@ function CloserPicker({
                   onSelect={() => onPick(c.id)}
                   className="flex items-center gap-2.5 py-2"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-mono font-semibold uppercase text-secondary-foreground">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
                     {deriveInitials(name)}
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm text-foreground">{name}</span>
-                    <span className="truncate text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    <span className="truncate text-sm text-muted-foreground">
                       {roleLabel(c.role)}
                     </span>
                   </span>
-                  {active && <Check className="ml-auto h-4 w-4 shrink-0 text-green-400" />}
+                  {active && <Check className="ml-auto h-4 w-4 shrink-0 text-primary" />}
                 </DropdownMenuItem>
               )
             })

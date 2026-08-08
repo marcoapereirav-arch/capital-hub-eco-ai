@@ -18,7 +18,7 @@ export function RegistrarVentaWidget() {
         onClick={() => setOpen(true)}
         title="Registrar venta (Ctrl+K, V)"
         className={cn(
-          "fixed right-4 z-40 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-6 md:right-6",
+          "fixed right-4 z-40 bottom-[calc(3.5rem+var(--sab)+1rem)] md:bottom-6 md:right-6",
           // El verde y la tinta salen del tema, no de los verdes crudos de
           // Tailwind: si un dia cambia la marca, este boton cambia con ella.
           // La tinta encima del verde NO es capricho: el blanco da 2.11 de

@@ -22,6 +22,24 @@ import { cn } from "@/lib/utils"
  *    en vez de ensenar una pagina en blanco
  *  - dice SIEMPRE en que punto estas ("Viendo 21 a 40 de 132"), porque si no el
  *    usuario no sabe si le faltan dos o doscientos
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POR DEFECTO ESTA LISTA **NO** TIENE DESPLAZAMIENTO PROPIO. Y es a proposito.
+ *
+ * Hasta el 2026-08-07 lo tenia siempre: envolvia el contenido en un cajon con
+ * `overflow-y-auto` + `no-overscroll` (`overscroll-behavior: contain`). Dentro de
+ * una pantalla normal ese cajon no tiene nada que desplazar, PERO `contain` corta
+ * el paso del gesto hacia la pagina. Resultado: con el raton encima de la lista,
+ * que es casi toda la pantalla, LA PAGINA NO SE MUEVE. Parece congelada.
+ *
+ * Es un fallo MUDO: no hay error, no se sale nada de sitio, las medidas salen en
+ * verde y las capturas se ven bien (una captura de pagina completa no prueba que
+ * se pueda desplazar). Solo se ve poniendo la rueda encima. Lo encontro Marco.
+ *
+ * Regla: **el desplazamiento de una pantalla lo hace el marco de la app, uno solo.**
+ * Una lista dentro de una ventana o de una hoja de alto fijo si necesita el suyo:
+ * eso se pide con `propioScroll`, a la vista, y no al reves.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 
 /** El maximo por pagina en TODO el OS. No se pasa por parametro a proposito. */
@@ -34,6 +52,7 @@ export function ListaPaginada<T>({
   className,
   nombreSingular = "registro",
   nombrePlural = "registros",
+  propioScroll = false,
 }: {
   items: T[]
   /** Pinta los elementos de la pagina actual. */
@@ -46,6 +65,12 @@ export function ListaPaginada<T>({
   className?: string
   nombreSingular?: string
   nombrePlural?: string
+  /**
+   * Solo cuando la lista vive dentro de una caja de ALTO FIJO (una ventana, una
+   * hoja inferior) y tiene que desplazarse por dentro. En una pantalla normal se
+   * deja en falso: si no, el gesto se queda atrapado y la pagina no se mueve.
+   */
+  propioScroll?: boolean
 }) {
   const [pagina, setPagina] = useState(1)
   const [contenedor, setContenedor] = useState<HTMLDivElement | null>(null)
@@ -66,16 +91,27 @@ export function ListaPaginada<T>({
 
   function ir(n: number) {
     setPagina(n)
-    // Vuelve arriba dentro del propio contenedor, no de la pagina entera: esto
-    // vive tanto suelto como dentro de una ventana emergente.
-    contenedor?.scrollTo({ top: 0, behavior: "smooth" })
+    // Vuelve al principio de la lista, no de la pagina entera.
+    //
+    // `scrollIntoView` sirve para los dos casos sin preguntar quien se desplaza:
+    // mueve al ancestro que se pueda mover, sea el marco de la app o la ventana
+    // en la que este metida la lista. Antes se llamaba a `scrollTo` sobre el
+    // cajon propio, y eso obligaba a que la lista TUVIERA cajon propio, que es
+    // justo lo que congelaba la pantalla.
+    contenedor?.scrollIntoView({ block: "start", behavior: "smooth" })
   }
 
   const hayVarias = totalPaginas > 1
 
   return (
     <div className={cn("flex min-h-0 flex-col", className)}>
-      <div ref={setContenedor} className="no-overscroll min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={setContenedor}
+        className={cn(
+          // Sin cajon propio por defecto: el gesto pasa a la pagina, como debe.
+          propioScroll && "no-overscroll min-h-0 flex-1 overflow-y-auto",
+        )}
+      >
         {children(enPantalla)}
       </div>
 
