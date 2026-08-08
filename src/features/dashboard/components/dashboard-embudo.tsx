@@ -36,6 +36,16 @@ export type OpcionEmbudo = {
   id: string
   nombre: string
   pasos: PasoEmbudo[]
+  /**
+   * "embudo"  = un recorrido de verdad: cada paso es un subconjunto del anterior
+   *             y entre paso y paso se dibuja la gente que se cae.
+   * "reparto" = una foto de donde esta cada persona AHORA. Los pasos NO son
+   *             subconjuntos unos de otros, asi que dibujar caidas seria mentir:
+   *             se enseña cuanta gente hay en cada sitio y ya.
+   */
+  modo?: "embudo" | "reparto"
+  /** Solo en "reparto": el total de personas del embudo. */
+  total?: number
 }
 
 export function DashboardEmbudo({
@@ -53,7 +63,12 @@ export function DashboardEmbudo({
 }) {
   const activo = opciones.find((o) => o.id === seleccionado) ?? opciones[0]
   const pasos = activo?.pasos ?? []
-  const entrada = pasos[0]?.valor ?? 0
+  const esReparto = activo?.modo === "reparto"
+  /* En un embudo, la escala es la entrada. En un reparto, el escalon mas grande:
+     si no, una etapa con 4 de 34 saldria como una raya invisible. */
+  const entrada = esReparto
+    ? Math.max(...pasos.map((p) => p.valor), 1)
+    : pasos[0]?.valor ?? 0
 
   /* Cual es el escalon donde mas gente se pierde. Es lo unico que se pinta en
      ambar en todo el panel. Solo cuenta si de verdad se cae alguien. */
@@ -76,7 +91,9 @@ export function DashboardEmbudo({
     return <div className="h-[360px]" />
   }
 
-  if (pasos.length === 0 || entrada === 0) {
+  const totalReparto = activo?.total ?? pasos.reduce((a, b) => a + b.valor, 0)
+
+  if (pasos.length === 0 || (esReparto ? totalReparto === 0 : entrada === 0)) {
     return (
       <div className="flex min-h-[220px] flex-col items-center justify-center gap-2 px-6 py-10 text-center">
         <h3 className="text-[17px] font-semibold text-foreground">
@@ -91,6 +108,12 @@ export function DashboardEmbudo({
 
   return (
     <div className="px-4 pb-6 pt-2 md:px-5">
+      {esReparto && (
+        <p className="pb-3 text-[15px] text-muted-foreground">
+          Dónde está cada persona ahora mismo.{" "}
+          <span className="font-semibold tabular-nums text-foreground">{totalReparto}</span> en total.
+        </p>
+      )}
       <ul>
         {pasos.map((paso, i) => {
           const anchoPaso = ancho(paso.valor)
@@ -103,7 +126,7 @@ export function DashboardEmbudo({
               {/* LA CUÑA: es la gente que se cae, dibujada a escala.
                   Va ANTES de la barra del paso, porque la caida ocurre al
                   pasar del escalon anterior a este. */}
-              {i > 0 && (
+              {i > 0 && !esReparto && (
                 <div className="relative h-14">
                   <div
                     className={cn(
@@ -132,15 +155,22 @@ export function DashboardEmbudo({
               )}
 
               {/* EL ESCALON: nombre, numero y barra a escala. */}
-              <div className="flex items-baseline justify-between gap-3">
+              <div className={cn("flex items-baseline justify-between gap-3", esReparto && i > 0 && "mt-4")}>
                 <span className="min-w-0 truncate text-[15px] font-semibold text-foreground">
                   {paso.etiqueta}
                 </span>
-                <span className="shrink-0 text-2xl font-bold tabular-nums tracking-tight text-foreground">
-                  {paso.valor}
+                <span className="flex shrink-0 items-baseline gap-2">
+                  {esReparto && totalReparto > 0 && (
+                    <span className="text-sm tabular-nums text-muted-foreground">
+                      {Math.round((paso.valor / totalReparto) * 100)}%
+                    </span>
+                  )}
+                  <span className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                    {paso.valor}
+                  </span>
                 </span>
               </div>
-              <div className="mt-1.5 flex justify-center">
+              <div className={cn("mt-1.5 flex", esReparto ? "justify-start" : "justify-center")}>
                 <div
                   className={cn(
                     "h-7 rounded-lg transition-[width] duration-700 ease-out",

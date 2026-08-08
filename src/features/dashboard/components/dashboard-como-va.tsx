@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { ListaEnVentana } from "@/components/ui/lista-en-ventana"
 
 /**
  * COMO VA EL MES. El unico grafico de tiempo del panel.
@@ -152,38 +153,19 @@ export function DashboardComoVa({
         <span>{tramos[tramos.length - 1]?.corta}</span>
       </div>
 
-      {/* QUIEN HAY DENTRO de la barra que se ha tocado. */}
-      {abierta !== null && (serie.filas[abierta]?.length ?? 0) > 0 && (
-        <div className="mt-3 rounded-lg border border-border bg-background">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2.5">
-            <span className="text-[15px] font-semibold text-foreground">
-              {tramos[abierta]?.larga}
-              <span className="ml-1.5 font-normal text-muted-foreground">
-                {serie.valores[abierta]} {serie.nombre.toLowerCase()}
-              </span>
-            </span>
-            <button
-              type="button"
-              onClick={() => setAbierta(null)}
-              className="h-11 rounded-lg px-2 text-sm text-muted-foreground md:h-8"
-            >
-              Cerrar
-            </button>
-          </div>
-          <ul className="divide-y divide-border">
-            {serie.filas[abierta].slice(0, 20).map((f) => (
-              <li key={f.id} className="px-3 py-2.5">
-                <div className="truncate text-[15px] text-foreground">{f.nombre}</div>
-                <div className="truncate text-sm text-muted-foreground">{f.detalle}</div>
-              </li>
-            ))}
-          </ul>
-          {serie.filas[abierta].length > 20 && (
-            <p className="border-t border-border px-3 py-2.5 text-sm text-muted-foreground">
-              y {serie.filas[abierta].length - 20} más
-            </p>
-          )}
-        </div>
+      {/* QUIEN HAY DENTRO de la barra que se ha tocado.
+          Se abre en VENTANA, no desplegandose hacia abajo, y nunca enseña mas de
+          20 a la vez: con mas, se pasa de pagina con las flechas.
+          Marco, 2026-08-08: "no quiero que esa vaina se despliegue hacia abajo.
+          Quiero ver un pop-up... nunca me muestras mas de veinte contactos."
+          Es REGLA #26 del protocolo del agente, para todo el OS. */}
+      {abierta !== null && (
+        <ListaEnVentana
+          titulo={`${serie.valores[abierta]} ${serie.nombre.toLowerCase()}`}
+          subtitulo={tramos[abierta]?.larga}
+          filas={serie.filas[abierta] ?? []}
+          onClose={() => setAbierta(null)}
+        />
       )}
 
       {/* Lo unico escrito: el total y el dia mas alto, que es lo que se busca. */}

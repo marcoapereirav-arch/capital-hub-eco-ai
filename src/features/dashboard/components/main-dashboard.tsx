@@ -70,6 +70,22 @@ type ReservaRow = {
   invitee_email: string | null
 }
 
+/**
+ * Una VENTA. La fuente de verdad del dinero (SOP ventas/02).
+ *
+ * ANTES el dinero salia de `contacts.total_revenue` de los contactos CREADOS en
+ * el periodo. Eso significa que una venta hecha en agosto a un lead que entro en
+ * julio NO contaba en agosto: el dinero se apuntaba al mes en que entro la
+ * persona, no al mes en que se cobro. Con una sola venta de prueba no se veia,
+ * pero en cuanto haya ventas de verdad los numeros serian falsos.
+ * Ahora sale del evento de venta, que lleva SU PROPIA fecha.
+ */
+type VentaRow = {
+  created_at: string
+  contact_id: string
+  data: { revenue?: number; cash_collected?: number; closer_name?: string; products?: string[] } | null
+}
+
 type ReporteSetterRow = {
   profile_id: string
   report_date: string
@@ -183,6 +199,8 @@ export function MainDashboard() {
   const [bookings, setBookings] = useState<ReservaRow[]>([])
   const [previousBookings, setPreviousBookings] = useState<ReservaRow[]>([])
   const [reportesSetter, setReportesSetter] = useState<ReporteSetterRow[]>([])
+  const [ventas, setVentas] = useState<VentaRow[]>([])
+  const [ventasPrevias, setVentasPrevias] = useState<VentaRow[]>([])
   const [embudoElegido, setEmbudoElegido] = useState("venta")
   const [loading, setLoading] = useState(true)
   /* La serie de 30 dias se sigue cargando exactamente igual (la carga de datos no
@@ -280,6 +298,8 @@ export function MainDashboard() {
         bookingsRes,
         prevBookingsRes,
         reportesRes,
+        ventasRes,
+        ventasPreviasRes,
         seriesRes,
         pendingSalesRes,
       ] = await Promise.all([
@@ -326,6 +346,18 @@ export function MainDashboard() {
           .gte("report_date", ymd(range.from))
           .lte("report_date", ymd(range.to)),
         supabase
+          .from("contact_journey_events")
+          .select("created_at, contact_id, data")
+          .eq("type", "sale")
+          .gte("created_at", fromIso)
+          .lte("created_at", toIso),
+        supabase
+          .from("contact_journey_events")
+          .select("created_at, contact_id, data")
+          .eq("type", "sale")
+          .gte("created_at", prevFromIso)
+          .lte("created_at", prevToIso),
+        supabase
           .from("contacts")
           .select("created_at, total_revenue")
           .gte("created_at", series30dStartIso)
@@ -347,6 +379,8 @@ export function MainDashboard() {
       setBookings((bookingsRes.data ?? []) as ReservaRow[])
       setPreviousBookings((prevBookingsRes.data ?? []) as ReservaRow[])
       setReportesSetter((reportesRes.data ?? []) as ReporteSetterRow[])
+      setVentas((ventasRes.data ?? []) as VentaRow[])
+      setVentasPrevias((ventasPreviasRes.data ?? []) as VentaRow[])
       setPendingSales((pendingSalesRes.data ?? []) as VentaPorCompletar[])
 
       const seriesMap = new Map<string, number>()
@@ -398,15 +432,20 @@ export function MainDashboard() {
     const r = contarReservas(bookings)
     const rPrev = contarReservas(previousBookings)
 
-    const revenue = contacts.reduce((s, c) => s + (c.total_revenue ?? 0), 0)
-    const prevRevenue = previousContacts.reduce((s, c) => s + (c.total_revenue ?? 0), 0)
+    /* EL DINERO SALE DE LAS VENTAS DEL PERIODO, no de los contactos creados en
+       el periodo. Una venta hecha hoy a un lead de julio es dinero de HOY. */
+    const sumar = (filas: VentaRow[], campo: "revenue" | "cash_collected") =>
+      filas.reduce((acc, v) => acc + (Number(v.data?.[campo]) || 0), 0)
+
+    const revenue = sumar(ventas, "revenue")
+    const prevRevenue = sumar(ventasPrevias, "revenue")
     const revenueDelta = revenue - prevRevenue
 
-    const cashCollected = contacts.reduce((s, c) => s + (c.total_cash_collected ?? 0), 0)
-    const prevCash = previousContacts.reduce((s, c) => s + (c.total_cash_collected ?? 0), 0)
+    const cashCollected = sumar(ventas, "cash_collected")
+    const prevCash = sumar(ventasPrevias, "cash_collected")
 
-    const ventas = invites.length
-    const prevVentas = previousInvites.length
+    const nVentas = ventas.length
+    const prevVentas = ventasPrevias.length
 
     const contactosNuevos = contacts.length
     const prevContactos = previousContacts.length
@@ -416,8 +455,8 @@ export function MainDashboard() {
        se lee como "vamos fatal", y es mentira. */
     const baseShow = r.hechas + r.noShows
     const showRate = baseShow > 0 ? Math.round((r.hechas / baseShow) * 100) : null
-    const conversion = r.hechas > 0 ? Math.round((ventas / r.hechas) * 100) : null
-    const ticketMedio = ventas > 0 ? Math.round(revenue / ventas) : null
+    const conversion = r.hechas > 0 ? Math.round((nVentas / r.hechas) * 100) : null
+    const ticketMedio = nVentas > 0 ? Math.round(revenue / nVentas) : null
 
     const pct = (actual: number, anterior: number) =>
       anterior > 0 ? Math.round(((actual - anterior) / anterior) * 100) : null
@@ -429,9 +468,9 @@ export function MainDashboard() {
       revenuePct: pct(revenue, prevRevenue),
       cashCollected,
       cashPct: pct(cashCollected, prevCash),
-      ventas,
+      ventas: nVentas,
       prevVentas,
-      ventasDelta: ventas - prevVentas,
+      ventasDelta: nVentas - prevVentas,
       contactosNuevos,
       prevContactos,
       contactosDelta: contactosNuevos - prevContactos,
@@ -445,7 +484,7 @@ export function MainDashboard() {
       conversion,
       ticketMedio,
     }
-  }, [contacts, previousContacts, invites, previousInvites, bookings, previousBookings])
+  }, [contacts, previousContacts, bookings, previousBookings, ventas, ventasPrevias])
 
   // ---------------------------------------------------------------------------
   // EL SETTER: sus cuatro numeros del periodo, sumados de sus partes diarias.
@@ -600,28 +639,28 @@ export function MainDashboard() {
         etiqueta: "Conversaciones nuevas",
         valor: setter.hayDatos ? setter.conversaciones : null,
         formato: "numero",
-        ayuda: setter.hayDatos ? "Abiertas en el periodo" : "Sin partes todavía",
+        ayuda: setter.hayDatos ? "Primeras conversaciones nuevas" : "Sin partes todavía",
       },
       {
         clave: "s-followups",
         etiqueta: "Follow-ups",
         valor: setter.hayDatos ? setter.followups : null,
         formato: "numero",
-        ayuda: setter.hayDatos ? "Seguimientos nuevos" : "Sin partes todavía",
+        ayuda: setter.hayDatos ? "Conversaciones que retomó" : "Sin partes todavía",
       },
       {
         clave: "s-ofertas",
         etiqueta: "Ofertas de llamada",
         valor: setter.hayDatos ? setter.ofertas : null,
         formato: "numero",
-        ayuda: setter.hayDatos ? "Veces que ofreció la llamada" : "Sin partes todavía",
+        ayuda: setter.hayDatos ? "Veces que propuso la llamada" : "Sin partes todavía",
       },
       {
         clave: "s-agendadas",
-        etiqueta: "Llamadas agendadas",
+        etiqueta: "Llamadas que consiguió",
         valor: setter.hayDatos ? setter.agendadas : null,
         formato: "numero",
-        ayuda: setter.hayDatos ? `De ${kpis.llamadas} en total` : "Sin partes todavía",
+        ayuda: setter.hayDatos ? `De ${kpis.llamadas} reservadas en total` : "Sin partes todavía",
       },
     ],
     [setter, kpis.llamadas],
@@ -708,52 +747,52 @@ export function MainDashboard() {
     return [
       {
         clave: "cash",
-        etiqueta: "Cash collected",
+        etiqueta: "Cobrado",
         valor: kpis.cashCollected,
         formato: "euro",
         delta: kpis.cashPct !== null ? { texto: `${signo(kpis.cashPct)}%`, sube: kpis.cashPct >= 0 } : null,
-        pie: "Lo que entró en caja",
+        pie: "Dinero que ya entró en la cuenta",
       },
       {
         clave: "ventas",
-        etiqueta: "Ventas",
+        etiqueta: "Ventas cerradas",
         valor: kpis.ventas,
         formato: "numero",
         delta: kpis.ventasDelta !== 0 ? { texto: signo(kpis.ventasDelta), sube: kpis.ventasDelta >= 0 } : null,
-        pie: "Cierres del periodo",
+        pie: "Ventas registradas en el periodo",
       },
       {
         clave: "ticket",
         etiqueta: "Ticket medio",
         valor: kpis.ticketMedio,
         formato: "euro",
-        pie: kpis.ticketMedio === null ? "Sin ventas todavía" : "Por venta",
+        pie: kpis.ticketMedio === null ? "Todavía no hay ninguna venta" : "Lo que deja cada venta de media",
       },
       {
         clave: "contactos",
-        etiqueta: "Contactos nuevos",
+        etiqueta: "Personas nuevas",
         valor: kpis.contactosNuevos,
         formato: "numero",
         delta:
           kpis.contactosDelta !== 0 ? { texto: signo(kpis.contactosDelta), sube: kpis.contactosDelta >= 0 } : null,
-        pie: "Entraron en el periodo",
+        pie: "Entraron al CRM en el periodo",
       },
       {
         clave: "llamadas",
-        etiqueta: "Llamadas hechas",
+        etiqueta: "Llamadas celebradas",
         valor: kpis.llamadasCompletadas,
         formato: "numero",
         pie:
           kpis.porVenir > 0
-            ? `De ${kpis.llamadas} agendadas · ${kpis.porVenir} por venir`
-            : `De ${kpis.llamadas} agendadas`,
+            ? `Se reservaron ${kpis.llamadas}. Quedan ${kpis.porVenir} por celebrar`
+            : `Se reservaron ${kpis.llamadas} en total`,
       },
       {
         clave: "noshow",
-        etiqueta: "No vinieron",
+        etiqueta: "No se presentaron",
         valor: kpis.noShows,
         formato: "numero",
-        pie: "De las que ya pasaron",
+        pie: "Tenían llamada y no aparecieron",
       },
     ]
   }, [kpis])
@@ -875,10 +914,11 @@ export function MainDashboard() {
       {
         id: "venta",
         nombre: "Embudo de la venta",
+        modo: "embudo",
         pasos: [
-          { clave: "contactos", etiqueta: "Contactos", valor: kpis.contactosNuevos },
-          { clave: "agendaron", etiqueta: "Agendaron", valor: kpis.llamadas },
-          { clave: "vinieron", etiqueta: "Vinieron", valor: kpis.llamadasCompletadas },
+          { clave: "contactos", etiqueta: "Personas nuevas", valor: kpis.contactosNuevos },
+          { clave: "agendaron", etiqueta: "Reservaron llamada", valor: kpis.llamadas },
+          { clave: "vinieron", etiqueta: "Se conectaron a la llamada", valor: kpis.llamadasCompletadas },
           { clave: "compraron", etiqueta: "Compraron", valor: kpis.ventas },
         ],
       },
@@ -888,6 +928,7 @@ export function MainDashboard() {
       lista.push({
         id: "conversacion",
         nombre: "De conversación a llamada",
+        modo: "embudo",
         pasos: [
           { clave: "conversaciones", etiqueta: "Conversaciones", valor: setter.conversaciones },
           { clave: "ofertas", etiqueta: "Ofertas de llamada", valor: setter.ofertas },
@@ -896,26 +937,37 @@ export function MainDashboard() {
       })
     }
 
-    /* Los embudos del CRM: donde esta cada persona AHORA. Uno por pipeline, con
-       sus etapas de avance. Las salidas (seguimiento, no show, perdido) no son
-       un paso del recorrido, asi que no entran en la cadena. */
+    /* LOS EMBUDOS DEL CRM: donde esta cada persona AHORA. Ni una suposicion.
+       ==========================================================================
+       LO QUE ESTABA MAL (lo cazo Marco el 2026-08-08): cada escalon contaba los
+       que estaban EN el MAS todos los de los escalones siguientes, dando por
+       hecho que quien esta en "Agendado" paso antes por "Lead" y antes por "DM".
+       Eso es falso: al embudo del webinar se entra directamente en "Lead" al
+       dejar los datos en la landing. Nadie pasa por "DM" salvo quien comenta un
+       reel. Resultado: el panel decia "23 en DM" cuando en DM no hay NADIE, y
+       "23 en Lead" cuando hay 19. El CRM decia la verdad y el panel otra cosa.
+
+       Para saber por donde paso cada persona haria falta su historial completo,
+       y hoy no lo tenemos (los eventos de cambio de etapa empezaron el 7 de
+       agosto). Asi que se enseña lo unico que se sabe con certeza: cuanta gente
+       hay AHORA MISMO en cada etapa. Los numeros cuadran con el CRM al dedillo,
+       que es lo que se pidio.
+       ========================================================================== */
     for (const p of pipelines) {
-      const avance = p.stages.filter((st) => st.kind === "active" || st.kind === "won")
-      if (avance.length === 0) continue
       const delPipeline = allContacts.filter((c) => c.pipeline_id === p.id)
+      if (delPipeline.length === 0) continue
       const cuenta = new Map<string, number>()
       for (const c of delPipeline) cuenta.set(c.stage, (cuenta.get(c.stage) ?? 0) + 1)
 
-      /* Cada escalon lleva los que estan EN el, mas todos los que ya lo pasaron:
-         si alguien esta en "Alumno", en su dia paso por "Agendado". Sin esto el
-         embudo saldria al reves, con mas gente al final que al principio. */
       lista.push({
         id: `pipeline-${p.id}`,
         nombre: p.name,
-        pasos: avance.map((st, i) => ({
+        modo: "reparto",
+        total: delPipeline.length,
+        pasos: p.stages.map((st) => ({
           clave: st.key,
           etiqueta: st.name,
-          valor: avance.slice(i).reduce((sum, posterior) => sum + (cuenta.get(posterior.key) ?? 0), 0),
+          valor: cuenta.get(st.key) ?? 0,
         })),
       })
     }
@@ -968,32 +1020,32 @@ export function MainDashboard() {
         <div className="mt-4">
           <DashboardMetricas
             titular={{
-              etiqueta: "Facturación del periodo",
+              etiqueta: "Facturado",
               valor: kpis.revenue,
               delta:
                 kpis.revenuePct !== null
                   ? { texto: `${kpis.revenuePct > 0 ? "+" : ""}${kpis.revenuePct}%`, sube: kpis.revenuePct >= 0 }
                   : null,
-              pie: `${kpis.ventas} ${plural(kpis.ventas, "venta", "ventas")} en el periodo`,
+              pie: `De ${kpis.ventas} ${plural(kpis.ventas, "venta cerrada", "ventas cerradas")} en el periodo`,
             }}
             anillos={[
               {
                 clave: "showrate",
-                etiqueta: "Show rate",
+                etiqueta: "Asistencia a las llamadas",
                 pct: kpis.showRate,
                 pie:
                   kpis.showRate === null
-                    ? "Sin llamadas que contar"
-                    : `${kpis.llamadasCompletadas} vinieron, ${kpis.noShows} no`,
+                    ? "Todavía no ha pasado ninguna llamada"
+                    : `${kpis.llamadasCompletadas} se conectaron · ${kpis.noShows} no se presentaron`,
               },
               {
                 clave: "conversion",
-                etiqueta: "Conversión llamada a venta",
+                etiqueta: "De llamada a venta",
                 pct: kpis.conversion,
                 pie:
                   kpis.conversion === null
-                    ? "Sin llamadas hechas todavía"
-                    : `${kpis.ventas} de ${kpis.llamadasCompletadas} llamadas`,
+                    ? "Todavía no ha pasado ninguna llamada"
+                    : `${kpis.ventas} ${plural(kpis.ventas, "venta", "ventas")} de ${kpis.llamadasCompletadas} ${plural(kpis.llamadasCompletadas, "llamada celebrada", "llamadas celebradas")}`,
               },
             ]}
             piezas={piezas}
