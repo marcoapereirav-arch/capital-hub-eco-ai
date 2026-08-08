@@ -91,39 +91,37 @@ OS y no solo él y Adrián.
 
 **El OS entero pasa al brandkit y a móvil primero. 29 de 30 pantallas sin ningún fallo.**
 
-- **Los tokens dicen la verdad.** `accent` y `primary` valían gris y blanco: ahora valen el
-  verde de marca `#22C55E` con tinta `#08130C`, y las dos familias tipográficas apuntan a
-  Inter Tight de verdad (antes empezaban por `-apple-system`, así que en un Mac nunca se
-  llegaba a ella).
-- **Las 35 pantallas internas rehechas móvil primero**, en cinco oleadas con revisor.
-  Medido a 375px con la versión de producción: botones más pequeños que un dedo **234 → 1**,
-  textos ilegibles **1535 → 1**, señales de diseño viejo **619 → 0**, tapados por la barra
-  **11 → 0**. Cero deslizamiento lateral en las 30.
-- **Las 7 piezas del marco común**, que salen en todas a la vez: el notch, el teclado
-  abierto, la hoja inferior, los flotantes que tapaban el menú, los márgenes, las zonas
-  táctiles y la barra de abajo descuadrada.
-- **Dashboard nuevo**: "la cadena". Contactos → Llamadas → Ventas, con cuánta gente se
-  pierde en cada paso dibujado. Con ceros no queda vacío: señala el problema real.
-- **Actividad reciente**: 10 en el panel, ventana con todo de 20 en 20, hora exacta y por
-  dónde entró cada lead.
-- **CRM minimalista**: buscador, acción principal y un solo botón de Filtros. Los ocho
-  desplegables viven dentro.
-- **Retirados**: los lead magnets (1 entrega en toda la base) y la agenda propia (0
-  reservas). La agenda es Calendly.
-- **Ads**: entra por Campañas y el gasto en euros.
+---
 
-**Tres cosas quedan ancladas para que no vuelva a pasar:**
+**El teléfono: cuatro cosas arregladas y UNA sin resolver.**
 
-| Qué | Dónde |
+Marco abrió el OS en su iPhone y encontró cuatro fallos. Tres están resueltos y uno no.
+
+| Lo que encontró | Estado |
 |---|---|
-| Cómo se construye una pantalla | skill `os-movil-primero` (978 líneas) |
-| Que no se pueda escribir diseño viejo | `scripts/check-brandkit.mjs`, al guardar y al construir |
-| Que ninguna lista se pinte entera (máximo 20) | `src/components/ui/lista-paginada.tsx` + regla del candado |
+| El menú de abajo con secciones que no usa, y "Más" sin salida | **Resuelto.** Dashboard, CRM, Ads, Instagram, y "Más" con su botón de Cerrar |
+| El widget de registrar venta se solapaba y no se podía cerrar | **Resuelto.** Usaba `vh`, que en el iPhone incluye la zona del reloj, así que la X quedaba debajo del reloj |
+| El avatar no llevaba a ningún sitio | **Resuelto.** Abre tu cuenta con Mi perfil y Cerrar sesión |
+| **La franja negra de abajo** | **SIN RESOLVER.** Seis intentos |
 
-El candado bloqueó mi propio trabajo cinco veces esta sesión, y las cinco tenía razón.
+De paso, un fallo real que llevaba ahí desde siempre: **los tres tonos oscuros del OS no
+eran los del brandkit.** El fondo era `#040506`, casi negro puro, en vez del carbón
+`#0F0F12`. Estaban escritos en otro formato y convertidos a ojo. Corregidos.
 
-**Publicado y comprobado:** `/webs/lead-magnets` y `/agenda` dan 404 en producción, que es
-la prueba de que la web sirve lo nuevo.
+Y todas las ventanas emergentes del OS pasaron al patrón nativo: se pintan en el `body`,
+un solo desplazamiento y salida visible a 44 puntos.
+
+---
+
+## Qué queda pendiente
+
+**La franja negra del iPhone.** Todo lo aprendido, los seis intentos que NO funcionaron y
+por dónde seguir están en [`producto/62`](docs/sops/producto/62-franja-negra-abajo-sin-resolver.md).
+Falta **un solo dato** del teléfono de Marco, y ya está montado el medidor que lo manda
+solo. Marco lo sigue en otro chat.
+
+Lo demás que sigue abierto: las 20 listas viejas sin paginar y las comprobaciones que solo
+se pueden hacer en un iPhone de verdad.
 
 ---
 
