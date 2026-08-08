@@ -135,18 +135,18 @@
        ============================================ */
 
     /* BG: #0F0F12 Negro Carbon (60%) */
-    --background: oklch(0.113 0.005 265);
+    --background: #0F0F12;
 
     /* TEXT: #F5F6F7 Blanco Roto (10%) */
     --foreground: oklch(0.97 0.001 250);
 
     /* CARDS: superficie elevada — DEBE separarse claramente del fondo (#0F0F12).
        Subido de 0.153 a 0.185 para que las fichas/cajas tengan contraste real. */
-    --card: oklch(0.185 0.004 265);
+    --card: #131318;
     --card-foreground: oklch(0.97 0.001 250);
 
     /* POPOVERS/menús/sheets: capa por encima de las cards → un punto más claro */
-    --popover: oklch(0.205 0.004 265);
+    --popover: #16161B;
     --popover-foreground: oklch(0.97 0.001 250);
 
     /* ACCION PRINCIPAL: verde de marca #22C55E con tinta #08130C encima.
@@ -207,7 +207,7 @@
     --chart-5: oklch(0.24 0.012 260);
 
     /* SIDEBAR (menu de la izquierda) */
-    --sidebar: oklch(0.113 0.005 265);
+    --sidebar: #0F0F12;
     --sidebar-foreground: oklch(0.97 0.001 250);
     --sidebar-primary: #22C55E;
     --sidebar-primary-foreground: #08130C;
@@ -224,7 +224,14 @@
     @apply border-border outline-ring/50;
   }
   html {
-    @apply font-sans bg-background;
+    @apply font-sans;
+    /* El LIENZO del navegador, no la pagina. En el iPhone de Marco la ventana se
+       queda 62 puntos por encima del borde de la pantalla (medido en su captura:
+       la barra acaba ahi y debajo quedaba el fondo a secas). Esos 62 puntos los
+       pinta el lienzo, que toma su color de AQUI. Con el color de la barra, esa
+       franja se lee como continuacion de la barra y desaparece la banda negra.
+       Donde la ventana si llega al borde, este color no se ve jamas. */
+    background-color: var(--popover);
 
     /* LAS ZONAS SEGURAS DEL TELEFONO, EN VARIABLES.
        Motivo: `env(safe-area-inset-*)` vale CERO en un navegador sin pantalla, asi
