@@ -2,280 +2,421 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { useCaja } from "./ads-medida"
+
+/** Alto del dibujo. En el telefono uno de 236 puntos se come media pantalla. */
+const ALTO_LIENZO = "h-[176px] md:h-[236px]"
 
 /**
- * Los gráficos del panel de Campañas.
+ * Los graficos de serie del panel de Campanas: la evolucion y el embudo.
  *
- * Reglas que cumplen (brandkit + os-movil-primero):
- *   - El número va SIEMPRE escrito, no escondido tras el cursor. En un teléfono no hay
- *     cursor, así que un dato que solo aparece al pasar el ratón no existe.
- *   - Barras horizontales en el embudo: en 375px las etiquetas de un eje inferior no caben.
- *   - Los dos ejes rotulados y título sin jerga.
- *   - Todo por tokens del tema. Ni un color escrito a mano.
+ * Rehechos el 2026-08-11 contra una referencia de paneles profesionales que trajo Marco.
+ * Lo que cambio y por que:
+ *
+ *   - FUERA la rejilla y las lineas de eje. En la referencia, 9 de cada 10 graficos no
+ *     tienen ni una ni otra: el eje es texto gris diminuto flotando, sin raya. Una rejilla
+ *     convierte el grafico en una hoja de calculo.
+ *   - La linea va CURVADA y medida en pixeles reales, no estirada. El relleno se apaga
+ *     hacia abajo hasta desaparecer.
+ *   - Etiqueta flotante siempre a la vista: ficha con la fecha y la cifra, unida al dato
+ *     por una linea vertical de puntos y un punto gordo sobre la curva. Es el detalle que
+ *     mas separa un panel profesional de una grafica de manual.
+ *   - El embudo son barras finas de progreso, no cajones. Cada tramo se mide CONTRA EL
+ *     ANTERIOR, no contra el numero mayor.
+ *
+ * Los dos ejes siguen rotulados y cada dato tiene su numero a la vista, como manda la
+ * seccion 8 bis del brandkit. Lo que se quita es el andamiaje, no la informacion.
  */
 
 const fmt = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 })
-const fmtDec = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 2 })
+const fmtDec = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 })
+/** Para porcentajes muy pequenos, que con un decimal fijo se quedarian en cero. */
+const fmtFino = new Intl.NumberFormat("es-ES", { maximumSignificantDigits: 2 })
+const fmtEur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
 
-function eur(n: number): string {
-  return new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(n)
+function diaCorto(iso: string): string {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString("es-ES", { day: "numeric", month: "short" })
 }
-
-/* ───────────────────────── embudo ───────────────────────── */
-
-export type PasoEmbudo = { nombre: string; valor: number; explica: string }
+function diaLargo(iso: string): string {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  })
+}
 
 /**
- * Embudo en barras horizontales. Cada paso lleva su número dentro y, entre uno y el
- * siguiente, el porcentaje que se queda por el camino. Esa caída es el dato que dice dónde
- * se atasca el dinero, así que va escrita, no deducida.
+ * Redondea el tope de una escala a 1, 2 o 5 por diez elevado a algo.
+ *
+ * Sin esto el eje salia "54,58 € / 36,02 € / 18,01 € / 0", que es el maximo del periodo
+ * partido en tres. Ningun panel serio rotula asi: se rotula 60 / 40 / 20 / 0. Con el tope
+ * ya redondeado, los tres cortes caen en numeros limpios solos.
  */
-export function Embudo({ pasos }: { pasos: PasoEmbudo[] }) {
-  const tope = Math.max(...pasos.map((p) => p.valor), 1)
-
-  return (
-    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
-      <h3 className="text-[17px] font-semibold text-foreground">De la impresión al lead</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Cuánta gente pasa de un paso al siguiente. El porcentaje es lo que se queda por el
-        camino.
-      </p>
-
-      <ul className="mt-4 space-y-3">
-        {pasos.map((p, i) => {
-          const anterior = i > 0 ? pasos[i - 1].valor : null
-          const pasan = anterior && anterior > 0 ? (p.valor / anterior) * 100 : null
-          const ancho = Math.max((p.valor / tope) * 100, p.valor > 0 ? 6 : 0)
-
-          return (
-            <li key={p.nombre}>
-              {/* Un paso puede salir por encima del 100%: los pasos no cuentan lo mismo.
-                  "Salieron" cuenta PERSONAS distintas y "cargaron la página" cuenta VISITAS,
-                  así que una persona que entra dos veces suma dos visitas. Decir entonces
-                  "se pierden -16%" es un sinsentido, así que se dice lo que de verdad pasa. */}
-              {pasan !== null && (
-                <p className="mb-1.5 pl-1 text-sm text-muted-foreground">
-                  {pasan > 100 ? (
-                    <>
-                      salen{" "}
-                      <span className="font-semibold text-foreground tabular-nums">
-                        {fmtDec.format(pasan - 100)}%
-                      </span>{" "}
-                      más que en el paso anterior, porque aquí se cuentan visitas y arriba
-                      personas: quien vuelve a entrar suma otra vez
-                    </>
-                  ) : (
-                    <>
-                      pasan{" "}
-                      <span className="font-semibold text-foreground tabular-nums">
-                        {fmtDec.format(pasan)}%
-                      </span>
-                      , se pierden{" "}
-                      <span className="tabular-nums">{fmtDec.format(100 - pasan)}%</span>
-                    </>
-                  )}
-                </p>
-              )}
-
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                <span className="text-[15px] font-medium text-foreground">{p.nombre}</span>
-                <span className="text-[17px] font-semibold text-foreground tabular-nums">
-                  {fmt.format(p.valor)}
-                </span>
-              </div>
-
-              <div
-                className="mt-1.5 h-8 w-full overflow-hidden rounded-lg bg-muted"
-                role="img"
-                aria-label={`${p.nombre}: ${fmt.format(p.valor)}`}
-              >
-                <div
-                  className="h-full rounded-lg bg-brand transition-[width] duration-500"
-                  style={{ width: `${ancho}%` }}
-                />
-              </div>
-
-              <p className="mt-1 text-sm text-muted-foreground">{p.explica}</p>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
-  )
+function escalaBonita(max: number, tramos = 3): number {
+  if (!(max > 0)) return 1
+  const bruto = max / tramos
+  const magnitud = Math.pow(10, Math.floor(Math.log10(bruto)))
+  const normal = bruto / magnitud
+  const paso = (normal <= 1 ? 1 : normal <= 2 ? 2 : normal <= 5 ? 5 : 10) * magnitud
+  return paso * tramos
 }
 
-/* ───────────────────── evolución diaria ───────────────────── */
+/**
+ * Curva suave que pasa por todos los puntos.
+ *
+ * Los puntos de control se recortan al rango de sus dos extremos: sin ese recorte la curva
+ * se sale por arriba entre dos dias y dibuja un gasto que nunca existio.
+ */
+function curva(pts: { x: number; y: number }[], t = 0.2): string {
+  if (pts.length === 0) return ""
+  if (pts.length === 1) return `M${pts[0].x},${pts[0].y}`
+  let d = `M${pts[0].x},${pts[0].y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[i + 2] ?? p2
+    const lo = Math.min(p1.y, p2.y)
+    const hi = Math.max(p1.y, p2.y)
+    const recorta = (y: number) => Math.min(Math.max(y, lo), hi)
+    const c1x = p1.x + (p2.x - p0.x) * t
+    const c1y = recorta(p1.y + (p2.y - p0.y) * t)
+    const c2x = p2.x - (p3.x - p1.x) * t
+    const c2y = recorta(p2.y - (p3.y - p1.y) * t)
+    d += ` C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`
+  }
+  return d
+}
+
+/* ───────────────────────── evolucion ───────────────────────── */
 
 export type Dia = { fecha: string; gasto: number; leads: number }
 
-function diaCorto(iso: string): string {
-  const d = new Date(`${iso}T12:00:00`)
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" })
-}
-
-/**
- * Gasto por día en barras, con los leads marcados encima.
- *
- * Se dibuja con barras y no con una línea a propósito: una línea estirada a lo ancho pierde
- * tramos si el lienzo se deforma (ya pasó, está en los errores del brandkit). Las barras se
- * miden solas con porcentajes y no se rompen a ningún ancho.
- *
- * En el teléfono no hay cursor, así que se toca una barra y su dato se fija debajo.
- */
-export function EvolucionDiaria({ dias }: { dias: Dia[] }) {
-  const [elegido, setElegido] = useState<number | null>(null)
+export function Evolucion({ dias }: { dias: Dia[] }) {
+  const [foco, setFoco] = useState<number | null>(null)
+  const [caja, medida] = useCaja()
 
   if (dias.length === 0) {
     return (
-      <section className="rounded-lg border border-border bg-card p-4 md:p-5">
-        <h3 className="text-[17px] font-semibold text-foreground">Gasto día a día</h3>
-        <p className="mt-2 text-[15px] text-muted-foreground">
-          No hay días con actividad en el periodo elegido.
-        </p>
+      <section className="rounded-lg border border-border bg-card p-5">
+        <h2 className="text-[15px] font-semibold text-foreground">Gasto y leads, día a día</h2>
+        <p className="mt-2 text-[15px] text-muted-foreground">Sin actividad en el periodo elegido.</p>
       </section>
     )
   }
 
-  const topeGasto = Math.max(...dias.map((d) => d.gasto), 0.01)
-  const totalGasto = dias.reduce((s, d) => s + d.gasto, 0)
-  const totalLeads = dias.reduce((s, d) => s + d.leads, 0)
-  const diaCaro = dias.reduce((a, b) => (b.gasto > a.gasto ? b : a), dias[0])
-  const visto = elegido !== null ? dias[elegido] : null
+  // El tamano lo manda el CSS y se lee de vuelta: asi el telefono decide su propio alto.
+  const listo = medida.ancho > 0 && medida.alto > 0
+  const H = Math.max(medida.alto, 1)
+  const W = Math.max(medida.ancho, 1)
+  const ARRIBA = 30 // hueco para que la curva nunca toque el borde de la tarjeta
+  const ABAJO = 10
+  const alto = Math.max(H - ARRIBA - ABAJO, 1)
+
+  const topeG = escalaBonita(Math.max(...dias.map((d) => d.gasto), 0))
+  const topeL = Math.max(...dias.map((d) => d.leads), 1)
+  // Se deja un margen a los lados: sin el, el punto del ultimo dia queda partido por la
+  // mitad contra el borde y la curva parece cortada a hueso.
+  const LADO = 5
+  const px = (i: number) =>
+    dias.length > 1 ? LADO + (i / (dias.length - 1)) * Math.max(W - LADO * 2, 1) : W / 2
+  const py = (g: number) => ARRIBA + (1 - g / topeG) * alto
+
+  const puntos = dias.map((d, i) => ({ x: px(i), y: py(d.gasto) }))
+  const linea = curva(puntos)
+  const area = `${linea} L${px(dias.length - 1)},${H} L${px(0)},${H} Z`
+
+  const iMax = dias.reduce((a, d, i) => (d.gasto > dias[a].gasto ? i : a), 0)
+  const iVisto = foco ?? iMax
+  const visto = dias[iVisto]
+  const totalG = dias.reduce((s, d) => s + d.gasto, 0)
+  const totalL = dias.reduce((s, d) => s + d.leads, 0)
+
+  const paso = dias.length > 1 ? W / (dias.length - 1) : W
+  const anchoBarra = Math.max(3, Math.min(18, paso * 0.34))
+  const altoLeads = alto * 0.44
+
+  // La ficha flotante se pega al borde si el dia enfocado es el primero o el ultimo.
+  const xFicha = Math.min(Math.max(px(iVisto), 74), Math.max(W - 74, 74))
+  const yPunto = py(visto.gasto)
+  const fichaArriba = yPunto > 58
+
+  function seguir(e: React.PointerEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect()
+    if (r.width === 0) return
+    const rel = (e.clientX - r.left) / r.width
+    const i = Math.round(rel * (dias.length - 1))
+    setFoco(Math.min(Math.max(i, 0), dias.length - 1))
+  }
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="text-[17px] font-semibold text-foreground">Gasto día a día</h3>
-        <p className="text-sm text-muted-foreground">
-          <span className="font-semibold text-foreground tabular-nums">{eur(totalGasto)}</span> en
-          total, <span className="font-semibold text-foreground tabular-nums">{totalLeads}</span>{" "}
-          leads
-        </p>
-      </div>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Cada barra es un día. Toca una para ver su dato. El día más caro fue el{" "}
-        {diaCorto(diaCaro.fecha)} con {eur(diaCaro.gasto)}.
-      </p>
+    <section className="overflow-hidden rounded-lg border border-border bg-card">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-1 pt-4">
+        <h2 className="text-[15px] font-semibold text-foreground">Gasto y leads, día a día</h2>
+        <span className="ml-auto flex items-center gap-4">
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <i className="h-1.5 w-4 rounded-full bg-brand" />
+            {fmtEur.format(totalG)}
+          </span>
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <i className="h-2.5 w-1.5 rounded-full bg-muted-foreground/50" />
+            {totalL} leads
+          </span>
+        </span>
+      </header>
 
-      {/* Eje de arriba rotulado con el tope, para que la altura signifique algo */}
-      <p className="mt-4 text-sm text-muted-foreground tabular-nums">{eur(topeGasto)}</p>
+      <div className="flex gap-2 px-3 pt-3 md:gap-2.5 md:px-4">
+        {/* Eje de la izquierda: solo texto, sin raya y sin rejilla. */}
+        <div
+          className={cn(
+            "flex shrink-0 flex-col justify-between text-right text-sm text-muted-foreground tabular-nums",
+            ALTO_LIENZO
+          )}
+          style={{ paddingTop: ARRIBA - 8, paddingBottom: ABAJO }}
+        >
+          {/* TERCIOS EXACTOS, no 0,66 y 0,33: con esos, un tope redondeado de 60 daba
+              "39,60 €" y "19,80 €" y se perdia todo lo ganado al redondear la escala. */}
+          {[1, 2 / 3, 1 / 3].map((f) => (
+            <span key={f}>{fmtEur.format(topeG * f)}</span>
+          ))}
+          <span>0</span>
+        </div>
 
-      <div className="mt-1 flex h-40 items-end gap-[2px] border-b border-border md:h-48">
-        {dias.map((d, i) => {
-          const alto = Math.max((d.gasto / topeGasto) * 100, d.gasto > 0 ? 3 : 0)
-          const activo = elegido === i
-          return (
-            <button
-              key={d.fecha}
-              type="button"
-              onClick={() => setElegido(activo ? null : i)}
-              title={`${diaCorto(d.fecha)}: ${eur(d.gasto)} · ${d.leads} leads`}
-              aria-label={`${diaCorto(d.fecha)}: ${eur(d.gasto)}, ${d.leads} leads`}
-              className="group relative flex h-full min-w-0 flex-1 items-end"
+        <div
+          ref={caja}
+          className={cn("relative min-w-0 flex-1 touch-pan-y", ALTO_LIENZO)}
+          onPointerMove={seguir}
+          onPointerDown={seguir}
+          onPointerLeave={() => setFoco(null)}
+        >
+          {listo && (
+            <svg
+              width={W}
+              height={H}
+              className="block"
+              role="img"
+              aria-label={`Gasto y leads día a día. ${fmtEur.format(totalG)} y ${totalL} leads en total.`}
             >
-              <span
-                className={cn(
-                  "w-full rounded-t-lg transition-colors",
-                  activo ? "bg-brand" : "bg-brand/60 group-hover:bg-brand"
-                )}
-                style={{ height: `${alto}%` }}
+              <defs>
+                {/* Llega hasta abajo. Apagandose a cero a media altura quedaba una nube
+                    flotando sin base. */}
+                <linearGradient id="ev-relleno" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-brand)" stopOpacity="0.32" />
+                  <stop offset="100%" stopColor="var(--color-brand)" stopOpacity="0.05" />
+                </linearGradient>
+                <linearGradient id="ev-trazo" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="var(--color-brand)" />
+                  <stop offset="100%" stopColor="var(--color-brand-soft)" />
+                </linearGradient>
+              </defs>
+
+              {/* Leads: columnas finas detras de la curva. */}
+              {dias.map((d, i) => {
+                const h = (d.leads / topeL) * altoLeads
+                if (h <= 0) return null
+                return (
+                  <rect
+                    key={`b${d.fecha}`}
+                    x={px(i) - anchoBarra / 2}
+                    y={H - ABAJO - h}
+                    width={anchoBarra}
+                    height={h}
+                    rx={anchoBarra / 2}
+                    className={i === iVisto ? "fill-brand-soft/70" : "fill-muted-foreground/25"}
+                  />
+                )
+              })}
+
+              <path d={area} fill="url(#ev-relleno)" />
+              <path
+                d={linea}
+                fill="none"
+                stroke="url(#ev-trazo)"
+                strokeWidth="2.2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
               />
-              {/* Los días con leads llevan marca: es lo que de verdad se busca */}
-              {d.leads > 0 && (
-                <span
-                  aria-hidden
-                  className="absolute inset-x-0 bottom-0 mx-auto h-1.5 w-1.5 rounded-full bg-foreground"
-                  style={{ bottom: `calc(${alto}% + 3px)` }}
+
+              {/* La vertical de puntos que une la ficha con el dato. */}
+              <line
+                x1={px(iVisto)}
+                x2={px(iVisto)}
+                y1={py(visto.gasto)}
+                y2={H - ABAJO}
+                strokeDasharray="2 4"
+                strokeWidth="1"
+                strokeLinecap="round"
+                className="stroke-muted-foreground/60"
+              />
+              {/* Punto fijo del ultimo dia, para que la serie termine en algo y no en un
+                  corte seco. Se calla cuando el dia enfocado ya es ese. */}
+              {iVisto !== dias.length - 1 && (
+                <circle
+                  cx={px(dias.length - 1)}
+                  cy={py(dias[dias.length - 1].gasto)}
+                  r="2.5"
+                  className="fill-brand-soft"
                 />
               )}
-            </button>
-          )
-        })}
+              <circle cx={px(iVisto)} cy={py(visto.gasto)} r="7" className="fill-brand/20" />
+              <circle
+                cx={px(iVisto)}
+                cy={py(visto.gasto)}
+                r="3.5"
+                className="fill-brand stroke-card"
+                strokeWidth="2"
+              />
+            </svg>
+          )}
+
+          {/* Ficha flotante. Va en HTML: dentro del dibujo la letra se deforma. */}
+          {listo && (
+            <div
+              className={cn(
+                "pointer-events-none absolute z-10 -translate-x-1/2 rounded-lg border border-border bg-popover px-2.5 py-1.5 shadow-md",
+                // Si el punto esta pegado al techo no cabe encima: la ficha se pone debajo.
+                // Sin esto, el dia de mas gasto (que es el que sale marcado por defecto)
+                // dejaba la ficha cortada por el borde de la tarjeta.
+                fichaArriba && "-translate-y-full"
+              )}
+              style={{ left: xFicha, top: fichaArriba ? yPunto - 12 : yPunto + 14 }}
+            >
+              <p className="whitespace-nowrap text-sm text-muted-foreground">
+                {diaCorto(visto.fecha)}
+              </p>
+              <p className="whitespace-nowrap text-[15px] font-semibold text-foreground tabular-nums">
+                {fmtEur.format(visto.gasto)}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="mt-1.5 flex items-center justify-between text-sm text-muted-foreground">
+      {/* Eje de abajo: fechas, tambien sin raya. */}
+      <div className="flex justify-between px-4 pb-1 pt-2 text-sm text-muted-foreground">
         <span>{diaCorto(dias[0].fecha)}</span>
+        {dias.length > 2 && <span>{diaCorto(dias[Math.floor(dias.length / 2)].fecha)}</span>}
         <span>{diaCorto(dias[dias.length - 1].fecha)}</span>
       </div>
 
-      {/* El dato del día tocado, fijo. Nunca solo al pasar el cursor. */}
-      <div className="mt-3 min-h-[52px] rounded-lg border border-border bg-muted/40 px-3 py-2">
-        {visto ? (
-          <p className="text-[15px] text-foreground">
-            <span className="font-semibold">{diaCorto(visto.fecha)}</span>:{" "}
-            <span className="tabular-nums">{eur(visto.gasto)}</span> y{" "}
-            <span className="tabular-nums">{visto.leads}</span>{" "}
-            {visto.leads === 1 ? "lead" : "leads"}
-          </p>
-        ) : (
-          <p className="text-[15px] text-muted-foreground">
-            Toca una barra para ver el gasto y los leads de ese día. El punto encima de una
-            barra significa que ese día entraron leads.
-          </p>
+      {/* En un telefono no hay cursor: el dato del dia enfocado se escribe siempre. */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-border px-4 py-2.5">
+        {/* `capitalize` pone mayuscula a CADA palabra y salia "5 De Agosto". */}
+        <span className="text-sm text-muted-foreground first-letter:uppercase">
+          {diaLargo(visto.fecha)}
+        </span>
+        <span className="text-[15px] font-semibold text-foreground tabular-nums">
+          {fmtEur.format(visto.gasto)}
+        </span>
+        <span className="text-[15px] font-semibold text-foreground tabular-nums">
+          {visto.leads} {visto.leads === 1 ? "lead" : "leads"}
+        </span>
+        {visto.leads > 0 && (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {fmtEur.format(visto.gasto / visto.leads)} por lead
+          </span>
         )}
       </div>
     </section>
   )
 }
 
-/* ─────────────────── comparativa por campaña ─────────────────── */
+/* ───────────────────────── embudo ───────────────────────── */
 
-export type BarraCampana = { nombre: string; gasto: number; leads: number; costePorLead: number }
+export type PasoEmbudo = { nombre: string; valor: number }
 
 /**
- * Comparación entre campañas en barras horizontales: el nombre a la izquierda y la barra
- * creciendo a la derecha. En 375px es la única forma de que el nombre de la campaña se lea.
- * Máximo 7, el resto se agrupa: 30 barras en un teléfono no son un gráfico.
+ * El embudo, en barras finas de progreso.
+ *
+ * Cada tramo se mide CONTRA EL ANTERIOR. Medido contra el numero mayor, como las
+ * impresiones son mil veces los leads, los tres ultimos pasos salian como rayas.
  */
-export function ComparativaCampanas({ campanas }: { campanas: BarraCampana[] }) {
-  if (campanas.length === 0) return null
+export function Embudo({ pasos }: { pasos: PasoEmbudo[] }) {
+  const primero = pasos[0]?.valor ?? 0
+  const ultimo = pasos[pasos.length - 1]?.valor ?? 0
+  // "0,037% llega al final" no le dice nada a nadie. "1 de cada 2.702 acaba en lead" si.
+  const cadaCuantos = ultimo > 0 ? Math.round(primero / ultimo) : null
+  const deQue = (pasos[0]?.nombre ?? "").toLowerCase()
+  const enQue = (pasos[pasos.length - 1]?.nombre ?? "").toLowerCase().replace(/s$/, "")
 
-  const orden = [...campanas].sort((a, b) => b.gasto - a.gasto)
-  const visibles = orden.slice(0, 7)
-  const resto = orden.slice(7)
-  const otros =
-    resto.length > 0
-      ? {
-          nombre: `Otras ${resto.length}`,
-          gasto: resto.reduce((s, c) => s + c.gasto, 0),
-          leads: resto.reduce((s, c) => s + c.leads, 0),
-          costePorLead: 0,
-        }
-      : null
-  const lista = otros ? [...visibles, otros] : visibles
-  const tope = Math.max(...lista.map((c) => c.gasto), 0.01)
+  let peor = -1
+  let peorTasa = 101
+  pasos.forEach((p, i) => {
+    if (i === 0) return
+    const prev = pasos[i - 1].valor
+    const t = prev > 0 ? (p.valor / prev) * 100 : 100
+    if (t < peorTasa) {
+      peorTasa = t
+      peor = i
+    }
+  })
 
   return (
-    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
-      <h3 className="text-[17px] font-semibold text-foreground">En qué se va el dinero</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Gasto por campaña, de mayor a menor. Al lado, los leads que trajo cada una.
-      </p>
+    <section className="flex h-full flex-col rounded-lg border border-border bg-card p-4">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <h2 className="text-[15px] font-semibold text-foreground">Embudo</h2>
+        <span className="text-sm text-muted-foreground tabular-nums">
+          {cadaCuantos
+            ? `1 de cada ${fmt.format(cadaCuantos)} ${deQue} acaba en ${enQue}`
+            : `Todavía sin ${(pasos[pasos.length - 1]?.nombre ?? "").toLowerCase()}`}
+        </span>
+      </header>
 
-      <ul className="mt-4 space-y-3">
-        {lista.map((c) => (
-          <li key={c.nombre}>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-              <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-foreground">
-                {c.nombre}
-              </span>
-              <span className="shrink-0 text-[15px] font-semibold text-foreground tabular-nums">
-                {eur(c.gasto)}
-              </span>
+      {/* Estrecha de verdad, paso a paso. Antes eran cuatro barras del mismo ancho apiladas
+          y de embudo no tenian nada. Lo que se ESTRECHA es el carril; lo que se rellena
+          dentro es cuanta gente pasa del paso anterior a este, que es el dato util. */}
+      <div className="mt-4 flex flex-1 flex-col justify-center gap-4">
+        {pasos.map((p, i) => {
+          const prev = i > 0 ? pasos[i - 1].valor : null
+          const tasa = prev && prev > 0 ? (p.valor / prev) * 100 : null
+          const relleno = tasa === null ? 100 : Math.max(Math.min(tasa, 100), 4)
+          const carril = 100 - i * (36 / Math.max(pasos.length - 1, 1))
+          const esPeor = i === peor && pasos.length > 2
+          return (
+            <div key={p.nombre} className="mx-auto w-full" style={{ maxWidth: `${carril}%` }}>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate text-sm text-muted-foreground">{p.nombre}</span>
+                <span className="shrink-0 text-[19px] font-bold leading-none tracking-tight text-foreground tabular-nums">
+                  {fmt.format(p.valor)}
+                </span>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted/50">
+                <span
+                  className={cn(
+                    "block h-full rounded-full",
+                    esPeor ? "bg-warn" : i === pasos.length - 1 ? "bg-brand" : "bg-brand/45"
+                  )}
+                  style={{ width: `${relleno}%` }}
+                />
+              </div>
+              {tasa !== null && (
+                <p
+                  className={cn(
+                    "mt-1.5 text-sm tabular-nums",
+                    esPeor ? "text-warn" : "text-muted-foreground"
+                  )}
+                >
+                  {tasa > 100 ? (
+                    <>sube {fmtDec.format(tasa - 100)}%: aquí se cuentan visitas, no personas</>
+                  ) : (
+                    <>
+                      pasa el {fmtDec.format(tasa)}%{esPeor && ", la mayor caída"}
+                    </>
+                  )}
+                </p>
+              )}
             </div>
-            <div className="mt-1.5 h-6 w-full overflow-hidden rounded-lg bg-muted">
-              <div
-                className="h-full rounded-lg bg-brand transition-[width] duration-500"
-                style={{ width: `${Math.max((c.gasto / tope) * 100, c.gasto > 0 ? 4 : 0)}%` }}
-              />
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground tabular-nums">
-              {c.leads} {c.leads === 1 ? "lead" : "leads"}
-              {c.leads > 0 && c.gasto > 0 && <> · {eur(c.gasto / c.leads)} por lead</>}
-            </p>
-          </li>
-        ))}
-      </ul>
+          )
+        })}
+      </div>
     </section>
   )
+}
+
+export const ETIQUETA_PLATAFORMA: Record<string, string> = {
+  instagram: "Instagram",
+  facebook: "Facebook",
+  threads: "Threads",
+  audience_network: "Red de socios",
+  messenger: "Messenger",
 }

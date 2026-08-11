@@ -170,6 +170,59 @@ hover del botón principal. Nada más.
 **Lo visual vale más que el texto. PROHIBIDO quitar un gráfico y dejar una frase
 en su lugar** (Marco, 2026-07-30). Ver REGLA #15 del protocolo del agente.
 
+### Cómo se DIBUJA un gráfico (2026-08-11)
+
+Marco rechazó tres paneles seguidos: *"horrible, básico, no me estás diseñando el
+gráfico que busco"*. Pasó una referencia con trece paneles profesionales. Esto es
+lo que faltaba, y **aplica a todo gráfico nuevo del OS**:
+
+| Regla | Por qué |
+|---|---|
+| **Cero rejilla y cero líneas de eje** | Nueve de cada diez gráficos de la referencia no las tienen. El eje es texto gris flotando, sin raya. La rejilla convierte el gráfico en una hoja de cálculo |
+| **El número va ENCIMA de la barra** | Hace de eje vertical y se lee de un vistazo. Cumple igual la regla de "cada dato con su número" |
+| **Degradado dentro del trazo**, nunca color plano | Y siempre verde sobre verde: el brandkit prohíbe degradados de varios colores |
+| **Ficha flotante siempre a la vista** | Tarjeta con el dato, vertical de puntos hasta la base y punto gordo sobre la curva. Es lo que más separa un panel profesional de una gráfica de manual |
+| **Un solo elemento saturado por bloque** | El resto en gris. Verde = lo mejor o lo activo, nunca adorno |
+| **Rampa monocroma para repartos** | Verde a distintas opacidades. Nunca colores distintos para distinguir porciones |
+| **Barras en cápsula con carril fantasma** | El carril marca el máximo, la cápsula lo alcanzado |
+| **Rejilla bento, no columna** | Entre ocho y doce bloques por pantalla y UNO héroe grande. Tarjetas apiladas a ancho completo se ven de plantilla |
+
+Y estas seis salieron de una revisión visual del panel ya terminado. Todas eran
+defectos medibles, no opiniones:
+
+| Regla | El fallo que la genera |
+|---|---|
+| **Las escalas se redondean** (1-2-5 x 10ⁿ) | El eje decía "54,58 € / 36,02 € / 18,01 €", que es el máximo partido en tres. Se rotula 60 / 40 / 20 / 0. Y los cortes van en **tercios exactos**, no en 0,66 y 0,33, o vuelve a salir "39,60 €" |
+| **Una barra ocupa el 60-80% de su banda** | Salían de 10 puntos dentro de bandas de 88: eran hilos. Y a ese ancho, fuera el carril fantasma: se convierte en un bloque gris que pesa más que el dato |
+| **Un embudo ESTRECHA** | Cuatro barras del mismo ancho apiladas no son un embudo, son una lista |
+| **Todas las tarjetas de una fila llevan el mismo adorno** | La mini línea existía en 1 de 5 tarjetas y las otras cuatro dejaban un hueco. Sin serie se dibuja la raya base apagada, pero se dibuja |
+| **Un dibujo codifica UNA cosa** | El aro decía "cuánto se lleva" y su color decía "qué lead sale más barato". Instagram con el 68% salía más apagado que Facebook con el 32%: el dato que manda era el más flojo de la tarjeta |
+| **En una leyenda se enseña lo que DIFERENCIA** | Tres campañas "WEBINAR - CBO - ...", "WEBINAR - ABO - ..." se cortaban justo después del prefijo común y las tres se leían igual. Se quita lo que se repite en todas (`loQueLasDiferencia`) |
+
+Y una que no es de gráficos pero se repite: **sin dato no es un error**. "sin
+leads" iba en rojo y parecía una avería; es gris.
+
+Formas que ya existen y se reutilizan, en
+`src/features/ads/components/ads-graficos-reparto.tsx`: rosco con hueco entre
+porciones, anillos de progreso, medidor semicircular y barras por día.
+
+**Y el hueco de una cifra dentro de un aro.** El número del rosco medía 106
+puntos dentro de un agujero de 117: estrangulado. El aro se adelgaza hasta que
+la cifra quepa con aire, y la cifra vive dentro de una caja del 70% del diámetro
+interior. Lo mismo en el medidor: la cifra va DENTRO del arco, y por eso el
+indicador es un trozo corto pegado al arco y no una aguja desde el centro, que
+cruzaría el número por encima.
+
+Detalle completo en `docs/sops/marketing/10-panel-campanas-meta.md`.
+
+### Sumar nombres que se solapan no da un total
+
+Al poner dos vistas del mismo dato una al lado de otra (el coste por lead junto al
+embudo) salió que los leads venían contados **tres veces**: Meta devuelve el mismo
+hecho con varios nombres y unos contienen a otros. **Antes de sumar una lista,
+comprobar si un nombre engloba a otro.** Y como método: **enseñar el mismo dato de
+dos formas distintas es un detector de errores.**
+
 Todo gráfico lleva, sin excepción:
 
 - Los **dos ejes rotulados**, con sus extremos.

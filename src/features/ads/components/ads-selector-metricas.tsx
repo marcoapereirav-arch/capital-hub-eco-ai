@@ -1,29 +1,29 @@
 "use client"
 
-import { useState } from "react"
-import { Check, RotateCcw, SlidersHorizontal } from "lucide-react"
+import { useMemo, useState } from "react"
+import { ArrowDown, ArrowUp, Check, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import {
   METRICAS,
+  metricaPorId,
   metricasPorDefecto,
   porFamiliaDeVariantes,
   type Metrica,
 } from "@/lib/meta/metricas"
 
 /**
- * Dónde se elige QUÉ métricas se ven.
+ * Dónde se elige QUÉ métricas se ven y EN QUÉ ORDEN.
  *
- * Está agrupado por FAMILIA DE VARIANTES a propósito. Meta ofrece varias versiones de la
- * misma idea y no lo dice: hay ocho CTR distintos y seis formas de contar clics, y sin
- * verlas juntas es imposible saber en qué se diferencian. Marco, 2026-08-07: "hay varios de
- * una sola métrica, los quiero ver y los quiero tener todos".
+ * Tres cosas que Marco pidió el 2026-08-07 y que la primera versión no tenía:
+ *   1. Buscador. Con 48 métricas, ir mirando familia por familia no es buscar.
+ *   2. Poder moverlas. El orden manda en los números grandes y en las columnas de la tabla.
+ *   3. Que no se corte. La versión anterior mezclaba hoja inferior y cajón lateral, las dos
+ *      posiciones se peleaban y parte del panel quedaba fuera de pantalla. Ahora la
+ *      cabecera, el buscador y el pie son FIJOS y solo se desliza la lista.
  *
- * Dentro de cada familia van primero las que Marco pidió expresamente, y las que hoy vienen
- * vacías en su cuenta quedan marcadas para que no las elija sin saberlo.
- *
- * Hoja inferior en móvil y cajón por la derecha en escritorio, decidido con clases y no con
- * JavaScript (`useIsMobile` miente en el primer pintado).
+ * El orden se mueve con flechas, no arrastrando: arrastrar en un teléfono pelea con el
+ * dedo que hace scroll y acabas moviendo la página en vez de la métrica.
  */
 
 export const CLAVE_GUARDADO = "ads:metricas-elegidas"
@@ -34,7 +34,6 @@ export function leerElegidas(): string[] {
     const guardado = window.localStorage.getItem(CLAVE_GUARDADO)
     if (!guardado) return metricasPorDefecto()
     const ids = JSON.parse(guardado) as string[]
-    // Se filtra contra el catálogo: si una métrica deja de existir, no rompe la pantalla.
     const validas = ids.filter((id) => METRICAS.some((m) => m.id === id))
     return validas.length > 0 ? validas : metricasPorDefecto()
   } catch {
@@ -42,7 +41,7 @@ export function leerElegidas(): string[] {
   }
 }
 
-function guardarElegidas(ids: string[]) {
+function guardar(ids: string[]) {
   try {
     window.localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(ids))
   } catch {
@@ -58,20 +57,44 @@ export function SelectorMetricas({
   onCambio: (ids: string[]) => void
 }) {
   const [abierto, setAbierto] = useState(false)
-  const familias = porFamiliaDeVariantes()
+  const [busqueda, setBusqueda] = useState("")
 
-  function alternar(id: string) {
-    const siguiente = elegidas.includes(id)
-      ? elegidas.filter((x) => x !== id)
-      : [...elegidas, id]
-    onCambio(siguiente)
-    guardarElegidas(siguiente)
+  function aplicar(ids: string[]) {
+    onCambio(ids)
+    guardar(ids)
   }
 
-  function restaurar() {
-    const base = metricasPorDefecto()
-    onCambio(base)
-    guardarElegidas(base)
+  const enOrden = useMemo(
+    () => elegidas.map((id) => metricaPorId(id)).filter((m): m is Metrica => Boolean(m)),
+    [elegidas]
+  )
+
+  const q = busqueda.trim().toLowerCase()
+
+  // Se busca por nombre Y por explicación: así "personas" encuentra todas las que cuentan
+  // gente en vez de clics, aunque no lleven esa palabra en el nombre.
+  const familias = useMemo(() => {
+    const todas = porFamiliaDeVariantes()
+    if (!q) return todas
+    return todas
+      .map((f) => ({
+        ...f,
+        metricas: f.metricas.filter(
+          (m) =>
+            m.nombre.toLowerCase().includes(q) ||
+            m.explica.toLowerCase().includes(q) ||
+            m.id.toLowerCase().includes(q)
+        ),
+      }))
+      .filter((f) => f.metricas.length > 0)
+  }, [q])
+
+  function mover(indice: number, direccion: -1 | 1) {
+    const destino = indice + direccion
+    if (destino < 0 || destino >= elegidas.length) return
+    const copia = [...elegidas]
+    ;[copia[indice], copia[destino]] = [copia[destino], copia[indice]]
+    aplicar(copia)
   }
 
   return (
@@ -87,61 +110,143 @@ export function SelectorMetricas({
         </button>
       </SheetTrigger>
 
+      {/* Altura fija y SIN scroll propio: el que se desliza es solo el bloque de la lista.
+          De ahí `flex flex-col`, `overflow-hidden` y `p-0`. Así la cabecera, el buscador y
+          el pie quedan siempre visibles y no se corta nada. */}
       <SheetContent
         side="bottom"
         className={cn(
-          "max-h-[85dvh] w-full overflow-y-auto rounded-t-xl pb-safe-4",
-          "md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-[460px] md:max-w-[460px] md:rounded-l-xl md:rounded-tr-none md:border-l md:pb-0"
+          "flex h-[88dvh] w-full flex-col overflow-hidden rounded-t-xl p-0",
+          "md:inset-y-0 md:right-0 md:left-auto md:h-dvh md:w-[440px] md:max-w-[440px] md:rounded-l-xl md:rounded-tr-none md:border-l"
         )}
       >
-        <div className="mx-auto mt-1 h-1 w-10 rounded-full bg-border md:hidden" />
+        <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" />
 
-        <SheetHeader className="px-4">
+        <SheetHeader className="shrink-0 px-4 pt-2">
           <SheetTitle className="text-[17px] font-semibold text-foreground">
             Qué métricas quieres ver
           </SheetTitle>
         </SheetHeader>
 
-        <p className="px-4 text-[15px] leading-relaxed text-muted-foreground">
-          Meta tiene varias versiones de lo mismo. Aquí van agrupadas para que veas en qué se
-          diferencian antes de elegir.
-        </p>
-
-        <div className="mt-3 flex items-center justify-between gap-3 px-4">
-          <span className="text-sm text-muted-foreground tabular-nums">
-            {elegidas.length} de {METRICAS.length} elegidas
-          </span>
-          <button
-            type="button"
-            onClick={restaurar}
-            className="flex h-11 items-center gap-1.5 rounded-lg px-3 text-[15px] text-muted-foreground active:bg-muted md:h-9 md:text-sm"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Volver a las recomendadas
-          </button>
+        <div className="shrink-0 px-4 pb-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar métrica"
+              inputMode="search"
+              className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-base text-foreground placeholder:text-muted-foreground md:h-9 md:text-sm"
+            />
+          </div>
         </div>
 
-        <div className="mt-2 space-y-5 px-4 pb-6">
+        {/* Lo único que se desliza */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+          {enOrden.length > 0 && (
+            <div className="mb-5">
+              <h4 className="sticky top-0 z-10 bg-popover py-2 text-[15px] font-semibold text-foreground">
+                Las tuyas, en este orden
+              </h4>
+              <ol className="space-y-1.5">
+                {enOrden.map((m, i) => (
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-1 rounded-lg border border-brand/40 bg-brand/10 p-2.5"
+                  >
+                    <span className="w-5 shrink-0 text-center text-sm font-semibold text-muted-foreground tabular-nums">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-medium text-foreground">
+                      {m.nombre}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => mover(i, -1)}
+                      disabled={i === 0}
+                      aria-label={`Subir ${m.nombre}`}
+                      className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-muted disabled:opacity-30 md:h-8"
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => mover(i, 1)}
+                      disabled={i === enOrden.length - 1}
+                      aria-label={`Bajar ${m.nombre}`}
+                      className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-muted disabled:opacity-30 md:h-8"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => aplicar(elegidas.filter((x) => x !== m.id))}
+                      aria-label={`Quitar ${m.nombre}`}
+                      className="flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground active:bg-muted md:h-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          <h4 className="sticky top-0 z-10 bg-popover py-2 text-[15px] font-semibold text-foreground">
+            {q ? "Resultados" : "Añadir más"}
+          </h4>
+
+          {familias.length === 0 && (
+            <p className="py-3 text-[15px] text-muted-foreground">
+              Ninguna métrica coincide con lo que buscas.
+            </p>
+          )}
+
           {familias.map((f) => (
-            <div key={f.base}>
-              <h4 className="text-[15px] font-semibold text-foreground">
+            <div key={f.base} className="mb-4">
+              <p className="mb-1.5 text-sm font-semibold text-muted-foreground">
                 {f.base}{" "}
-                <span className="font-normal text-muted-foreground tabular-nums">
+                <span className="font-normal tabular-nums">
                   {f.metricas.length} {f.metricas.length === 1 ? "versión" : "versiones"}
                 </span>
-              </h4>
-              <ul className="mt-2 space-y-1.5">
+              </p>
+              <ul className="space-y-1.5">
                 {f.metricas.map((m) => (
                   <FilaMetrica
                     key={m.id}
                     metrica={m}
                     marcada={elegidas.includes(m.id)}
-                    onClick={() => alternar(m.id)}
+                    onClick={() =>
+                      aplicar(
+                        elegidas.includes(m.id)
+                          ? elegidas.filter((x) => x !== m.id)
+                          : [...elegidas, m.id]
+                      )
+                    }
                   />
                 ))}
               </ul>
             </div>
           ))}
+        </div>
+
+        {/* Pie fijo: siempre alcanzable, sin tener que bajar hasta el final para cerrar */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border p-3 pb-safe-4 md:pb-3">
+          <button
+            type="button"
+            onClick={() => aplicar(metricasPorDefecto())}
+            className="flex h-11 items-center gap-1.5 rounded-lg px-3 text-[15px] text-muted-foreground active:bg-muted md:h-9 md:text-sm"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Recomendadas
+          </button>
+          <button
+            type="button"
+            onClick={() => setAbierto(false)}
+            className="h-11 rounded-lg bg-primary px-5 text-[15px] font-semibold text-primary-foreground md:h-9 md:text-sm"
+          >
+            Listo
+          </button>
         </div>
       </SheetContent>
     </Sheet>

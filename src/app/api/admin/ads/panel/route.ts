@@ -40,5 +40,11 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  return NextResponse.json(await getDatosPanel(rango))
+  // Lo marcado con casillas llega como lista separada por comas. Vacio = cuenta entera.
+  const lista = (k: string) =>
+    (req.nextUrl.searchParams.get(k) ?? "").split(",").map((x) => x.trim()).filter(Boolean)
+
+  return NextResponse.json(
+    await getDatosPanel(rango, { campanas: lista("campanas"), conjuntos: lista("conjuntos") })
+  )
 }

@@ -64,9 +64,12 @@ function objetivoLegible(o: string): string {
 export function ListaCampanas({
   campanas,
   elegidas,
+  titulo = "Tus campañas",
 }: {
   campanas: FilaCampana[]
   elegidas: string[]
+  /** Cambia segun el nivel: campañas de la cuenta, o conjuntos de lo marcado. */
+  titulo?: string
 }) {
   const [busqueda, setBusqueda] = useState("")
   const [orden, setOrden] = useState<{ id: string; desc: boolean }>({ id: "spend", desc: true })
@@ -106,6 +109,12 @@ export function ListaCampanas({
     return out
   }, [filtradas, columnas])
 
+  // Para dibujar la barra dentro de la celda del gasto, en proporcion a la que mas gasta.
+  const topeGasto = useMemo(
+    () => Math.max(...campanas.map((c) => c.valores.spend ?? 0), 0),
+    [campanas]
+  )
+
   function ordenarPor(id: string) {
     setOrden((o) => (o.id === id ? { id, desc: !o.desc } : { id, desc: true }))
     setPagina(0)
@@ -131,7 +140,7 @@ export function ListaCampanas({
     <section className="rounded-lg border border-border bg-card">
       <header className="flex flex-col gap-3 border-b border-border p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h3 className="text-[17px] font-semibold text-foreground">Tus campañas</h3>
+          <h3 className="text-[17px] font-semibold text-foreground">{titulo}</h3>
           <span className="text-sm text-muted-foreground tabular-nums">
             {filtradas.length} de {campanas.length}
           </span>
@@ -200,9 +209,21 @@ export function ListaCampanas({
             </tr>
           </thead>
           <tbody>
-            {visibles.map((c) => (
+            {visibles.map((c) => {
+              const gasto = c.valores.spend ?? 0
+              const leads = c.valores.leads ?? 0
+              // Gasta y no trae nada: es lo primero que hay que ver de una lista.
+              const quema = gasto > 0 && leads === 0
+              return (
               <tr key={c.id} className="border-b border-border/60 last:border-0">
-                <td className="max-w-[280px] px-4 py-2.5">
+                <td className="relative max-w-[280px] py-2.5 pl-5 pr-4">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute inset-y-2 left-0 w-[3px] rounded-r",
+                      quema ? "bg-destructive" : "bg-brand"
+                    )}
+                  />
                   <p className="truncate font-medium text-foreground">{c.nombre}</p>
                   <p className="truncate text-sm text-muted-foreground">
                     {objetivoLegible(c.objetivo)}
@@ -211,13 +232,29 @@ export function ListaCampanas({
                 {columnas.map((m) => (
                   <td
                     key={m.id}
-                    className="px-4 py-2.5 text-right text-foreground tabular-nums"
+                    className={cn(
+                      "px-4 py-2.5 text-right tabular-nums",
+                      quema && m.id === "leads" ? "font-semibold text-destructive" : "text-foreground"
+                    )}
                   >
-                    {pinta(c.valores[m.id] ?? 0, m)}
+                    {m.id === "spend" ? (
+                      <span className="inline-flex flex-col items-end gap-1">
+                        {pinta(gasto, m)}
+                        <span className="h-1 w-16 overflow-hidden rounded-full bg-muted/60">
+                          <span
+                            className={cn("block h-full rounded-full", quema ? "bg-destructive" : "bg-brand")}
+                            style={{ width: `${topeGasto > 0 ? Math.max((gasto / topeGasto) * 100, 3) : 0}%` }}
+                          />
+                        </span>
+                      </span>
+                    ) : (
+                      pinta(c.valores[m.id] ?? 0, m)
+                    )}
                   </td>
                 ))}
               </tr>
-            ))}
+              )
+            })}
           </tbody>
           <tfoot>
             <tr className="border-t border-border bg-muted/40">
