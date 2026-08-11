@@ -49,6 +49,24 @@ Sacado de una referencia de trece paneles profesionales que trajo Marco el 2026-
 | **Rampa monocroma para repartos** | Verde a distintas opacidades. Nunca varios colores para distinguir porciones |
 | **Barras en cápsula con carril fantasma** | El carril marca el máximo, la cápsula lo alcanzado |
 
+### Y seis más, de la revisión visual del panel ya terminado
+
+Todas eran defectos medibles sobre el píxel, no opiniones:
+
+| Regla | El fallo que la genera |
+|---|---|
+| **Las escalas se redondean** (1-2-5 x 10ⁿ) | El eje decía "54,58 € / 36,02 € / 18,01 €". Se rotula 60 / 40 / 20 / 0. Y los cortes van en **tercios exactos**, no en 0,66 y 0,33, o vuelve a salir "39,60 €" |
+| **Una barra ocupa el 60-80% de su banda** | Salían de 10 puntos en bandas de 88: hilos. Y a ese ancho, fuera el carril fantasma |
+| **Un embudo ESTRECHA** | Cuatro barras del mismo ancho apiladas son una lista, no un embudo |
+| **Todas las tarjetas de una fila llevan el mismo adorno** | La mini línea estaba en 1 de 5 y las otras cuatro dejaban un hueco |
+| **Un dibujo codifica UNA cosa** | El aro decía "cuánto se lleva" y el color "qué lead sale más barato": Instagram con el 68% salía más apagado que Facebook con el 32% |
+| **En una leyenda se enseña lo que DIFERENCIA** | Tres campañas con el mismo prefijo se cortaban justo después de él y se leían iguales. `loQueLasDiferencia()` quita lo repetido |
+
+Más: **una cifra dentro de un aro necesita hueco.** El número del rosco medía 106 puntos
+dentro de un agujero de 117. El aro se adelgaza hasta que quepa con aire y la cifra vive en
+una caja del 70% del diámetro interior. Y **sin dato no es un error**: "sin leads" iba en
+rojo y parecía una avería; es gris.
+
 ### Y una que ya estaba, reforzada
 
 **El tamaño lo decide el CSS y se lee de vuelta.** El lienzo se mide con `ResizeObserver` en

@@ -39,6 +39,34 @@ const RAMPA_TRAZO = [
 
 export type Porcion = { clave: string; nombre: string; valor: number }
 
+/**
+ * Quita de los nombres los trozos que se repiten en TODOS, al principio y al final.
+ *
+ * Las tres campanas se llamaban "WEBINAR - CBO - CL POTENCIALES - ETHOS",
+ * "WEBINAR - ABO - CL POTENCIAL - ETHOS" y "WEBINAR - ABO - TRAFFIC - ETHOS". En la leyenda
+ * del rosco se cortaban las tres justo despues de "WEBINAR - ", asi que las tres se leian
+ * igual y no se distinguia ninguna. Quitando lo comun quedan "CBO · CL POTENCIALES",
+ * "ABO · CL POTENCIAL" y "ABO · TRAFFIC", que es justo lo que las diferencia.
+ */
+export function loQueLasDiferencia(nombres: string[]): string[] {
+  if (nombres.length < 2) return nombres
+  const partes = nombres.map((n) => n.split(/\s+[-|]\s+/).filter(Boolean))
+  // Siempre se deja al menos un trozo: si dos campanas se llaman igual, mejor repetido
+  // que en blanco.
+  let cabeza = 0
+  while (partes.every((p) => p.length > cabeza + 1 && p[cabeza] === partes[0][cabeza])) cabeza++
+  let cola = 0
+  while (
+    partes.every((p) => {
+      const i = p.length - 1 - cola
+      return i > cabeza && p[i] === partes[0][partes[0].length - 1 - cola]
+    })
+  )
+    cola++
+  if (cabeza === 0 && cola === 0) return nombres
+  return partes.map((p) => p.slice(cabeza, p.length - cola).join(" · "))
+}
+
 /* ───────────────────── rosco: en que se va el dinero ───────────────────── */
 
 export function Reparto({ porciones, unidad = "campañas" }: { porciones: Porcion[]; unidad?: string }) {
@@ -50,7 +78,9 @@ export function Reparto({ porciones, unidad = "campañas" }: { porciones: Porcio
   // Cinco porciones y el resto junto: un rosco de veinte trozos no se lee.
   const visibles = conGasto.slice(0, 5)
   const resto = conGasto.slice(5).reduce((s, p) => s + p.valor, 0)
-  const trozos = resto > 0 ? [...visibles, { clave: "otras", nombre: "Las demás", valor: resto }] : visibles
+  const brutos = resto > 0 ? [...visibles, { clave: "otras", nombre: "Las demás", valor: resto }] : visibles
+  const cortos = loQueLasDiferencia(brutos.map((p) => p.nombre))
+  const trozos = brutos.map((p, i) => ({ ...p, corto: cortos[i] }))
 
   // El aro es FINO a proposito: con el grosor de antes el hueco central se quedaba en 112
   // puntos y la cifra de dinero llegaba a rozar el trazo. Ahora el hueco mide 121 y la
@@ -71,7 +101,9 @@ export function Reparto({ porciones, unidad = "campañas" }: { porciones: Porcio
         </span>
       </header>
 
-      <div className="relative mx-auto mt-4 w-full max-w-[168px]">
+      {/* En el telefono la tarjeta mide 343 puntos y el rosco se queda en 168; en monitor
+          hay sitio de sobra y crece. Es el mismo dibujo, no dos. */}
+      <div className="relative mx-auto mt-4 w-full max-w-[168px] md:max-w-[192px]">
         <svg viewBox="0 0 168 168" className="block w-full" role="img" aria-label="Reparto del gasto por campaña">
           <circle cx="84" cy="84" r={R} fill="none" strokeWidth={GROSOR} className="stroke-muted/40" />
           {trozos.map((p, i) => {
@@ -108,7 +140,9 @@ export function Reparto({ porciones, unidad = "campañas" }: { porciones: Porcio
         {trozos.map((p, i) => (
           <li key={p.clave} className="flex items-center gap-2.5">
             <i className={cn("h-2 w-2 shrink-0 rounded-full", RAMPA[i] ?? RAMPA[5])} />
-            <span className="min-w-0 flex-1 truncate text-sm text-foreground">{p.nombre}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground" title={p.nombre}>
+              {p.corto}
+            </span>
             <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
               {fmtDec.format((p.valor / total) * 100)}%
             </span>
@@ -136,20 +170,27 @@ export function Anillos({
   const total = filas.reduce((s, f) => s + f.gasto, 0)
   if (total <= 0) return null
 
-  const visibles = filas.slice(0, 3)
+  // Fuera las que no llegan al 1%: dibujaban un puntito verde suelto que parecia suciedad.
+  const visibles = filas.filter((f) => f.gasto / total >= 0.01).slice(0, 3)
   const mejor = filas
     .filter((f) => f.leads > 0)
     .sort((a, b) => a.gasto / a.leads - b.gasto / b.leads)[0]
+  const mayor = visibles[0]
 
   return (
     <section className="flex h-full flex-col rounded-lg border border-border bg-card p-4">
       <h2 className="text-[15px] font-semibold text-foreground">{titulo}</h2>
 
-      <div className="mt-4 flex flex-1 items-center justify-around gap-2">
+      <div className="flex flex-1 items-center justify-around gap-2 py-2">
         {visibles.map((f) => {
           const parte = f.gasto / total
           const porLead = f.leads > 0 ? f.gasto / f.leads : null
           const esMejor = Boolean(mejor && f.clave === mejor.clave)
+          // El ARO dice cuanto se lleva, asi que su color tambien: el que mas, verde
+          // entero. Quien trae el lead mas barato se marca en el texto de abajo. Antes el
+          // aro se pintaba por coste y salia Instagram, con el 68%, mas apagado que
+          // Facebook con el 32%: el dato que manda era el mas flojo de la tarjeta.
+          const esMayor = Boolean(mayor && f.clave === mayor.clave)
           // Aro fino y hueco ancho, por lo mismo que el rosco: la cifra tiene que respirar.
           const R = 33
           const VUELTA = 2 * Math.PI * R
@@ -167,7 +208,7 @@ export function Anillos({
                     strokeLinecap="round"
                     strokeDasharray={`${VUELTA * parte} ${VUELTA}`}
                     transform="rotate(-90 39 39)"
-                    className={esMejor ? "stroke-brand" : "stroke-brand/45"}
+                    className={esMayor ? "stroke-brand" : "stroke-brand/45"}
                   />
                 </svg>
                 <span className="absolute inset-0 flex items-center justify-center text-base font-bold text-foreground tabular-nums">
@@ -180,10 +221,11 @@ export function Anillos({
               <span
                 className={cn(
                   "text-sm tabular-nums",
-                  porLead === null ? "text-destructive" : esMejor ? "text-brand" : "text-muted-foreground"
+                  // Sin leads NO es un error, es que no hubo. En rojo parecia una averia.
+                  porLead === null ? "text-muted-foreground" : esMejor ? "text-brand" : "text-muted-foreground"
                 )}
               >
-                {porLead === null ? "sin leads" : `${fmtEur.format(porLead)} por lead`}
+                {porLead === null ? "sin leads todavía" : `${fmtEur.format(porLead)} por lead`}
               </span>
             </div>
           )
@@ -348,44 +390,55 @@ export function PorDiaDeSemana({ dias }: { dias: { fecha: string; gasto: number;
         <span className="text-sm text-muted-foreground tabular-nums">{totalLeads} leads</span>
       </header>
 
-      {/* El numero va ENCIMA de cada barra: hace de eje vertical y se lee de un vistazo. */}
-      <div className="mt-5 flex flex-1 items-stretch gap-1" style={{ minHeight: 132 }}>
-        {acumulado.map((a) => {
-          const alto = (a.leads / tope) * 78
-          const esMejor = a.nombre === mejor.nombre && a.leads > 0
-          return (
-            <div key={a.nombre} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-              <div className="relative flex w-full flex-1 justify-center">
-                <div className="relative h-full w-2 rounded-full bg-muted/40 md:w-2.5">
-                  <span
-                    className={cn(
-                      "absolute inset-x-0 bottom-0 rounded-full",
-                      esMejor ? "bg-brand" : a.leads > 0 ? "bg-brand/45" : "bg-muted-foreground/20"
-                    )}
-                    style={{ height: `${Math.max(alto, a.leads > 0 ? 4 : 2)}%` }}
-                  />
-                </div>
+      {/* El numero va ENCIMA de cada barra: hace de eje vertical y se lee de un vistazo.
+          Las barras y los dias van en DOS filas para que la linea base sea una sola raya
+          continua; con la raya dentro de cada columna salia partida en siete trozos. */}
+      <div className="mt-5 flex min-h-[132px] flex-1 flex-col md:min-h-[152px]">
+        <div className="flex flex-1 items-stretch gap-1 border-b border-border">
+          {acumulado.map((a) => {
+            const alto = (a.leads / tope) * 76
+            const esMejor = a.nombre === mejor.nombre && a.leads > 0
+            const suelo = Math.max(alto, a.leads > 0 ? 5 : 2)
+            return (
+              <div key={a.nombre} className="relative flex min-w-0 flex-1 items-end justify-center">
+                {/* ANCHAS. Antes median 10 puntos dentro de una banda de 88: eran hilos.
+                    Y sin carril fantasma detras: a este ancho el carril se convierte en un
+                    bloque gris que pesa mas que el propio dato. */}
+                <span
+                  className={cn(
+                    "block w-[74%] max-w-[46px] rounded-t",
+                    esMejor ? "bg-brand" : a.leads > 0 ? "bg-brand/40" : "bg-muted/60"
+                  )}
+                  style={{ height: `${suelo}%` }}
+                />
                 <span
                   className={cn(
                     "absolute inset-x-0 text-center text-sm tabular-nums",
                     esMejor ? "font-semibold text-foreground" : "text-muted-foreground"
                   )}
-                  style={{ bottom: `calc(${Math.max(alto, 4)}% + 5px)` }}
+                  style={{ bottom: `calc(${suelo}% + 6px)` }}
                 >
                   {a.leads}
                 </span>
               </div>
-              <span
-                className={cn(
-                  "text-sm",
-                  esMejor ? "font-semibold text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {a.nombre}
-              </span>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+        <div className="flex gap-1 pt-2">
+          {acumulado.map((a) => (
+            <span
+              key={a.nombre}
+              className={cn(
+                "min-w-0 flex-1 text-center text-sm",
+                a.nombre === mejor.nombre && a.leads > 0
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              {a.nombre}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Frases cortas y con el dato dentro. Nada de "es el que más trae, con 6 de 25". */}

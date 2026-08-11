@@ -112,7 +112,7 @@ export function AdsPanel() {
   const cplAntes = datos?.ok ? costePorLead(datos.anteriores) : 0
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Barra de arriba: que estas viendo, de cuando, y con que metricas */}
       <div className="flex flex-wrap items-center gap-2">
         <SelectorAlcance
@@ -143,14 +143,14 @@ export function AdsPanel() {
           />
 
           {/* Fila heroe: la evolucion ocupa dos tercios, el rosco el otro */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <Evolucion dias={datos.dias} />
             </div>
             <Reparto porciones={porciones} unidad={marcadas ? "conjuntos" : "campañas"} />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Embudo
               pasos={[
                 { nombre: "Impresiones", valor: datos.embudo.impresiones },
@@ -180,7 +180,7 @@ export function AdsPanel() {
 
           {/* La edad va ancha (seis barras horizontales agradecen el sitio) y los siete dias
               van estrechos: con dos tercios de pantalla para siete barras queda un desierto. */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <Desglose
                 titulo="Qué edad responde"
@@ -256,23 +256,44 @@ function FilaNumeros({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-      {metricas.map((m) => {
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+      {/* El degradado de las mini lineas se declara UNA vez: cinco copias del mismo id
+          serian cinco identificadores repetidos en la pagina. */}
+      <svg width="0" height="0" className="absolute" aria-hidden>
+        <defs>
+          <linearGradient id="chispa-relleno" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-brand)" stopOpacity="0.26" />
+            <stop offset="100%" stopColor="var(--color-brand)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {metricas.map((m, i) => {
         const ahora = totales[m.id] ?? 0
         const antes = anteriores[m.id] ?? 0
         const cambio = antes > 0 ? ((ahora - antes) / antes) * 100 : null
         // En un coste, bajar es bueno. En el resto, subir es bueno.
         const menosEsMejor = m.id.startsWith("cost_per") || m.id === "cpc" || m.id === "cpm"
+        // Con cinco metricas, en el telefono la ultima se quedaba sola a media fila con un
+        // hueco al lado. Ocupa las dos columnas y la fila cierra.
+        const huerfana = metricas.length % 2 === 1 && i === metricas.length - 1
         return (
-          <div key={m.id} className="rounded-lg border border-border bg-card p-3.5">
-            <p className="truncate text-sm text-muted-foreground">{m.nombre}</p>
-            <p className="mt-2 text-[27px] font-bold leading-none tracking-tight text-foreground tabular-nums">
-              {pintaValor(ahora, m)}
-            </p>
-            <div className="mt-3 flex h-6 items-center gap-2">
-              <Chispa valores={serie(m.id)} />
+          <div
+            key={m.id}
+            className={cn(
+              "flex flex-col overflow-hidden rounded-lg border border-border bg-card",
+              huerfana && "col-span-2 md:col-span-1"
+            )}
+          >
+            <div className="flex items-start justify-between gap-2 px-3.5 pt-3.5">
+              {/* Dos lineas, no `truncate`: "Coste por clic saliente unico" se cortaba. */}
+              <p className="min-w-0 text-sm leading-snug text-muted-foreground">{m.nombre}</p>
               <Cambio porcentaje={cambio} menosEsMejor={menosEsMejor} />
             </div>
+            <p className="mt-auto px-3.5 pt-3 text-[30px] font-bold leading-none tracking-tight text-foreground tabular-nums">
+              {pintaValor(ahora, m)}
+            </p>
+            <Chispa valores={serie(m.id)} />
           </div>
         )
       })}
@@ -280,21 +301,29 @@ function FilaNumeros({
   )
 }
 
-/** Mini linea de tendencia. Se mide en porcentajes sobre un lienzo fijo. */
+/**
+ * Mini linea de tendencia, sangrada a los bordes de la tarjeta.
+ *
+ * La dibujan LAS CINCO tarjetas. Antes solo la tenian las que tienen serie diaria (gasto y
+ * leads) y las otras cuatro dejaban un hueco vacio: una fila donde uno lleva adorno y
+ * cuatro no, no es una fila. Sin serie se dibuja la raya base apagada.
+ */
 function Chispa({ valores }: { valores: number[] | null }) {
-  if (!valores || valores.length < 3) return <span className="flex-1" />
-  const tope = Math.max(...valores, 0.0001)
-  const paso = 100 / (valores.length - 1)
-  const d = valores.map((v, i) => `${i * paso},${22 - (v / tope) * 20}`).join(" L")
+  const hay = Boolean(valores && valores.length >= 3)
+  const v = hay ? valores! : [1, 1, 1]
+  const tope = Math.max(...v, 0.0001)
+  const paso = 100 / (v.length - 1)
+  const d = `M${v.map((x, i) => `${i * paso},${32 - (x / tope) * 26}`).join(" L")}`
   return (
-    <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="h-6 min-w-0 flex-1" aria-hidden>
+    <svg viewBox="0 0 100 34" preserveAspectRatio="none" className="mt-3 block h-[34px] w-full" aria-hidden>
+      {hay && <path d={`${d} L100,34 L0,34 Z`} fill="url(#chispa-relleno)" />}
       <path
-        d={`M${d}`}
+        d={d}
         fill="none"
         strokeWidth="1.6"
         vectorEffect="non-scaling-stroke"
         strokeLinejoin="round"
-        className="stroke-brand"
+        className={hay ? "stroke-brand" : "stroke-muted-foreground/25"}
       />
     </svg>
   )

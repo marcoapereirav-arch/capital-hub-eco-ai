@@ -46,6 +46,22 @@ function diaLargo(iso: string): string {
 }
 
 /**
+ * Redondea el tope de una escala a 1, 2 o 5 por diez elevado a algo.
+ *
+ * Sin esto el eje salia "54,58 € / 36,02 € / 18,01 € / 0", que es el maximo del periodo
+ * partido en tres. Ningun panel serio rotula asi: se rotula 60 / 40 / 20 / 0. Con el tope
+ * ya redondeado, los tres cortes caen en numeros limpios solos.
+ */
+function escalaBonita(max: number, tramos = 3): number {
+  if (!(max > 0)) return 1
+  const bruto = max / tramos
+  const magnitud = Math.pow(10, Math.floor(Math.log10(bruto)))
+  const normal = bruto / magnitud
+  const paso = (normal <= 1 ? 1 : normal <= 2 ? 2 : normal <= 5 ? 5 : 10) * magnitud
+  return paso * tramos
+}
+
+/**
  * Curva suave que pasa por todos los puntos.
  *
  * Los puntos de control se recortan al rango de sus dos extremos: sin ese recorte la curva
@@ -97,9 +113,13 @@ export function Evolucion({ dias }: { dias: Dia[] }) {
   const ABAJO = 10
   const alto = Math.max(H - ARRIBA - ABAJO, 1)
 
-  const topeG = Math.max(...dias.map((d) => d.gasto), 1)
+  const topeG = escalaBonita(Math.max(...dias.map((d) => d.gasto), 0))
   const topeL = Math.max(...dias.map((d) => d.leads), 1)
-  const px = (i: number) => (dias.length > 1 ? (i / (dias.length - 1)) * W : W / 2)
+  // Se deja un margen a los lados: sin el, el punto del ultimo dia queda partido por la
+  // mitad contra el borde y la curva parece cortada a hueso.
+  const LADO = 5
+  const px = (i: number) =>
+    dias.length > 1 ? LADO + (i / (dias.length - 1)) * Math.max(W - LADO * 2, 1) : W / 2
   const py = (g: number) => ARRIBA + (1 - g / topeG) * alto
 
   const puntos = dias.map((d, i) => ({ x: px(i), y: py(d.gasto) }))
@@ -154,7 +174,9 @@ export function Evolucion({ dias }: { dias: Dia[] }) {
           )}
           style={{ paddingTop: ARRIBA - 8, paddingBottom: ABAJO }}
         >
-          {[1, 0.66, 0.33].map((f) => (
+          {/* TERCIOS EXACTOS, no 0,66 y 0,33: con esos, un tope redondeado de 60 daba
+              "39,60 €" y "19,80 €" y se perdia todo lo ganado al redondear la escala. */}
+          {[1, 2 / 3, 1 / 3].map((f) => (
             <span key={f}>{fmtEur.format(topeG * f)}</span>
           ))}
           <span>0</span>
@@ -176,10 +198,11 @@ export function Evolucion({ dias }: { dias: Dia[] }) {
               aria-label={`Gasto y leads día a día. ${fmtEur.format(totalG)} y ${totalL} leads en total.`}
             >
               <defs>
+                {/* Llega hasta abajo. Apagandose a cero a media altura quedaba una nube
+                    flotando sin base. */}
                 <linearGradient id="ev-relleno" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-brand)" stopOpacity="0.3" />
-                  <stop offset="70%" stopColor="var(--color-brand)" stopOpacity="0.04" />
-                  <stop offset="100%" stopColor="var(--color-brand)" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--color-brand)" stopOpacity="0.32" />
+                  <stop offset="100%" stopColor="var(--color-brand)" stopOpacity="0.05" />
                 </linearGradient>
                 <linearGradient id="ev-trazo" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="var(--color-brand)" />
@@ -225,6 +248,16 @@ export function Evolucion({ dias }: { dias: Dia[] }) {
                 strokeLinecap="round"
                 className="stroke-muted-foreground/60"
               />
+              {/* Punto fijo del ultimo dia, para que la serie termine en algo y no en un
+                  corte seco. Se calla cuando el dia enfocado ya es ese. */}
+              {iVisto !== dias.length - 1 && (
+                <circle
+                  cx={px(dias.length - 1)}
+                  cy={py(dias[dias.length - 1].gasto)}
+                  r="2.5"
+                  className="fill-brand-soft"
+                />
+              )}
               <circle cx={px(iVisto)} cy={py(visto.gasto)} r="7" className="fill-brand/20" />
               <circle
                 cx={px(iVisto)}
@@ -329,34 +362,38 @@ export function Embudo({ pasos }: { pasos: PasoEmbudo[] }) {
         </span>
       </header>
 
-      <div className="mt-4 flex flex-1 flex-col justify-center gap-3.5">
+      {/* Estrecha de verdad, paso a paso. Antes eran cuatro barras del mismo ancho apiladas
+          y de embudo no tenian nada. Lo que se ESTRECHA es el carril; lo que se rellena
+          dentro es cuanta gente pasa del paso anterior a este, que es el dato util. */}
+      <div className="mt-4 flex flex-1 flex-col justify-center gap-4">
         {pasos.map((p, i) => {
           const prev = i > 0 ? pasos[i - 1].valor : null
           const tasa = prev && prev > 0 ? (p.valor / prev) * 100 : null
-          const ancho = tasa === null ? 100 : Math.max(Math.min(tasa, 100), 4)
+          const relleno = tasa === null ? 100 : Math.max(Math.min(tasa, 100), 4)
+          const carril = 100 - i * (36 / Math.max(pasos.length - 1, 1))
           const esPeor = i === peor && pasos.length > 2
           return (
-            <div key={p.nombre}>
+            <div key={p.nombre} className="mx-auto w-full" style={{ maxWidth: `${carril}%` }}>
               <div className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-sm text-muted-foreground">{p.nombre}</span>
-                <span className="shrink-0 text-[15px] font-semibold text-foreground tabular-nums">
+                <span className="shrink-0 text-[19px] font-bold leading-none tracking-tight text-foreground tabular-nums">
                   {fmt.format(p.valor)}
                 </span>
               </div>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted/50">
                 <span
                   className={cn(
                     "block h-full rounded-full",
                     esPeor ? "bg-warn" : i === pasos.length - 1 ? "bg-brand" : "bg-brand/45"
                   )}
-                  style={{ width: `${ancho}%` }}
+                  style={{ width: `${relleno}%` }}
                 />
               </div>
               {tasa !== null && (
                 <p
                   className={cn(
-                    "mt-1 text-sm tabular-nums",
-                    esPeor ? "font-semibold text-warn" : "text-muted-foreground"
+                    "mt-1.5 text-sm tabular-nums",
+                    esPeor ? "text-warn" : "text-muted-foreground"
                   )}
                 >
                   {tasa > 100 ? (
