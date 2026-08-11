@@ -2,11 +2,53 @@
 
 > Se actualiza en cada cierre de chat. Dice la verdad de hoy, no la intención.
 
-**Última actualización:** 2026-08-07
+**Última actualización:** 2026-08-11
 
 ---
 
-## Qué se hizo hoy
+## Qué se hizo el 2026-08-11 · el panel de Ads y un fallo de números
+
+**El panel de Campañas rehecho entero, siguiendo una referencia que pasó Marco.**
+
+Antes de esto rechazó tres versiones seguidas: *"horrible, básico, no me estás diseñando el
+gráfico que busco"*. El bloqueo era mío: **el chat no podía abrir la captura de referencia**
+y estuve diseñando a ciegas. Se resolvió mandando a otro agente a leerla y describirla.
+
+- **Siete gráficos, en rejilla con un héroe grande**: gasto y leads día a día (curva medida
+  en píxeles, con ficha flotante), rosco del reparto del gasto, embudo que estrecha, medidor
+  del coste por lead con la marca del periodo anterior, anillos por plataforma, barras por
+  día de la semana y barras por edad.
+- **El lenguaje visual quedó escrito como ley**: fuera rejilla y líneas de eje, el número
+  encima de la barra, degradado dentro del trazo, rampa monocroma del verde, escalas
+  redondeadas, una barra ocupa el 60-80% de su banda, un dibujo codifica una sola cosa.
+
+**Y el fallo gordo, que no era de diseño: los leads venían contados TRES veces.**
+
+Salió solo al poner el coste por lead al lado del embudo, porque los dos números se
+contradecían en la misma pantalla. Meta devuelve el mismo lead con tres nombres y uno ya
+incluye a los otros dos; el código los sumaba. Decía 75 leads cuando eran **25**, y 1.144
+páginas cargadas de 1.011 clics: más gente llegando que saliendo. **Todos los números del
+panel estaban inflados x3 desde que se construyó.**
+
+**Doce defectos más** los encontró una revisión visual del panel ya terminado, midiendo
+sobre la imagen: el eje sin redondear, la mini línea en 1 de 5 tarjetas, barras de 10 puntos
+en bandas de 88, tres campañas que se leían iguales por su prefijo común, el aro pintando de
+verde apagado al que se lleva el 68%.
+
+**Anclado para que no se repita:**
+
+| Qué | Dónde |
+|---|---|
+| Cómo se dibuja un gráfico del OS | skill `brandkit-capital-hub`, sección 8 bis |
+| Qué hay en el panel y por qué | `docs/sops/marketing/10-panel-campanas-meta.md` |
+| Si no puedo ver algo, lo mira otro agente | protocolo del agente, REGLA #24 |
+| Lo que yo diseño lo revisa otro midiendo píxeles | protocolo del agente, REGLA #25 |
+
+**Publicado y comprobado en producción.**
+
+---
+
+## Qué se hizo el 2026-08-07
 
 **El OS entero pasa al brandkit y a móvil primero. 29 de 30 pantallas sin ningún fallo.**
 

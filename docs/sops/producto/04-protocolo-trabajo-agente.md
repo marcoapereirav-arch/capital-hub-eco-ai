@@ -581,3 +581,57 @@ ya se disparo).
 **Why:** 2026-08-07, retirando los lead magnets y la agenda propia. Los dos borrados eran
 correctos; lo que casi sale mal fueron las cosas que se llamaban igual y las que quedaron
 apuntando a lo borrado.
+
+---
+
+## REGLA #24 — Si no puedo ver algo, lo mira otro agente. No se le dice a Marco "no puedo"
+
+Marco pasó una captura de referencia y **el chat no podía abrirla**: se le había agotado el
+cupo de imágenes con las capturas de verificación. El resultado fue media hora de "pásamela
+otra vez" / "ya te la pasé, joder" con él cada vez más quemado, y tres diseños rechazados
+seguidos por trabajar a ciegas.
+
+**La salida existía desde el principio: un agente aparte, con su contexto limpio, abre la
+imagen y la describe por escrito.** Eso convirtió una captura ilegible en un informe de 13
+paneles con colores en hexadecimal, tipos de gráfico y detalles de acabado — más útil que
+haberla visto yo.
+
+Aplica a cualquier límite del chat, no solo a imágenes:
+
+| Situación | Qué se hace |
+|---|---|
+| No puedo abrir una imagen que me pasó | Un agente la lee y me la describe con detalle |
+| Hay que barrer medio repositorio para una respuesta | Un agente barre y devuelve la conclusión |
+| Necesito una segunda opinión sobre algo que acabo de hacer | Un agente lo audita sin saber que lo hice yo |
+
+**Nunca se le dice a Marco "no puedo verlo".** Él ya hizo su parte al mandarlo.
+
+**Why:** 2026-08-11. *"¿Cuál es la fucking pérdida de tiempo, hermano? Te he dado una foto."*
+Tenía razón: el problema era mío y la solución también.
+
+---
+
+## REGLA #25 — Lo que yo acabo de diseñar lo revisa otro, midiendo píxeles
+
+Después de dar el panel de Ads por bueno (tipos limpios, tres candados en verde, verificado
+en el navegador), un agente lo auditó contra la referencia **midiendo sobre la imagen**.
+Sacó **doce defectos reales** que yo no vi, y ninguno era cuestión de gusto:
+
+- El eje rotulaba "54,58 € / 36,02 € / 18,01 €" — el máximo partido en tres.
+- La mini línea estaba en 1 de 5 tarjetas; las otras cuatro dejaban un hueco.
+- Las barras medían 10 puntos dentro de bandas de 88.
+- Tres campañas se cortaban justo después de su prefijo común y se leían iguales.
+- El aro pintaba de verde apagado al que se lleva el 68% y de verde entero al del 32%.
+
+**Yo no los veía porque los había escrito yo.** Lo que se le pide al revisor:
+
+1. Que **mida**, no que opine: anchos, altos, contrastes, distancias.
+2. Que reciba **las restricciones** (el brandkit) para no proponer lo prohibido.
+3. Que compare contra **la referencia del dueño**, no contra su gusto.
+4. Que separe **defecto objetivo** de **mejora opinable**.
+
+Y luego se filtra: parte de lo que devuelva chocará con el brandkit (aquí propuso resplandor
+verde y esquinas de 16px, las dos prohibidas). **El revisor no manda sobre el brandkit.**
+
+**Why:** 2026-08-11, panel de Campañas. Tres versiones rechazadas por Marco antes de que se
+me ocurriera pedir la revisión. La cuarta salió a la primera.
