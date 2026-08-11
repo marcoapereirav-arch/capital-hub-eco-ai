@@ -9,23 +9,32 @@ Estas son las **3 reglas operativas que rigen cómo trabajo yo (el agente Claude
 
 ---
 
-## REGLA #1 — Auto-sync del board EN CADA TURNO
+## REGLA #1 — Auto-sync de la lista EN CADA TURNO
 
-El board (BD `public.tasks` en Supabase) es la fuente de verdad de qué se está haciendo, qué está pendiente y qué está hecho. **Antes de cerrar cualquier respuesta** que implique trabajo de código, decisión, o avance:
+La lista de Operaciones (BD `public.tasks`, pantalla `/operaciones`) es la fuente de verdad
+de qué está pendiente y qué está hecho. **Antes de cerrar cualquier respuesta** que implique
+trabajo de código, decisión o avance:
 
-1. Si la tarea ejecutada en el turno **no existía** en `tasks` → la creo (con `id` legible tipo `t_<scope>_<n>_<slug>`, `assignee='ai'` si la ejecuto yo, `para_id` apuntando a un proyecto/área PARA, `depends_on` si toca).
-2. Si la tarea **existía y arranco** → `is_in_progress=true`.
-3. Si la tarea **existía y termino** → `status='done'`, `is_in_progress=false`, `completed_at=now()`.
-4. Si descubro **subtareas nuevas** durante el turno → las creo con su `depends_on` apuntando a la tarea padre.
+1. Si la tarea del turno **no existía** → la creo, con su prioridad y su responsable.
+2. Si **la termino** → `status='hecha'` (la fecha de completado la sella el sistema solo).
+3. Si deja de tener sentido pero no quiero perderla → `status='archivada'`.
+4. Si ya no sirve para nada → la elimino. No se dejan tareas zombi.
 
-**Why:** Sin esto el board queda desincronizado y Marco pierde visibilidad real del estado. Pasó antes — quedaba sólo "lo que recordaba el chat".
+**Why:** Sin esto la lista queda desincronizada y Marco pierde visibilidad real del estado.
+Pasó antes — quedaba sólo "lo que recordaba el chat".
 
 **How to apply:**
-- Statuses válidos: `inbox | next | waiting | someday | done`.
-- Priorities válidas: `urgent | high | normal | low`.
-- Assignees válidos: `marco | adrian | equipo | ai`. Si la tarea la ejecuto yo (código, migración, UI, knowledge, APIs) → `'ai'`. Si requiere acción humana en dashboards externos → humano.
-- Tabla `para_items` para proyectos/áreas/recursos. Cada task lleva `para_id`.
-- Constraint `tasks_assignee_check` ya incluye `'ai'` desde `a019c12`.
+- Estados válidos: `pendiente | hecha | archivada`. **No hay más.**
+- Prioridades válidas: `P1 | P2 | P3`. P1 lo primero, P2 normal, P3 cuando haya hueco.
+- `assignee_id` es el **uuid de un perfil real del OS** (`public.profiles`), o `null`.
+  No hay `'ai'` ni `'equipo'`: si la ejecuto yo, va sin responsable o a nombre de quien la
+  tenga que revisar.
+- **No hay proyectos, áreas, focos, fechas límite, dependencias ni subtareas.** Si una tarea
+  es demasiado grande, se parte en varias tareas sueltas. Ver SOP `producto/01`.
+
+> Esta regla se reescribió el 2026-08-07, cuando el sistema GTD + PARA se sustituyó por una
+> lista de un solo nivel. Lo de antes (board, `para_items`, `depends_on`, `is_in_progress`)
+> ya no existe en la base de datos.
 
 ---
 
@@ -123,22 +132,26 @@ Extensión universal de la REGLA #4. Aplica a **CUALQUIER información**, no sol
 
 ---
 
-## REGLA #6 — El sistema de tareas del OS SIEMPRE en LIVE
+## REGLA #6 — La lista del OS SIEMPRE en LIVE
 
-El sistema de tareas del OS (`public.tasks` + `public.para_items`) debe estar **sincronizado y visible en vivo en TODO momento**. Insertar en BD no es suficiente; el usuario tiene que VERLO actualizado sin tocar nada.
+La lista de Operaciones (`public.tasks`) debe estar **sincronizada y visible en vivo en TODO
+momento**. Insertar en BD no es suficiente; el usuario tiene que VERLO actualizado sin tocar
+nada.
 
-- Si añado/modifico tareas en BD durante un turno: el componente de tareas del OS debe refrescar automáticamente (sin F5 manual).
-- Si el orden del plan cambia (display_order): debe verse reflejado al instante en `/projects`, `/operaciones/overview`, `/dashboard`, y CUALQUIER vista que liste proyectos.
-- Si una vista no respeta el orden definido: es bug del producto, se arregla en ese mismo turno.
-- Cada lista de proyectos/tareas del OS debe ordenarse por `display_order ASC` como default (con opciones de re-ordenar adicionales).
+- Si añado o cambio tareas en BD durante un turno, `/operaciones` lo enseña sin F5.
+- Si una vista no lo refleja, es bug del producto y se arregla en ese mismo turno.
+- El orden por defecto es **por prioridad** (P1 → P2 → P3) y, dentro de cada una, lo más
+  reciente primero.
 
 **Why:**
-- 2026-06-12: Marco no veía los bloques que yo añadí en BD. Asumía que estaba en chat pero no en producto. Me dijo: "El OS SIEMPRE SIEMPRE debe estar actualizado, IN LIVE SIEMPRE."
+- 2026-06-12: Marco no veía los bloques que yo añadí en BD. Asumía que estaba en chat pero
+  no en producto. Me dijo: "El OS SIEMPRE SIEMPRE debe estar actualizado, IN LIVE SIEMPRE."
 
 **How to apply:**
-- Cada componente que liste proyectos/tareas: query con `ORDER BY display_order ASC NULLS LAST, name`.
-- Cada componente: `useEffect` con poll cada 15-30s O subscribe a Supabase Realtime de las tablas.
-- Si añado un proyecto/tarea via API: el front debe re-fetcharlo en máximo 30s sin acción del usuario.
+- La pantalla está suscrita a Supabase Realtime sobre `tasks` (INSERT, UPDATE y DELETE), así
+  que un cambio se ve en todas las pantallas abiertas en menos de un segundo.
+- Nada de `display_order` ni de reordenar a mano: eso murió con el sistema viejo. El orden
+  sale de la prioridad y de la fecha.
 
 ---
 
@@ -554,7 +567,7 @@ ni de la rama que se tenga puesta.
 
 ---
 
-## REGLA #23 — Antes de borrar algo, comprobar QUIEN lo usa de verdad
+## REGLA #29 — Antes de borrar algo, comprobar QUIEN lo usa de verdad
 
 Marco pide retirar una pantalla y la reaccion facil es borrar todo lo que se llame igual.
 **Eso rompe cosas vivas sin dar ningun error.**
@@ -584,7 +597,97 @@ apuntando a lo borrado.
 
 ---
 
-## REGLA #24 — Si no puedo ver algo, lo mira otro agente. No se le dice a Marco "no puedo"
+## REGLA #23: Las horas que se enseñan son las horas REALES
+
+**Toda hora que se le enseñe a Marco, en chat o en pantalla, tiene que ser la hora real de lo que pasó.**
+
+**How to apply:**
+
+- Las APIs devuelven UTC. **Nunca se le pasa a Marco el texto crudo de una API.**
+- La hora se saca de la base de datos ya convertida, o se convierte antes de escribirla.
+- Antes de decir una hora: comprobarla contra la base de datos, no contra la respuesta de la API.
+
+**Why:** 2026-08-07. Le pasé a Marco cinco horas de llamadas leídas en UTC, con **dos horas de error**. Se lo corrigió su equipo en una reunión. Y de paso salió que la cuenta de Calendly de Adrián está en **Asia/Dubái**, así que ni la API ni lo que ve Adrián coinciden con la hora del negocio.
+
+---
+
+## REGLA #24: Todas las métricas se enseñan SIEMPRE
+
+**Ninguna métrica desaparece de la pantalla porque no tenga datos.** Todas se pintan siempre, con su nombre y su número propio.
+
+**How to apply:**
+
+- Un **conteo** vacío es `0`. Cero contactos es un dato: se escribe 0.
+- Un **porcentaje o una media sin divisor** no es 0: es que no se puede calcular. Ahí va un **guion**. Escribir "0%" cuando no hubo ni una llamada es mentir.
+- **Prohibido** el patrón `if (valor <= 0) return null` en una métrica. Eso es lo que rompió el dashboard.
+
+**Why:** 2026-08-07. El revenue y el cash collected estaban escritos para NO pintarse si no había dinero. Como el periodo venía sin ventas, la pantalla no enseñaba nada de dinero y Marco no entendía qué estaba mirando: *"siempre tienen que estar mostrando todas las fichas, todas las métricas, independientemente de si hay o no haya"*.
+
+---
+
+## REGLA #25: Un gráfico que no se explica solo, no sube
+
+**Si un dibujo necesita que alguien lo explique, está mal hecho y no entra en el producto.**
+
+**How to apply:**
+
+- **El número va escrito**, siempre, encima o dentro del dibujo. En un teléfono no hay ratón: un dato que solo aparece al pasar por encima **no existe**.
+- **Lo que se pierde se dibuja, no se cuenta.** En un embudo, la caída entre paso y paso es una forma con su número dentro, no un porcentaje flotando.
+- **Un solo idioma visual** para todo el panel: los embudos se dibujan todos igual, y los gráficos de tiempo también. Si cada uno es distinto, hay que aprender a leer cada uno.
+- **Colores con significado fijo:** verde avanza, gris no avanzó, **ámbar solo donde se pierde más** y en ningún otro sitio.
+- **Cero diagonales, sombras o trozos de color sin rótulo.**
+- **Los números se pueden abrir:** al tocar una barra se ve quién hay dentro. Un número que obliga a irse a otra pantalla a buscar el detalle está a medias.
+
+**Why:** 2026-08-08. El dashboard tenía **siete gráficos** y Marco no entendía ninguno: *"no entiendo ninguno de los gráficos... TU OBJETIVO ES CLARIDAD"*. Cada uno estaba dibujado de una forma distinta, con diagonales que no significaban nada y porcentajes sueltos. Se quedaron **tres**, con un solo idioma.
+
+---
+
+## REGLA #26: Toda lista se abre en VENTANA y nunca enseña más de 20
+
+> Marco, 2026-08-08: *"cuando toco una barra, no quiero que esa vaina se despliegue hacia abajo. Quiero ver un pop-up donde me muestre todos los contactos y recuerda siempre: nunca me muestras más de veinte contactos. Si hay más de veinte, se mueve con una flecha en la otra. Eso anótalo como regla para no estar repitiéndotelo cada rato."*
+
+**Por defecto, en todo el OS, sin que haga falta pedirlo:**
+
+- Al tocar algo que representa un grupo de personas (una barra, una etapa, un número), la lista se abre en una **ventana**, no desplegándose hacia abajo y empujando lo demás.
+- **Máximo 20 filas a la vez. Siempre.** Con más, se pasa de página con **una flecha atrás y una flecha adelante**, y se dice en qué punto estás ("21 a 40 de 132").
+- El tamaño de página es una **constante única del OS**, no un parámetro por pantalla: el día que cambie, cambia en todos lados a la vez.
+- En el teléfono la ventana entra desde abajo; en el ordenador, centrada. El lado se decide con clases, nunca con JavaScript.
+- Mientras la ventana está abierta, la página de detrás **no se mueve**.
+
+Componentes: `<ListaEnVentana>` (`src/components/ui/lista-en-ventana.tsx`) para la ventana, y `<ListaPaginada>` para listas en línea dentro de una pantalla.
+
+---
+
+## REGLA #27: Un número que se enseña tiene que poder explicarse en una frase
+
+> Marco, 2026-08-08: *"¿Cómo que vinieron? ¿Qué carajo es vinieron, bro? Habla específicamente con el lenguaje exacto que es."*
+
+**Antes de escribir el rótulo de una métrica, hay que poder terminar esta frase: "esto cuenta ___ , medido desde ___ , en el periodo ___".** Si no se puede, la métrica no está lista para salir a pantalla.
+
+**How to apply:**
+
+- **Nada de verbos vagos.** "Vinieron" no significa nada: es **"se conectaron a la llamada"**. "Llamadas hechas" es **"llamadas celebradas"**. "No vinieron" es **"no se presentaron"**.
+- **El pie de cada número dice de dónde sale**, con las dos cantidades: no "de 8 agendadas, 3 por venir", sino **"se reservaron 8. Quedan 3 por celebrar"**.
+- **Un porcentaje dice siempre de qué es**: no "0%", sino "0 ventas de 5 llamadas celebradas".
+- Si el rótulo no cabe, se acorta el rótulo, **nunca el significado**.
+
+---
+
+## REGLA #28: Un embudo solo se dibuja como embudo si de verdad lo es
+
+**Un embudo supone que cada paso es un subconjunto del anterior.** Si no lo es, dibujarlo como embudo es mentir.
+
+**How to apply:**
+
+- **Recorrido** (cada paso sale del anterior): se dibuja como embudo, con la caída entre paso y paso.
+- **Reparto** (dónde está cada persona ahora): se dibuja como barras con su porcentaje del total. **Sin caídas**, porque nadie se ha caído: están repartidos.
+- **Nunca se deduce por dónde pasó alguien a partir de dónde está ahora.** Eso solo lo sabe su historial.
+
+**Why:** 2026-08-08. El panel decía **"23 en DM"** en el embudo del webinar cuando en DM no había **nadie**, y "23 en Lead" cuando había 19. El cálculo sumaba a cada escalón todos los siguientes, dando por hecho que quien está en "Agendado" pasó antes por "Lead" y antes por "DM". Falso: al webinar se entra directamente en "Lead" al dejar los datos. **El CRM decía la verdad y el panel otra cosa**, y lo cazó Marco.
+
+---
+
+## REGLA #30 — Si no puedo ver algo, lo mira otro agente. No se le dice a Marco "no puedo"
 
 Marco pasó una captura de referencia y **el chat no podía abrirla**: se le había agotado el
 cupo de imágenes con las capturas de verificación. El resultado fue media hora de "pásamela
@@ -611,7 +714,7 @@ Tenía razón: el problema era mío y la solución también.
 
 ---
 
-## REGLA #25 — Lo que yo acabo de diseñar lo revisa otro, midiendo píxeles
+## REGLA #31 — Lo que yo acabo de diseñar lo revisa otro, midiendo píxeles
 
 Después de dar el panel de Ads por bueno (tipos limpios, tres candados en verde, verificado
 en el navegador), un agente lo auditó contra la referencia **midiendo sobre la imagen**.

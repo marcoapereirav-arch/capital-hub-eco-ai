@@ -215,6 +215,8 @@ function VentanaHistorial({
           nombreSingular="entrada"
           nombrePlural="entradas"
           className="min-h-0 flex-1"
+          // Ventana de alto fijo: aqui la lista SI se desplaza por dentro.
+          propioScroll
         >
           {(pagina) => (
             <Grupos grupos={agrupaPorDia(pagina)} etiquetaDeStage={etiquetaDeStage} />

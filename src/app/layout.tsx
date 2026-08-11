@@ -49,10 +49,12 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  // Al abrir el teclado, la pagina se encoge en vez de quedarse igual. Sin esto,
-  // todo lo anclado abajo (el boton de guardar, la barra de acciones) queda
-  // tapado por el teclado y no se puede pulsar.
-  interactiveWidget: 'resizes-content',
+  // OJO, NO devolver `interactiveWidget`: es de Android, iOS no lo entiende, y
+  // al meterlo en el meta del viewport el iPhone dejo de aplicar bien el
+  // `viewport-fit=cover`. La ventana se quedaba 62 puntos por encima del borde de
+  // la pantalla y ahi salia la banda negra (medido en la captura de Marco,
+  // 2026-08-08). Para el teclado se usa `sticky` dentro de lo que se desplaza,
+  // no elementos anclados con `fixed`.
 }
 
 export default function RootLayout({

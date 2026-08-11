@@ -119,11 +119,29 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     parsed.data.stage !== before.data?.stage &&
     !movedPipeline
   if (manualStageChange) {
+    /* QUIEN lo movio, no solo QUE se movio.
+       Marco, 2026-08-08, mirando 10 contactos en Seguimiento: "¿quien ha movido
+       lo del seguimiento aqui?". Se podia contestar CUANDO (cada evento tiene su
+       hora) pero no QUIEN: el historial guardaba {from, to} y nada mas. Ahora
+       guarda el nombre y el identificador de quien lo hizo, y se lee en la ficha
+       del contacto sin tener que preguntar. */
+    const { data: quienMueve } = await admin
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
+      .maybeSingle()
+    const nombreQuienMueve = quienMueve?.full_name || quienMueve?.email || "alguien del equipo"
+
     await admin.from("contact_journey_events").insert({
       contact_id: id,
       type: "stage_change",
-      title: `Stage: ${before.data?.stage ?? "(none)"} -> ${parsed.data.stage}`,
-      data: { from: before.data?.stage ?? null, to: parsed.data.stage },
+      title: `Movido de ${before.data?.stage ?? "(sin etapa)"} a ${parsed.data.stage} por ${nombreQuienMueve}`,
+      data: {
+        from: before.data?.stage ?? null,
+        to: parsed.data.stage,
+        movido_por_id: user.id,
+        movido_por: nombreQuienMueve,
+      },
     })
 
     // Notificar a super_admins del movimiento MANUAL (in-app), igual que hacen las

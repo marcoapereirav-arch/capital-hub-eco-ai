@@ -48,7 +48,7 @@ export function PushNotificationPrompt({
     // Se ancla POR ENCIMA de la barra de abajo del telefono (56 puntos mas la
     // franja de gestos) y por encima del boton de registrar venta, para no
     // dejar al usuario sin menu mientras el aviso esta abierto.
-    <div className="fixed right-4 bottom-[calc(3.5rem+env(safe-area-inset-bottom)+5rem)] z-50 w-[min(24rem,calc(100vw-2rem))] space-y-3 rounded-xl border border-border bg-card p-4 shadow-lg md:right-6 md:bottom-6">
+    <div className="fixed right-4 bottom-[calc(3.5rem+var(--sab)+5rem)] z-50 w-[min(24rem,calc(100vw-2rem))] space-y-3 rounded-xl border border-border bg-card p-4 shadow-lg md:right-6 md:bottom-6">
       <p className="text-[15px] font-medium text-foreground">Activar notificaciones?</p>
       <p className="text-sm text-muted-foreground">
         Recibe avisos de leads, agendas y ventas aunque no tengas la app abierta.

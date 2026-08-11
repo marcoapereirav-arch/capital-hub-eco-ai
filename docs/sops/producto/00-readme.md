@@ -9,13 +9,13 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 
 | # | Documento | Qué contiene |
 |---|---|---|
-| 01 | [Board y sistema de tareas](01-board-y-sistema-tareas.md) | GTD + PARA, board visual, stages, regla auto-sync |
+| 01 | [Operaciones — la lista de tareas](01-board-y-sistema-tareas.md) | UNA lista, un solo nivel: título, descripción, P1/P2/P3 y responsable. Se tiró el sistema GTD + PARA (board, proyectos, áreas, focos) el 2026-08-07 |
 | 02 | [Arquitectura OS vs App](02-arquitectura-os-app.md) | Capital Hub OS (admin) vs Capital Hub App (cliente) — proyectos separados |
 | 03 | [Mobile-First OS](03-mobile-first-os.md) | El OS es mobile-first. Bottom tab bar, safe-area, dvh, breakpoints |
 | 04 | [Protocolo de trabajo del agente](04-protocolo-trabajo-agente.md) | Reglas auto-board, auto-knowledge, auto-commit, no inventar UI, hablar claro y sin tecnicismos |
 | 05 | [Protocolo de proyectos externos](05-proyectos-externos.md) | Verificar nombre/URL antes de tocar Supabase / Vercel / GitHub / Stripe / DNS |
 | 06 | [Vercel - deploy y colaboración](06-vercel-deploy-y-colaboracion.md) | Producción en team Pro de Adrian. Workflow diario, env vars, dominios |
-| 07 | [Misión Producto Terminado — dashboard /mision](07-mision-producto-terminado.md) | Dashboard del lanzamiento al 2026-05-31. Reutiliza tasks + para_items, añade fases y bloques. 66 tareas seedeadas |
+| 07 | ~~Misión Producto Terminado~~ | **RETIRADO el 2026-08-07.** La pantalla `/mision`, su tabla y sus 67 tareas se borraron de raíz: era el mismo sistema de tareas con otra cara. `/mision` redirige a `/operaciones`. Ver SOP 01 |
 | 47 | [Reglas de UI — contraste y legibilidad](47-reglas-ui-contraste-legibilidad.md) | Nunca texto/icono del color del fondo. Fix autofill blanco-sobre-blanco en dark mode + controles nativos |
 | 48 | [Diseño dinámico y efecto WOW](48-diseno-dinamico-wow.md) | Regla principal: funnels/landings dinámicos, con motion y WOW, siempre dentro del brandkit |
 | 49 | [Efecto de carga de marca (SIEMPRE)](49-efecto-de-carga.md) | `<LoadingScreen />` (anillo + monograma CH) en TODA carga. `app/loading.tsx` de raíz. Nada de spinners genéricos ni pantallas en blanco/gris |
@@ -30,6 +30,9 @@ Cómo se construye y opera el OS: arquitectura, mobile-first, deploy, protocolos
 | 59 | [Archivo ordenado de vídeos en Bunny](59-bunny-archivo-ordenado.md) | El árbol `Testimonios / VSLs / Formaciones / [formación] / [módulo] / [lección].mp4`. Stream NO anida carpetas (comprobado en su API): el árbol vive en Bunny **Storage**. Reloj cada 10 min que archiva solo. Las carpetas siguen al nombre si lo renombran |
 | 60 | [Clipper sustituye a Media Buyer](60-clipper-sustituye-media-buyer.md) | Las tres formaciones pasan a ser IA Integrator, Comercial Closing y **Clipper**. Migración con freno: se detiene sola si alguien tuviera Media Buyer comprado. Los cinco sitios donde el nombre estaba escrito a mano |
 | 61 | [Tutoriales (formación interna)](61-tutoriales-formacion-interna.md) | `/tutoriales` en el OS: vídeos en carpetas para **todo el equipo interno**. Dos formas de meter vídeo (archivo a Bunny en `Tutoriales OS`, o link de Loom). Candado copiado de `knowledges`: alumno cero. **Pendiente de seguridad** de la puerta de subida de la App, y por qué no se cerró todavía |
+| 62 | [La franja negra de abajo en el iPhone (SIN RESOLVER)](62-franja-negra-abajo-sin-resolver.md) | Seis intentos fallidos y el unico dato duro que hay. Lo que YA se probo y no era, para no repetirlo. El medidor que manda las medidas del telefono solo. Los tonos oscuros que no eran los del brandkit |
+
+| 62 | [Un solo desplazamiento por pantalla](62-un-solo-scroll-por-pantalla.md) | El fallo MUDO que congela la app: una caja con `overflow-y-auto` + `no-overscroll` que no tiene nada que desplazar **bloquea a la página**. Arreglado de raíz en `ListaPaginada` (`propioScroll` como excepción), y medido en `check:movil`. La captura de pantalla completa NO prueba que se pueda desplazar |
 
 ## Formaciones (material de presentación)
 

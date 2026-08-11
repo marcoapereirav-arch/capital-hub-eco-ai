@@ -1,4 +1,4 @@
-import { AfiliadosPage } from "@/features/ads/components/afiliados-page"
+import { AfiliadosPage } from "@/features/afiliados/components/afiliados-page"
 
 export const dynamic = "force-dynamic"
 

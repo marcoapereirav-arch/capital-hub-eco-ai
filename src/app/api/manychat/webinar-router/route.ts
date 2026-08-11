@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { resolveAutoStage } from "@/lib/pipeline/stage-guard"
+import { construirLinkDeAfiliado } from "@/lib/afiliados/funnels"
+import { funnelBySlug } from "@/lib/meta/funnel-catalog"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -35,7 +37,8 @@ const BodySchema = z.object({
   post_id: z.union([z.string(), z.number()]).optional().nullable().transform((v) => (v == null ? null : String(v))),
 })
 
-const SITE_CH = process.env.NEXT_PUBLIC_CH_URL ?? "https://ch.capitalhubapp.com"
+// El dominio publico ya no se declara aqui: lo sabe `baseDeFunnels()` en
+// "@/lib/afiliados/funnels", que es quien construye el link (2026-08-07).
 
 function slugify(s: string): string {
   return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40)
@@ -159,9 +162,14 @@ export async function POST(req: NextRequest) {
     data: { subscriber_id: mcId, ig_username: ig, comment_text: body.comment_text ?? null, post_id: body.post_id },
   })
 
-  // 8. Link del webinar con mc_id (para vincular al opt-in)
-  const deliveryLink =
-    `${SITE_CH}/webinar?mc_id=${encodeURIComponent(mcId)}&utm_source=instagram&utm_medium=manychat&utm_campaign=reel_webinar`
+  // 8. Link del webinar con mc_id (para vincular al opt-in).
+  //    Se construye con la pieza comun: es quien sabe el dominio publico y la ruta del
+  //    funnel. Antes estaba escrito a mano y podia quedarse viejo sin que nadie lo viera.
+  const deliveryLink = construirLinkDeAfiliado(funnelBySlug("webinar")?.path ?? "/webinar", "instagram", {
+    mc_id: mcId,
+    utm_medium: "manychat",
+    utm_campaign: "reel_webinar",
+  })
 
   return NextResponse.json({ matched: true, delivery_link: deliveryLink, contact_id: contactId, stage: "dm" })
 }

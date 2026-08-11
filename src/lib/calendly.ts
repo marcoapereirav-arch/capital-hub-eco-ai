@@ -85,11 +85,38 @@ export async function listScheduledEvents(organizationUri: string, opts?: { coun
   return data.collection
 }
 
+export async function getScheduledEvent(eventUri: string): Promise<CalendlyScheduledEvent> {
+  // eventUri es URL absoluta tipo https://api.calendly.com/scheduled_events/{uuid}
+  const eventUuid = eventUri.split("/").pop()
+  const data = await calendlyFetch<{ resource: CalendlyScheduledEvent }>(`/scheduled_events/${eventUuid}`)
+  return data.resource
+}
+
+/** Una respuesta del formulario de Calendly. El orden puede cambiar: nunca uses `position`. */
+export type CalendlyQuestionAnswer = {
+  question?: string | null
+  answer?: string | null
+  position?: number
+}
+
+export type CalendlyTracking = {
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  utm_content?: string | null
+  utm_term?: string | null
+}
+
 export type CalendlyInvitee = {
   uri: string
   email: string
   name: string
+  status?: string
+  no_show?: { uri?: string } | null
+  /** VERIFICADO 2026-08-07: llega null casi siempre. El telefono real esta en questions_and_answers. */
   text_reminder_number?: string | null
+  questions_and_answers?: CalendlyQuestionAnswer[]
+  tracking?: CalendlyTracking | null
   cancellation?: { reason?: string }
 }
 
@@ -98,6 +125,84 @@ export async function listInvitees(eventUri: string): Promise<CalendlyInvitee[]>
   const eventUuid = eventUri.split("/").pop()
   const data = await calendlyFetch<{ collection: CalendlyInvitee[] }>(`/scheduled_events/${eventUuid}/invitees?count=100`)
   return data.collection
+}
+
+/** inviteeUri absoluta: https://api.calendly.com/scheduled_events/{uuid}/invitees/{uuid} */
+export async function getInvitee(inviteeUri: string): Promise<CalendlyInvitee> {
+  const path = inviteeUri.replace(API_BASE, "")
+  const data = await calendlyFetch<{ resource: CalendlyInvitee }>(path)
+  return data.resource
+}
+
+/**
+ * Del URI de un invitado saca el URI de su reserva.
+ * .../scheduled_events/{a}/invitees/{b}  ->  .../scheduled_events/{a}
+ * Devuelve null si el texto no tiene esa forma.
+ */
+export function scheduledEventUriFromInvitee(inviteeUri: string | null | undefined): string | null {
+  if (!inviteeUri || typeof inviteeUri !== "string") return null
+  const idx = inviteeUri.indexOf("/invitees/")
+  if (idx <= 0) return null
+  return inviteeUri.slice(0, idx)
+}
+
+// ---------------------------------------------------------------------------
+// Normalizacion de las respuestas del formulario.
+//
+// Por que vive aqui: el receptor del webhook y el importador scripts/calendly-backfill.mjs
+// tienen que limpiar EXACTAMENTE igual, o la misma reserva queda distinta segun por
+// donde entre. Si tocas una de estas funciones, toca tambien la copia del importador.
+//
+// El telefono y el Instagram NO vienen en campos propios de Calendly: vienen dentro de
+// questions_and_answers, identificados por el TEXTO de la pregunta. Adrian puede
+// renombrar esas preguntas, asi que se busca con tolerancia y nunca por posicion fija.
+// ---------------------------------------------------------------------------
+
+export type CalendlyAnswers = Record<string, string | null>
+
+/** Pasa el array de preguntas y respuestas a un objeto { pregunta: respuesta }. */
+export function answersToObject(qa: CalendlyQuestionAnswer[] | null | undefined): CalendlyAnswers {
+  const out: CalendlyAnswers = {}
+  for (const item of qa ?? []) {
+    const question = typeof item?.question === "string" ? item.question.trim() : ""
+    if (question) out[question] = item.answer ?? null
+  }
+  return out
+}
+
+/** Busca la primera respuesta cuya pregunta contenga alguna de las palabras dadas. */
+export function findAnswer(answers: CalendlyAnswers, ...needles: string[]): string | null {
+  for (const [q, a] of Object.entries(answers)) {
+    const key = q.toLowerCase()
+    if (needles.some((n) => key.includes(n))) {
+      const val = typeof a === "string" ? a.trim() : null
+      if (val) return val
+    }
+  }
+  return null
+}
+
+export function cleanPhone(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const cleaned = String(raw).replace(/[^\d+]/g, "")
+  return cleaned.replace(/^\+?$/, "") || null
+}
+
+export function cleanInstagram(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const val = String(raw).trim().replace(/^@+/, "").replace(/\s+/g, "")
+  if (!val || /^(no\.?tengo|notengoinstagram|\.\.\.|-)$/i.test(val)) return null
+  return val.slice(0, 60)
+}
+
+/** Telefono real del invitado: primero las respuestas del formulario, luego el campo de Calendly. */
+export function phoneFromInvitee(answers: CalendlyAnswers, textReminderNumber?: string | null): string | null {
+  return cleanPhone(findAnswer(answers, "tel", "phone", "movil", "whatsapp") ?? textReminderNumber)
+}
+
+/** Instagram del invitado, sacado de las respuestas del formulario. */
+export function instagramFromInvitee(answers: CalendlyAnswers): string | null {
+  return cleanInstagram(findAnswer(answers, "instagram", " ig"))
 }
 
 /**

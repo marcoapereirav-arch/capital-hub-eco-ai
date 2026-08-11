@@ -1,29 +1,21 @@
 import { createClient } from "@/lib/supabase/client"
-import type { Task, ParaItem, ParaPriority, GTDStatus, Priority, Assignee, ParaType, ParaStatus } from "../types/task"
+import type { Task, OsUser, Priority, TaskStatus } from "../types/task"
 
 type TaskRow = {
   id: string
   title: string
-  description: string
-  status: GTDStatus
+  description: string | null
+  status: TaskStatus
   priority: Priority
-  assignee: Assignee
-  para_id: string | null
-  due_date: string | null
+  assignee_id: string | null
   created_at: string
-  updated_at: string
   completed_at: string | null
 }
 
-type ParaRow = {
+type ProfileRow = {
   id: string
-  name: string
-  type: ParaType
-  status: ParaStatus
-  parent_id: string | null
-  focus_id: string | null
-  display_order: number | null
-  priority: string | null
+  full_name: string | null
+  email: string
 }
 
 function rowToTask(row: TaskRow): Task {
@@ -33,65 +25,24 @@ function rowToTask(row: TaskRow): Task {
     description: row.description ?? "",
     status: row.status,
     priority: row.priority,
-    assignee: row.assignee,
-    paraId: row.para_id,
-    dueDate: row.due_date,
+    assigneeId: row.assignee_id,
     createdAt: row.created_at,
     completedAt: row.completed_at,
   }
 }
 
-function rowToPara(row: ParaRow): ParaItem {
-  const validPriorities: ParaPriority[] = ["urgent", "important", "normal", "low"]
-  const priority = validPriorities.includes(row.priority as ParaPriority)
-    ? (row.priority as ParaPriority)
-    : "normal"
-  return {
-    id: row.id,
-    name: row.name,
-    type: row.type,
-    status: row.status ?? "active",
-    parentId: row.parent_id ?? null,
-    focusId: row.focus_id ?? null,
-    displayOrder: row.display_order ?? null,
-    priority,
-  }
-}
-
-function paraUpdatesToRow(updates: Partial<ParaItem>): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
-  if (updates.name !== undefined) out.name = updates.name
-  if (updates.type !== undefined) out.type = updates.type
-  if (updates.status !== undefined) out.status = updates.status
-  if (updates.parentId !== undefined) out.parent_id = updates.parentId
-  if (updates.focusId !== undefined) out.focus_id = updates.focusId
-  if (updates.displayOrder !== undefined) out.display_order = updates.displayOrder
-  if (updates.priority !== undefined) out.priority = updates.priority
-  return out
-}
-
-function taskToInsert(task: Omit<Task, "id" | "createdAt" | "completedAt">) {
-  return {
-    title: task.title,
-    description: task.description,
-    status: task.status,
-    priority: task.priority,
-    assignee: task.assignee,
-    para_id: task.paraId,
-    due_date: task.dueDate,
-  }
-}
-
-function taskUpdatesToRow(updates: Partial<Task>): Record<string, unknown> {
+function updatesToRow(updates: Partial<Task>): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   if (updates.title !== undefined) out.title = updates.title
   if (updates.description !== undefined) out.description = updates.description
-  if (updates.status !== undefined) out.status = updates.status
   if (updates.priority !== undefined) out.priority = updates.priority
-  if (updates.assignee !== undefined) out.assignee = updates.assignee
-  if (updates.paraId !== undefined) out.para_id = updates.paraId
-  if (updates.dueDate !== undefined) out.due_date = updates.dueDate
-  if (updates.completedAt !== undefined) out.completed_at = updates.completedAt
+  if (updates.assigneeId !== undefined) out.assignee_id = updates.assigneeId
+  if (updates.status !== undefined) {
+    out.status = updates.status
+    // La fecha de completado la lleva el sistema, no el usuario: si se marca hecha se
+    // sella, y si vuelve a pendiente o se archiva se borra. Asi el historial no miente.
+    out.completed_at = updates.status === "hecha" ? new Date().toISOString() : null
+  }
   return out
 }
 
@@ -100,39 +51,61 @@ export const tasksService = {
     const supabase = createClient()
     const { data, error } = await supabase
       .from("tasks")
-      .select("*")
+      .select("id, title, description, status, priority, assignee_id, created_at, completed_at")
       .order("created_at", { ascending: false })
     if (error) throw error
     return (data ?? []).map((r) => rowToTask(r as TaskRow))
   },
 
-  async listParaItems(): Promise<ParaItem[]> {
+  /**
+   * Las personas que pueden ser responsables: los usuarios ACTIVOS del OS.
+   * No hay lista escrita a mano — quien entra al OS aparece aqui solo.
+   */
+  async listOsUsers(): Promise<OsUser[]> {
     const supabase = createClient()
     const { data, error } = await supabase
-      .from("para_items")
-      .select("*")
-      .order("created_at", { ascending: true })
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("active", true)
+      .order("full_name", { ascending: true })
     if (error) throw error
-    return (data ?? []).map((r) => rowToPara(r as ParaRow))
+    return (data ?? []).map((r) => {
+      const row = r as ProfileRow
+      return { id: row.id, name: row.full_name?.trim() || row.email, email: row.email }
+    })
   },
 
-  async addTask(task: Omit<Task, "id" | "createdAt" | "completedAt">): Promise<Task> {
+  async addTask(input: {
+    title: string
+    description?: string
+    priority?: Priority
+    assigneeId?: string | null
+  }): Promise<Task> {
     const supabase = createClient()
     const { data: userData } = await supabase.auth.getUser()
-    const insert = { ...taskToInsert(task), created_by: userData.user?.id ?? null }
-    const { data, error } = await supabase.from("tasks").insert(insert).select("*").single()
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({
+        title: input.title,
+        description: input.description ?? "",
+        priority: input.priority ?? "P2",
+        assignee_id: input.assigneeId ?? null,
+        status: "pendiente",
+        created_by: userData.user?.id ?? null,
+      })
+      .select("id, title, description, status, priority, assignee_id, created_at, completed_at")
+      .single()
     if (error) throw error
     return rowToTask(data as TaskRow)
   },
 
   async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
     const supabase = createClient()
-    const patch = taskUpdatesToRow(updates)
     const { data, error } = await supabase
       .from("tasks")
-      .update(patch)
+      .update(updatesToRow(updates))
       .eq("id", id)
-      .select("*")
+      .select("id, title, description, status, priority, assignee_id, created_at, completed_at")
       .single()
     if (error) throw error
     return rowToTask(data as TaskRow)
@@ -143,88 +116,28 @@ export const tasksService = {
     const { error } = await supabase.from("tasks").delete().eq("id", id)
     if (error) throw error
   },
-
-  async addParaItem(item: { name: string; type: ParaType; status?: ParaStatus; parentId?: string | null }): Promise<ParaItem> {
-    const supabase = createClient()
-    const id = `para_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-    const { data, error } = await supabase
-      .from("para_items")
-      .insert({
-        id,
-        name: item.name,
-        type: item.type,
-        status: item.status ?? "active",
-        parent_id: item.parentId ?? null,
-      })
-      .select("*")
-      .single()
-    if (error) throw error
-    return rowToPara(data as ParaRow)
-  },
-
-  async updateParaItem(id: string, updates: Partial<ParaItem>): Promise<ParaItem> {
-    const supabase = createClient()
-    const patch = paraUpdatesToRow(updates)
-    const { data, error } = await supabase
-      .from("para_items")
-      .update(patch)
-      .eq("id", id)
-      .select("*")
-      .single()
-    if (error) throw error
-    return rowToPara(data as ParaRow)
-  },
-
-  async deleteParaItem(id: string): Promise<void> {
-    const supabase = createClient()
-    const { error } = await supabase.from("para_items").delete().eq("id", id)
-    if (error) throw error
-  },
 }
 
 export type RealtimeHandlers = {
-  onTaskInsert: (task: Task) => void
-  onTaskUpdate: (task: Task) => void
-  onTaskDelete: (id: string) => void
-  onParaInsert: (item: ParaItem) => void
-  onParaUpdate: (item: ParaItem) => void
-  onParaDelete: (id: string) => void
+  onInsert: (task: Task) => void
+  onUpdate: (task: Task) => void
+  onDelete: (id: string) => void
 }
 
+/** Un cambio en cualquier pantalla abierta se ve en todas en menos de un segundo. */
 export function subscribeRealtime(handlers: RealtimeHandlers) {
   const supabase = createClient()
 
   const channel = supabase
     .channel("tasks-realtime")
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "tasks" },
-      (payload) => handlers.onTaskInsert(rowToTask(payload.new as TaskRow))
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "tasks" }, (payload) =>
+      handlers.onInsert(rowToTask(payload.new as TaskRow))
     )
-    .on(
-      "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "tasks" },
-      (payload) => handlers.onTaskUpdate(rowToTask(payload.new as TaskRow))
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tasks" }, (payload) =>
+      handlers.onUpdate(rowToTask(payload.new as TaskRow))
     )
-    .on(
-      "postgres_changes",
-      { event: "DELETE", schema: "public", table: "tasks" },
-      (payload) => handlers.onTaskDelete((payload.old as { id: string }).id)
-    )
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "para_items" },
-      (payload) => handlers.onParaInsert(rowToPara(payload.new as ParaRow))
-    )
-    .on(
-      "postgres_changes",
-      { event: "UPDATE", schema: "public", table: "para_items" },
-      (payload) => handlers.onParaUpdate(rowToPara(payload.new as ParaRow))
-    )
-    .on(
-      "postgres_changes",
-      { event: "DELETE", schema: "public", table: "para_items" },
-      (payload) => handlers.onParaDelete((payload.old as { id: string }).id)
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "tasks" }, (payload) =>
+      handlers.onDelete((payload.old as { id: string }).id)
     )
     .subscribe()
 

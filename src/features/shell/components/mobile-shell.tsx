@@ -24,7 +24,7 @@ export function MobileShell({
   return (
     <div className="flex min-h-dvh flex-col bg-background md:hidden">
       <MobileHeader userEmail={userEmail} userName={userName} />
-      <main className="flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+      <main className="flex-1 pb-[calc(3.5rem+var(--sab))]">
         {children}
       </main>
       <MobileBottomNav

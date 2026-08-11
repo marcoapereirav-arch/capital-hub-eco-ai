@@ -92,7 +92,7 @@ export function PipelinesKanban({
             pasa por el, su altura llega hasta el borde de la ventana y la barra de
             abajo (56 puntos mas la franja de gestos) taparia la ultima tarjeta y su
             boton "Mover a...". */}
-        <div className="no-overscroll min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)]">
+        <div className="no-overscroll min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-[calc(3.5rem+var(--sab)+1rem)]">
           {listaActiva.length === 0 ? (
             <div className="flex min-h-[200px] flex-col items-center justify-center gap-2 px-6 py-10 text-center">
               <h3 className="text-[17px] font-semibold text-foreground">Esta etapa está vacía</h3>

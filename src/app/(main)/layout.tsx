@@ -7,6 +7,7 @@ import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { PushNotificationPrompt } from "@/features/notifications/components/PushNotificationPrompt"
 import { UpdateNotifier } from "@/components/UpdateNotifier"
 import { RegistrarVentaWidget } from "@/features/sales/components/registrar-venta-widget"
+import { DiagMovil } from "@/features/shell/components/diag-movil"
 import { TopBar } from "@/features/shell/components/top-bar"
 import { ViewAsRoleBanner } from "@/features/shell/components/view-as-role-banner"
 import { createClient } from "@/lib/supabase/server"
@@ -24,20 +25,27 @@ export default async function MainLayout({
     redirect("/login")
   }
 
-  // Hidrata el cache de role_permissions desde BD para este request.
-  // El sidebar (server component) usa canAccessRoute que lee este cache.
-  // Si la BD falla, fallback a ROLE_ROUTES hardcoded (seguro).
-  const rolePermsSnapshot = await loadRolePermsFromDb(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  /* LAS DOS COMPROBACIONES QUE QUEDAN, A LA VEZ.
+     ==========================================================================
+     Medido el 2026-08-08: este marco hacia TRES viajes a Supabase uno detras de
+     otro (quien eres, que permisos hay, tu perfil) y ninguna peticion de datos
+     de la pagina arrancaba hasta que terminaban los tres: 373 ms de espera fija
+     en TODAS las pantallas del OS. La prueba mas limpia: /login, que esta fuera
+     de este marco, responde en 83 ms; /perfil, que esta dentro y casi no tiene
+     contenido, tardaba 586 ms.
+     Estas dos no dependen una de otra, asi que van juntas. Y la matriz de
+     permisos ademas se guarda en memoria un minuto (ver role-access.ts), que era
+     la mas absurda: releia 29 filas que casi nunca cambian, en cada navegacion.
+     ========================================================================== */
+  const [rolePermsSnapshot, perfilRes] = await Promise.all([
+    loadRolePermsFromDb(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    ),
+    supabase.from("profiles").select("full_name, role").eq("id", user.id).maybeSingle(),
+  ])
   if (rolePermsSnapshot) setCachedRolePerms(rolePermsSnapshot)
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .maybeSingle()
+  const profile = perfilRes.data
 
   const userEmail = user.email ?? ""
   const userName = profile?.full_name ?? null
@@ -85,7 +93,9 @@ export default async function MainLayout({
 
       <PushNotificationPrompt userId={user.id} />
       <UpdateNotifier />
-      <RegistrarVentaWidget />
+      <RegistrarVentaWidget rol={realRole} />
+      {/* TEMPORAL: manda las medidas del telefono para poder arreglar la franja. */}
+      <DiagMovil />
     </SidebarProvider>
   )
 }
