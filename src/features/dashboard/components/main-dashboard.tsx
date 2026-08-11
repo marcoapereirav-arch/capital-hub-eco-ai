@@ -201,7 +201,11 @@ export function MainDashboard() {
   const [reportesSetter, setReportesSetter] = useState<ReporteSetterRow[]>([])
   const [ventas, setVentas] = useState<VentaRow[]>([])
   const [ventasPrevias, setVentasPrevias] = useState<VentaRow[]>([])
-  const [embudoElegido, setEmbudoElegido] = useState("venta")
+  /* El embudo elegido. Empieza vacio: los nombres los pone el CRM, no este
+     fichero. `elegidoAMano` distingue "lo puso el usuario" de "lo puso el
+     sistema porque no habia nada elegido". */
+  const [embudoElegido, setEmbudoElegido] = useState("")
+  const [elegidoAMano, setElegidoAMano] = useState(false)
   const [loading, setLoading] = useState(true)
   /* La serie de 30 dias se sigue cargando exactamente igual (la carga de datos no
      se toca), pero el pulso mide el PERIODO elegido en el filtro, asi que sus
@@ -910,70 +914,61 @@ export function MainDashboard() {
   // gente que se cae. El de la venta va primero porque es el que se mira.
   // ---------------------------------------------------------------------------
   const embudos: OpcionEmbudo[] = useMemo(() => {
-    const lista: OpcionEmbudo[] = [
-      {
-        id: "venta",
-        nombre: "Embudo de la venta",
-        modo: "embudo",
-        pasos: [
-          { clave: "contactos", etiqueta: "Personas nuevas", valor: kpis.contactosNuevos },
-          { clave: "agendaron", etiqueta: "Reservaron llamada", valor: kpis.llamadas },
-          { clave: "vinieron", etiqueta: "Se conectaron a la llamada", valor: kpis.llamadasCompletadas },
-          { clave: "compraron", etiqueta: "Compraron", valor: kpis.ventas },
-        ],
-      },
-    ]
-
-    if (setter.hayDatos) {
-      lista.push({
-        id: "conversacion",
-        nombre: "De conversación a llamada",
-        modo: "embudo",
-        pasos: [
-          { clave: "conversaciones", etiqueta: "Conversaciones", valor: setter.conversaciones },
-          { clave: "ofertas", etiqueta: "Ofertas de llamada", valor: setter.ofertas },
-          { clave: "agendadas", etiqueta: "Agendadas", valor: setter.agendadas },
-        ],
+    /* SOLO los embudos que existen de verdad en el CRM. Ni uno mas.
+       Marco, 2026-08-11: "solo y exclusivamente tienen que estar estos
+       pipelines. No pueden estar mas, ya que va directamente conectado."
+       Asi que esta lista NO se escribe a mano: sale de los pipelines que hay.
+       Si manana se crea uno en el CRM, aparece aqui solo; si se borra,
+       desaparece. Antes habia ademas dos embudos inventados aqui dentro
+       ("Embudo de la venta" y "De conversacion a llamada") que no existian en el
+       CRM: eso es justo lo que rompia la correspondencia. */
+    return pipelines
+      .map((p) => {
+        const delPipeline = allContacts.filter((c) => c.pipeline_id === p.id)
+        const cuenta = new Map<string, number>()
+        for (const c of delPipeline) cuenta.set(c.stage, (cuenta.get(c.stage) ?? 0) + 1)
+        return {
+          id: `pipeline-${p.id}`,
+          nombre: p.name,
+          modo: "reparto" as const,
+          total: delPipeline.length,
+          pasos: p.stages.map((st) => ({
+            clave: st.key,
+            etiqueta: st.name,
+            valor: cuenta.get(st.key) ?? 0,
+          })),
+        }
       })
+      .sort((a, b) => (b.total ?? 0) - (a.total ?? 0))
+  }, [pipelines, allContacts])
+
+  /* Cual se enseña por defecto: el que tiene MAS gente dentro, que es el embudo
+     vivo del negocio. Se recalcula mientras el usuario no haya elegido a mano.
+     Antes se fijaba en el primero que llegara, y como los contactos tardan un
+     instante mas que la lista de embudos, se quedaba clavado en el que tocara
+     (salia "General" con 5 personas teniendo el del webinar 34).
+     Se depende del ID, no del objeto: `embudos` es nuevo en cada pintado y
+     depender de el dispararia el efecto en bucle. */
+  const embudoConMasGente = embudos[0]?.id ?? ""
+  useEffect(() => {
+    if (elegidoAMano) return
+    setEmbudoElegido(embudoConMasGente)
+  }, [embudoConMasGente, elegidoAMano])
+
+  /* Si el embudo elegido desaparece (se borro ese pipeline), se cae al de mas
+     gente en vez de dejar la tarjeta en blanco. */
+  const embudoExiste = embudos.some((e) => e.id === embudoElegido)
+  useEffect(() => {
+    if (!embudoExiste && embudoConMasGente) {
+      setEmbudoElegido(embudoConMasGente)
+      setElegidoAMano(false)
     }
+  }, [embudoExiste, embudoConMasGente])
 
-    /* LOS EMBUDOS DEL CRM: donde esta cada persona AHORA. Ni una suposicion.
-       ==========================================================================
-       LO QUE ESTABA MAL (lo cazo Marco el 2026-08-08): cada escalon contaba los
-       que estaban EN el MAS todos los de los escalones siguientes, dando por
-       hecho que quien esta en "Agendado" paso antes por "Lead" y antes por "DM".
-       Eso es falso: al embudo del webinar se entra directamente en "Lead" al
-       dejar los datos en la landing. Nadie pasa por "DM" salvo quien comenta un
-       reel. Resultado: el panel decia "23 en DM" cuando en DM no hay NADIE, y
-       "23 en Lead" cuando hay 19. El CRM decia la verdad y el panel otra cosa.
-
-       Para saber por donde paso cada persona haria falta su historial completo,
-       y hoy no lo tenemos (los eventos de cambio de etapa empezaron el 7 de
-       agosto). Asi que se enseña lo unico que se sabe con certeza: cuanta gente
-       hay AHORA MISMO en cada etapa. Los numeros cuadran con el CRM al dedillo,
-       que es lo que se pidio.
-       ========================================================================== */
-    for (const p of pipelines) {
-      const delPipeline = allContacts.filter((c) => c.pipeline_id === p.id)
-      if (delPipeline.length === 0) continue
-      const cuenta = new Map<string, number>()
-      for (const c of delPipeline) cuenta.set(c.stage, (cuenta.get(c.stage) ?? 0) + 1)
-
-      lista.push({
-        id: `pipeline-${p.id}`,
-        nombre: p.name,
-        modo: "reparto",
-        total: delPipeline.length,
-        pasos: p.stages.map((st) => ({
-          clave: st.key,
-          etiqueta: st.name,
-          valor: cuenta.get(st.key) ?? 0,
-        })),
-      })
-    }
-
-    return lista
-  }, [kpis, setter, pipelines, allContacts])
+  function elegirEmbudo(id: string) {
+    setElegidoAMano(true)
+    setEmbudoElegido(id)
+  }
 
   // ---------------------------------------------------------------------------
   // Render
@@ -1065,16 +1060,16 @@ export function MainDashboard() {
             Sustituye a los dos embudos sueltos que habia y al del CRM. */}
         <Card
           delay={120}
-          title="El embudo"
+          title="Los embudos del CRM"
           className="mt-4"
           right={
-            <SelectorEmbudo opciones={embudos} valor={embudoElegido} onChange={setEmbudoElegido} />
+            <SelectorEmbudo opciones={embudos} valor={embudoElegido} onChange={elegirEmbudo} />
           }
         >
           <DashboardEmbudo
             opciones={embudos}
             seleccionado={embudoElegido}
-            onSeleccionar={setEmbudoElegido}
+            onSeleccionar={elegirEmbudo}
             cargando={loading}
           />
         </Card>

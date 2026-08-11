@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { olvidarPermisosCacheados } from "@/lib/auth/role-access"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
 import { navSections } from "@/features/shell/components/nav-config"
@@ -144,6 +145,10 @@ export async function PUT(req: NextRequest) {
       .eq("route_href", route_href)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  /* La matriz cambio: se tira la copia en memoria para que el cambio se note ya
+     y no haya que esperar al minuto. Ver PERMISOS_VIVEN_MS en role-access.ts. */
+  olvidarPermisosCacheados()
 
   return NextResponse.json({ ok: true })
 }

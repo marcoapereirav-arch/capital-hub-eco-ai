@@ -57,7 +57,7 @@ export function ManychatPeriodKpis() {
         <h3 className="font-heading text-[15px] font-semibold text-foreground">
           Actividad del período
         </h3>
-        <PeriodFilter onChange={setRange} defaultPreset="30d" />
+        <PeriodFilter value={range ?? undefined} onChange={setRange} defaultPreset="30d" />
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <KpiCard title="Nuevos suscriptores" value={loading ? "…" : nuevos} hint={range?.label} source="manychat" />
