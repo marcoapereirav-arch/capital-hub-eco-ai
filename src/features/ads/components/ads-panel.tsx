@@ -1,22 +1,26 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertCircle, ArrowDown, ArrowUp, Loader2, Minus } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { cn } from "@/lib/utils"
 import { metricaPorId, type Metrica } from "@/lib/meta/metricas"
 import type { FilaCampana, FilaConjunto, FilaDesglose } from "@/lib/meta/panel"
-import { Desglose, Embudo, ETIQUETA_PLATAFORMA, Evolucion } from "./ads-graficos"
+import { Embudo, ETIQUETA_PLATAFORMA, Evolucion } from "./ads-graficos"
+import { Anillos, Desglose, Medidor, PorDiaDeSemana, Reparto } from "./ads-graficos-reparto"
 import { ListaCampanas, pintaValor } from "./ads-campanas"
 import { SelectorMetricas, leerElegidas } from "./ads-selector-metricas"
 import { SelectorAlcance, type Alcance } from "./ads-selector-alcance"
 
 /**
- * El panel de Campañas.
+ * El panel de Campanas.
  *
- * Orden a propósito: primero el filtro, después los GRÁFICOS y al final la tabla. La
- * filosofía es visual primero y números después, así que lo que se ve al entrar es el
- * embudo y la evolución, no una rejilla de cifras.
+ * Colocado en rejilla, no en columna: la referencia que trajo Marco pone entre ocho y doce
+ * bloques por pantalla y uno HEROE grande. Aqui el heroe es la evolucion, que ocupa dos
+ * tercios, con el rosco del reparto al lado. Debajo, tres bloques por fila.
+ *
+ * Filosofia: visual primero, numeros despues. Lo que se ve al entrar son graficos; la tabla
+ * queda al final para el que quiera la cifra exacta.
  *
  * El filtro de fechas es el del OS (`PeriodFilter`) y manda sobre todo lo de abajo. Ver SOP
  * producto/58.
@@ -37,8 +41,16 @@ type Respuesta =
     }
   | { ok: false; error: string; sinPermiso: boolean }
 
+const fmtEur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
+
 function aFecha(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+}
+
+/** Coste por lead. Meta no siempre lo devuelve, asi que se calcula si falta. */
+function costePorLead(v: Record<string, number>): number {
+  if (v.costePorLead > 0) return v.costePorLead
+  return v.leads > 0 ? v.spend / v.leads : 0
 }
 
 export function AdsPanel() {
@@ -46,11 +58,11 @@ export function AdsPanel() {
   const [datos, setDatos] = useState<Respuesta | null>(null)
   const [cargando, setCargando] = useState(false)
   const [elegidas, setElegidas] = useState<string[]>([])
-  // Que campañas o conjuntos estan marcados. Vacio = la cuenta entera.
+  // Que campanas o conjuntos estan marcados. Vacio = la cuenta entera.
   const [alcance, setAlcance] = useState<Alcance>({ campanas: [], conjuntos: [] })
 
-  // Las métricas guardadas se leen tras montar: `localStorage` no existe en el servidor y
-  // leerlo en el primer pintado haría que la pantalla salte de unas columnas a otras.
+  // Las metricas guardadas se leen tras montar: `localStorage` no existe en el servidor y
+  // leerlo en el primer pintado haria que la pantalla salte de unas columnas a otras.
   useEffect(() => {
     setElegidas(leerElegidas())
   }, [])
@@ -68,8 +80,7 @@ export function AdsPanel() {
         if (!cancelado) setDatos(j as Respuesta)
       })
       .catch(() => {
-        if (!cancelado)
-          setDatos({ ok: false, error: "No se pudo conectar", sinPermiso: false })
+        if (!cancelado) setDatos({ ok: false, error: "No se pudo conectar", sinPermiso: false })
       })
       .finally(() => {
         if (!cancelado) setCargando(false)
@@ -77,13 +88,32 @@ export function AdsPanel() {
     return () => {
       cancelado = true
     }
-    // Se depende de las fechas sueltas: el objeto es nuevo en cada pintado y dispararía
-    // la petición en bucle.
-  }, [rango?.from.getTime(), rango?.to.getTime(), alcance.campanas.join(","), alcance.conjuntos.join(",")])
+    // Se depende de las fechas sueltas: el objeto es nuevo en cada pintado y dispararia
+    // la peticion en bucle.
+  }, [
+    rango?.from.getTime(),
+    rango?.to.getTime(),
+    alcance.campanas.join(","),
+    alcance.conjuntos.join(","),
+  ])
+
+  // Cuando hay campanas marcadas, el reparto y la tabla bajan un nivel: se enseñan sus
+  // conjuntos. Si no, la lista entera de campanas.
+  const marcadas = alcance.campanas.length > 0
+  const porciones = datos?.ok
+    ? (marcadas ? datos.conjuntos : datos.campanas).map((c) => ({
+        clave: c.id,
+        nombre: c.nombre,
+        valor: c.valores.spend ?? 0,
+      }))
+    : []
+
+  const cpl = datos?.ok ? costePorLead(datos.totales) : 0
+  const cplAntes = datos?.ok ? costePorLead(datos.anteriores) : 0
 
   return (
-    <div className="space-y-4">
-      {/* Barra de arriba: el filtro del OS y el selector de métricas */}
+    <div className="space-y-3">
+      {/* Barra de arriba: que estas viendo, de cuando, y con que metricas */}
       <div className="flex flex-wrap items-center gap-2">
         <SelectorAlcance
           campanas={datos?.ok ? datos.campanas : []}
@@ -112,9 +142,15 @@ export function AdsPanel() {
             elegidas={elegidas}
           />
 
-          <Evolucion dias={datos.dias} />
+          {/* Fila heroe: la evolucion ocupa dos tercios, el rosco el otro */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Evolucion dias={datos.dias} />
+            </div>
+            <Reparto porciones={porciones} unidad={marcadas ? "conjuntos" : "campañas"} />
+          </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             <Embudo
               pasos={[
                 { nombre: "Impresiones", valor: datos.embudo.impresiones },
@@ -123,20 +159,39 @@ export function AdsPanel() {
                 { nombre: "Leads", valor: datos.embudo.leads },
               ]}
             />
-            <Desglose
+            {cpl > 0 && (
+              <Medidor
+                titulo="Cuánto cuesta un lead"
+                valor={cpl}
+                referencia={cplAntes > 0 ? cplAntes : null}
+                pieReferencia={
+                  cplAntes > 0
+                    ? `Antes costaba ${fmtEur.format(cplAntes)}. Es la raya de fuera del arco.`
+                    : "No hay periodo anterior con el que comparar."
+                }
+              />
+            )}
+            <Anillos
               titulo="Dónde se muestra"
               filas={datos.plataformas}
               etiqueta={(k) => ETIQUETA_PLATAFORMA[k] ?? k}
-              nota={notaPlataforma(datos.plataformas)}
-            />
-            <Desglose
-              titulo="Qué edad responde"
-              filas={datos.edades}
-              etiqueta={(k) => `${k} años`}
             />
           </div>
 
-          {alcance.campanas.length > 0 ? (
+          {/* La edad va ancha (seis barras horizontales agradecen el sitio) y los siete dias
+              van estrechos: con dos tercios de pantalla para siete barras queda un desierto. */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Desglose
+                titulo="Qué edad responde"
+                filas={datos.edades}
+                etiqueta={(k) => `${k} años`}
+              />
+            </div>
+            <PorDiaDeSemana dias={datos.dias} />
+          </div>
+
+          {marcadas ? (
             <ListaCampanas
               titulo="Conjuntos de lo que has marcado"
               campanas={datos.conjuntos.map((c) => ({
@@ -164,19 +219,13 @@ export function AdsPanel() {
 
 /* ───────────────────────── piezas ───────────────────────── */
 
-/** La mejor plataforma por coste por lead, dicha en una linea. */
-function notaPlataforma(filas: FilaDesglose[]): string | undefined {
-  const con = filas.filter((f) => f.leads > 0).sort((a, b) => a.gasto / a.leads - b.gasto / b.leads)
-  if (con.length < 2) return undefined
-  const dif = con[1].gasto / con[1].leads - con[0].gasto / con[0].leads
-  const nombre = ETIQUETA_PLATAFORMA[con[0].clave] ?? con[0].clave
-  return `${nombre} trae el lead ${new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(dif)} más barato`
-}
-
 /**
- * La fila de números grandes: cifra grande, etiqueta pequeña arriba, su mini tendencia y
- * cuánto cambió. Dos columnas en el teléfono: cuatro en 375px salen a 90 puntos y no cabe
- * una cifra de dinero con separadores.
+ * La fila de numeros grandes.
+ *
+ * Etiqueta pequena en gris arriba, cifra grande debajo, y al pie la mini tendencia con el
+ * cambio. Sin mayusculas espaciadas: cuestan leer y el brandkit las prohibe fuera del
+ * wordmark. Dos columnas en el telefono: cuatro en 375px salen a 90 puntos y no cabe una
+ * cifra de dinero con separadores.
  */
 function FilaNumeros({
   totales,
@@ -208,27 +257,19 @@ function FilaNumeros({
 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-      {metricas.map((m, i) => {
+      {metricas.map((m) => {
         const ahora = totales[m.id] ?? 0
         const antes = anteriores[m.id] ?? 0
         const cambio = antes > 0 ? ((ahora - antes) / antes) * 100 : null
         // En un coste, bajar es bueno. En el resto, subir es bueno.
         const menosEsMejor = m.id.startsWith("cost_per") || m.id === "cpc" || m.id === "cpm"
         return (
-          <div
-            key={m.id}
-            className={cn(
-              "rounded-lg border p-3.5",
-              i === 0 ? "border-brand/25 bg-brand/[0.06]" : "border-border bg-card"
-            )}
-          >
-            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              {m.nombre}
-            </p>
-            <p className="mt-1.5 text-[28px] font-bold leading-none tracking-tight text-foreground tabular-nums">
+          <div key={m.id} className="rounded-lg border border-border bg-card p-3.5">
+            <p className="truncate text-sm text-muted-foreground">{m.nombre}</p>
+            <p className="mt-2 text-[27px] font-bold leading-none tracking-tight text-foreground tabular-nums">
               {pintaValor(ahora, m)}
             </p>
-            <div className="mt-2.5 flex h-6 items-end gap-2">
+            <div className="mt-3 flex h-6 items-center gap-2">
               <Chispa valores={serie(m.id)} />
               <Cambio porcentaje={cambio} menosEsMejor={menosEsMejor} />
             </div>
@@ -244,18 +285,24 @@ function Chispa({ valores }: { valores: number[] | null }) {
   if (!valores || valores.length < 3) return <span className="flex-1" />
   const tope = Math.max(...valores, 0.0001)
   const paso = 100 / (valores.length - 1)
-  const d = valores.map((v, i) => `${i * paso},${24 - (v / tope) * 22}`).join(" L")
+  const d = valores.map((v, i) => `${i * paso},${22 - (v / tope) * 20}`).join(" L")
   return (
     <svg viewBox="0 0 100 24" preserveAspectRatio="none" className="h-6 min-w-0 flex-1" aria-hidden>
-      <path d={`M${d}`} fill="none" strokeWidth="1.6" vectorEffect="non-scaling-stroke"
-            className="stroke-brand" />
+      <path
+        d={`M${d}`}
+        fill="none"
+        strokeWidth="1.6"
+        vectorEffect="non-scaling-stroke"
+        strokeLinejoin="round"
+        className="stroke-brand"
+      />
     </svg>
   )
 }
 
 /**
- * Cuánto cambió respecto al periodo anterior. En un coste, bajar es buena noticia; en el
- * resto, subir. Sin esa distinción el panel pinta de verde una subida del coste por lead.
+ * Cuanto cambio respecto al periodo anterior. En un coste, bajar es buena noticia; en el
+ * resto, subir. Sin esa distincion el panel pinta de verde una subida del coste por lead.
  */
 function Cambio({
   porcentaje,
@@ -265,7 +312,8 @@ function Cambio({
   menosEsMejor?: boolean
 }) {
   if (porcentaje === null) {
-    return <span className="shrink-0 text-sm text-muted-foreground">nuevo</span>
+    // "nuevo" no decia nada. Lo que pasa es que el periodo anterior no tuvo actividad.
+    return <span className="shrink-0 text-sm text-muted-foreground">sin comparar</span>
   }
   const plano = Math.abs(porcentaje) < 0.5
   const sube = porcentaje > 0
@@ -287,7 +335,7 @@ function Cambio({
 }
 
 /**
- * Los avisos dicen QUÉ pasó y QUÉ hacer, nunca un código de error.
+ * Los avisos dicen QUE paso y QUE hacer, nunca un codigo de error.
  */
 function Aviso({ error, sinPermiso }: { error: string; sinPermiso: boolean }) {
   const faltaLlave = sinPermiso || /permission|ads_read|access_token|capability/i.test(error)
@@ -307,8 +355,7 @@ function Aviso({ error, sinPermiso }: { error: string; sinPermiso: boolean }) {
             </>
           ) : (
             <>
-              No se pudo traer el gasto. Vuelve a intentarlo en unos minutos. Meta responde:{" "}
-              {error}
+              No se pudo traer el gasto. Vuelve a intentarlo en unos minutos. Meta responde: {error}
             </>
           )}
         </p>

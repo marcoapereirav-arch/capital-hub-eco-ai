@@ -48,7 +48,14 @@ export function valorDe(fila: Record<string, unknown>, id: string): number {
   return aNumero(fila[id] as ValorCrudo, ACCION_PREFERIDA[id])
 }
 
-/** Los tipos de acción que de verdad importan del bloque `actions`. */
+/**
+ * Los tipos de acción que de verdad importan del bloque `actions`.
+ *
+ * El ORDEN es la prioridad, y es lo que hace que el número sea correcto. Meta devuelve el
+ * mismo hecho con varios nombres y unos CONTIENEN a otros: `lead` es el total de todos los
+ * canales y ya incluye dentro `offsite_conversion.fb_pixel_lead` y `onsite_web_lead`. Lo
+ * mismo con `omni_landing_page_view`, que contiene a `landing_page_view`.
+ */
 export const ACCIONES = {
   lead: ["lead", "onsite_web_lead", "offsite_conversion.fb_pixel_lead"],
   visitaWeb: ["landing_page_view", "omni_landing_page_view"],
@@ -56,26 +63,31 @@ export const ACCIONES = {
   compra: ["purchase", "offsite_conversion.fb_pixel_purchase"],
 } as const
 
-/** Suma los tipos de acción que correspondan a un concepto. */
-export function sumaAcciones(
+/**
+ * El valor de un concepto dentro del bloque de acciones de Meta.
+ *
+ * NO SE SUMAN los tipos: se coge el PRIMERO de la lista que exista.
+ *
+ * Antes se sumaban, y el 11-ago-2026 eso salio a la vista en el panel: el embudo decia 75
+ * leads y el medidor 11,28 € por lead con 282,02 € de gasto, que son 25 leads. El mismo
+ * lead venia contado tres veces, una por cada nombre, porque `lead` ya incluye a los otros
+ * dos. Con las visitas pasaba igual: 1144 paginas cargadas de 1011 clics, o sea mas
+ * llegadas que salidas.
+ *
+ * Sumar cosas que se solapan no da un total: da el mismo hecho repetido.
+ */
+export function valorDeAccion(
   fila: Record<string, unknown>,
   campo: "actions" | "cost_per_action_type",
   tipos: readonly string[]
 ): number {
   const lista = fila[campo] as Array<{ action_type: string; value: string }> | undefined
   if (!Array.isArray(lista)) return 0
-  // Para el coste NO se suma: se coge el primero que exista, porque sumar costes
-  // de tipos distintos no significa nada.
-  if (campo === "cost_per_action_type") {
-    for (const t of tipos) {
-      const hit = lista.find((a) => a.action_type === t)
-      if (hit) return Number.parseFloat(hit.value) || 0
-    }
-    return 0
+  for (const t of tipos) {
+    const hit = lista.find((a) => a.action_type === t)
+    if (hit) return Number.parseFloat(hit.value) || 0
   }
-  return lista
-    .filter((a) => tipos.includes(a.action_type))
-    .reduce((s, a) => s + (Number.parseFloat(a.value) || 0), 0)
+  return 0
 }
 
 export type FilaDia = { fecha: string; gasto: number; leads: number; clicsSalientes: number }
@@ -174,9 +186,9 @@ export async function getDatosPanel(
   const valores = (f: Record<string, unknown>) => {
     const out: Record<string, number> = {}
     for (const m of METRICAS) out[m.id] = valorDe(f, m.id)
-    out.leads = sumaAcciones(f, "actions", ACCIONES.lead)
-    out.costePorLead = sumaAcciones(f, "cost_per_action_type", ACCIONES.lead)
-    out.visitasWeb = sumaAcciones(f, "actions", ACCIONES.visitaWeb)
+    out.leads = valorDeAccion(f, "actions", ACCIONES.lead)
+    out.costePorLead = valorDeAccion(f, "cost_per_action_type", ACCIONES.lead)
+    out.visitasWeb = valorDeAccion(f, "actions", ACCIONES.visitaWeb)
     return out
   }
 
@@ -198,7 +210,7 @@ export async function getDatosPanel(
           .map((f) => ({
             fecha: String(f.date_start ?? ""),
             gasto: valorDe(f, "spend"),
-            leads: sumaAcciones(f, "actions", ACCIONES.lead),
+            leads: valorDeAccion(f, "actions", ACCIONES.lead),
             clicsSalientes: valorDe(f, "outbound_clicks"),
           }))
           .filter((d) => d.fecha)
@@ -236,7 +248,7 @@ function leerDesglose(
     .map((f) => ({
       clave: String(f[clave] ?? ""),
       gasto: valorDe(f, "spend"),
-      leads: sumaAcciones(f, "actions", ACCIONES.lead),
+      leads: valorDeAccion(f, "actions", ACCIONES.lead),
       impresiones: valorDe(f, "impressions"),
     }))
     .filter((x) => x.gasto > 0)

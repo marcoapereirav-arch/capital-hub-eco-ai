@@ -170,6 +170,37 @@ hover del botón principal. Nada más.
 **Lo visual vale más que el texto. PROHIBIDO quitar un gráfico y dejar una frase
 en su lugar** (Marco, 2026-07-30). Ver REGLA #15 del protocolo del agente.
 
+### Cómo se DIBUJA un gráfico (2026-08-11)
+
+Marco rechazó tres paneles seguidos: *"horrible, básico, no me estás diseñando el
+gráfico que busco"*. Pasó una referencia con trece paneles profesionales. Esto es
+lo que faltaba, y **aplica a todo gráfico nuevo del OS**:
+
+| Regla | Por qué |
+|---|---|
+| **Cero rejilla y cero líneas de eje** | Nueve de cada diez gráficos de la referencia no las tienen. El eje es texto gris flotando, sin raya. La rejilla convierte el gráfico en una hoja de cálculo |
+| **El número va ENCIMA de la barra** | Hace de eje vertical y se lee de un vistazo. Cumple igual la regla de "cada dato con su número" |
+| **Degradado dentro del trazo**, nunca color plano | Y siempre verde sobre verde: el brandkit prohíbe degradados de varios colores |
+| **Ficha flotante siempre a la vista** | Tarjeta con el dato, vertical de puntos hasta la base y punto gordo sobre la curva. Es lo que más separa un panel profesional de una gráfica de manual |
+| **Un solo elemento saturado por bloque** | El resto en gris. Verde = lo mejor o lo activo, nunca adorno |
+| **Rampa monocroma para repartos** | Verde a distintas opacidades. Nunca colores distintos para distinguir porciones |
+| **Barras en cápsula con carril fantasma** | El carril marca el máximo, la cápsula lo alcanzado |
+| **Rejilla bento, no columna** | Entre ocho y doce bloques por pantalla y UNO héroe grande. Tarjetas apiladas a ancho completo se ven de plantilla |
+
+Formas que ya existen y se reutilizan, en
+`src/features/ads/components/ads-graficos-reparto.tsx`: rosco con hueco entre
+porciones, anillos de progreso, medidor semicircular con aguja y barras por día.
+
+Detalle completo en `docs/sops/marketing/10-panel-campanas-meta.md`.
+
+### Sumar nombres que se solapan no da un total
+
+Al poner dos vistas del mismo dato una al lado de otra (el coste por lead junto al
+embudo) salió que los leads venían contados **tres veces**: Meta devuelve el mismo
+hecho con varios nombres y unos contienen a otros. **Antes de sumar una lista,
+comprobar si un nombre engloba a otro.** Y como método: **enseñar el mismo dato de
+dos formas distintas es un detector de errores.**
+
 Todo gráfico lleva, sin excepción:
 
 - Los **dos ejes rotulados**, con sus extremos.
