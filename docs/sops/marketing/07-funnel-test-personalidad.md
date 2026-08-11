@@ -7,8 +7,65 @@ order: 7
 
 Canal **principal** de captación de leads de Capital Hub (confirmado Marco 2026-06-15). No confundir con "captura solo desde Instagram": este funnel es la fuente real de leads.
 
-> **VERSIÓN VIGENTE: v2** (2026-07-23), decidida en la reunión Adrián + Marco + Pat + JP + Giustina del 18-jul-2026. Transcript: `transcripts/2026-07-18_marco_adrian_funnel_ht.md`. Construcción: `.claude/PRPs/PRP-007-funnel-test-personalidad-v2.md`.
-> La v1 está más abajo, en "Histórico v1", para entender de dónde viene.
+> **VERSIÓN VIGENTE: v3 — DIRECTO** (2026-08-11, orden de Marco antes de lanzar la campaña).
+> El lead deja sus datos y entra al test en ese mismo momento. **Sin página de espera y sin
+> correo.** Todo lo de la v2 (gracias con VSL + Calendly, y email de los 7 minutos) sigue
+> construido y **solo está apagado** detrás de un interruptor.
+> La v2 y la v1 quedan más abajo, para entender de dónde viene el funnel.
+
+## v3 · El recorrido de hoy
+
+```
+1. Anuncio → /test-personalidad
+2. Pulsa el botón → pop-up → nombre + email + teléfono (los 3 obligatorios)
+3. Submit → POST /api/optin/test-personalidad (CRM, atribución, avisos: igual que siempre)
+4. DIRECTO a /test-personalidad/test (lo decide el SERVIDOR con el campo `next`)
+5. Pulsa «Abrir el test» → Equilibria en pestaña nueva
+   · sube a Lead cualificado en el CRM  · avisa al equipo  · evento a Meta
+6. Manda su resultado por Instagram o WhatsApp → el setter conversa a mano
+```
+
+### El interruptor «paso intermedio»
+
+Vive en el engranaje ⚙️ de `/webs` (`app_settings` → `funnel:test-personalidad` →
+`paso_intermedio`). Nace y está **apagado**.
+
+| Interruptor | Qué pasa |
+|---|---|
+| **Apagado** (hoy) | El opt-in lleva a `/test-personalidad/test`. No se programa ningún correo. `/test-personalidad/gracias` redirige al test y va con `noindex`. |
+| Encendido | Vuelve la v2 entera: gracias con VSL + Calendly, y correo de acceso a los N minutos. Sin tocar código ni desplegar. |
+
+**Nada se borró.** Ni la página de gracias, ni el Calendly, ni la plantilla del correo
+(`test_personalidad_acceso` sigue en `/email-marketing`), ni el endpoint del botón del
+correo (`/api/funnel/test-personalidad/acceso`, que sigue funcionando por si se reactiva).
+
+### Dónde se decide el destino
+
+En el **servidor**, no en la página: el opt-in devuelve `next` y la landing obedece. Si se
+decidiera en el navegador, un usuario con la página vieja en caché seguiría yendo a la
+gracias después de apagar el interruptor.
+
+### La calificación cambió de puerta
+
+`lead_cualificado` lo disparaba el clic del correo. Sin correo, esa columna se quedaría
+vacía para siempre, así que ahora lo dispara **el botón «Abrir el test»**
+(`POST /api/funnel/test-personalidad/abrir`). Las dos puertas comparten la misma pieza:
+`src/features/funnel-test-personalidad/cualificar.ts`. Un solo sitio, un solo
+comportamiento, y el no-retroceso se respeta igual.
+
+**Quién manda el evento a Meta**: desde el botón lo manda el navegador (píxel + servidor,
+mismo identificador, con las cookies de Meta puestas → mejor emparejamiento). Desde el
+correo lo manda el servidor, porque ahí no hay navegador nuestro. Nunca los dos: serían
+dos conversiones para un solo hecho.
+
+### Por qué se quitó, en palabras de Marco (2026-08-11)
+
+*"Vamos a quitar la página de gracias con el vídeo. No la quitamos, simplemente ponla en
+pausa. […] una vez que dan los datos, lo llevamos directamente a donde está el test de
+personalidad. […] No le llegue ningún correo electrónico de los siete minutos."*
+
+Contexto: la VSL de Adrián seguía sin grabarse, así que la página de espera enseñaba un
+hueco vacío y pedía siete minutos de paciencia a cambio de nada.
 
 ## Qué es
 
@@ -153,12 +210,35 @@ La landing se muestra **siempre** (force-dynamic), sin gate draft/published, has
 
 ## Tracking Meta (Pixel + CAPI)
 
-Dos eventos, uno por cada nivel de intención. Esto es lo que pidió JP para poder optimizar por calidad y no solo por volumen.
+Desde el 2026-08-11 se mide **todo el recorrido**, no solo el formulario. Cada momento
+dispara el evento que Meta ya conoce **y** el nuestro, con el mismo identificador (Meta
+cuenta una sola conversión y nosotros podemos hacer audiencias finas por funnel).
 
-| Evento | Cuándo | Dónde se dispara |
+| Momento | Estándar de Meta | Nuestro |
 |---|---|---|
-| `test_personalidad_lead` + `Lead` (estándar) | Opt-in guardado OK | Cliente, helper `track()` |
-| `test_personalidad_cualificado` | Clic del botón del email (primera vez) | Servidor, `sendCapiEvent` |
+| Entra a cualquier página del funnel | `PageView` (automático del píxel) | — |
+| Ve la landing | `ViewContent` | `test_personalidad_ver_landing` |
+| Deja sus datos | `Lead` | `test_personalidad_lead` |
+| Llega a la página del test | `ViewContent` | `test_personalidad_ver_test` |
+| Pulsa «Abrir el test» | — | `test_personalidad_cualificado` |
+| Pulsa Instagram | `Contact` | `test_personalidad_contacto_instagram` |
+| Pulsa WhatsApp | `Contact` | `test_personalidad_contacto_whatsapp` |
+
+**Optimizar la campaña hacia `Lead`.** `Contact` es la señal de intención más alta del
+funnel (la persona va a hablar con nosotros) y sirve para audiencias y para leer la calidad
+del tráfico, no para optimizar todavía: llega poco volumen.
+
+`Abrir el test` no lleva estándar de Meta a propósito: ninguno de los 17 significa eso, y
+colgarle un `Lead` o un `ViewContent` duplicaría una conversión que ya contamos antes.
+
+### Lo que faltaba antes (encontrado el 2026-08-11 auditando antes de lanzar)
+
+El funnel solo mandaba `Lead` + `test_personalidad_lead` y el `cualificado`. Le faltaban
+`ViewContent` y `Contact`, **y la pantalla de Ads lo pintaba en verde igual**, porque el
+catálogo de este funnel no los esperaba. Un hueco que no se ve es peor que un fallo: nadie
+lo busca. Por eso todo evento nuevo se registra en los **cuatro** sitios o no cuenta como
+hecho: `capi-client.ts` (`CapiEventName`), `/api/meta/capi/track` (`ALLOWED_EVENTS`),
+`ads-events-service.ts` (`KNOWN_EVENTS` + `EVENT_LABELS`) y `funnel-catalog.ts`.
 
 El del opt-in usa el helper `track()` (`src/lib/meta/pixel-client.ts`): Pixel browser + Conversions API server-side con el **mismo `event_id`** para deduplicación. Incluye las UTMs (first-touch) automáticamente. Ambos se registran en `meta_events_log` y son visibles en el panel `/ads` (Tracker).
 
@@ -220,6 +300,40 @@ Funnel `web_reservar` en `/webs`. Cubre los dos caminos (lead que ya hizo el tes
 De momento SIN ManyChat: el setter abre IG/WhatsApp manualmente. Cuando se reactive: comentario en Reel con keyword o story reply → envía el link de la landing. La fuente única hoy es `/test-personalidad`.
 
 ## Cambios versionados
+
+### 2026-08-11 (v3) — DIRECTO al test, sin espera y sin correo, y todo medido
+
+Orden de Marco antes de lanzar la campaña. Qué cambia:
+
+1. **El opt-in lleva directo a `/test-personalidad/test`.** El destino lo devuelve el
+   servidor en `next`.
+2. **No se programa el correo de los 7 minutos.** La plantilla y el endpoint del botón
+   siguen vivos.
+3. **La página de gracias queda en pausa**: `noindex` y redirige al test mientras el
+   interruptor esté apagado. No se borró nada.
+4. **`lead_cualificado` lo dispara ahora el botón «Abrir el test»**, no el correo. Lógica
+   compartida en `cualificar.ts`.
+5. **Eventos nuevos**: `ViewContent` y `Contact` (los dos estándar que faltaban) más cuatro
+   nuestros. El funnel pasa de 4 señales a 8, y la pantalla de Ads las espera.
+6. **Interruptor `paso_intermedio`** en el engranaje de `/webs`, apagado por defecto.
+
+Dos fallos de medición encontrados y corregidos en la misma pasada:
+
+- **La app se recargaba sola en la primera visita** y duplicaba toda la medición. El
+  registro del service worker (`PWARegister.tsx`) confundía "primera visita" con "hay
+  versión nueva", porque miraba si había un service worker mandando *después* de
+  registrarlo, cuando el `clients.claim()` ya lo había puesto. Cada visitante nuevo
+  generaba **dos `PageView`**: el doble de gente de la que había, la mitad de coste por
+  resultado del real, y campañas optimizando con números inventados. **Afectaba también a
+  la clase en directo y a la reserva de sesión.** Ahora se mira antes de registrar.
+- **`test_personalidad_cualificado` se saltaba el interruptor de medición del funnel.**
+  Salía por su cuenta desde el servidor, así que apagar la medición en `/webs` no lo
+  paraba. Ahora lo respeta y, si está apagado, el descarte queda registrado con su motivo.
+
+Y `ViewContent` pasa a contarse **una vez por visita**, no una por vez que se pinta la
+página: el candado sobrevive a una recarga (sesión de la pestaña).
+
+Verificado en local con navegador real, evento por evento, antes de publicar.
 
 ### 2026-07-23 (v2) — VSL + Calendly + email de los 7 minutos + Lead cualificado
 

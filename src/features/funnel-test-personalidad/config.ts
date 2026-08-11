@@ -1,8 +1,13 @@
 /**
- * Configuracion del Funnel Test Personalidad (v2, ver PRP-007 y SOP marketing/07).
+ * Configuracion del Funnel Test Personalidad (v3, ver SOP marketing/07).
  *
- * Flujo v2: opt-in -> pagina de gracias con VSL + Calendly embebido -> email a los
- * 7 minutos con el acceso -> landing del test (califica el lead) -> Equilibria.
+ * Flujo v3 (VIGENTE, Marco 2026-08-11): opt-in -> DIRECTO a la landing del test.
+ * Sin pagina intermedia y sin email de espera: el lead entra al test en el mismo
+ * momento en que deja sus datos.
+ *
+ * El flujo v2 (gracias con VSL + Calendly, y email de acceso a los 7 minutos) NO se
+ * borro: vive detras del interruptor PASO_INTERMEDIO. Encenderlo desde el engranaje
+ * de /webs devuelve el funnel al comportamiento v2 sin tocar codigo ni publicar.
  *
  * Valores centralizados (se cambian en 1 sitio) y todos sobreescribibles SIN deploy
  * desde el engranaje de /webs (app_settings, key 'funnel:test-personalidad'):
@@ -14,6 +19,8 @@
  *   - BUNNY_LIBRARY_ID: id publico de la library de Bunny (va en la URL del iframe)
  *   - CALENDLY_URL: scheduling URL del evento online-coffee de Adrian
  *   - EMAIL_DELAY_MINUTES: retraso del email con el acceso al test
+ *   - PASO_INTERMEDIO: false = funnel directo (v3). true = vuelve el v2 completo
+ *     (gracias con VSL + Calendly, y email de acceso programado).
  */
 export const FUNNEL_TEST_PERSONALIDAD = {
   TEST_URL: "https://pdi.equilibria.com/#/instructions/FULLES",
@@ -23,6 +30,12 @@ export const FUNNEL_TEST_PERSONALIDAD = {
   BUNNY_LIBRARY_ID: "686883",
   CALENDLY_URL: "https://calendly.com/adrian-sales-capital/online-coffee",
   EMAIL_DELAY_MINUTES: 7,
+  /**
+   * El paso intermedio (gracias + email de los 7 min) esta APAGADO.
+   * Decision de Marco del 2026-08-11: para la campana, el lead entra al test en el
+   * momento. Nada se ha borrado; esto es un interruptor, no una amputacion.
+   */
+  PASO_INTERMEDIO: false,
 } as const
 
 export function whatsappLink(message = "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.") {

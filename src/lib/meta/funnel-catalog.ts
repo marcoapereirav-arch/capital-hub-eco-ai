@@ -66,9 +66,15 @@ export const FUNNEL_CATALOG: readonly FunnelSpec[] = [
     optimizeFor: "Lead",
     events: [
       { name: "PageView", when: "Entró a cualquier página del funnel", kind: "automatico" },
+      { name: "ViewContent", when: "Vio la landing o la página del test", kind: "estandar" },
+      { name: "test_personalidad_ver_landing", when: "Vio la landing", kind: "nuestro" },
       { name: "Lead", when: "Dejó sus datos", kind: "estandar" },
       { name: "test_personalidad_lead", when: "Dejó sus datos", kind: "nuestro" },
-      { name: "test_personalidad_cualificado", when: "Abrió el test desde el email", kind: "nuestro" },
+      { name: "test_personalidad_ver_test", when: "Llegó a la página del test", kind: "nuestro" },
+      { name: "test_personalidad_cualificado", when: "Pulsó «Abrir el test»", kind: "nuestro" },
+      { name: "Contact", when: "Nos escribió por Instagram o WhatsApp", kind: "estandar" },
+      { name: "test_personalidad_contacto_instagram", when: "Pulsó el botón de Instagram", kind: "nuestro" },
+      { name: "test_personalidad_contacto_whatsapp", when: "Pulsó el botón de WhatsApp", kind: "nuestro" },
     ],
   },
   {

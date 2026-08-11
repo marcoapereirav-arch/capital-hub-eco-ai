@@ -213,8 +213,12 @@ payload. Si lo lleva, no cuenta.
 | Clase en directo | `Contact` | al pulsar el botón de WhatsApp en la gracias |
 | Reserva de sesión | `ViewContent` | al abrir la página de reserva |
 | Reserva de sesión | `Schedule` + `agenda_reserva` | cuando Calendly confirma la reserva |
+| Test de personalidad | `ViewContent` + `test_personalidad_ver_landing` | al abrir la landing |
 | Test de personalidad | `Lead` + `test_personalidad_lead` | al enviar el formulario |
-| Test de personalidad | `test_personalidad_cualificado` | al abrir el test desde el email |
+| Test de personalidad | `ViewContent` + `test_personalidad_ver_test` | al llegar a la página del test |
+| Test de personalidad | `test_personalidad_cualificado` | al pulsar «Abrir el test» |
+| Test de personalidad | `Contact` + `test_personalidad_contacto_instagram` | al pulsar Instagram |
+| Test de personalidad | `Contact` + `test_personalidad_contacto_whatsapp` | al pulsar WhatsApp |
 
 **El de la reserva no depende de Adrián.** Calendly avisa a la propia página en el
 instante en que el usuario confirma día y hora (la página ya escuchaba ese aviso para
@@ -305,6 +309,36 @@ tráfico de personas, no configuración de anuncios.
 ---
 
 ## Cambios versionados
+
+### 2026-08-11: el funnel del test, medido entero — y la recarga que duplicaba TODO
+
+Auditando el funnel del test antes de lanzar la campaña salieron tres cosas:
+
+1. **Al test le faltaban `ViewContent` y `Contact`**, que la clase en directo sí tenía. Sin
+   `ViewContent` no hay audiencia de "vio la oferta y no dejó datos", que en tráfico frío
+   es la mayoría. Sin `Contact` no se medía el momento de más intención del funnel: que la
+   persona pulsa para escribirnos. Añadidos los dos, más cuatro eventos nuestros para poder
+   separar por canal (ver el mapa de arriba).
+
+2. **La pantalla de Eventos lo daba por bueno igualmente.** El catálogo de ese funnel no
+   esperaba esas señales, así que salía en verde con la mitad de la medición sin poner.
+   Regla que queda: **un evento no está hecho hasta estar en los cuatro sitios**
+   (`capi-client.ts`, `/api/meta/capi/track`, `ads-events-service.ts` y `funnel-catalog.ts`).
+   Un hueco silencioso es peor que un fallo visible, porque nadie lo busca.
+
+3. **Y lo más gordo: la app se recargaba sola en la primera visita de cada persona.** El
+   registro del service worker miraba si había un service worker mandando *después* de
+   registrarlo — pero para entonces el propio `sw.js` ya había hecho `clients.claim()`, así
+   que una primera visita se disfrazaba de "hay versión nueva" y la página se recargaba al
+   segundo. Resultado: **dos `PageView` por cada visitante nuevo**, en las TRES landings
+   (clase en directo, reserva de sesión y test). El doble de gente de la que había y la
+   mitad de coste por resultado del real. Corregido mirándolo antes de registrar.
+
+   Consecuencia práctica: **los números de tráfico anteriores al 2026-08-11 están inflados**
+   (hasta el doble en visitantes nuevos). No sirven para comparar contra los de después.
+
+`ViewContent` pasa además a contarse una vez por visita y no una por vez que se pinta la
+página: el candado sobrevive a una recarga, usando la sesión de la pestaña.
 
 ### 2026-07-31: sistema montado y verificado en vivo
 Interruptor a real. Añadidos `ViewContent` y `Contact` a la clase en directo, y

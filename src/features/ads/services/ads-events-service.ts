@@ -36,8 +36,12 @@ export const KNOWN_EVENTS = [
   "mifge_monthly_purchased",
   "mifge_call_attended",
   "mifge_lead_magnet_optin",
+  "test_personalidad_ver_landing",
   "test_personalidad_lead",
+  "test_personalidad_ver_test",
   "test_personalidad_cualificado",
+  "test_personalidad_contacto_instagram",
+  "test_personalidad_contacto_whatsapp",
   "webinar_lead",
 ] as const
 
@@ -50,8 +54,12 @@ export const EVENT_LABELS: Record<string, string> = {
   mifge_monthly_purchased: "Compra Mensual 97€",
   mifge_call_attended: "Llamada atendida",
   mifge_lead_magnet_optin: "Opt-in Lead Magnet (agregado)",
+  test_personalidad_ver_landing: "Vio la landing del test",
   test_personalidad_lead: "Lead (opt-in Test Personalidad)",
+  test_personalidad_ver_test: "Vio la página del test",
   test_personalidad_cualificado: "Lead cualificado (abrió el test)",
+  test_personalidad_contacto_instagram: "Nos escribió por Instagram",
+  test_personalidad_contacto_whatsapp: "Nos escribió por WhatsApp",
   webinar_lead: "Lead (opt-in Webinar)",
 }
 

@@ -22,6 +22,9 @@ function getAdminClient() {
  *                 webhook recibió evento real en últimos 7d)
  *   - 'idle'    = registrada y configurada pero sin ejecuciones recientes
  *   - 'pending' = falta paso externo (token, panel ManyChat, OAuth, etc)
+ *   - 'paused'  = apagada A PROPÓSITO desde un interruptor. No está rota ni parada por
+ *                 falta de tráfico: la apagamos nosotros y se vuelve a encender igual.
+ *                 Sin este estado, algo apagado adrede se leería como algo averiado.
  *   - 'error'   = última ejecución conocida falló
  */
 export async function GET() {
@@ -527,6 +530,7 @@ export async function GET() {
         "Dispara Meta Pixel + CAPI (test_personalidad_lead + Lead)",
         "Contacto recurrente ya avanzado → notifica a super_admins (no degrada)",
         "Inserta contact_journey_event 'optin_test_personalidad'",
+        "Manda al lead DIRECTO a /test-personalidad/test (paso intermedio apagado desde el 2026-08-11)",
       ],
       relatedTables: ["contacts", "contact_tags", "tags", "contact_journey_events", "meta_events_log", "affiliates", "notifications"],
       status: (tpOptinCount ?? 0) > 0 ? "live" : "idle",
@@ -541,22 +545,23 @@ export async function GET() {
     {
       id: "test_personalidad_email_acceso",
       category: "email",
-      label: "Test Personalidad · email del acceso a los 7 minutos",
+      label: "Test Personalidad · email del acceso a los 7 minutos (EN PAUSA)",
       description:
-        "Cada opt-in programa (Resend scheduledAt) el email con el acceso al test, que llega a los 7 minutos mientras el lead ve la VSL en la página de gracias. Sin cron ni cola propia. El retraso es editable desde el engranaje de /webs. Se envía siempre, haya agendado o no: es la promesa a cambio de sus datos.",
-      trigger: "POST /api/optin/test-personalidad (programa el envío en el momento del opt-in)",
+        "EN PAUSA desde el 2026-08-11 (Marco): el funnel va directo del formulario al test, así que un correo con «aquí tienes tu acceso» siete minutos después de que el lead ya lo tenga solo sería ruido. No se ha borrado nada: la plantilla sigue en /email-marketing y esta automatización revive entera encendiendo «paso intermedio» en el engranaje de /webs. Cuando está encendida, cada opt-in programa el envío con Resend (scheduledAt), sin cron ni cola propia.",
+      trigger: "POST /api/optin/test-personalidad — solo si «paso intermedio» está encendido",
       actions: [
+        "Comprueba el interruptor «paso intermedio»: si está apagado, no programa nada",
         "Renderiza la plantilla 'test_personalidad_acceso' (editable y pausable en /email-marketing)",
         "Programa el envío con Resend a los N minutos (default 7)",
         "El botón del email apunta a /api/funnel/test-personalidad/acceso, no a Equilibria",
         "Registra el envío en email_logs con metadata.scheduled_at",
       ],
       relatedTables: ["email_logs", "email_template_overrides", "app_settings"],
-      status: (tpAccesoEmailCount ?? 0) > 0 ? "live" : "idle",
+      status: "paused",
       statusReason:
         (tpAccesoEmailCount ?? 0) > 0
-          ? `Programando entregas · ${tpAccesoEmailCount} emails`
-          : "Cableado · sin opt-ins reales todavía",
+          ? `En pausa · ${tpAccesoEmailCount} emails enviados antes de apagarlo`
+          : "En pausa · el funnel va directo al test",
       lastRun: lastTpAccesoEmail?.created_at ?? null,
       lastRunHoursAgo: hoursSince(lastTpAccesoEmail?.created_at),
       totalExecutions: tpAccesoEmailCount ?? 0,
@@ -564,16 +569,17 @@ export async function GET() {
     {
       id: "test_personalidad_acceso_cualifica",
       category: "crm",
-      label: "Test Personalidad · el clic del email cualifica al lead",
+      label: "Test Personalidad · abrir el test cualifica al lead",
       description:
-        "El lead pulsa el botón del email y pasa por /api/funnel/test-personalidad/acceso antes de llegar a la landing del test. Ahí se le sube el stage a 'Lead cualificado' (con guarda de no retroceso), se avisa al equipo y se manda el evento a Meta. Así el setter sabe a quién escribir primero y las campañas pueden optimizar por calidad. Idea de JP en la reunión del 18-jul-2026.",
-      trigger: "GET /api/funnel/test-personalidad/acceso?c=<slug> (botón del email)",
+        "Cuando el lead pulsa «Abrir el test» se le sube el stage a 'Lead cualificado' (con guarda de no retroceso), se avisa al equipo y se manda el evento a Meta. Así el setter sabe a quién escribir primero y las campañas pueden optimizar por calidad de lead y no por volumen. Idea de JP en la reunión del 18-jul-2026. Desde el 2026-08-11 la señal es el botón de la página en vez del clic del correo, porque el funnel va directo y ya no hay correo; la puerta del correo sigue viva por si se reactiva el paso intermedio.",
+      trigger:
+        "POST /api/funnel/test-personalidad/abrir (botón «Abrir el test») · y GET /api/funnel/test-personalidad/acceso?c=<slug> si vuelve el correo",
       actions: [
         "Sube stage a 'lead_cualificado' respetando el no retroceso (no degrada agendado ni alumno)",
-        "Inserta contact_journey_event 'acceso_test_personalidad'",
-        "Dispara Meta CAPI 'test_personalidad_cualificado' (solo la primera vez)",
+        "Inserta contact_journey_event 'acceso_test_personalidad' con el canal por el que entró",
+        "Meta 'test_personalidad_cualificado' (solo la primera vez): por el navegador desde el botón, por el servidor desde el correo",
         "Notifica al equipo (campana + push) para priorizar el seguimiento",
-        "Redirige a /test-personalidad/test pase lo que pase (nunca le falla al lead)",
+        "Nunca le falla al lead: el test se abre igual aunque falle la BD o Meta",
       ],
       relatedTables: ["contacts", "contact_journey_events", "meta_events_log", "notifications"],
       status: (tpAccesoCount ?? 0) > 0 ? "live" : "idle",
@@ -714,6 +720,8 @@ export async function GET() {
     live: automations.filter((a) => a.status === "live").length,
     pending: automations.filter((a) => a.status === "pending").length,
     idle: automations.filter((a) => a.status === "idle").length,
+    // En pausa = la apagamos nosotros a propósito. No es lo mismo que inactiva.
+    paused: automations.filter((a) => a.status === "paused").length,
     error: automations.filter((a) => a.status === "error").length,
   }
 

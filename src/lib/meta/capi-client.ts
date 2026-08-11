@@ -71,9 +71,14 @@ export type CapiEventName =
   | "mifge_lead_magnet_optin"
   | `mifge_lm_${string}`
   // Funnel Test de Personalidad (ver SOP marketing/07-funnel-test-personalidad)
+  | "test_personalidad_ver_landing"
   | "test_personalidad_lead"
-  // v2: el lead pulsó el botón del email y abrió la landing del test (intención real)
+  | "test_personalidad_ver_test"
+  // El lead abrió el test de verdad (intención real). En v2 lo disparaba el clic del
+  // email; en v3 (directo, sin email) lo dispara el botón "Abrir el test".
   | "test_personalidad_cualificado"
+  | "test_personalidad_contacto_instagram"
+  | "test_personalidad_contacto_whatsapp"
   // Funnel Webinar (ver SOP marketing/08-funnel-webinar)
   | "webinar_lead"
   // Funnel Reserva de Sesión / agenda Calendly (ver SOP marketing/09)

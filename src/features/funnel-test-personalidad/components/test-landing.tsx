@@ -1,23 +1,27 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
 import { Camera, MessageCircle, ExternalLink, CheckCircle2 } from "lucide-react"
+import { track } from "@/lib/meta/pixel-client"
+import { useViewContent } from "@/lib/meta/use-view-content"
 import { FUNNEL_TEST_PERSONALIDAD } from "../config"
 
 /**
- * Landing del Test (paso 4 del funnel v2, ver PRP-007 y SOP marketing/07).
+ * Landing del Test. Es la ULTIMA pagina nuestra del funnel y donde se mide todo lo que
+ * de verdad indica intencion (ver SOP marketing/07 y marketing/09).
  *
- * Es el destino del boton del email que llega a los 7 minutos. El lead aterriza aqui
- * DESPUES de pasar por /api/funnel/test-personalidad/acceso, que ya lo ha marcado como
- * 'lead_cualificado' en el CRM.
+ * En el funnel directo (v3, vigente desde el 2026-08-11) se llega aqui en cuanto el lead
+ * deja sus datos: sin pagina de espera y sin correo. La pagina del paso intermedio sigue
+ * existiendo detras de su interruptor, y su email tambien aterriza aqui si se reactiva.
  *
  * Hace 3 cosas:
  *   1. Entrega el LINK del test de Equilibria (abre en pestaña nueva).
  *   2. Explica el protocolo: captura del resultado y enviarla.
  *   3. Da los dos canales para enviarla: Instagram (recomendado) y WhatsApp de Adrian.
  *
- * Este contenido vivia antes en la pagina de gracias. En v2 la gracias pasa a ser la
- * pagina del VSL + Calendly, y el protocolo se mueve aqui, que es donde tiene sentido
- * (decision de la reunion del 18-jul-2026: quitar la friccion del WhatsApp de la gracias).
+ * Y mide las tres: abrir el test (que ademas sube al lead a 'Lead cualificado' en el CRM),
+ * escribirnos por Instagram y escribirnos por WhatsApp. Los dos ultimos son la señal de
+ * intencion mas alta del funnel: la persona va a hablar con nosotros.
  *
  * Brandkit Capital Hub: base monocromo B&W + verde de acento (#22C55E). Tipografia
  * normal y limpia (Inter Tight / Inter), sin labels mono espaciados.
@@ -36,6 +40,54 @@ export function TestPersonalidadTestLanding({ testUrl, whatsapp, instagram }: Pr
     "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
   )}`
   const instagramHref = `https://instagram.com/${resolvedInstagram}`
+
+  /* El slug opaco del contacto, que el opt-in dejó en la URL (?c=...). Sirve para saber
+     QUIÉN abrió el test y subirlo de columna. Se lee del navegador y no con
+     useSearchParams para no obligar a envolver la página en un Suspense. */
+  const [slug, setSlug] = useState<string | null>(null)
+  useEffect(() => {
+    setSlug(new URLSearchParams(window.location.search).get("c"))
+  }, [])
+
+  useViewContent("Test de personalidad · página del test", {
+    customEvent: "test_personalidad_ver_test",
+  })
+
+  /* Una sola vez por visita. Si el lead abre el test, vuelve y lo abre otra vez, es la
+     misma intención: contarla dos veces encarecería falsamente la conversión. */
+  const abierto = useRef(false)
+  function onAbrirTest() {
+    if (abierto.current) return
+    abierto.current = true
+    // A Meta, por los dos caminos y con las cookies puestas.
+    track({
+      event: "test_personalidad_cualificado",
+      contentName: "Abrió el test de personalidad",
+    }).catch(() => {})
+    // Al CRM: sube a 'Lead cualificado' y avisa al equipo. `keepalive` para que la
+    // petición sobreviva aunque el navegador cambie de pestaña en ese instante.
+    fetch("/api/funnel/test-personalidad/abrir", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ c: slug ?? undefined, url: window.location.href }),
+      keepalive: true,
+    }).catch(() => {})
+  }
+
+  /* `Contact` es el evento de Meta para "nos escribió". Junto va el nuestro, que separa
+     Instagram de WhatsApp: sirven para lo mismo pero no funcionan igual, y hay que poder
+     verlo por separado. Mismo identificador, así que Meta cuenta una sola conversión. */
+  const contactado = useRef(false)
+  function onContacto(canal: "instagram" | "whatsapp") {
+    if (contactado.current) return
+    contactado.current = true
+    track({
+      event: `test_personalidad_contacto_${canal}`,
+      standardEvent: "Contact",
+      contentName: canal === "instagram" ? "Nos escribió por Instagram" : "Nos escribió por WhatsApp",
+      custom: { canal },
+    }).catch(() => {})
+  }
 
   return (
     <main
@@ -84,6 +136,7 @@ export function TestPersonalidadTestLanding({ testUrl, whatsapp, instagram }: Pr
             href={resolvedTestUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={onAbrirTest}
             className="tp-open group relative block w-full max-w-md h-13 px-6 py-3.5 rounded-none bg-white text-[#0F0F12] font-semibold inline-flex items-center justify-center gap-2 overflow-hidden text-base mb-3"
             style={{ fontFamily: "'Inter Tight', sans-serif" }}
           >
@@ -126,6 +179,7 @@ export function TestPersonalidadTestLanding({ testUrl, whatsapp, instagram }: Pr
               href={instagramHref}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => onContacto("instagram")}
               className="flex items-center gap-3 px-4 h-12 bg-white text-[#0F0F12] font-semibold hover:bg-[#F5F6F7] transition-colors mb-2"
               style={{ fontFamily: "'Inter Tight', sans-serif" }}
             >
@@ -138,6 +192,7 @@ export function TestPersonalidadTestLanding({ testUrl, whatsapp, instagram }: Pr
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => onContacto("whatsapp")}
               className="flex items-center gap-3 px-4 h-11 border border-[#3F3F46] hover:border-[#22C55E] hover:bg-[#22C55E]/10 transition-colors text-sm text-[#F5F6F7]"
             >
               <MessageCircle className="h-4 w-4" />

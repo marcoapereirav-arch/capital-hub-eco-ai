@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Zap, ChevronDown, ChevronRight, CheckCircle2, Clock, Loader2, RefreshCcw, XCircle } from "lucide-react"
+import { Zap, ChevronDown, ChevronRight, CheckCircle2, Clock, Loader2, PauseCircle, RefreshCcw, XCircle } from "lucide-react"
 import { PageContainer } from "@/components/ui/page-container"
 import { cn } from "@/lib/utils"
 
@@ -13,19 +13,30 @@ type Automation = {
   trigger: string
   actions: string[]
   relatedTables: string[]
-  status: "live" | "pending" | "idle" | "error"
+  status: "live" | "pending" | "idle" | "paused" | "error"
   statusReason: string
   lastRun: string | null
   lastRunHoursAgo: number | null
   totalExecutions: number | null
 }
 
-type Summary = { total: number; live: number; pending: number; idle: number; error: number }
+type Summary = {
+  total: number
+  live: number
+  pending: number
+  idle: number
+  paused?: number
+  error: number
+}
 
-/* Cuatro estados, cuatro colores del TEMA: verde de marca lo que funciona,
+/* Cinco estados, cinco colores del TEMA: verde de marca lo que funciona,
  * ambar de aviso lo que espera, gris lo apagado y rojo lo que falla. Antes
  * cada uno traia su familia de Tailwind escrita a mano (green-400, amber-400,
- * red-400), que son verdes y rojos distintos a los de la marca. */
+ * red-400), que son verdes y rojos distintos a los de la marca.
+ *
+ * "En pausa" es distinto de "Inactiva" y por eso tiene su sitio: inactiva es que no ha
+ * pasado nada; en pausa es que la apagamos nosotros a proposito y se vuelve a encender
+ * con un interruptor. Confundirlas hace que alguien "arregle" algo que no esta roto. */
 const STATUS_META: Record<
   Automation["status"],
   { label: string; icon: typeof CheckCircle2; color: string; bg: string; border: string }
@@ -33,6 +44,7 @@ const STATUS_META: Record<
   live: { label: "Activa", icon: CheckCircle2, color: "text-primary", bg: "bg-primary/5", border: "border-primary/30" },
   pending: { label: "Pendiente", icon: Clock, color: "text-warn", bg: "bg-warn/5", border: "border-warn/30" },
   idle: { label: "Inactiva", icon: Clock, color: "text-muted-foreground", bg: "bg-card", border: "border-border" },
+  paused: { label: "En pausa", icon: PauseCircle, color: "text-muted-foreground", bg: "bg-muted/40", border: "border-border" },
   error: { label: "Fallando", icon: XCircle, color: "text-destructive", bg: "bg-destructive/5", border: "border-destructive/30" },
 }
 
@@ -120,6 +132,7 @@ export function AutomatizacionesPage() {
             <SummaryCard label="Activas" value={summary.live} color="text-primary" />
             <SummaryCard label="Pendientes" value={summary.pending} color="text-warn" />
             <SummaryCard label="Inactivas" value={summary.idle} color="text-muted-foreground" />
+            <SummaryCard label="En pausa" value={summary.paused ?? 0} color="text-muted-foreground" />
             <SummaryCard label="Fallando" value={summary.error} color="text-destructive" />
           </div>
         )}

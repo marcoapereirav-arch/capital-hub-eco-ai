@@ -160,13 +160,18 @@ export async function POST(req: Request) {
     })
   }
 
+  // ¿Hay paso intermedio? Decide DOS cosas a la vez: si se programa el email de espera
+  // y a dónde va el lead después del formulario. Se lee una sola vez.
+  const settings = await getTestPersonalidadSettings()
+
   // Email con el acceso al test, PROGRAMADO a los N minutos (default 7).
-  // Es la pieza central del funnel v2: el lead se queda viendo la VSL mientras espera,
-  // y el clic de este botón es lo que lo marca como Lead cualificado. Ver PRP-007.
-  // Se envía siempre (haya agendado o no): es la promesa a cambio de sus datos.
-  if (contactSlug) {
+  // Era la pieza central del funnel v2: el lead veía la VSL mientras esperaba.
+  // Desde el 2026-08-11 el paso intermedio está APAGADO, así que NO se programa nada:
+  // el lead entra al test en el momento y un email de "aquí tienes tu acceso" siete
+  // minutos después de que ya lo tenga solo sería ruido. Si Marco vuelve a encender el
+  // interruptor en /webs, esto revive tal cual estaba.
+  if (contactSlug && settings.pasoIntermedio) {
     try {
-      const settings = await getTestPersonalidadSettings()
       const origin = resolveOrigin(req)
       const accessUrl = `${origin}/api/funnel/test-personalidad/acceso?c=${encodeURIComponent(contactSlug)}`
       // Mismos destinos que los botones de la landing del test, para que el lead
@@ -246,6 +251,14 @@ export async function POST(req: Request) {
     }
   }
 
-  // `slug` lo usa la landing para redirigir a /test-personalidad/gracias?c=<slug>
-  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage, slug: contactSlug })
+  // A dónde manda la landing al lead. Lo decide el SERVIDOR, no el navegador: así el
+  // interruptor de /webs cambia el recorrido de verdad, sin desplegar y sin que quede una
+  // versión vieja de la página mandando gente a la ruta equivocada.
+  const next = contactSlug
+    ? `${settings.pasoIntermedio ? "/test-personalidad/gracias" : "/test-personalidad/test"}?c=${encodeURIComponent(contactSlug)}`
+    : settings.pasoIntermedio
+      ? "/test-personalidad/gracias"
+      : "/test-personalidad/test"
+
+  return NextResponse.json({ ok: true, action, recurring: !!recurringFromStage, slug: contactSlug, next })
 }

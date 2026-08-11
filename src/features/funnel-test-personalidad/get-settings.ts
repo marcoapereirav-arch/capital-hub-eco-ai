@@ -18,6 +18,13 @@ export type TestPersonalidadSettings = {
   calendlyUrl: string
   /** Minutos de espera hasta que llega el email con el acceso al test. */
   emailDelayMinutes: number
+  /**
+   * ¿Hay paso intermedio entre el opt-in y el test?
+   * false (por defecto) = funnel DIRECTO: el opt-in lleva a /test-personalidad/test y
+   * no se programa ningún email. true = vuelve el flujo v2 (gracias con VSL + Calendly
+   * y email de acceso). Se cambia desde el engranaje de /webs, sin deploy.
+   */
+  pasoIntermedio: boolean
 }
 
 export async function getTestPersonalidadSettings(): Promise<TestPersonalidadSettings> {
@@ -29,6 +36,7 @@ export async function getTestPersonalidadSettings(): Promise<TestPersonalidadSet
     bunnyLibraryId: FUNNEL_TEST_PERSONALIDAD.BUNNY_LIBRARY_ID,
     calendlyUrl: FUNNEL_TEST_PERSONALIDAD.CALENDLY_URL,
     emailDelayMinutes: FUNNEL_TEST_PERSONALIDAD.EMAIL_DELAY_MINUTES,
+    pasoIntermedio: FUNNEL_TEST_PERSONALIDAD.PASO_INTERMEDIO,
   }
   try {
     const admin = createClient(
@@ -51,6 +59,9 @@ export async function getTestPersonalidadSettings(): Promise<TestPersonalidadSet
       calendlyUrl: v.calendly_url?.trim() || fallback.calendlyUrl,
       emailDelayMinutes:
         Number.isFinite(delay) && delay > 0 && delay <= 720 ? delay : fallback.emailDelayMinutes,
+      // El toggle guarda "on"/"off". Cualquier otra cosa (o vacío) = el default de config.
+      pasoIntermedio:
+        v.paso_intermedio === "on" ? true : v.paso_intermedio === "off" ? false : fallback.pasoIntermedio,
     }
   } catch {
     return fallback

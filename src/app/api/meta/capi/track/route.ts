@@ -14,8 +14,12 @@ const ALLOWED_EVENTS: CapiEventName[] = [
   "mifge_anual_purchased",
   "mifge_monthly_purchased",
   "mifge_call_attended",
+  "test_personalidad_ver_landing",
   "test_personalidad_lead",
+  "test_personalidad_ver_test",
   "test_personalidad_cualificado",
+  "test_personalidad_contacto_instagram",
+  "test_personalidad_contacto_whatsapp",
   "webinar_lead",
   "agenda_reserva",
   // Eventos ESTÁNDAR de Meta. Antes no estaban aquí, así que el estándar solo salía

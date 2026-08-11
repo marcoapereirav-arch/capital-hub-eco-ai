@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, ArrowRight, X } from "lucide-react"
 import { track } from "@/lib/meta/pixel-client"
+import { useViewContent } from "@/lib/meta/use-view-content"
 import { getStoredUtms } from "@/lib/utm/utm-capture"
 
 /**
@@ -24,6 +25,14 @@ import { getStoredUtms } from "@/lib/utm/utm-capture"
 export function TestPersonalidadLanding() {
   const [open, setOpen] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
+
+  /* "Vio la oferta". PageView salta en todas las páginas, incluida la de cookies;
+     esto salta solo aquí, así que la audiencia de retargeting es gente que vio de
+     verdad la landing del test y no dejó sus datos. Sale por navegador y por servidor,
+     con el estándar de Meta y con el nuestro. */
+  useViewContent("Test de personalidad · landing", {
+    customEvent: "test_personalidad_ver_landing",
+  })
 
   // Spotlight que sigue el cursor (desktop, si no hay reduced-motion)
   useEffect(() => {
@@ -345,7 +354,9 @@ function OptinModal({ onClose }: { onClose: () => void }) {
           utm_source: utmSource,
         }),
       })
-      const payload = await res.json().catch(() => ({} as { slug?: string; error?: string }))
+      const payload = await res
+        .json()
+        .catch(() => ({}) as { slug?: string; next?: string; error?: string })
       if (!res.ok) {
         setError(payload?.error ?? "Algo salió mal. Inténtalo otra vez.")
         setLoading(false)
@@ -358,13 +369,11 @@ function OptinModal({ onClose }: { onClose: () => void }) {
         phone: phone.trim(),
         contentName: "Test Personalidad opt-in",
       }).catch(() => {})
-      // El slug opaco del contacto viaja a la gracias para prellenar el Calendly
-      // sin exponer email ni id en la URL (ver PRP-007).
-      router.push(
-        payload?.slug
-          ? `/test-personalidad/gracias?c=${encodeURIComponent(payload.slug)}`
-          : "/test-personalidad/gracias",
-      )
+      // A dónde va ahora lo decide el SERVIDOR (`next`), no esta página: así el
+      // interruptor del paso intermedio en /webs cambia el recorrido de verdad. Con el
+      // paso apagado (lo normal hoy) va directo a la página del test. El slug opaco viaja
+      // en la URL para poder marcarlo como Lead cualificado cuando abra el test.
+      router.push(payload?.next ?? "/test-personalidad/test")
     } catch {
       setError("Sin conexión. Revisa tu internet y vuelve a intentarlo.")
       setLoading(false)

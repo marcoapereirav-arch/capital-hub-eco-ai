@@ -30,6 +30,13 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
     slug: "test-personalidad",
     fields: [
       {
+        key: "paso_intermedio",
+        label: "¿Hay paso intermedio antes del test?",
+        hint: "APAGADO (como está ahora): el lead deja sus datos y entra al test en ese momento, sin página de espera y sin correo. ENCENDIDO: vuelve la página de gracias con el vídeo y el calendario, y el correo con el acceso a los minutos de abajo. Nada se ha borrado: esto lo enciende y lo apaga.",
+        default: "off",
+        type: "toggle",
+      },
+      {
         key: "video_guid",
         label: "VSL de la página de gracias (GUID de Bunny)",
         hint: "Pega aquí el GUID del vídeo de Adrián cuando esté subido a Bunny. Vacío: la página no muestra reproductor y el resto del funnel sigue funcionando.",
