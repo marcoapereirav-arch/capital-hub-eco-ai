@@ -141,10 +141,33 @@ export function allowedPrefixesFor(role: Role | string | null | undefined): stri
  * Usado por server components / proxy middleware para hidratar el cache.
  * Si falla, devuelve null (cache NO se actualiza, sigue usando fallback).
  */
+/**
+ * Cuanto vale la copia en memoria de la matriz de permisos, en milisegundos.
+ *
+ * Por que existe (medido el 2026-08-08): esta consulta se hacia con `no-store`,
+ * o sea que se releian las 29 filas de `role_permissions` EN CADA navegacion,
+ * y ademas en cadena con las otras dos comprobaciones del marco. Eran ~117 ms
+ * de ida y vuelta a Frankfurt, en TODAS las pantallas, para una tabla que se
+ * toca cuando alguien edita la matriz de permisos: casi nunca.
+ *
+ * 60 segundos es el compromiso: un cambio de permisos tarda como mucho un
+ * minuto en notarse, y a cambio 59 de cada 60 navegaciones se ahorran el viaje.
+ */
+const PERMISOS_VIVEN_MS = 60_000
+let permisosEnMemoria: { valor: Record<string, string[]>; hasta: number } | null = null
+
+/** Tira la copia en memoria. Se llama al guardar la matriz de permisos. */
+export function olvidarPermisosCacheados() {
+  permisosEnMemoria = null
+}
+
 export async function loadRolePermsFromDb(
   supabaseUrl: string,
   serviceRoleKey: string,
 ): Promise<Record<string, string[]> | null> {
+  if (permisosEnMemoria && permisosEnMemoria.hasta > Date.now()) {
+    return permisosEnMemoria.valor
+  }
   try {
     const res = await fetch(`${supabaseUrl}/rest/v1/role_permissions?select=role,route_href`, {
       headers: {
@@ -161,6 +184,7 @@ export async function loadRolePermsFromDb(
       if (!out[row.role]) out[row.role] = []
       out[row.role].push(row.route_href)
     }
+    permisosEnMemoria = { valor: out, hasta: Date.now() + PERMISOS_VIVEN_MS }
     return out
   } catch {
     return null

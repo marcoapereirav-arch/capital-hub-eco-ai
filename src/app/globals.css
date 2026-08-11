@@ -9,6 +9,29 @@
  * Paleta: carbon + verde de marca. Sin gradientes, sin otros colores.
  */
 
+/* LAS ZONAS SEGURAS DEL TELEFONO, FUERA DE TODA CAPA.
+   ==========================================================================
+   Medido en el navegador el 2026-08-08: declaradas dentro de `@layer base`,
+   `getComputedStyle(document.documentElement).getPropertyValue('--sab')`
+   devolvia CADENA VACIA. Y una variable que no llega no falla sola: se lleva
+   por delante la declaracion ENTERA que la usa, porque
+   `calc(3.5rem + var(--sab) + 1rem)` sin la variable es invalido y el navegador
+   tira la regla sin avisar.
+
+   Consecuencia real: el boton flotante del OS, escrito para quedarse "fijo
+   abajo", salia pegado ARRIBA del todo y tapado, y no se podia pulsar en el
+   telefono. Y el mismo patron lo usan otras diez pantallas (la barra de arriba,
+   el detalle de contacto, el kanban, el editor del Knowledge, los avisos).
+
+   Aqui, sin capa, no hay nada que pueda dejarlas fuera.
+   ========================================================================== */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
 @theme inline {
   /* Inter Tight es la UNICA familia de la marca (brandkit, seccion Tipografia).
      Va primero la variable que crea next/font, que apunta a la fuente REALMENTE

@@ -253,3 +253,45 @@ No es la base (todas las consultas por debajo de 1 ms), ni faltan índices, ni e
 **Aplicado aquí:** el menú apunta a `/crm/contactos` en vez de a `/crm`. `/crm` solo hacía un desvío, y el marco se ejecutaba **entero dos veces**: medido, **746 ms tirados** antes de empezar a cargar la página buena.
 
 **Pendiente (no tocado, fuera del encargo):** poner esos tres viajes en paralelo y guardar en memoria los permisos por rol (hoy se releen con `no-store` en cada navegación, 29 filas que casi nunca cambian). Ahorro estimado ~175 ms en TODAS las pantallas.
+
+---
+
+## 2026-08-11 · Los embudos del dashboard son los del CRM, y nada más
+
+Marco: *"solo y exclusivamente tienen que estar estos pipelines. No pueden estar más, ya que va directamente conectado"*.
+
+La tarjeta **"Los embudos del CRM"** ya no tiene ni un embudo escrito a mano. Su lista **sale de `pipelines`**: si mañana se crea uno en el CRM aparece solo, y si se borra desaparece. Antes había dentro dos inventados aquí ("Embudo de la venta" y "De conversación a llamada") que no existían en el CRM, y eso era justo lo que rompía la correspondencia.
+
+Se enseña por defecto **el embudo con más gente**, que es el vivo del negocio. Antes se fijaba en el primero que llegara y, como los contactos tardan un instante más que la lista de embudos, se quedaba clavado en el que tocara: salía "General" con 5 personas teniendo el del webinar 34.
+
+## 2026-08-11 · La venta de prueba, borrada
+
+Había **una sola venta en toda la base** y era una prueba (`Prueba Marco`, `marcoantonio@n-vision.cc`, 18-jun-2026, 3.000 € facturados y 2.800 € cobrados, producto "IA Integrator"). Ensuciaba el facturado, el cobrado, el ticket medio y contaba como 1 alumno en el embudo General.
+
+Borrado el contacto entero con su venta, su invitación a la App y sus etiquetas. La base queda con **0 ventas y 0 € de facturación**, que es lo real.
+
+## 2026-08-11 · Lo que iba lento, arreglado
+
+Medido el 2026-08-08: el marco del OS hacía **tres viajes a Supabase en cadena** antes de cargar nada (quién eres, qué permisos hay, tu perfil), y ninguna petición de la página arrancaba hasta terminarlos.
+
+1. **Los permisos por rol se guardan en memoria un minuto.** Se releían con `no-store` en **cada navegación**: 29 filas que solo cambian cuando alguien edita la matriz de permisos. Al guardar la matriz se tira la copia (`olvidarPermisosCacheados()`), así que un cambio se nota al instante.
+2. **Las dos consultas que quedan van a la vez**, no en cadena.
+3. **El menú de CRM apunta a `/crm/contactos`.** `/crm` solo desviaba, y el marco se ejecutaba entero dos veces: 746 ms tirados en el clic que más se usa.
+
+## 2026-08-11 · La causa de que se rompieran diez pantallas en el teléfono
+
+`--sat`, `--sab`, `--sal` y `--sar` (las zonas seguras del iPhone) estaban declaradas **dentro de `@layer base`** y llegaban **vacías** al navegador. Medido: `getComputedStyle(document.documentElement).getPropertyValue('--sab')` devolvía cadena vacía, y un elemento con `bottom: calc(3.5rem + var(--sab) + 1rem)` calculaba `auto`.
+
+**Una variable que no llega no falla sola: se lleva por delante la declaración entera que la usa**, porque el `calc()` se vuelve inválido y el navegador tira la regla sin avisar. Por eso el botón flotante, escrito para quedarse fijo abajo, salía pegado arriba y tapado.
+
+Movidas **fuera de toda capa**, al principio de `globals.css`. Comprobado después: `--sab` devuelve `0px` y el mismo `calc()` da `72px`. Con eso se reparan de golpe las diez pantallas que usan ese patrón (barra de arriba, detalle de contacto, kanban, editor del Knowledge, avisos, notificador de actualización).
+
+**Regla derivada:** una medida que depende de una variable CSS se cae entera si la variable falta, y no avisa. Se comprueba en el navegador con `getComputedStyle`, nunca leyendo el código.
+
+## 2026-08-11 · Quién mueve a cada contacto
+
+`contact_journey_events` guardaba `{from, to}` pero no la persona. Ahora el evento `stage_change` guarda `movido_por` y `movido_por_id`, y el título se lee solo: *"Movido de lead a seguimiento por Adrián Villanueva"*.
+
+## 2026-08-11 · El filtro de ManyChat
+
+Le faltaba `value`, igual que le faltaba al dashboard: la etiqueta se quedaba clavada. **Todas las pantallas del OS con filtro lo pasan ya.**
