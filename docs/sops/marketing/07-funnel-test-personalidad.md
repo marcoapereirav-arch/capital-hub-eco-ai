@@ -306,11 +306,28 @@ sin fila = encendido.
 
 ## Correos al lead
 
-**En el funnel directo, el lead NO recibe ningún correo.** El único que existía era el del
-acceso al test a los 7 minutos, y va con el paso intermedio: apagado.
+Hay **dos** plantillas, cada una con su interruptor, y las dos nacen apagadas:
 
-Es una consecuencia buscada (el lead ya tiene el test delante), pero deja un hueco: si
-cierra la pestaña, se queda sin forma de volver al test aunque nos haya dado su email.
+| Plantilla | Cuándo sale | Interruptor | Estado |
+|---|---|---|---|
+| `test_personalidad_confirmacion` | **al instante** del opt-in | `email_confirmacion` | apagado, pendiente del OK de Marco |
+| `test_personalidad_acceso` | a los N minutos (default 7) | `paso_intermedio` | apagado (va con el paso intermedio) |
+
+**Hoy el lead no recibe ningún correo.** Al encender el de confirmación recibirá ese, y
+solo ese.
+
+### Por qué existe el de confirmación
+
+En el funnel directo el lead entra al test en el momento, así que técnicamente no necesita
+que le mandemos nada. Pero **si cierra la pestaña sin hacerlo, se queda sin manera de
+volver**, y nos ha dado su correo justo para eso. Es su copia de seguridad del acceso, no
+una entrega ni una venta: por eso el copy da el enlace y se aparta.
+
+**Su botón apunta al endpoint de acceso**, no a Equilibria. Así, quien abra el test desde
+el correo también sube a Lead cualificado y manda el evento, igual que desde la web. Si
+alguien lo cambia por el link directo, ese lead se pierde de la medición.
+
+Vista previa sin mandar nada: `/api/admin/email/preview/test_personalidad_confirmacion`.
 
 ## Contacto recurrente (re-opt-in)
 

@@ -20,6 +20,7 @@ import { TeamInviteEmail } from "@/lib/email/templates/team-invite"
 import { InternalErrorAlert } from "@/lib/email/templates/internal-error-alert"
 import { InternalGCalAlert } from "@/lib/email/templates/internal-gcal-alert"
 import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
+import { TestPersonalidadConfirmacionEmail } from "@/lib/email/templates/test-personalidad-confirmacion"
 import { FUNNEL_TEST_PERSONALIDAD } from "@/features/funnel-test-personalidad/config"
 
 export const dynamic = "force-dynamic"
@@ -32,6 +33,16 @@ const previews: Record<string, () => Promise<string>> = {
   // Funnel del test v2: el email que llega a los 7 minutos. El botón principal apunta
   // al endpoint de acceso (que califica al lead), NUNCA al link directo de Equilibria.
   test_personalidad_acceso: () => render(TestPersonalidadAccesoEmail({
+    firstName: "Andrés",
+    accessUrl: `${APP_URL}/api/funnel/test-personalidad/acceso?c=andres_ab12cd`,
+    whatsappUrl: `https://wa.me/${FUNNEL_TEST_PERSONALIDAD.WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
+    )}`,
+    instagramUrl: `https://instagram.com/${FUNNEL_TEST_PERSONALIDAD.INSTAGRAM_HANDLE}`,
+  })),
+  // Funnel del test v3 (directo): el correo que sale AL INSTANTE del opt-in, como copia
+  // de seguridad del acceso. Su botón también apunta al endpoint que califica al lead.
+  test_personalidad_confirmacion: () => render(TestPersonalidadConfirmacionEmail({
     firstName: "Andrés",
     accessUrl: `${APP_URL}/api/funnel/test-personalidad/acceso?c=andres_ab12cd`,
     whatsappUrl: `https://wa.me/${FUNNEL_TEST_PERSONALIDAD.WHATSAPP_NUMBER}?text=${encodeURIComponent(

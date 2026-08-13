@@ -5,6 +5,7 @@ import { z } from "zod"
 import { notifyAdmins } from "@/lib/notifications/notify-admins"
 import { sendEmail } from "@/lib/email/send-email"
 import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
+import { TestPersonalidadConfirmacionEmail } from "@/lib/email/templates/test-personalidad-confirmacion"
 import { getTestPersonalidadSettings } from "@/features/funnel-test-personalidad/get-settings"
 import {
   camposAtribucionExistente,
@@ -201,6 +202,39 @@ export async function POST(req: Request) {
     } catch (e) {
       // Nunca bloquea el opt-in: el lead ya está guardado y va a ver la VSL igual.
       console.error("[optin/test-personalidad] email de acceso falló (no bloquea)", e)
+    }
+  }
+
+  // Correo de confirmación del funnel DIRECTO: sale al instante, con el acceso al test.
+  // El lead ya lo tiene abierto en la web, así que esto no le entrega nada nuevo: es su
+  // copia de seguridad. Si cierra la pestaña sin hacerlo, este correo es la única forma
+  // que le queda de volver, y nos dio su email justo para eso.
+  // Su botón apunta al endpoint de acceso, no a Equilibria: así abrirlo desde el correo
+  // también lo marca como Lead cualificado, igual que el botón de la página.
+  if (contactSlug && settings.emailConfirmacion) {
+    try {
+      const origin = resolveOrigin(req)
+      const accessUrl = `${origin}/api/funnel/test-personalidad/acceso?c=${encodeURIComponent(contactSlug)}`
+      const whatsappUrl = `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(
+        "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.",
+      )}`
+      const instagramUrl = `https://instagram.com/${settings.instagram}`
+      const firstName = full_name.split(" ")[0] || full_name
+      const html = await render(
+        TestPersonalidadConfirmacionEmail({ firstName, accessUrl, whatsappUrl, instagramUrl }),
+      )
+      await sendEmail({
+        template: "test_personalidad_confirmacion",
+        to: email,
+        toName: full_name,
+        subject: "Tu acceso al test de personalidad",
+        html,
+        metadata: { funnel: "test_personalidad", contact_id: contactId, action },
+        vars: { firstName, accessUrl, whatsappUrl, instagramUrl },
+      })
+    } catch (e) {
+      // Nunca bloquea el opt-in: el lead ya está guardado y ya tiene el test delante.
+      console.error("[optin/test-personalidad] email de confirmación falló (no bloquea)", e)
     }
   }
 

@@ -25,6 +25,12 @@ export type TestPersonalidadSettings = {
    * y email de acceso). Se cambia desde el engranaje de /webs, sin deploy.
    */
   pasoIntermedio: boolean
+  /**
+   * ¿Sale el correo de confirmación al instante del opt-in?
+   * Es la copia de seguridad del acceso al test para quien cierra la pestaña sin hacerlo.
+   * Independiente del paso intermedio y de su correo de los 7 minutos.
+   */
+  emailConfirmacion: boolean
 }
 
 export async function getTestPersonalidadSettings(): Promise<TestPersonalidadSettings> {
@@ -37,6 +43,7 @@ export async function getTestPersonalidadSettings(): Promise<TestPersonalidadSet
     calendlyUrl: FUNNEL_TEST_PERSONALIDAD.CALENDLY_URL,
     emailDelayMinutes: FUNNEL_TEST_PERSONALIDAD.EMAIL_DELAY_MINUTES,
     pasoIntermedio: FUNNEL_TEST_PERSONALIDAD.PASO_INTERMEDIO,
+    emailConfirmacion: FUNNEL_TEST_PERSONALIDAD.EMAIL_CONFIRMACION,
   }
   try {
     const admin = createClient(
@@ -62,6 +69,12 @@ export async function getTestPersonalidadSettings(): Promise<TestPersonalidadSet
       // El toggle guarda "on"/"off". Cualquier otra cosa (o vacío) = el default de config.
       pasoIntermedio:
         v.paso_intermedio === "on" ? true : v.paso_intermedio === "off" ? false : fallback.pasoIntermedio,
+      emailConfirmacion:
+        v.email_confirmacion === "on"
+          ? true
+          : v.email_confirmacion === "off"
+            ? false
+            : fallback.emailConfirmacion,
     }
   } catch {
     return fallback
