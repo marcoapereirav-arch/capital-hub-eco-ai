@@ -65,3 +65,35 @@ const TYPE_TO_PREF: Record<string, string> = {
 export function prefKeyForType(type: string): string | null {
   return TYPE_TO_PREF[type] ?? null
 }
+
+/* ─────────────────────── QUIÉN recibe cada aviso ─────────────────────── */
+
+/**
+ * Roles que reciben cada tipo de notificación.
+ *
+ * Antes TODO iba solo a los super_admins, y eso dejaba fuera justo a quien tiene que
+ * actuar: el setter es el que escribe a los leads, así que era el último en enterarse de
+ * que había uno (Marco, 2026-08-11). Los avisos van a quien hace el trabajo, no solo a
+ * quien manda.
+ *
+ * Vive aquí, en una sola tabla, y no repartido por cada endpoint: si mañana hay que
+ * sumar a los closers a las agendas, se toca esta línea y ya, sin ir a buscar cada sitio
+ * donde se avisa.
+ *
+ * Un tipo sin mapear va solo a super_admins: es el comportamiento que había, así que
+ * nada cambia por accidente al añadir avisos nuevos.
+ */
+const TYPE_TO_ROLES: Record<string, string[]> = {
+  // Leads: el setter los necesita SIEMPRE, es su trabajo.
+  lead: ["super_admin", "setter"],
+  lead_cualificado: ["super_admin", "setter"],
+  recurring_optin_webinar: ["super_admin", "setter"],
+  recurring_optin_test_personalidad: ["super_admin", "setter"],
+}
+
+const ROLES_POR_DEFECTO = ["super_admin"]
+
+/** Roles que deben recibir este tipo de aviso. */
+export function rolesForType(type: string): string[] {
+  return TYPE_TO_ROLES[type] ?? ROLES_POR_DEFECTO
+}

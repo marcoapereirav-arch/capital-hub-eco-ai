@@ -268,6 +268,50 @@ En `/webs`, cada funnel con manifiesto muestra botón **Ajustes** → popup para
 - Valores en `app_settings` key `funnel:<slug>` (endpoint `/api/admin/settings/[key]`).
 - La página de gracias los resuelve server-side (`get-settings.ts`) con fallback a `config.ts` → nunca se rompe.
 
+## Avisos al equipo (campana + push)
+
+El funnel manda **dos** avisos por lead, y en el funnel directo llegan casi seguidos
+porque el lead abre el test a los pocos segundos de dejar sus datos (en la v2 se
+separaban 7 minutos, por eso antes no se notaba):
+
+| Aviso | Cuándo | Tipo |
+|---|---|---|
+| **Nuevo lead · Test Personalidad** | al enviar el formulario, solo si el contacto es NUEVO | `lead` |
+| **Lead cualificado · Test Personalidad** | al pulsar «Abrir el test», solo la primera vez | `lead_cualificado` |
+| Contacto recurrente en el funnel del test | si alguien que ya estaba avanzado vuelve a pasar | `recurring_optin_test_personalidad` |
+
+Un contacto que repite opt-in **no** dispara el de "Nuevo lead": solo el de recurrente.
+
+### Quién los recibe (cambiado el 2026-08-11)
+
+Antes TODOS los avisos del OS iban solo a los `super_admin`. Eso dejaba fuera justo a
+quien tiene que actuar: **el setter es el que escribe a los leads y era el último en
+enterarse.**
+
+Ahora, quién recibe qué se decide en una sola tabla: `TYPE_TO_ROLES` en
+`src/lib/notifications/prefs-catalog.ts`.
+
+| Tipo de aviso | Roles que lo reciben |
+|---|---|
+| `lead`, `lead_cualificado`, `recurring_optin_*` | `super_admin` + **`setter`** |
+| Todo lo demás (agenda, venta, sistema…) | `super_admin` |
+
+Está en una tabla y no repartido por cada endpoint a propósito: sumar a los closers a las
+agendas es cambiar una línea, no ir a buscar cada sitio donde se avisa. Un tipo sin mapear
+va solo a super_admins, o sea que añadir avisos nuevos nunca amplía destinatarios por
+accidente.
+
+Cada persona puede apagar grupos de avisos desde `/perfil` (`notification_preferences`);
+sin fila = encendido.
+
+## Correos al lead
+
+**En el funnel directo, el lead NO recibe ningún correo.** El único que existía era el del
+acceso al test a los 7 minutos, y va con el paso intermedio: apagado.
+
+Es una consecuencia buscada (el lead ya tiene el test delante), pero deja un hueco: si
+cierra la pestaña, se queda sin forma de volver al test aunque nos haya dado su email.
+
 ## Contacto recurrente (re-opt-in)
 
 Si un contacto que **ya estaba más allá de `lead`** (agendado, seguimiento, alumno…) vuelve a pasar por el opt-in:

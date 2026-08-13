@@ -2,8 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { render } from "@react-email/render"
 import { z } from "zod"
-import { TEST_AGENT_EMAIL } from "@/lib/notifications/recipients"
-import { notifyAdmins, filterByNotificationPref } from "@/lib/notifications/notify-admins"
+import { notifyAdmins } from "@/lib/notifications/notify-admins"
 import { sendEmail } from "@/lib/email/send-email"
 import { TestPersonalidadAccesoEmail } from "@/lib/email/templates/test-personalidad-acceso"
 import { getTestPersonalidadSettings } from "@/features/funnel-test-personalidad/get-settings"
@@ -220,11 +219,6 @@ export async function POST(req: Request) {
   // "X (que ya estaba en Y) volvió a entrar por el funnel." No se modifica su stage.
   if (contactId && recurringFromStage) {
     try {
-      const { data: admins } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("role", "super_admin")
-        .neq("email", TEST_AGENT_EMAIL)
       const stageLabels: Record<string, string> = {
         agendado: "Agendado",
         seguimiento: "Seguimiento",
@@ -233,19 +227,17 @@ export async function POST(req: Request) {
         perdido: "Perdido",
       }
       const label = stageLabels[recurringFromStage] ?? recurringFromStage
-      const adminIds = await filterByNotificationPref(
-        admin,
-        (admins ?? []).map((a) => a.id as string),
-        "recurring_optin_test_personalidad",
-      )
-      const rows = adminIds.map((user_id) => ({
-        user_id,
+      // Va por el helper común: así llega TAMBIÉN al setter y TAMBIÉN por push. Antes
+      // este aviso se montaba a mano aquí, solo para super_admins y solo en la campana:
+      // el que tiene que escribirle no se enteraba, que es justo lo contrario de para
+      // lo que sirve avisar de que un contacto ya conocido ha vuelto.
+      await notifyAdmins(admin, {
         title: "Contacto recurrente en el funnel del test",
-        body: `${full_name} (${email}) ya estaba en «${label}» y volvió a pasar por la landing del test. Su stage NO se modificó.`,
+        body: `${full_name} ya estaba en «${label}» y volvió a pasar por la landing del test. Su etapa NO se modificó.`,
         type: "recurring_optin_test_personalidad",
-        data: { url: `/crm/contactos/${contactId}`, contact_id: contactId, email, prior_stage: recurringFromStage, source },
-      }))
-      if (rows.length) await admin.from("notifications").insert(rows)
+        url: `/crm/contactos/${contactId}`,
+        data: { contact_id: contactId, email, prior_stage: recurringFromStage, source },
+      })
     } catch (e) {
       console.error("[optin/test-personalidad] notif recurrente falló (no bloquea)", e)
     }

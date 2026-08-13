@@ -2,10 +2,10 @@ import "server-only"
 import webpush from "web-push"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { TEST_AGENT_EMAIL } from "./recipients"
-import { prefKeyForType } from "./prefs-catalog"
+import { prefKeyForType, rolesForType } from "./prefs-catalog"
 
 /**
- * Notificaciones al equipo (super_admins): in-app + PUSH, en un solo sitio.
+ * Notificaciones al equipo: in-app + PUSH, en un solo sitio.
  *
  * Objetivo (Marco 2026-07-07): cada evento importante (lead, agenda, venta) tiene
  * que avisar por push. Antes cada endpoint hacía lo suyo (unos in-app, otros email,
@@ -105,18 +105,30 @@ type NotifyInput = {
   /** a dónde navega al pulsar la notificación. Por defecto /crm/pipeline. */
   url?: string
   data?: Record<string, unknown>
+  /**
+   * Roles que reciben el aviso. Por defecto, los que diga el catálogo para este tipo
+   * (los leads van también al setter). Solo se pasa a mano para casos sueltos.
+   */
+  roles?: string[]
 }
 
 /**
- * Notifica a TODOS los super_admins activos (excepto el bot de tests): crea la
- * notificación in-app (campana del OS) Y manda push a sus dispositivos.
+ * Notifica al equipo que corresponda según el TIPO de aviso: crea la notificación in-app
+ * (campana del OS) Y manda push a sus dispositivos.
+ *
+ * Quién recibe qué está en `prefs-catalog` (`rolesForType`), no aquí: un aviso de lead va
+ * a los super_admins y al setter, que es quien tiene que escribirle. Lo demás sigue yendo
+ * solo a los super_admins.
+ *
+ * Siempre se excluye la cuenta-bot de pruebas y a la gente dada de baja.
  */
 export async function notifyAdmins(admin: SupabaseClient, input: NotifyInput): Promise<void> {
   try {
+    const roles = input.roles ?? rolesForType(input.type)
     const { data: admins } = await admin
       .from("profiles")
       .select("id")
-      .eq("role", "super_admin")
+      .in("role", roles)
       .eq("active", true)
       .neq("email", TEST_AGENT_EMAIL)
     let ids = (admins ?? []).map((a) => a.id as string)
