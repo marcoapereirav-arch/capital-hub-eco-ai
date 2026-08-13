@@ -310,11 +310,10 @@ Hay **dos** plantillas, cada una con su interruptor, y las dos nacen apagadas:
 
 | Plantilla | Cuándo sale | Interruptor | Estado |
 |---|---|---|---|
-| `test_personalidad_confirmacion` | **al instante** del opt-in | `email_confirmacion` | apagado, pendiente del OK de Marco |
+| `test_personalidad_confirmacion` | **al instante** del opt-in | `email_confirmacion` | **ENCENDIDO** (Marco, 2026-08-11) |
 | `test_personalidad_acceso` | a los N minutos (default 7) | `paso_intermedio` | apagado (va con el paso intermedio) |
 
-**Hoy el lead no recibe ningún correo.** Al encender el de confirmación recibirá ese, y
-solo ese.
+El lead recibe **ese y solo ese**.
 
 ### Por qué existe el de confirmación
 

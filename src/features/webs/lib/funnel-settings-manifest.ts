@@ -39,8 +39,8 @@ export const FUNNEL_MANIFESTS: Record<string, FunnelManifest> = {
       {
         key: "email_confirmacion",
         label: "¿Mandar el correo con el acceso al test nada más dejar los datos?",
-        hint: "Sale al instante, no a los 7 minutos. Es la copia de seguridad del acceso: si la persona cierra la pestaña sin hacer el test, este correo es su única forma de volver. Se puede editar en Email marketing → Plantillas.",
-        default: "off",
+        hint: "ENCENDIDO. Sale al instante, no a los 7 minutos. Es la copia de seguridad del acceso: si la persona cierra la pestaña sin hacer el test, este correo es su única forma de volver. Se puede editar en Email marketing → Plantillas.",
+        default: "on",
         type: "toggle",
       },
       {

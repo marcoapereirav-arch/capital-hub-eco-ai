@@ -38,16 +38,38 @@ export function TestPersonalidadConfirmacionEmail({
   whatsappUrl,
   instagramUrl,
 }: Props) {
-  const secondaryButton: React.CSSProperties = {
+  /**
+   * Los dos canales de contacto. Antes eran dos filetes finos del color del borde sobre
+   * el fondo: se leían como texto legal, no como botones, y pasaban desapercibidos justo
+   * cuando la persona ya tiene la captura hecha y quiere mandárnosla (Marco, 2026-08-11).
+   *
+   * Ahora tienen peso propio y jerarquía entre ellos, sin pelear con el verde del botón
+   * principal: Instagram va en sólido claro (es el canal donde ya hay conversación
+   * abierta) y WhatsApp sobre la superficie de tarjeta con el borde subido de tono.
+   *
+   * Todos los colores salen de la paleta del layout. Ninguno se inventa aquí: el borde
+   * "fuerte" es el gris de texto apagado que ya existe, no un gris nuevo.
+   */
+  const botonBase: React.CSSProperties = {
     display: "block",
-    border: `1px solid ${emailColors.border}`,
     borderRadius: 6,
-    color: emailColors.text,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 600,
-    padding: "12px 18px",
+    padding: "14px 18px",
     textAlign: "center",
     textDecoration: "none",
+  }
+  const botonInstagram: React.CSSProperties = {
+    ...botonBase,
+    backgroundColor: emailColors.text,
+    color: emailColors.bg,
+    border: `1px solid ${emailColors.text}`,
+  }
+  const botonWhatsapp: React.CSSProperties = {
+    ...botonBase,
+    backgroundColor: emailColors.surface,
+    color: emailColors.text,
+    border: `1px solid ${emailColors.textMuted}`,
   }
 
   return (
@@ -71,13 +93,16 @@ export function TestPersonalidadConfirmacionEmail({
       </P>
 
       <Section style={{ margin: "0 0 10px" }}>
-        <Link href={instagramUrl} style={{ ...secondaryButton, marginBottom: 10 }}>
+        <Link href={instagramUrl} style={{ ...botonInstagram, marginBottom: 10 }}>
           Enviar mi resultado por Instagram
         </Link>
-        <Link href={whatsappUrl} style={secondaryButton}>
+        <Link href={whatsappUrl} style={botonWhatsapp}>
           O por WhatsApp de Adrián
         </Link>
       </Section>
+      <Text style={{ fontSize: 13, color: emailColors.textDim, margin: "0 0 16px", textAlign: "center" }}>
+        Por Instagram te contestamos antes.
+      </Text>
 
       <P dim>Si el botón no funciona, copia y pega este enlace en tu navegador: {accessUrl}</P>
 

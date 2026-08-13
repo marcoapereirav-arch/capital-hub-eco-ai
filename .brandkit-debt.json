@@ -9,8 +9,8 @@
     "NO se edita a mano. Cuando un archivo mejora, el candado lo aprieta solo. Si partes o",
     "renombras un archivo:  npm run check:brandkit -- --rebase"
   ],
-  "generado": "2026-08-07",
-  "total": 1727,
+  "generado": "2026-08-13",
+  "total": 1726,
   "archivos": {
     "src/app/(auth)/check-email/page.tsx": {
       "alto-atado-a-la-ventana": {
@@ -1778,7 +1778,7 @@
     "src/lib/email/templates/_layout.tsx": {
       "color-a-mano": {
         "#18181B": 1,
-        "#FAFAFA": 2,
+        "#FAFAFA": 1,
         "#D1D5DB": 1,
         "#9CA3AF": 1,
         "#6B7280": 1

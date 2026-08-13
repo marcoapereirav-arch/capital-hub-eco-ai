@@ -47,6 +47,7 @@ Las versiones nuevas se añaden como pestañas nuevas, sin borrar las anteriores
 - Base monocromo se mantiene: `#0F0F12` carbón, `#2A2D34` grafito, `#F5F6F7` blanco roto.
 - **Papel Hueso cálido `#F4F1E8`** (paneles claros, el "gi") + tinta `#141414`. El contraste negro contra papel es el corazón del rediseño.
 - **Acento: SOLO el verde oficial** `#22C55E` / `#4ADE80`. El "acento que cambia de color según nivel" se DESCARTÓ (mucho para un MVP).
+- **Esto incluye los correos.** Los botones principales de las plantillas de email van en el verde oficial con tinta `#08130C` encima (sobre el verde, el blanco no contrasta). Estuvieron en blanco hasta el 2026-08-11 por una corrección anterior que confundió el problema: lo prohibido era el verde **inventado** (`#37ca37`, un neón fuera de paleta), no el verde de la marca. Al quitar el neón se quitó también el acento y los correos se quedaron sin el único color que tiene Capital Hub. Palabras de Marco: *"pon el botón en color verde (eso ya lo deberías saber, está en el brandkit)"*.
 - Escalera de cinturones (Marco, 2026-07-08, escala jiu-jitsu, versiones mate): blanco `#F5F6F7`, azul `#4F7CC0`, púrpura `#7B5BA6`, marrón `#856046`, negro `#0F0F12`. Numerados 00 a 04.
 
 ### Cinturones (lenguaje de progresión; mecánica = fase futura)

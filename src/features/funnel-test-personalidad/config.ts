@@ -39,9 +39,9 @@ export const FUNNEL_TEST_PERSONALIDAD = {
   /**
    * Correo de confirmacion que sale AL INSTANTE del opt-in con el acceso al test.
    * Distinto del de los 7 minutos (ese va con PASO_INTERMEDIO).
-   * Nace apagado: Marco lo enciende cuando da el visto bueno al copy.
+   * ENCENDIDO: Marco dio el visto bueno al copy el 2026-08-11.
    */
-  EMAIL_CONFIRMACION: false,
+  EMAIL_CONFIRMACION: true,
 } as const
 
 export function whatsappLink(message = "Hola, acabo de hacer el test de personalidad. Te dejo mi resultado.") {

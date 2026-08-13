@@ -31,9 +31,19 @@ const colors = {
   textDim: "#9CA3AF",
   textMuted: "#6B7280",
   white: "#FFFFFF",
-  // Accent del brandkit = BLANCO (monocromo). Antes era verde #37ca37 (off-brand,
-  // neon prohibido). Las plantillas lo usan para bordes/texto de resaltado.
-  accent: "#FAFAFA",
+  /**
+   * Acento del brandkit = VERDE OFICIAL. Ver `docs/sops/marketing/brand/01-brandkit-oficial`:
+   * "Acento: SOLO el verde oficial #22C55E / #4ADE80".
+   *
+   * Estuvo en blanco por una correccion anterior que confundio el problema: lo prohibido
+   * era el verde INVENTADO (#37ca37, un neon fuera de paleta), no el verde de la marca.
+   * Al quitar el neon se quito tambien el acento, y los correos se quedaron sin el unico
+   * color que tiene Capital Hub. Corregido al verde oficial (Marco, 2026-08-11).
+   */
+  accent: "#22C55E",
+  accentSoft: "#4ADE80",
+  /** Tinta que va ENCIMA del verde. Sobre #22C55E el blanco no contrasta; esta si. */
+  onAccent: "#08130C",
 }
 
 const FONT = "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
@@ -99,10 +109,12 @@ export function Button({ href, children }: { href: string; children: React.React
         href={href}
         style={{
           display: "inline-block",
-          backgroundColor: colors.white,
-          color: colors.bg,
-          padding: "13px 30px",
-          fontSize: 14,
+          // Verde de marca. Es el unico color de Capital Hub: el boton principal de un
+          // correo es exactamente donde tiene que estar.
+          backgroundColor: colors.accent,
+          color: colors.onAccent,
+          padding: "14px 32px",
+          fontSize: 15,
           fontWeight: 600,
           letterSpacing: 0,
           borderRadius: 6,
