@@ -308,7 +308,8 @@ function CreateInviteSheet({
 }) {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
-  const [product, setProduct] = useState("Capital Hub")
+  const [product, setProduct] = useState("")
+  const [catalogo, setCatalogo] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -318,9 +319,24 @@ function CreateInviteSheet({
    * invitacion por descuido. */
   useEffect(() => {
     if (!open) return
+    let vivo = true
+    fetch("/api/catalogo/productos")
+      .then((r) => (r.ok ? r.json() : { productos: [] }))
+      .then((d: { productos?: { nombre: string }[] }) => {
+        if (!vivo) return
+        const nombres = (d.productos ?? []).map((p) => p.nombre)
+        setCatalogo(nombres)
+        setProduct((actual) => actual || nombres[0] || "")
+      })
+      .catch(() => {})
+    return () => { vivo = false }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
     setFullName("")
     setEmail("")
-    setProduct("Capital Hub")
+    setProduct(catalogo[0] ?? "")
     setSaving(false)
     setError(null)
   }, [open])
@@ -378,13 +394,23 @@ function CreateInviteSheet({
             />
           </label>
           <label className="block space-y-1.5">
-            <span className={ETIQUETA}>Producto</span>
-            <Input
+            <span className={ETIQUETA}>Formación a la que le das acceso</span>
+            {/* LISTA, no texto libre. Antes se escribia a mano y venia con
+                "Capital Hub" puesto por defecto, que no es ninguna formacion
+                del catalogo: cualquier invitacion creada aqui daba CERO acceso
+                y el alumno entraba a una pantalla vacia sin ningun aviso. */}
+            <select
               value={product}
               onChange={(e) => setProduct(e.target.value)}
-              placeholder="Capital Hub"
-              enterKeyHint="done"
-            />
+              className="h-11 w-full rounded-lg border border-border bg-background px-3 text-[15px] text-foreground md:h-9 md:text-sm"
+            >
+              <option value="" disabled>
+                {catalogo.length ? "Elige una formación" : "Cargando..."}
+              </option>
+              {catalogo.map((nombre) => (
+                <option key={nombre} value={nombre}>{nombre}</option>
+              ))}
+            </select>
           </label>
           {error && <div className="text-[15px] text-destructive">{error}</div>}
         </div>
