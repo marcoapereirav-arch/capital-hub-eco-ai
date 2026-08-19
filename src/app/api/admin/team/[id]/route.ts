@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { getSlugsFormacion } from "@/lib/catalogo/productos"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
 
@@ -7,13 +8,15 @@ export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
 const ROLES = ["super_admin", "marketing", "closer", "setter", "formador"] as const
-const FORMACIONES = ["ia-integrator", "media-buyer-digital", "comercial-closing"] as const
+// Las formaciones asignables NO se escriben aqui: salen del catalogo real.
+// Esta lista tenia "media-buyer-digital" (retirado el 2026-07-30) y le faltaba
+// "clipper", asi que no se podia asignar un formador a Clipper.
 
 const PatchSchema = z.object({
   role: z.enum(ROLES).optional(),
   full_name: z.string().min(2).max(120).optional(),
   active: z.boolean().optional(),
-  formacion_asignada: z.enum(FORMACIONES).nullable().optional(),
+  formacion_asignada: z.string().min(1).max(80).nullable().optional(),
 })
 
 /** OS role → App role (ADMIN/USER). Replicado en /team route POST. */
@@ -55,6 +58,24 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
   }
   const admin = getAdminClient()
   const data = parsed.data
+
+  // CANDADO · la formacion asignada tiene que existir en el catalogo real.
+  // Si no, el formador entra y no ve nada suyo, sin ningun error.
+  if (data.formacion_asignada) {
+    try {
+      const validas = await getSlugsFormacion()
+      if (!validas.includes(data.formacion_asignada)) {
+        return NextResponse.json({
+          error: `Esa formacion no existe: ${data.formacion_asignada}. Disponibles: ${validas.join(", ")}`,
+        }, { status: 400 })
+      }
+    } catch (e) {
+      return NextResponse.json({
+        error: "No se pudo comprobar el catalogo de formaciones. Vuelve a intentarlo.",
+        detail: (e as Error).message,
+      }, { status: 503 })
+    }
+  }
 
   // 1. Update profile OS
   const { error } = await admin

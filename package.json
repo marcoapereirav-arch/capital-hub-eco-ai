@@ -21,8 +21,9 @@
     "publicar": "node scripts/publicar.mjs",
     "cerrar": "node scripts/cerrar.mjs",
     "skills:inventory": "node scripts/gen-skills-inventory.mjs",
-    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs && node scripts/check-filtros.mjs && node scripts/check-afiliados.mjs",
-    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs && node scripts/check-filtros.mjs && node scripts/check-afiliados.mjs"
+    "predev": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs && node scripts/check-filtros.mjs && node scripts/check-afiliados.mjs && node scripts/check-productos.mjs",
+    "prebuild": "node scripts/check-skills.mjs && node scripts/check-flujo.mjs && node scripts/check-layout.mjs && node scripts/check-brandkit.mjs && node scripts/check-filtros.mjs && node scripts/check-afiliados.mjs && node scripts/check-productos.mjs",
+    "check:productos": "node scripts/check-productos.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
