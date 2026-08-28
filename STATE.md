@@ -2,7 +2,55 @@
 
 > Se actualiza en cada cierre de chat. Dice la verdad de hoy, no la intención.
 
-**Última actualización:** 2026-08-11
+**Última actualización:** 2026-08-28
+---
+
+## Qué se hizo el 2026-08-28 · la tanda de anuncios de Georgia y el panel de Ads
+
+**Dos cosas: preparar 16 anuncios para subir a Facebook, y arreglar cinco fallos del panel.**
+
+### Los anuncios
+
+De 18 archivos sueltos con nombres de cámara salieron **16 anuncios listos**, numerados del
+01 al 16 sin huecos y con el nombre puesto en el propio archivo. Dos eran copias byte a byte,
+otros dos la misma toma con medio segundo de diferencia.
+
+Se transcribieron los 18 con Whisper para clasificarlos por ángulo, y de ahí salieron las tres
+familias: `REC` (reclutamiento), `EMP` (emprendedor) y `SUE` (sueldo).
+
+Subidos a `B | Lead | ABO | Test` / `B02 | ESP | Giorgia Test`. **Aprobados sin un solo
+rechazo.** La regla completa quedó en el Knowledge, `marketing/12-nomenclatura-anuncios`.
+
+**Aviso que sigue abierto:** el conjunto arrancó con 24 €/día y 16 anuncios, o sea 1,50 € por
+anuncio. Eso no da señal: con el CPM de la cuenta son ~300 impresiones diarias por creativo
+cuando hacen falta 1.000-2.000, y el conjunto no sale de aprendizaje. Recomendado dejar 5 o 6
+activos, o subir a 80-100 €/día. **Marco no ha decidido todavía.**
+
+### El panel de Ads
+
+Cinco fallos, todos suyos, todos reales:
+
+1. **Solo se veía el nivel campaña.** Ahora hay pestañas Campañas / Conjuntos / Anuncios, y
+   el selector marca a los tres niveles. El nivel anuncio no existía en el código.
+2. **Las métricas tenían nombres inventados** ("Personas que hicieron clic"). Las 53 pasan a
+   llamarse exactamente como en Facebook ("Clics únicos (todos)"). Es regla dura ahora.
+3. **El cartel "la que pediste"** colgado de tres métricas. Borrado de la pantalla y del
+   modelo de datos.
+4. **Faltaban métricas.** "Visitas a la página de destino" y "Clientes potenciales", que el
+   panel ya calculaba pero no dejaba elegir. No son campos de la API: van dentro de `actions`,
+   y pedirlas como campo tumba la petición entera.
+5. **Elegías 9 métricas y veías 5.** Un `.slice(0, 5)` escondido.
+
+El filtro se rehízo dos veces: la primera versión apilaba los tres niveles en el mismo
+desplegable y se volvía un scroll sin fin.
+
+**Sin verificar en pantalla por mí:** el panel pide sesión y este chat no tenía permiso para
+leer `.env.local`. `tsc` y build limpios, publicado y sirviendo. La mirada real la da Marco.
+Si algún nombre de métrica no coincide con su Facebook, cambiarlo es una línea.
+
+**Y una cosa que hay que mirar:** 3 anuncios del conjunto `B01 | ESP` están **rechazados** por
+Facebook. Los rechazos acumulados afectan a la cuenta.
+
 ---
 
 ## Qué se hizo el 2026-08-11 · el panel de Ads y un fallo de números

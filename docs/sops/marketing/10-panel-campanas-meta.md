@@ -77,45 +77,88 @@ instrucción de teléfono.
 
 ---
 
+## Qué se ve, y a qué altura
+
+El panel tiene **tres niveles**, y se eligen a mano con pestañas encima de la tabla:
+**Campañas**, **Conjuntos** y **Anuncios**. Mandan sobre la tabla y sobre el rosco del reparto.
+
+Antes esto no se elegía: el panel lo deducía solo (si había una campaña marcada, bajaba a
+conjuntos) y los anuncios no existían en ninguna parte del código. Marco, 2026-08-28: *"esta
+es una campaña, pero dentro hay dos conjuntos... quiero también seleccionar los conjuntos que
+quiero ver internamente con estas métricas"*.
+
+El selector de arriba (**Viendo**) marca con casillas a los tres niveles, cada uno en **su
+propia pestaña**. Reglas de cómo se comportan entre ellos:
+
+- Las campañas se ofrecen siempre todas.
+- Los conjuntos se acotan a las campañas marcadas; **si no hay ninguna marcada, salen todos**.
+  Antes había que marcar la campaña primero, o sea adivinar de quién colgaba el conjunto.
+- Los anuncios se acotan a los conjuntos marcados, y si no los hay, a las campañas marcadas.
+- Al desmarcar una campaña se **sueltan sus conjuntos y sus anuncios**. Si no, quedarían
+  filtrando por algo que ya no está marcado y los números no cuadrarían con la etiqueta.
+- La lista de cada nivel se pide **sin filtrar por sí misma**: si los anuncios se filtraran
+  por los anuncios marcados, al marcar uno desaparecerían los demás y no habría forma de
+  desmarcarlo.
+
+### Una lista cada vez, de 20 en 20
+
+Los tres niveles empezaron apilados en el mismo desplegable y se convirtió en un scroll sin
+fin: la cuenta tiene más de cien anuncios y para llegar a ellos había que pasar por encima de
+todo lo demás. Ahora hay una pestaña por nivel, con su número al lado (los marcados en verde,
+o el total si no hay ninguno), y dentro se pintan 20 con un botón que suma las siguientes.
+
+**La regla de las 20 filas vale también dentro de un desplegable.** No es solo para las
+tablas de una página.
+
+"Toda la cuenta" y las pestañas van **fijas**, fuera del scroll: el reset se perdía al bajar.
+
+---
+
 ## El selector de métricas
 
-**48 métricas verificadas contra la cuenta real**, no sacadas de la documentación: se le
+**53 métricas verificadas contra la cuenta real**, no sacadas de la documentación: se le
 preguntó a Meta campo por campo qué acepta y qué devuelve con datos.
 
 Van **agrupadas por familia de variantes**, porque Meta ofrece varias versiones de la misma
-idea y no lo dice:
-
-| Familia | Versiones |
-|---|---|
-| CTR | 8 |
-| Vídeo | 8 |
-| Resultados | 7 |
-| Clics | 6 |
-| Coste por clic | 6 |
-| Calidad | 5 |
-| Alcance | 5 |
-| Gasto | 4 |
+idea y no lo dice: nueve CTR distintos, ocho de vídeo, siete formas de contar clics.
 
 Cada una con su explicación en lenguaje normal. Las que Meta acepta pero hoy vienen vacías
 (ROAS, valor de compra, recuerdo del anuncio) salen marcadas **"hoy sin datos"**, para que
 nadie las elija y luego vea una columna en blanco.
 
-### Las que Marco pidió expresamente
+### REGLA DURA: los nombres son los de Facebook, literales
 
-Van las primeras y marcadas. Son las que cuentan **personas y no clics**:
+**No se traducen, no se acortan y no se mejoran.**
 
-| Métrica | Qué mide |
+Marco, 2026-08-28: *"tienen que estar exactamente todas las métricas que están en Facebook
+Ads con el mismo nombre y todas exactas que están ahí. No te lo voy a volver a repetir."*
+
+El motivo no es estético: si el panel dice "CTR por persona" y Facebook dice "CTR único
+(todos)", **nadie puede comparar las dos pantallas** y el panel deja de servir para lo único
+que existe. Lo que explica qué mide cada métrica va en su descripción, nunca en el nombre.
+
+Lo que había antes y por qué estaba mal:
+
+| Decía el panel | Se llama en Facebook |
 |---|---|
-| `unique_outbound_clicks_ctr` | CTR saliente único |
-| `unique_outbound_clicks` | Clics salientes únicos |
-| `cost_per_unique_outbound_click` | Coste por clic saliente único |
+| Gasto | Importe gastado |
+| Personas que hicieron clic | Clics únicos (todos) |
+| CTR por persona | CTR único (todos) |
+| Coste por persona que hace clic | CPC único (todos) |
+| Llegaron a la mitad | Reproducciones de vídeo hasta el 50% |
+| Reproducciones completas | ThruPlays |
+| Calidad del anuncio | Clasificación de calidad |
 
-**Por qué importan:** el CTR normal cuenta todos los clics, incluidos los que no llevan a
-ninguna parte (me gusta, comentar, ver más). El saliente único cuenta **personas distintas
-que llegaron a nuestra web**. En la cuenta de Capital Hub, el mismo periodo daba 1,65% de
-CTR normal y 2,26% de CTR saliente único: no son el mismo número ni miden lo mismo.
+La regla llega también al **embudo** y al **medidor**, que decían "Cargaron la página" y
+"Leads": ahora dicen "Visitas a la página de destino" y "Clientes potenciales".
 
----
+### Y NUNCA una etiqueta que diga quién pidió la métrica
+
+Tres métricas llevaban colgado un cartel que decía **"la que pediste"**. Marco, 2026-08-28:
+*"¿Para qué cojones pones eso? Esto es un dashboard."*
+
+Fuera de la interfaz **y fuera del modelo de datos**: se borró también el campo que lo
+alimentaba. Una métrica se justifica por lo que mide, no por quién la pidió.
 
 ## Cosas que se aprendieron construyéndolo
 
@@ -129,6 +172,49 @@ uno, lo aparta y reintenta con el resto.
 buscarlo **como palabra completa**. `actions` es subcadena de `total_unique_actions`, así que
 una búsqueda simple acusa al inocente y descarta una métrica que funciona perfectamente. Se
 busca con límites de palabra y, si encajan varios, gana el más largo.
+
+### Hay métricas que NO son campos: viven dentro de `actions`
+
+"Visitas a la página de destino" y "Clientes potenciales" salen en el administrador de
+anuncios como una métrica más, así que lo natural es pedírselas a la API por su nombre.
+
+**No existen como campo.** Y no fallan solas: meter una sola de ellas en `fields` hace que
+Meta **rechace la petición entera**, así que el panel completo se queda en blanco, no la
+métrica que falta.
+
+Viven dentro del bloque `actions` (y su coste dentro de `cost_per_action_type`), que sí son
+campos. En el catálogo van marcadas con `fuente: "accion"` y se calculan después. Los campos
+que se le piden a Meta salen de `camposPedibles()`, que las excluye a propósito.
+
+Afecta a cuatro: `landing_page_views`, `cost_per_landing_page_view`, `leads` y
+`cost_per_lead`.
+
+### Un número que la pantalla calcula pero no deja elegir es un número invisible
+
+El panel ya calculaba leads, coste por lead y visitas a la web para el embudo y el medidor,
+pero **no estaban en el catálogo de métricas**, así que no se podían poner en la fila de
+números grandes ni en las columnas de la tabla. Marco los buscó y no los encontró.
+
+Si un dato ya se está calculando, tiene que poder elegirse. Y sale del **mismo sitio** que la
+métrica del catálogo (`out.visitasWeb = out.landing_page_views`), no de un cálculo paralelo:
+dos caminos hasta el mismo número acaban discrepando.
+
+### Un recorte silencioso en la pantalla es una mentira
+
+La fila de números grandes tenía un `.slice(0, 5)`. El selector decía "(9)" y la pantalla
+enseñaba cinco. Nada avisaba.
+
+**Si algo no cabe, se pagina o se avisa; no se corta por detrás.**
+
+### El nombre de una persona no se pasa por un traductor de códigos
+
+La segunda línea de cada fila mostraba el objetivo de Meta, que viene en MAYÚSCULAS y en
+inglés (`OUTCOME_LEADS`), y se traducía a minúsculas. Al reutilizar esa fila para conjuntos y
+anuncios, el nombre del padre pasaba por el mismo traductor: `B02 | ESP | Giorgia Test` salía
+como `b02 | esp | giorgia test` y dejaba de coincidir con Facebook.
+
+Ahora solo se traduce lo que **parece** un código de Meta (`/^[A-Z0-9_]+$/`). Cualquier cosa
+con espacios, barras o minúsculas es un nombre puesto por una persona y se deja tal cual.
 
 ### Un paso del embudo puede pasar del 100%
 
@@ -193,6 +279,23 @@ va en `:root` y en `.dark`, igual que el resto de tokens del proyecto.
 ---
 
 ## Cambios versionados
+
+### 2026-08-28: tres niveles, y las métricas con el nombre de Facebook
+
+Cinco fallos que encontró Marco de una sentada:
+
+1. **No se podía bajar de nivel.** El panel deducía solo si enseñar campañas o conjuntos, y
+   los anuncios no existían. Ahora hay pestañas Campañas / Conjuntos / Anuncios, y el
+   selector marca a los tres niveles, cada uno en su propia pestaña.
+2. **Los nombres estaban traducidos a mano.** Las 53 métricas pasan a llamarse exactamente
+   como en Facebook. Ver la regla dura de arriba.
+3. **El cartel "la que pediste"**, fuera de la interfaz y del modelo de datos.
+4. **Faltaban métricas.** Añadidas "Visitas a la página de destino", su coste, "Clientes
+   potenciales" y su coste, como derivadas de `actions`.
+5. **Elegías nueve métricas y veías cinco.** Había un recorte escondido.
+
+Y el filtro, que en la primera versión apilaba los tres niveles en el mismo desplegable y se
+volvía un scroll sin fin, pasó a una pestaña por nivel con 20 filas por tanda.
 
 ### 2026-08-11: rediseño de los gráficos y arreglo del conteo de leads
 Marco rechazó tres versiones seguidas ("horrible, básico, no me estás diseñando el gráfico
