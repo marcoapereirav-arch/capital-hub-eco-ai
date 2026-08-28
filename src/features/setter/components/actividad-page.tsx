@@ -272,7 +272,18 @@ export function ActividadPage() {
                   nombrePlural="días"
                 >
                   {(pagina) => (
-                    <ul className="divide-y divide-border">
+                    /* La carta NO alarga la pagina: la lista se desplaza POR DENTRO y el
+                       boton de Siguiente queda siempre a la vista, justo debajo.
+                       `max-h` y NO `overscroll-contain` a proposito: con `contain`, el dia
+                       que una pagina traiga pocas filas la caja no tendria nada que
+                       desplazar y se tragaria el gesto, dejando la pantalla congelada
+                       (el fallo del SOP producto/62). Asi, cuando la lista se acaba, el
+                       dedo sigue moviendo la pagina como debe.
+                       El alto se queda en 52dvh para que la carta ENTERA (cabecera, lista
+                       y el boton de Siguiente) quepa de una vez en un telefono: si el
+                       boton de pasar de pagina hay que ir a buscarlo, no existe. */
+                    <div className="max-h-[52dvh] overflow-y-auto md:max-h-[30rem]">
+                      <ul className="divide-y divide-border">
                       {pagina.map((d) => (
                         <li key={d.clave}>
                           <button
@@ -345,8 +356,9 @@ export function ActividadPage() {
                             <ChevronRight className="hidden size-5 text-muted-foreground md:block" aria-hidden />
                           </button>
                         </li>
-                      ))}
-                    </ul>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </ListaPaginada>
               </>

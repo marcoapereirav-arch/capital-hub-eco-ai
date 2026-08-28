@@ -91,7 +91,15 @@ Reglas duras de esta tabla:
    el resto apagado. Los días sin parte salen como una raya y con un guion, **nunca como un
    cero**: no registrar no es haber hecho cero.
 4. **Historial diario** de 20 en 20 (`<ListaPaginada>`), con el día, los cuatro números,
-   quién lo registró, a qué hora y cuántas correcciones lleva.
+   quién lo registró, a qué hora y cuántas correcciones lleva. **La carta no alarga la
+   página**: la lista se desplaza por dentro con un tope de alto, para que la carta entera
+   (cabecera, lista y el botón de Siguiente) quepa de una vez en un teléfono. Un botón de
+   pasar de página que hay que ir a buscar scrolleando, no existe.
+
+   Esa caja lleva `max-h` y **NO** `overscroll-contain`, a propósito: con `contain`, el día
+   que una página traiga pocas filas la caja no tendría nada que desplazar y se tragaría el
+   gesto, dejando la pantalla congelada (el fallo del SOP [`producto/62`](62-un-solo-scroll-por-pantalla.md)).
+   Medido: con la lista al final, la página sigue moviéndose.
 5. **Ficha de un día**: se abre al tocarlo. Los cuatro números y la línea de tiempo completa
    de guardados, con el campo, el valor de antes y el de después de cada corrección. Desde
    ahí se corrige.
