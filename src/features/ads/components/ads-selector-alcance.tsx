@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { Check, ChevronDown, Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { FilaCampana, FilaConjunto } from "@/lib/meta/panel"
+import type { FilaAnuncio, FilaCampana, FilaConjunto } from "@/lib/meta/panel"
 
 /**
  * QUÉ estás viendo. Con casillas, no con una sola elección.
@@ -12,81 +12,145 @@ import type { FilaCampana, FilaConjunto } from "@/lib/meta/panel"
  * las tres y ahí puedo ver todo". Por eso son casillas y los números salen SUMADOS de lo
  * marcado, no de una campaña suelta.
  *
+ * Marco, 2026-08-28: "esta es una campaña, pero dentro hay dos conjuntos... quiero también
+ * seleccionar los conjuntos que quiero ver internamente con estas métricas... un filtro más
+ * para conjuntos y también un filtro más para anuncios". De ahí los TRES niveles.
+ *
+ * Los conjuntos y los anuncios ya NO exigen marcar antes la campaña. Antes, la lista de
+ * conjuntos salía vacía hasta que marcabas una campaña, así que para ver un conjunto había
+ * que adivinar de quién colgaba. Ahora cada nivel se puede marcar directo, y lo que se
+ * marca arriba solo sirve para ACOTAR lo que se ofrece abajo.
+ *
  * Sin nada marcado significa la cuenta entera. Es el estado de entrada y se dice con
  * palabras, no dejando el botón vacío.
  */
 
 const fmtEur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
 
-export type Alcance = { campanas: string[]; conjuntos: string[] }
+export type Alcance = { campanas: string[]; conjuntos: string[]; anuncios: string[] }
 
 export function SelectorAlcance({
   campanas,
   conjuntos,
+  anuncios,
   valor,
   onCambio,
 }: {
   campanas: FilaCampana[]
   conjuntos: FilaConjunto[]
+  anuncios: FilaAnuncio[]
   valor: Alcance
   onCambio: (a: Alcance) => void
 }) {
   const [abierto, setAbierto] = useState(false)
   const [busqueda, setBusqueda] = useState("")
 
+  // La etiqueta nombra el nivel MÁS FINO que esté marcado: si hay anuncios sueltos
+  // marcados, eso es lo que estás viendo, aunque también haya campañas marcadas.
   const etiqueta = useMemo(() => {
-    if (valor.conjuntos.length > 0) {
-      return valor.conjuntos.length === 1
-        ? conjuntos.find((c) => c.id === valor.conjuntos[0])?.nombre ?? "1 conjunto"
-        : `${valor.conjuntos.length} conjuntos`
-    }
-    if (valor.campanas.length > 0) {
-      return valor.campanas.length === 1
-        ? campanas.find((c) => c.id === valor.campanas[0])?.nombre ?? "1 campaña"
-        : `${valor.campanas.length} campañas`
-    }
+    const uno = (ids: string[], lista: { id: string; nombre: string }[], plural: string) =>
+      ids.length === 1 ? (lista.find((x) => x.id === ids[0])?.nombre ?? `1 ${plural}`) : null
+
+    if (valor.anuncios.length > 0)
+      return uno(valor.anuncios, anuncios, "anuncio") ?? `${valor.anuncios.length} anuncios`
+    if (valor.conjuntos.length > 0)
+      return uno(valor.conjuntos, conjuntos, "conjunto") ?? `${valor.conjuntos.length} conjuntos`
+    if (valor.campanas.length > 0)
+      return uno(valor.campanas, campanas, "campaña") ?? `${valor.campanas.length} campañas`
     return "Toda la cuenta"
-  }, [valor, campanas, conjuntos])
+  }, [valor, campanas, conjuntos, anuncios])
 
   const q = busqueda.trim().toLowerCase()
+  const coincide = (n: string) => !q || n.toLowerCase().includes(q)
+  const porGasto = <T extends { valores: Record<string, number> }>(a: T, b: T) =>
+    (b.valores.spend ?? 0) - (a.valores.spend ?? 0)
 
   // Ordenadas por gasto, de mayor a menor. Meta devuelve tambien campañas que no gastaron
   // nada en el periodo, y si salen las primeras el selector abre con lo que no importa.
-  // Las de cero quedan abajo y marcadas, para que se vea que existen pero no confundan.
-  const campanasVisibles = useMemo(() => {
-    const base = q ? campanas.filter((c) => c.nombre.toLowerCase().includes(q)) : campanas
-    return [...base].sort((a, b) => (b.valores.spend ?? 0) - (a.valores.spend ?? 0))
-  }, [campanas, q])
+  // Las de cero quedan abajo y apagadas, para que se vea que existen pero no confundan.
+  const campanasVisibles = useMemo(
+    () => campanas.filter((c) => coincide(c.nombre)).sort(porGasto),
+    [campanas, q]
+  )
 
-  // Los conjuntos que se enseñan son los de las campañas marcadas. Sin campañas marcadas
-  // no se enseña ninguno: una lista de todos los conjuntos de la cuenta no ayuda a nadie.
+  // Si hay campañas marcadas, solo se ofrecen sus conjuntos. Si no, todos: asi se puede ir
+  // directo a un conjunto sin saber de que campaña cuelga.
   const conjuntosVisibles = useMemo(() => {
-    if (valor.campanas.length === 0) return []
-    const dentro = conjuntos.filter((c) => valor.campanas.includes(c.campanaId))
-    const filtrados = q ? dentro.filter((c) => c.nombre.toLowerCase().includes(q)) : dentro
-    return [...filtrados].sort((a, b) => (b.valores.spend ?? 0) - (a.valores.spend ?? 0))
+    const dentro =
+      valor.campanas.length > 0
+        ? conjuntos.filter((c) => valor.campanas.includes(c.campanaId))
+        : conjuntos
+    return dentro.filter((c) => coincide(c.nombre)).sort(porGasto)
   }, [conjuntos, valor.campanas, q])
 
+  // Igual un nivel mas abajo: acota por conjunto si lo hay, si no por campaña, si no todos.
+  const anunciosVisibles = useMemo(() => {
+    const dentro =
+      valor.conjuntos.length > 0
+        ? anuncios.filter((a) => valor.conjuntos.includes(a.conjuntoId))
+        : valor.campanas.length > 0
+          ? anuncios.filter((a) => valor.campanas.includes(a.campanaId))
+          : anuncios
+    return dentro.filter((a) => coincide(a.nombre)).sort(porGasto)
+  }, [anuncios, valor.conjuntos, valor.campanas, q])
+
+  /**
+   * Al desmarcar una campaña se sueltan sus conjuntos Y sus anuncios. Si no, quedarían
+   * filtrando por algo que ya no está marcado y los números no cuadrarían con lo que se lee
+   * en el botón.
+   */
   function alternarCampana(id: string) {
     const marcadas = valor.campanas.includes(id)
       ? valor.campanas.filter((x) => x !== id)
       : [...valor.campanas, id]
-    // Al desmarcar una campaña se sueltan sus conjuntos: si no, quedarían filtrando por
-    // algo que ya no está seleccionado y los números no cuadrarían con lo que se lee.
-    const suyos = new Set(conjuntos.filter((c) => !marcadas.includes(c.campanaId)).map((c) => c.id))
-    onCambio({ campanas: marcadas, conjuntos: valor.conjuntos.filter((x) => !suyos.has(x)) })
-  }
 
-  function alternarConjunto(id: string) {
+    if (marcadas.length === 0) {
+      onCambio({ campanas: [], conjuntos: valor.conjuntos, anuncios: valor.anuncios })
+      return
+    }
+    const dentro = (campanaId: string) => marcadas.includes(campanaId)
     onCambio({
-      campanas: valor.campanas,
-      conjuntos: valor.conjuntos.includes(id)
-        ? valor.conjuntos.filter((x) => x !== id)
-        : [...valor.conjuntos, id],
+      campanas: marcadas,
+      conjuntos: valor.conjuntos.filter((x) =>
+        conjuntos.some((c) => c.id === x && dentro(c.campanaId))
+      ),
+      anuncios: valor.anuncios.filter((x) =>
+        anuncios.some((a) => a.id === x && dentro(a.campanaId))
+      ),
     })
   }
 
-  const hayFiltro = valor.campanas.length > 0 || valor.conjuntos.length > 0
+  function alternarConjunto(id: string) {
+    const marcados = valor.conjuntos.includes(id)
+      ? valor.conjuntos.filter((x) => x !== id)
+      : [...valor.conjuntos, id]
+
+    onCambio({
+      campanas: valor.campanas,
+      conjuntos: marcados,
+      // Mismo motivo que arriba, un nivel mas abajo.
+      anuncios:
+        marcados.length === 0
+          ? valor.anuncios
+          : valor.anuncios.filter((x) =>
+              anuncios.some((a) => a.id === x && marcados.includes(a.conjuntoId))
+            ),
+    })
+  }
+
+  function alternarAnuncio(id: string) {
+    onCambio({
+      ...valor,
+      anuncios: valor.anuncios.includes(id)
+        ? valor.anuncios.filter((x) => x !== id)
+        : [...valor.anuncios, id],
+    })
+  }
+
+  const nada = { campanas: [], conjuntos: [], anuncios: [] }
+  const marcados =
+    valor.campanas.length + valor.conjuntos.length + valor.anuncios.length
+  const hayFiltro = marcados > 0
 
   return (
     <div className="relative">
@@ -98,7 +162,10 @@ export function SelectorAlcance({
         <span className="shrink-0 text-muted-foreground">Viendo</span>
         <span className="min-w-0 truncate font-medium">{etiqueta}</span>
         <ChevronDown
-          className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", abierto && "rotate-180")}
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            abierto && "rotate-180"
+          )}
         />
       </button>
 
@@ -114,7 +181,7 @@ export function SelectorAlcance({
 
           <div
             className={cn(
-              "absolute z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-lg",
+              "absolute z-50 mt-2 w-[min(460px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-border bg-popover shadow-lg",
               // Se ancla a la izquierda del boton. En pantallas estrechas se centra para
               // que no se salga por ningun lado: era justo lo que se cortaba antes.
               "left-0 max-sm:left-1/2 max-sm:-translate-x-1/2"
@@ -126,7 +193,7 @@ export function SelectorAlcance({
                 <input
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Buscar campaña o conjunto"
+                  placeholder="Buscar campaña, conjunto o anuncio"
                   inputMode="search"
                   className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-base text-foreground placeholder:text-muted-foreground md:h-9 md:text-sm"
                 />
@@ -138,7 +205,7 @@ export function SelectorAlcance({
             <div className="max-h-[min(60dvh,26rem)] overflow-y-auto overscroll-contain p-2">
               <button
                 type="button"
-                onClick={() => onCambio({ campanas: [], conjuntos: [] })}
+                onClick={() => onCambio(nada)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left active:bg-muted",
                   !hayFiltro && "bg-brand/10"
@@ -155,12 +222,8 @@ export function SelectorAlcance({
                 </span>
               </button>
 
-              <p className="px-3 pb-1 pt-3 text-sm font-semibold text-muted-foreground">
-                Campañas
-              </p>
-              {campanasVisibles.length === 0 && (
-                <p className="px-3 py-2 text-sm text-muted-foreground">Ninguna coincide.</p>
-              )}
+              <Titulo>Campañas</Titulo>
+              {campanasVisibles.length === 0 && <Vacio />}
               {campanasVisibles.map((c) => (
                 <Fila
                   key={c.id}
@@ -176,36 +239,56 @@ export function SelectorAlcance({
                 />
               ))}
 
-              {conjuntosVisibles.length > 0 && (
-                <>
-                  <p className="px-3 pb-1 pt-3 text-sm font-semibold text-muted-foreground">
-                    Conjuntos de las campañas marcadas
-                  </p>
-                  {conjuntosVisibles.map((c) => (
-                    <Fila
-                      key={c.id}
-                      marcada={valor.conjuntos.includes(c.id)}
-                      titulo={c.nombre}
-                      pie={`${c.campanaNombre} · ${fmtEur.format(c.valores.spend ?? 0)}`}
-                      onClick={() => alternarConjunto(c.id)}
-                      sangrado
-                    />
-                  ))}
-                </>
-              )}
+              <Titulo>
+                Conjuntos
+                {valor.campanas.length > 0 && (
+                  <span className="font-normal"> de lo que has marcado arriba</span>
+                )}
+              </Titulo>
+              {conjuntosVisibles.length === 0 && <Vacio />}
+              {conjuntosVisibles.map((c) => (
+                <Fila
+                  key={c.id}
+                  marcada={valor.conjuntos.includes(c.id)}
+                  titulo={c.nombre}
+                  pie={`${c.campanaNombre} · ${fmtEur.format(c.valores.spend ?? 0)}`}
+                  apagada={(c.valores.spend ?? 0) === 0}
+                  onClick={() => alternarConjunto(c.id)}
+                  sangrado={1}
+                />
+              ))}
+
+              <Titulo>
+                Anuncios
+                {(valor.conjuntos.length > 0 || valor.campanas.length > 0) && (
+                  <span className="font-normal"> de lo que has marcado arriba</span>
+                )}
+              </Titulo>
+              {anunciosVisibles.length === 0 && <Vacio />}
+              {anunciosVisibles.map((a) => (
+                <Fila
+                  key={a.id}
+                  marcada={valor.anuncios.includes(a.id)}
+                  titulo={a.nombre}
+                  pie={`${a.conjuntoNombre} · ${fmtEur.format(a.valores.spend ?? 0)}`}
+                  apagada={(a.valores.spend ?? 0) === 0}
+                  onClick={() => alternarAnuncio(a.id)}
+                  sangrado={2}
+                />
+              ))}
             </div>
 
             <div className="flex items-center justify-between gap-3 border-t border-border p-3">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground tabular-nums">
                 {hayFiltro
-                  ? `${valor.campanas.length} ${valor.campanas.length === 1 ? "campaña" : "campañas"}${valor.conjuntos.length ? ` · ${valor.conjuntos.length} conjuntos` : ""}`
+                  ? `${marcados} ${marcados === 1 ? "marcado" : "marcados"}`
                   : "Sin filtrar"}
               </span>
               <div className="flex gap-2">
                 {hayFiltro && (
                   <button
                     type="button"
-                    onClick={() => onCambio({ campanas: [], conjuntos: [] })}
+                    onClick={() => onCambio(nada)}
                     className="flex h-11 items-center gap-1.5 rounded-lg px-3 text-[15px] text-muted-foreground active:bg-muted md:h-9 md:text-sm"
                   >
                     <X className="h-4 w-4" />
@@ -228,19 +311,30 @@ export function SelectorAlcance({
   )
 }
 
+function Titulo({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-3 pb-1 pt-3 text-sm font-semibold text-muted-foreground">{children}</p>
+  )
+}
+
+function Vacio() {
+  return <p className="px-3 py-2 text-sm text-muted-foreground">Ninguno coincide.</p>
+}
+
 function Fila({
   marcada,
   titulo,
   pie,
   onClick,
-  sangrado = false,
+  sangrado = 0,
   apagada = false,
 }: {
   marcada: boolean
   titulo: string
   pie: string
   onClick: () => void
-  sangrado?: boolean
+  /** Cuantos niveles cuelga: 0 campaña, 1 conjunto, 2 anuncio. */
+  sangrado?: 0 | 1 | 2
   /** Sin gasto en el periodo: se puede marcar igual, pero no compite por la atencion. */
   apagada?: boolean
 }) {
@@ -252,7 +346,8 @@ function Fila({
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left active:bg-muted",
         marcada && "bg-brand/10",
-        sangrado && "pl-7",
+        sangrado === 1 && "pl-7",
+        sangrado === 2 && "pl-11",
         apagada && !marcada && "opacity-60"
       )}
     >

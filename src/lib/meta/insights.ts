@@ -55,6 +55,8 @@ export type OpcionesInsights = {
   campanas?: string[]
   /** Igual pero para conjuntos, cuando se baja un nivel. */
   conjuntos?: string[]
+  /** Y para anuncios sueltos, el nivel mas fino. */
+  anuncios?: string[]
   /** Desglose de Meta: por donde se muestra, por edad, por dispositivo. */
   desglose?: "publisher_platform" | "age" | "impression_device" | "gender"
 }
@@ -97,6 +99,7 @@ export async function pedirInsights<T = Record<string, unknown>>(
   const filtros: { field: string; operator: string; value: string[] }[] = []
   if (o.campanas?.length) filtros.push({ field: "campaign.id", operator: "IN", value: o.campanas })
   if (o.conjuntos?.length) filtros.push({ field: "adset.id", operator: "IN", value: o.conjuntos })
+  if (o.anuncios?.length) filtros.push({ field: "ad.id", operator: "IN", value: o.anuncios })
   if (filtros.length) params.set("filtering", JSON.stringify(filtros))
 
   try {

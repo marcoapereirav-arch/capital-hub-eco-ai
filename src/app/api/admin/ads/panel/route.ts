@@ -45,6 +45,10 @@ export async function GET(req: NextRequest) {
     (req.nextUrl.searchParams.get(k) ?? "").split(",").map((x) => x.trim()).filter(Boolean)
 
   return NextResponse.json(
-    await getDatosPanel(rango, { campanas: lista("campanas"), conjuntos: lista("conjuntos") })
+    await getDatosPanel(rango, {
+      campanas: lista("campanas"),
+      conjuntos: lista("conjuntos"),
+      anuncios: lista("anuncios"),
+    })
   )
 }
