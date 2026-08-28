@@ -29,6 +29,11 @@ const fmtEur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EU
 
 export type Alcance = { campanas: string[]; conjuntos: string[]; anuncios: string[] }
 
+type NivelSel = "campanas" | "conjuntos" | "anuncios"
+
+/** Cuantas filas se pintan de golpe. El resto entra con el boton de abajo. */
+const POR_TANDA = 20
+
 export function SelectorAlcance({
   campanas,
   conjuntos,
@@ -44,6 +49,12 @@ export function SelectorAlcance({
 }) {
   const [abierto, setAbierto] = useState(false)
   const [busqueda, setBusqueda] = useState("")
+  // Una lista cada vez. Antes iban las tres apiladas y el desplegable se convertia en un
+  // scroll sin fin: para llegar a los anuncios habia que pasar por encima de todo lo demas.
+  // Marco, 2026-08-28: "campañas por un lado, conjuntos por otro, anuncios por otro".
+  const [pestana, setPestana] = useState<NivelSel>("campanas")
+  // Y dentro de la lista, de 20 en 20. La cuenta tiene mas de cien anuncios.
+  const [verHasta, setVerHasta] = useState(POR_TANDA)
 
   // La etiqueta nombra el nivel MÁS FINO que esté marcado: si hay anuncios sueltos
   // marcados, eso es lo que estás viendo, aunque también haya campañas marcadas.
@@ -147,6 +158,60 @@ export function SelectorAlcance({
     })
   }
 
+  // La lista que se esta mirando ahora mismo, ya normalizada a un formato comun.
+  const listaActiva = useMemo(() => {
+    if (pestana === "conjuntos")
+      return conjuntosVisibles.map((c) => ({
+        id: c.id,
+        titulo: c.nombre,
+        pie: `${c.campanaNombre} · ${fmtEur.format(c.valores.spend ?? 0)}`,
+        gasto: c.valores.spend ?? 0,
+        marcada: valor.conjuntos.includes(c.id),
+        alternar: () => alternarConjunto(c.id),
+      }))
+    if (pestana === "anuncios")
+      return anunciosVisibles.map((a) => ({
+        id: a.id,
+        titulo: a.nombre,
+        pie: `${a.conjuntoNombre} · ${fmtEur.format(a.valores.spend ?? 0)}`,
+        gasto: a.valores.spend ?? 0,
+        marcada: valor.anuncios.includes(a.id),
+        alternar: () => alternarAnuncio(a.id),
+      }))
+    return campanasVisibles.map((c) => ({
+      id: c.id,
+      titulo: c.nombre,
+      pie:
+        (c.valores.spend ?? 0) > 0
+          ? fmtEur.format(c.valores.spend)
+          : "sin gasto en este periodo",
+      gasto: c.valores.spend ?? 0,
+      marcada: valor.campanas.includes(c.id),
+      alternar: () => alternarCampana(c.id),
+    }))
+  }, [pestana, campanasVisibles, conjuntosVisibles, anunciosVisibles, valor])
+
+  const visibles = listaActiva.slice(0, verHasta)
+  const quedan = listaActiva.length - visibles.length
+
+  // Al cambiar de pestaña o de busqueda se vuelve a empezar: si no, cambiar de "Anuncios"
+  // (donde habias abierto 60) a "Campañas" (que tiene 3) dejaria el boton diciendo cosas
+  // raras y la lista arrancaria por donde no toca.
+  function irA(n: NivelSel) {
+    setPestana(n)
+    setVerHasta(POR_TANDA)
+  }
+
+  const PESTANAS: { id: NivelSel; etiqueta: string; total: number; marcados: number }[] = [
+    { id: "campanas", etiqueta: "Campañas", total: campanasVisibles.length, marcados: valor.campanas.length },
+    { id: "conjuntos", etiqueta: "Conjuntos", total: conjuntosVisibles.length, marcados: valor.conjuntos.length },
+    { id: "anuncios", etiqueta: "Anuncios", total: anunciosVisibles.length, marcados: valor.anuncios.length },
+  ]
+
+  const acotada =
+    (pestana === "conjuntos" && valor.campanas.length > 0) ||
+    (pestana === "anuncios" && (valor.conjuntos.length > 0 || valor.campanas.length > 0))
+
   const nada = { campanas: [], conjuntos: [], anuncios: [] }
   const marcados =
     valor.campanas.length + valor.conjuntos.length + valor.anuncios.length
@@ -192,7 +257,10 @@ export function SelectorAlcance({
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
+                  onChange={(e) => {
+                    setBusqueda(e.target.value)
+                    setVerHasta(POR_TANDA)
+                  }}
                   placeholder="Buscar campaña, conjunto o anuncio"
                   inputMode="search"
                   className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-base text-foreground placeholder:text-muted-foreground md:h-9 md:text-sm"
@@ -200,82 +268,97 @@ export function SelectorAlcance({
               </div>
             </div>
 
-            {/* La lista es lo unico que se desliza: el buscador de arriba y el pie de abajo
-                quedan siempre a la vista. */}
-            <div className="max-h-[min(60dvh,26rem)] overflow-y-auto overscroll-contain p-2">
-              <button
-                type="button"
-                onClick={() => onCambio(nada)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left active:bg-muted",
-                  !hayFiltro && "bg-brand/10"
-                )}
-              >
-                <Casilla marcada={!hayFiltro} />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[15px] font-medium text-foreground">
-                    Toda la cuenta
-                  </span>
-                  <span className="block text-sm text-muted-foreground">
-                    Todas las campañas juntas
-                  </span>
+            {/* Fija: es el reset y no debe perderse dentro del scroll de la lista. */}
+            <button
+              type="button"
+              onClick={() => onCambio(nada)}
+              className={cn(
+                "flex w-full items-center gap-3 border-b border-border px-4 py-2.5 text-left active:bg-muted",
+                !hayFiltro && "bg-brand/10"
+              )}
+            >
+              <Casilla marcada={!hayFiltro} />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-medium text-foreground">
+                  Toda la cuenta
                 </span>
-              </button>
+                <span className="block text-sm text-muted-foreground">
+                  Sin filtrar por nada
+                </span>
+              </span>
+            </button>
 
-              <Titulo>Campañas</Titulo>
-              {campanasVisibles.length === 0 && <Vacio />}
-              {campanasVisibles.map((c) => (
+            {/* Una pestaña por nivel. Fijas: se cambia de lista sin tener que subir. */}
+            <div
+              role="tablist"
+              aria-label="Qué quieres marcar"
+              className="flex gap-1 border-b border-border p-2"
+            >
+              {PESTANAS.map((t) => {
+                const activa = t.id === pestana
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activa}
+                    onClick={() => irA(t.id)}
+                    className={cn(
+                      "flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 text-[15px] font-medium transition-colors md:h-9 md:text-sm",
+                      activa
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground active:bg-muted md:hover:text-foreground"
+                    )}
+                  >
+                    {t.etiqueta}
+                    <span
+                      className={cn(
+                        "tabular-nums",
+                        activa
+                          ? "opacity-70"
+                          : t.marcados > 0
+                            ? "font-semibold text-brand"
+                            : "text-muted-foreground"
+                      )}
+                    >
+                      {t.marcados > 0 ? t.marcados : t.total}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Lo unico que se desliza. El buscador, las pestañas y el pie no se mueven. */}
+            <div className="max-h-[min(52dvh,22rem)] overflow-y-auto overscroll-contain p-2">
+              {acotada && (
+                <p className="px-3 pb-1 pt-1 text-sm text-muted-foreground">
+                  Solo los de lo que has marcado antes.
+                </p>
+              )}
+
+              {listaActiva.length === 0 && <Vacio />}
+
+              {visibles.map((f) => (
                 <Fila
-                  key={c.id}
-                  marcada={valor.campanas.includes(c.id)}
-                  titulo={c.nombre}
-                  pie={
-                    (c.valores.spend ?? 0) > 0
-                      ? fmtEur.format(c.valores.spend)
-                      : "sin gasto en este periodo"
-                  }
-                  apagada={(c.valores.spend ?? 0) === 0}
-                  onClick={() => alternarCampana(c.id)}
+                  key={f.id}
+                  marcada={f.marcada}
+                  titulo={f.titulo}
+                  pie={f.pie}
+                  apagada={f.gasto === 0}
+                  onClick={f.alternar}
                 />
               ))}
 
-              <Titulo>
-                Conjuntos
-                {valor.campanas.length > 0 && (
-                  <span className="font-normal"> de lo que has marcado arriba</span>
-                )}
-              </Titulo>
-              {conjuntosVisibles.length === 0 && <Vacio />}
-              {conjuntosVisibles.map((c) => (
-                <Fila
-                  key={c.id}
-                  marcada={valor.conjuntos.includes(c.id)}
-                  titulo={c.nombre}
-                  pie={`${c.campanaNombre} · ${fmtEur.format(c.valores.spend ?? 0)}`}
-                  apagada={(c.valores.spend ?? 0) === 0}
-                  onClick={() => alternarConjunto(c.id)}
-                  sangrado={1}
-                />
-              ))}
-
-              <Titulo>
-                Anuncios
-                {(valor.conjuntos.length > 0 || valor.campanas.length > 0) && (
-                  <span className="font-normal"> de lo que has marcado arriba</span>
-                )}
-              </Titulo>
-              {anunciosVisibles.length === 0 && <Vacio />}
-              {anunciosVisibles.map((a) => (
-                <Fila
-                  key={a.id}
-                  marcada={valor.anuncios.includes(a.id)}
-                  titulo={a.nombre}
-                  pie={`${a.conjuntoNombre} · ${fmtEur.format(a.valores.spend ?? 0)}`}
-                  apagada={(a.valores.spend ?? 0) === 0}
-                  onClick={() => alternarAnuncio(a.id)}
-                  sangrado={2}
-                />
-              ))}
+              {quedan > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setVerHasta((v) => v + POR_TANDA)}
+                  className="mt-1 flex h-11 w-full items-center justify-center rounded-lg text-[15px] font-medium text-muted-foreground active:bg-muted md:h-9 md:text-sm"
+                >
+                  Ver {Math.min(quedan, POR_TANDA)} más
+                  <span className="ml-1.5 tabular-nums opacity-70">({quedan} sin ver)</span>
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between gap-3 border-t border-border p-3">
@@ -311,12 +394,6 @@ export function SelectorAlcance({
   )
 }
 
-function Titulo({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="px-3 pb-1 pt-3 text-sm font-semibold text-muted-foreground">{children}</p>
-  )
-}
-
 function Vacio() {
   return <p className="px-3 py-2 text-sm text-muted-foreground">Ninguno coincide.</p>
 }
@@ -326,15 +403,12 @@ function Fila({
   titulo,
   pie,
   onClick,
-  sangrado = 0,
   apagada = false,
 }: {
   marcada: boolean
   titulo: string
   pie: string
   onClick: () => void
-  /** Cuantos niveles cuelga: 0 campaña, 1 conjunto, 2 anuncio. */
-  sangrado?: 0 | 1 | 2
   /** Sin gasto en el periodo: se puede marcar igual, pero no compite por la atencion. */
   apagada?: boolean
 }) {
@@ -346,8 +420,6 @@ function Fila({
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left active:bg-muted",
         marcada && "bg-brand/10",
-        sangrado === 1 && "pl-7",
-        sangrado === 2 && "pl-11",
         apagada && !marcada && "opacity-60"
       )}
     >
