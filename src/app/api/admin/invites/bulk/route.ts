@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { randomBytes } from "crypto"
+import { productosQueNoExisten } from "@/lib/catalogo/productos"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -46,6 +47,24 @@ export async function POST(req: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
+
+  // CANDADO · el CSV puede traer cualquier cosa escrita a mano. Un producto que
+  // no existe en el catalogo deja al alumno dentro con la formacion vacia y sin
+  // ningun error, asi que se rechaza el archivo ENTERO antes de crear nada.
+  try {
+    const pedidos = Array.from(new Set(parsed.data.rows.map((r) => r.product).filter((p): p is string => Boolean(p))))
+    const inexistentes = await productosQueNoExisten(pedidos)
+    if (inexistentes.length) {
+      return NextResponse.json({
+        error: `El archivo trae productos que no existen en el catalogo: ${inexistentes.join(", ")}. No se ha creado ninguna invitacion.`,
+      }, { status: 400 })
+    }
+  } catch (e) {
+    return NextResponse.json({
+      error: "No se pudo comprobar el catalogo de productos. No se ha creado ninguna invitacion.",
+      detail: (e as Error).message,
+    }, { status: 503 })
+  }
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   let created = 0

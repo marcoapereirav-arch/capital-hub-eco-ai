@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import { randomBytes } from "crypto"
+import { productosQueNoExisten } from "@/lib/catalogo/productos"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -49,6 +50,23 @@ export async function POST(req: Request) {
   const parsed = createSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 })
+  }
+
+  // CANDADO · una invitacion con un producto que no existe en el catalogo deja
+  // al alumno dentro pero con la formacion vacia, y sin ningun error. Aqui se
+  // acepta cualquier texto desde siempre; a partir de ahora, no.
+  try {
+    const inexistentes = await productosQueNoExisten(parsed.data.products ?? [])
+    if (inexistentes.length) {
+      return NextResponse.json({
+        error: `Este producto no existe en el catalogo: ${inexistentes.join(", ")}`,
+      }, { status: 400 })
+    }
+  } catch (e) {
+    return NextResponse.json({
+      error: "No se pudo comprobar el catalogo de productos. Vuelve a intentarlo.",
+      detail: (e as Error).message,
+    }, { status: 503 })
   }
 
   const admin = createServiceClient(

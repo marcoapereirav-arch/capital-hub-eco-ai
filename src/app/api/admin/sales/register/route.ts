@@ -4,6 +4,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient } from "@supabase/supabase-js"
 import { sendWelcomeAlumnoHT, notifyMarcoPurchase } from "@/lib/email/senders"
 import { notifyAdmins } from "@/lib/notifications/notify-admins"
+import { getProductosVendibles, productosQueNoExisten } from "@/lib/catalogo/productos"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -21,7 +22,8 @@ function generateToken(): string {
     .join("")
 }
 
-const PRODUCTS = ["IA Integrator", "Media Buyer Digital", "Comercial Closing"] as const
+// La lista de productos NO se escribe aqui: sale del catalogo real (routes).
+// Ver src/lib/catalogo/productos.ts y el vigilante `npm run check:productos`.
 const PAYMENT_METHODS = [
   "Stripe (full pay)",
   "Stripe (split pay)",
@@ -41,7 +43,9 @@ const Schema = z.object({
   phone: z.string().min(6).max(40),
   source: z.string().max(60).optional(),
   // Producto
-  products: z.array(z.enum(PRODUCTS)).min(1),
+  // Se valida contra el catalogo real dentro del handler, no aqui:
+  // un z.enum obligaria a repetir la lista y es justo lo que rompio esto.
+  products: z.array(z.string().min(1).max(120)).min(1),
   // Cifras
   revenue: z.number().nonnegative(),
   cash_collected: z.number().nonnegative(),
@@ -73,6 +77,25 @@ export async function POST(req: NextRequest) {
   const data = parsed.data
   const admin = getAdminClient()
   const email = data.email.toLowerCase().trim()
+
+  // CANDADO · no se vende lo que no existe en el catalogo.
+  // Sin esto, la venta se registraba, el correo salia, el alumno ponia su
+  // contraseña, entraba... y veia la formacion VACIA sin ningun aviso.
+  // Ahora el closer se entera EN EL MOMENTO, que es cuando se puede arreglar.
+  try {
+    const inexistentes = await productosQueNoExisten(data.products)
+    if (inexistentes.length) {
+      return NextResponse.json({
+        error: `Este producto ya no existe en el catalogo: ${inexistentes.join(", ")}. Recarga la pagina y elige uno de la lista.`,
+      }, { status: 400 })
+    }
+  } catch (e) {
+    // FAIL-CLOSED: si no se puede comprobar, no se registra la venta.
+    return NextResponse.json({
+      error: "No se pudo comprobar el catalogo de productos. Vuelve a intentarlo.",
+      detail: (e as Error).message,
+    }, { status: 503 })
+  }
 
   // 1. Upsert contacto
   let contactId = data.contact_id
@@ -311,9 +334,21 @@ export async function GET() {
     .eq("active", true)
     .order("full_name", { nullsFirst: false })
 
+  // FAIL-CLOSED: si el catalogo no carga, el widget se entera. Antes devolvia
+  // una lista escrita a mano que llevaba 19 dias sin Clipper.
+  let products: string[]
+  try {
+    products = (await getProductosVendibles()).map((p) => p.nombre)
+  } catch (e) {
+    return NextResponse.json(
+      { error: "No se pudo cargar el catalogo de productos", detail: (e as Error).message },
+      { status: 503 }
+    )
+  }
+
   return NextResponse.json({
     closers: data ?? [],
-    products: PRODUCTS,
+    products,
     payment_methods: PAYMENT_METHODS,
   })
 }

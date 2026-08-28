@@ -62,7 +62,25 @@ type Booking = {
 
 type Stage = { value: string; label: string }
 
-const PRODUCT_OPTIONS = ["IA Integrator", "Media Buyer Digital", "Comercial Closing"]
+/** Los productos vendibles, leidos del catalogo real. */
+function useProductOptions(): string[] {
+  const [opciones, setOpciones] = useState<string[]>([])
+  useEffect(() => {
+    let vivo = true
+    fetch("/api/catalogo/productos")
+      .then((r) => (r.ok ? r.json() : { productos: [] }))
+      .then((d: { productos?: { nombre: string }[] }) => {
+        if (vivo) setOpciones((d.productos ?? []).map((p) => p.nombre))
+      })
+      .catch(() => {})
+    return () => { vivo = false }
+  }, [])
+  return opciones
+}
+
+// Los productos NO se escriben aqui. Salen del catalogo real via
+// /api/catalogo/productos. Esta lista estuvo 19 dias ofreciendo "Media Buyer
+// Digital" (retirado) y sin Clipper, y nadie se entero.
 
 /** Enlace o boton de accion rapida. 44 puntos en telefono. */
 const CLASES_ACCION =
@@ -98,6 +116,7 @@ export function ContactDrawer({
    */
   pipelines?: PipelineWithStages[]
 }) {
+  const PRODUCT_OPTIONS = useProductOptions()
   const [tab, setTab] = useState<"datos" | "productos" | "journey" | "notas">("datos")
   const [contact, setContact] = useState<ContactDetail | null>(null)
   const [events, setEvents] = useState<JourneyEvent[]>([])

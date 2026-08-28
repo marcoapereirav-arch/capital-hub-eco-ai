@@ -19,8 +19,18 @@ import { CARPETAS_RAIZ, carpetaFormacion, coleccionDeFormacion } from "@/lib/bun
  * tenga que pulsar nada. Es barato porque cada paso mira antes si hace falta.
  */
 
-/** Las tres formaciones. No hay más y nadie crea más (decisión de Marco). */
-export const FORMACIONES = ["IA Integrator", "Comercial Closing", "Clipper"] as const
+/**
+ * Las formaciones salen del CATALOGO real, no de una lista escrita aquí.
+ *
+ * Antes eran tres nombres a mano. El 2026-07-30 Clipper sustituyó a Media Buyer
+ * y hubo que acordarse de tocar cinco sitios distintos; en el widget de venta
+ * nadie se acordó y estuvo 19 días roto. Leyendo el catálogo, una formación
+ * nueva aparece sola y una retirada desaparece sola.
+ */
+async function formaciones(): Promise<string[]> {
+  const { getProductosVendibles } = await import("@/lib/catalogo/productos")
+  return (await getProductosVendibles()).map((p) => p.nombre)
+}
 
 const NOTAS: Record<string, string> = {
   Testimonios: "Aqui van los videos de testimonios de alumnos.",
@@ -39,7 +49,7 @@ export async function asegurarEstructura(): Promise<{ creadas: string[] }> {
     creadas.push(raiz)
   }
 
-  for (const formacion of FORMACIONES) {
+  for (const formacion of await formaciones()) {
     const ruta = carpetaFormacion(formacion)
     if ((await listar(ruta)).length > 0) continue
     await asegurarCarpeta(
@@ -66,7 +76,7 @@ export async function asegurarColecciones(): Promise<{ creadas: string[] }> {
   if (existentes === null) return { creadas }
 
   const yaEstan = new Set(existentes.map((c) => c.name.trim().toLowerCase()))
-  for (const formacion of FORMACIONES) {
+  for (const formacion of await formaciones()) {
     const nombre = coleccionDeFormacion(formacion)
     if (yaEstan.has(nombre.trim().toLowerCase())) continue
     await asegurarColeccion(nombre).catch(() => {})
