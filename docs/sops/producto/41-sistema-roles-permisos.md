@@ -16,7 +16,7 @@ Cómo se gestiona quién ve qué dentro del panel interno.
 | **`marketing`** | dashboard · operaciones · CRM (con contactos) · webs | (sin acceso o lectura, por confirmar) |
 | **`formador`** | dashboard · operaciones · CRM (con contactos) | **ADMIN** — puede editar su formación |
 | **`closer`** | dashboard · operaciones · CRM (con contactos) | (sin acceso o lectura, por confirmar) |
-| **`setter`** | dashboard · operaciones · CRM (con contactos) | (sin acceso o lectura, por confirmar) |
+| **`setter`** | dashboard · operaciones · CRM (con contactos) · **actividad** (su propio historial del parte diario, ver SOP [`63`](63-actividad-setter-historial.md)) | (sin acceso o lectura, por confirmar) |
 
 **Nota formador en App:** cuando clica "Ir a App" desde el OS entra con su mismo usuario (vía Magic Link Bridge cuando Adrián termine la Edge Function). Mapeo: `profiles.role = 'formador'` (OS) → `auth.users.raw_user_meta_data.role = 'ADMIN'` (App).
 
@@ -33,7 +33,7 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
   marketing: ["/dashboard", "/overview", "/operaciones", "/crm", "/contactos", "/webs"],
   formador:  ["/dashboard", "/overview", "/operaciones", "/crm", "/contactos"],
   closer:    ["/dashboard", "/overview", "/operaciones", "/crm", "/contactos"],
-  setter:    ["/dashboard", "/overview", "/operaciones", "/crm", "/contactos"],
+  setter:    ["/dashboard", "/overview", "/operaciones", "/crm", "/contactos", "/actividad"],
 }
 ```
 

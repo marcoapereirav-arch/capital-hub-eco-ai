@@ -14,6 +14,7 @@ import {
   Mail,
   Zap,
   GraduationCap,
+  ClipboardList,
 } from "lucide-react"
 import type { NavSection } from "../types/navigation"
 
@@ -56,13 +57,19 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    // Ventas ya tiene su primera ruta: el historial del parte diario. Hasta hoy la
+    // seccion existia en el Knowledge pero no en el menu.
+    label: "Ventas",
+    items: [{ title: "Actividad", href: "/actividad", icon: ClipboardList }],
+  },
+  {
     label: "Producto",
     items: [
       { title: "Invitaciones App", href: "/invitaciones", icon: Mail },
       { title: "Integraciones", href: "/integrations", icon: Link2 },
     ],
   },
-  // Ventas y Finanzas — pendientes de rutas. Se añaden secciones aquí cuando existan.
+  // Finanzas — pendiente de rutas. Se añade la sección aquí cuando existan.
 ]
 
 export const navAll = navSections.flatMap((s) => s.items)

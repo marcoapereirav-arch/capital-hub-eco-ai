@@ -14,6 +14,11 @@ import { cn } from "@/lib/utils"
  * sin querer, y la pantalla lo dice en voz alta cuando estas corrigiendo uno.
  *
  * Sin avisos al movil: Marco los quito expresamente el 2026-08-07.
+ *
+ * DESDE EL HISTORIAL (2026-08-28)
+ * El mismo formulario se abre sobre un dia y una persona concretos desde la pantalla de
+ * Actividad. `profileId` solo lo acepta el servidor si quien llama es administrador, asi
+ * que aqui no hay ninguna decision de permiso: se manda y la base vuelve a comprobarlo.
  */
 
 type Parte = {
@@ -37,12 +42,38 @@ function enElBody(nodo: React.ReactNode) {
   return createPortal(nodo, document.body)
 }
 
+/** Los parametros de la API: el dia y, cuando se corrige el de otra persona, quien es. */
+function consultaFactory(profileId?: string) {
+  return (fecha?: string) => {
+    const p = new URLSearchParams()
+    if (fecha) p.set("date", fecha)
+    if (profileId) p.set("profile", profileId)
+    return p.toString()
+  }
+}
+
 function fechaLarga(iso: string) {
   const [a, m, d] = iso.split("-").map(Number)
   return new Date(a, m - 1, d).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
 }
 
-export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
+export function ParteDiarioModal({
+  onClose,
+  fechaInicial,
+  profileId,
+  nombrePersona,
+  onGuardado,
+}: {
+  onClose: () => void
+  /** El dia que se abre. Si no viene, se abre el de hoy. */
+  fechaInicial?: string
+  /** De quien es el parte. Si no viene, el de quien esta usando el OS. */
+  profileId?: string
+  /** Para decir en pantalla de quien es el parte que se esta corrigiendo. */
+  nombrePersona?: string
+  /** Se llama despues de guardar bien, para que la pantalla de detras se refresque. */
+  onGuardado?: () => void
+}) {
   const [fecha, setFecha] = useState("")
   const [hoy, setHoy] = useState("")
   const [valores, setValores] = useState<Parte>(VACIO)
@@ -51,6 +82,8 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [guardado, setGuardado] = useState(false)
+
+  const consulta = consultaFactory(profileId)
 
   /* Mientras el modal esta abierto, la pagina de detras NO se mueve.
      Sin esto, al llegar al final de la lista el dedo sigue empujando y lo que
@@ -64,13 +97,13 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
     }
   }, [])
 
-  // Carga inicial: el parte de hoy, si lo hay.
+  // Carga inicial: el parte del dia pedido (o el de hoy), si lo hay.
   useEffect(() => {
     let cancelado = false
     ;(async () => {
       setCargando(true)
       try {
-        const res = await fetch("/api/setter/report")
+        const res = await fetch(`/api/setter/report?${consulta(fechaInicial)}`)
         const d = await res.json()
         if (cancelado) return
         if (!res.ok) {
@@ -90,7 +123,9 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
     return () => {
       cancelado = true
     }
-  }, [])
+    // Se abre una vez, sobre el dia y la persona con los que nace el modal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechaInicial, profileId])
 
   // Al cambiar de dia se trae el parte de ESE dia.
   async function cambiarFecha(nueva: string) {
@@ -99,7 +134,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
     setGuardado(false)
     setCargando(true)
     try {
-      const res = await fetch(`/api/setter/report?date=${nueva}`)
+      const res = await fetch(`/api/setter/report?${consulta(nueva)}`)
       const d = await res.json()
       if (!res.ok) {
         setError(d.error ?? "No se pudo abrir ese día")
@@ -120,7 +155,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/setter/report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: fecha, ...valores }),
+        body: JSON.stringify({ date: fecha, profile_id: profileId, ...valores }),
       })
       const d = await res.json()
       if (!res.ok) {
@@ -128,6 +163,7 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
         return
       }
       setGuardado(true)
+      onGuardado?.()
       setTimeout(onClose, 1100)
     } catch {
       setError("No se pudo conectar")
@@ -161,7 +197,12 @@ export function ParteDiarioModal({ onClose }: { onClose: () => void }) {
         className="flex max-h-[92dvh] w-full min-w-0 max-w-md flex-col rounded-t-xl border border-border bg-background md:max-h-[85dvh] md:rounded-xl"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h2 className="text-base font-semibold text-foreground">Registrar actividad</h2>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-foreground">Registrar actividad</h2>
+            {nombrePersona && (
+              <p className="truncate text-sm text-muted-foreground">Parte de {nombrePersona}</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={onClose}

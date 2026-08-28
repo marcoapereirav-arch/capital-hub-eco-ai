@@ -11,7 +11,7 @@
  *   - marketing: dashboard · operaciones · CRM · webs
  *   - formador: dashboard · operaciones · CRM (en App tiene rol ADMIN para editar su formación)
  *   - closer: dashboard · operaciones · CRM
- *   - setter: dashboard · operaciones · CRM
+ *   - setter: dashboard · operaciones · CRM · actividad (su propio historial del parte)
  */
 
 export type Role = "super_admin" | "admin" | "marketing" | "closer" | "setter" | "formador"
@@ -58,6 +58,8 @@ export const ROLE_ROUTES: Record<Role, string[] | "*"> = {
     "/crm",
     "/contactos",
     "/tutoriales",
+    // Su propio historial del parte diario. Solo ve sus dias: lo corta la RLS, no esta lista.
+    "/actividad",
   ],
 }
 
