@@ -202,6 +202,17 @@ export async function GET() {
     .limit(1)
     .maybeSingle()
 
+  // Stats del rastro del parte diario
+  const { count: lineasParte } = await admin
+    .from("setter_report_events")
+    .select("*", { count: "exact", head: true })
+  const { data: ultimaLineaParte } = await admin
+    .from("setter_report_events")
+    .select("created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
   // Stats Calendly
   const { count: calendlyCount } = await admin
     .from("calendly_scheduled_events")
@@ -712,6 +723,28 @@ export async function GET() {
       lastRun: ultimaVisitaAfiliado?.created_at ?? null,
       lastRunHoursAgo: hoursSince(ultimaVisitaAfiliado?.created_at),
       totalExecutions: visitasAfiliados ?? 0,
+    },
+    {
+      id: "parte_diario_rastro",
+      category: "crm",
+      label: "Rastro del parte diario (quién registró y qué cambió)",
+      description:
+        "Cada vez que alguien guarda el parte diario de actividad, la propia base de datos escribe una línea con quién lo firmó, a qué hora, cómo estaba antes y cómo quedó. No lo hace la pantalla: lo hace un disparador, así que es imposible guardar sin dejar rastro, venga del botón, de la API o de una consulta a mano. Un guardado que no cambia ningún número no deja línea. Nadie puede editar ni borrar el historial, ni siendo administrador. Se ve en /actividad.",
+      trigger: "Disparador de la base: setter_report_rastro_trg (AFTER INSERT OR UPDATE en setter_daily_reports)",
+      actions: [
+        "Compara los cuatro números de antes con los de después",
+        "Si no cambió ninguno, no escribe nada",
+        "Inserta una línea en setter_report_events con el actor, la acción y el antes y el después",
+      ],
+      relatedTables: ["setter_daily_reports", "setter_report_events", "profiles"],
+      status: (lineasParte ?? 0) > 0 ? "live" : "idle",
+      statusReason:
+        (lineasParte ?? 0) > 0
+          ? `Guardando · ${lineasParte} líneas de historial`
+          : "Listo · todavía nadie ha guardado un parte",
+      lastRun: ultimaLineaParte?.created_at ?? null,
+      lastRunHoursAgo: hoursSince(ultimaLineaParte?.created_at),
+      totalExecutions: lineasParte ?? 0,
     },
   ]
 

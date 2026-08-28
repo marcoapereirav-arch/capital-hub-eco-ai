@@ -295,3 +295,9 @@ Movidas **fuera de toda capa**, al principio de `globals.css`. Comprobado despu�
 ## 2026-08-11 · El filtro de ManyChat
 
 Le faltaba `value`, igual que le faltaba al dashboard: la etiqueta se quedaba clavada. **Todas las pantallas del OS con filtro lo pasan ya.**
+
+## Los cuatro números de la prospección
+
+La tira de Conversaciones, Follow-ups, Ofertas y Agendadas sale del **parte diario**, sumada
+del periodo elegido. El día a día, quién lo registró, a qué hora y qué se corrigió está en
+`/actividad`. Detalle en [`producto/63`](63-actividad-setter-historial.md).

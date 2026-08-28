@@ -99,3 +99,19 @@ _(Vacío de momento — todas las declaradas están activas o pendientes)_
 Mensualmente (o antes de invitar nuevos miembros del equipo):
 - Abrir `/automatizaciones` y comparar con esta tabla
 - Si algo no cuadra: **actualizar lo que sea correcto** (siempre lo real, no lo "que debería estar")
+
+## Rastro del parte diario (2026-08-29)
+
+| | |
+|---|---|
+| **id** | `parte_diario_rastro` |
+| **Qué hace** | Cada guardado del parte diario deja una línea con quién lo firmó, a qué hora, cómo estaba antes y cómo quedó |
+| **Quién lo dispara** | La propia base: `setter_report_rastro_trg`, `AFTER INSERT OR UPDATE` sobre `setter_daily_reports` |
+| **Tablas** | `setter_daily_reports`, `setter_report_events`, `profiles` |
+| **Dónde se ve** | `/actividad` |
+
+No lo escribe la pantalla a propósito: así es imposible guardar sin dejar rastro, venga del
+botón, de la API o de una consulta a mano. Un guardado que no cambia ningún número no deja
+línea. El historial no se puede editar ni borrar por la API, ni siendo administrador.
+
+Detalle en [`producto/63`](63-actividad-setter-historial.md).
