@@ -169,6 +169,37 @@ Asi esta hecha "Lo que va pasando" del dashboard
 (`src/features/dashboard/components/dashboard-activity.tsx`): 10 en el panel, ventana con
 todo de 20 en 20.
 
+### Una carta con 20 filas se desplaza POR DENTRO
+
+> Marco, 2026-08-29: *"si hay una lista de mas de 20 filas, tiene que haber un boton de
+> siguiente. Haz que la carta no sea un scroll largo, sino que sea un scroll interno."*
+
+Veinte filas alargan tanto la carta que **el boton de pasar de pagina queda fuera de la
+vista**, y un boton que hay que ir a buscar no existe. Se le da su propio desplazamiento a
+la lista, con dos condiciones:
+
+```tsx
+<ListaPaginada items={dias} claveDeFiltros={firma} nombreSingular="día" nombrePlural="días">
+  {(pagina) => (
+    // 1. Tope de alto: la carta ENTERA (cabecera + lista + Siguiente) cabe en un telefono.
+    // 2. `max-h` y NUNCA `overscroll-contain`: con `contain`, una pagina con pocas filas
+    //    no tendria nada que desplazar y se tragaria el gesto (seccion 2 ter).
+    <div className="max-h-[52dvh] overflow-y-auto md:max-h-[30rem]">
+      <ul className="divide-y divide-border">{pagina.map(...)}</ul>
+    </div>
+  )}
+</ListaPaginada>
+```
+
+Nota: **no se usa `propioScroll`**, que trae `no-overscroll` incluido. Ahi la caja va por
+fuera, dentro del `children`, para que el contador y los botones queden **debajo** del
+desplazamiento y siempre a la vista.
+
+Medido: la carta queda en 546 puntos en un telefono de 667 y en 622 en uno de 812.
+
+**Se comprueba con el puntero, no con una captura:** rodar encima de la lista con sitio
+dentro (se mueve la lista), llevarla a su final y volver a rodar (se mueve la pagina).
+
 ### Lo que NO vale
 
 - `items.map(...)` sobre la lista entera. Es lo que hay que dejar de hacer.
@@ -1132,6 +1163,16 @@ carpetas o del disco del usuario, se salta con `process.env.VERCEL || process.en
 **8. Poner `pt-safe` a una pieza que ya tiene altura fija.** Es el aplastamiento contra el
 notch de la seccion 3.1. La regla no es "todo lo de arriba lleva `pt-safe`": es "lleva
 `pt-safe` **y ademas** su altura tiene que poder crecer".
+
+**8 bis. Creer que un `md:` pisa a una clase base de un componente del kit.** La hoja
+(`sheet.tsx`) escribe sus clases con el selector `data-[side=bottom]:`, que **pesa mas** que
+un `md:`: `data-[side=bottom]:inset-x-0` gana a `md:left-auto` y no hay `cn()` que lo
+arregle, porque tailwind-merge no fusiona entre variantes distintas. Resultado medido el
+2026-08-29: un cajon pensado para la derecha salio pegado a la IZQUIERDA de la pantalla, con
+los tipos y el candado en verde. Se resuelve con el importante, y en **Tailwind 4 el `!` va
+al FINAL**: `md:right-0!`, no `md:!right-0`. (Ojo: por el repo queda sintaxis vieja tipo
+`md:!bottom-6`, que en Tailwind 4 **no hace nada**.) Y se mira en el navegador: esto no lo
+caza ningun comprobador.
 
 **9. Decidir el diseno de movil con JavaScript.** `useIsMobile()` miente en el primer pintado.
 Lo que se ve al abrir es el diseno de escritorio, y luego salta. Se decide con clases.

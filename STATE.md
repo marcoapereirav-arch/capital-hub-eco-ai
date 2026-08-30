@@ -2,7 +2,59 @@
 
 > Se actualiza en cada cierre de chat. Dice la verdad de hoy, no la intención.
 
-**Última actualización:** 2026-08-11
+**Última actualización:** 2026-08-30
+---
+
+## Qué se hizo el 2026-08-29 · el parte del setter deja de perder su propio historial
+
+Marco: *"necesito un registro diario (historial) de las veces que se registra actividad del
+setter... que ahí se pueda editar y se pueda ver quién registra y quién editó ya, qué hora y
+TODO lo necesario para tener claridad"*.
+
+**Lo que había, medido en el código y en la base, no supuesto:** el parte se guardaba
+**pisando** la línea anterior. El valor viejo desaparecía para siempre. No se guardaba quién
+lo escribió ni quién lo corrigió. No había ninguna pantalla del día a día: los números solo
+salían **sumados** en el Dashboard. Y **nadie podía corregir el parte de otro**, ni un
+administrador: si Juanda se equivocaba, solo Juanda podía arreglarlo.
+
+- **El rastro lo escribe la BASE, no la pantalla.** Un disparador guarda una línea por cada
+  guardado, con quién lo firmó, la hora, el antes y el después y qué campos cambiaron. Es
+  imposible guardar sin dejar huella: da igual que venga del botón, de la API o de una
+  consulta a mano. El historial **no tiene política de escritura**: nadie lo edita ni lo
+  borra, ni un administrador. Un guardado que no cambia ningún número no deja línea.
+- **Un administrador puede registrar y corregir el parte de un setter**, y queda firmado con
+  su nombre. Abrir eso no pierde trazabilidad: la crea.
+- **Pantalla nueva `/actividad`**, primera ruta de la sección **Ventas** del menú, que
+  existía en el Knowledge y no en el OS. Registrado hoy · los cuatro totales · gráfico día a
+  día · historial de 20 en 20 · ficha del día con la línea de tiempo completa y el botón de
+  corregir.
+- **Los días sin parte se ven, con un guion.** No registrar no es haber hecho cero.
+- **Las horas son las de Madrid**, nunca el UTC crudo (REGLA #23).
+- Los 4 partes que ya existían se rellenaron hacia atrás, marcados como **reconstruidos**.
+  De los dos que se corrigieron antes de que esto existiera, la ficha dice en voz alta que
+  hubo una corrección pero que los valores de antes no se guardaron, en vez de inventarlos.
+
+**Dos decisiones de diseño que costaron una pasada cada una:**
+
+| Qué pasaba | Por qué |
+|---|---|
+| La carta del historial alargaba tanto la página que el botón de **Siguiente** había que ir a buscarlo | Marco lo pidió: la lista se desplaza **por dentro**, con tope de alto y **sin** `overscroll-contain`. Con `contain`, una página con pocas filas se tragaría el gesto y congelaría la pantalla |
+| El cajón de la ficha del día salía pegado a la **izquierda** | Las clases base de la hoja usan el selector `data-[side=bottom]:`, que pesa más que un `md:`. Se arregla con el importante, y en Tailwind 4 el `!` va **al final** |
+
+Los dos eran **fallos mudos**: tipos, candados y build en verde. Solo se ven mirando.
+
+**Anclado para que no se repita:**
+
+| Qué | Dónde |
+|---|---|
+| El sistema entero (qué se mide, quién corrige, qué guarda el rastro) | [`producto/63`](docs/sops/producto/63-actividad-setter-historial.md) |
+| La carta larga que se desplaza por dentro, y sus dos condiciones | [`producto/62`](docs/sops/producto/62-un-solo-scroll-por-pantalla.md) + skill `os-movil-primero` |
+| El `!` de Tailwind 4 y la especificidad de las clases del kit | skill `os-movil-primero`, errores ya cometidos |
+| El disparador, en el panel de Marco | `/automatizaciones` como `parte_diario_rastro` + [`producto/30`](docs/sops/producto/30-automatizaciones-estado.md) |
+
+**Publicado y comprobado en producción.** Datos de prueba borrados: solo quedan los 3 partes
+reales de Juanda y el de la cuenta de pruebas del 8 de agosto.
+
 ---
 
 ## Qué se hizo el 2026-08-11 · el panel de Ads y un fallo de números

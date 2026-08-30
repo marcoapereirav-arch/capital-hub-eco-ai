@@ -98,7 +98,37 @@ informe.
 - **Antes de dar una pantalla por hecha, se desplaza con el puntero ENCIMA del contenido**,
   no solo por el borde. Una captura no prueba que se pueda desplazar.
 
+## La excepción que SÍ vale: una carta larga se desplaza por dentro
+
+> Marco, 2026-08-29: *"si hay una lista de más de 20 filas, tiene que haber un botón de
+> siguiente. Haz que la carta no sea un scroll largo, sino que sea un scroll interno."*
+
+Una carta con veinte filas dentro alarga la página tanto que **el botón de pasar de página
+queda fuera de la vista**. Y un botón que hay que ir a buscar, no existe. Ahí sí se le da a
+la lista su propio desplazamiento, pero **con dos condiciones que no se negocian**:
+
+1. **Tope de alto, y que la carta ENTERA quepa en una pantalla de teléfono**: cabecera,
+   lista y el contador con Anterior y Siguiente. Medido: `max-h-[52dvh] md:max-h-[30rem]`
+   deja la carta en 546 puntos en un teléfono de 667 y en 622 en uno de 812.
+2. **`max-h` y NUNCA `overscroll-contain`.** Con `contain`, el día que una página traiga
+   pocas filas la caja no tendría nada que desplazar y se tragaría el gesto: la pantalla
+   congelada de este mismo documento. Sin `contain`, cuando la lista se acaba el gesto pasa
+   a la página, que es lo que debe hacer.
+
+Esto **no** contradice la regla de arriba: sigue habiendo un solo desplazamiento por
+pantalla más el de esta caja, que tiene alto fijo y contenido que no cabe, que son
+exactamente las dos condiciones que la regla pide.
+
+**Cómo se comprueba** (no vale la captura): se pone el puntero encima de la lista, se rueda
+con sitio dentro (tiene que moverse la lista, no la página), se lleva la lista a su final y
+se vuelve a rodar (ahora tiene que moverse la página). Primera pantalla que lo hace:
+`/actividad`, ver [`producto/63`](63-actividad-setter-historial.md).
+
 ## Cambios versionados
+
+### 2026-08-29 — La excepción de la carta larga
+Marco pidió que la carta del historial no alargara la página y que el botón de Siguiente
+estuviera a la vista. Se añade la excepción con sus dos condiciones y la forma de medirla.
 
 ### 2026-08-07 — Creación
 Encontrado por Marco en la Configuración de Afiliados. Arreglado en `ListaPaginada` (afecta a
