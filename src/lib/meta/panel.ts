@@ -1,6 +1,6 @@
 import "server-only"
 import { pedirInsights, periodoAnterior, type RangoFechas } from "./insights"
-import { CAMPOS_META, METRICAS, metricaPorId } from "./metricas"
+import { CAMPOS_META, METRICAS, camposPedibles, metricaPorId } from "./metricas"
 
 /**
  * Todo lo que necesita el panel de Campañas, en una sola pasada.
@@ -108,8 +108,18 @@ export type FilaConjunto = {
   valores: Record<string, number>
 }
 
+export type FilaAnuncio = {
+  id: string
+  nombre: string
+  conjuntoId: string
+  conjuntoNombre: string
+  campanaId: string
+  campanaNombre: string
+  valores: Record<string, number>
+}
+
 /** Lo que se ha marcado con casillas. Vacio = la cuenta entera. */
-export type Seleccion = { campanas: string[]; conjuntos: string[] }
+export type Seleccion = { campanas: string[]; conjuntos: string[]; anuncios: string[] }
 
 /** Una linea de desglose: donde se muestra, o que edad responde. */
 export type FilaDesglose = { clave: string; gasto: number; leads: number; impresiones: number }
@@ -122,6 +132,7 @@ export type DatosPanel = {
   dias: FilaDia[]
   campanas: FilaCampana[]
   conjuntos: FilaConjunto[]
+  anuncios: FilaAnuncio[]
   plataformas: FilaDesglose[]
   edades: FilaDesglose[]
   moneda: string
@@ -129,20 +140,26 @@ export type DatosPanel = {
 
 export type ErrorPanel = { ok: false; error: string; sinPermiso: boolean }
 
-/** Todas las métricas del catálogo, para pedirlas de una y no tener que volver. */
+/**
+ * Todo lo que se le pide a Meta de una, para no tener que volver.
+ *
+ * Solo los campos PEDIBLES. Las visitas a la pagina de destino y los clientes potenciales
+ * no son campos: viven dentro de `actions`. Si se colaran aqui, Meta devolveria error y el
+ * panel entero se quedaria en blanco. Se calculan luego, en `valores()`.
+ */
 function todosLosCampos(): string[] {
-  return [...new Set([...METRICAS.map((m) => m.id), ...CAMPOS_META])]
+  return [...new Set([...camposPedibles(), ...CAMPOS_META])]
 }
 
 export async function getDatosPanel(
   rango: RangoFechas,
-  sel: Seleccion = { campanas: [], conjuntos: [] }
+  sel: Seleccion = { campanas: [], conjuntos: [], anuncios: [] }
 ): Promise<DatosPanel | ErrorPanel> {
   const campos = todosLosCampos()
   // Lo marcado con casillas se aplica a los totales, al dia a dia y al embudo. La LISTA de
   // campañas se pide SIEMPRE entera: es de donde salen las casillas, asi que si se filtrara
   // tambien, al marcar una desaparecerian las demas y no se podria desmarcar.
-  const filtro = { campanas: sel.campanas, conjuntos: sel.conjuntos }
+  const filtro = { campanas: sel.campanas, conjuntos: sel.conjuntos, anuncios: sel.anuncios }
 
   const desglose = (b: "publisher_platform" | "age") =>
     pedirInsights<Record<string, unknown>>({
@@ -152,7 +169,7 @@ export async function getDatosPanel(
       ...filtro,
     })
 
-  const [tot, ant, dia, camp, conj, plat, edad] = await Promise.all([
+  const [tot, ant, dia, camp, conj, anun, plat, edad] = await Promise.all([
     pedirInsights<Record<string, unknown>>({ rango, campos, ...filtro }),
     pedirInsights<Record<string, unknown>>({ rango: periodoAnterior(rango), campos, ...filtro }),
     // La evolución se pide a nivel de cuenta: día a día por anuncio serían cientos de filas
@@ -174,6 +191,22 @@ export async function getDatosPanel(
       campos: [...campos, "campaign_id", "campaign_name", "adset_id", "adset_name"],
       campanas: sel.campanas,
     }),
+    // Los anuncios se piden filtrados por lo que este marcado ARRIBA (campanas y
+    // conjuntos), nunca por `sel.anuncios`: si se filtrara por ellos mismos, al marcar uno
+    // desapareceria el resto de la lista y no se podria desmarcar. Es el mismo motivo por
+    // el que la lista de campanas se pide siempre entera.
+    pedirInsights<Record<string, unknown>>({
+      rango,
+      nivel: "ad",
+      campos: [
+        ...campos,
+        "campaign_id", "campaign_name",
+        "adset_id", "adset_name",
+        "ad_id", "ad_name",
+      ],
+      campanas: sel.campanas,
+      conjuntos: sel.conjuntos,
+    }),
     desglose("publisher_platform"),
     desglose("age"),
   ])
@@ -185,10 +218,17 @@ export async function getDatosPanel(
 
   const valores = (f: Record<string, unknown>) => {
     const out: Record<string, number> = {}
-    for (const m of METRICAS) out[m.id] = valorDe(f, m.id)
-    out.leads = valorDeAccion(f, "actions", ACCIONES.lead)
-    out.costePorLead = valorDeAccion(f, "cost_per_action_type", ACCIONES.lead)
-    out.visitasWeb = valorDeAccion(f, "actions", ACCIONES.visitaWeb)
+    for (const m of METRICAS) {
+      // Las derivadas no vienen como campo: se sacan del bloque de acciones que ya se pidio.
+      out[m.id] =
+        m.fuente === "accion"
+          ? valorDeAccion(f, m.bloque ?? "actions", m.acciones ?? [])
+          : valorDe(f, m.id)
+    }
+    // Alias historicos que usan el embudo y el medidor. Salen del MISMO sitio que las
+    // metricas de arriba, asi que las dos vistas del dato no pueden discrepar.
+    out.visitasWeb = out.landing_page_views
+    out.costePorLead = out.cost_per_lead
     return out
   }
 
@@ -227,6 +267,17 @@ export async function getDatosPanel(
       ? conj.filas.map((f) => ({
           id: String(f.adset_id ?? ""),
           nombre: String(f.adset_name ?? "Sin nombre"),
+          campanaId: String(f.campaign_id ?? ""),
+          campanaNombre: String(f.campaign_name ?? ""),
+          valores: valores(f),
+        }))
+      : [],
+    anuncios: anun.ok
+      ? anun.filas.map((f) => ({
+          id: String(f.ad_id ?? ""),
+          nombre: String(f.ad_name ?? "Sin nombre"),
+          conjuntoId: String(f.adset_id ?? ""),
+          conjuntoNombre: String(f.adset_name ?? ""),
           campanaId: String(f.campaign_id ?? ""),
           campanaNombre: String(f.campaign_name ?? ""),
           valores: valores(f),

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { ArrowDown, ArrowUp, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { metricaPorId, type Metrica } from "@/lib/meta/metricas"
@@ -57,23 +57,46 @@ const OBJETIVOS: Record<string, string> = {
   MESSAGES: "Mensajes",
 }
 
+/**
+ * La segunda linea de cada fila.
+ *
+ * En campañas es el objetivo de Meta, que viene en MAYUSCULAS y en ingles y hay que
+ * traducir. En conjuntos y anuncios es el nombre del padre, que NO se toca: ponerlo en
+ * minusculas convertia "B02 | ESP | Giorgia Test" en "b02 | esp | giorgia test" y dejaba de
+ * coincidir con Facebook, que es justo lo que no puede pasar.
+ */
 function objetivoLegible(o: string): string {
-  return OBJETIVOS[o] ?? o.replace(/^OUTCOME_/, "").replace(/_/g, " ").toLowerCase()
+  if (OBJETIVOS[o]) return OBJETIVOS[o]
+  // Un objetivo de Meta es SOLO mayusculas, numeros y guiones bajos. Cualquier otra cosa
+  // (espacios, barras, minusculas) es un nombre puesto por una persona: se deja tal cual.
+  return /^[A-Z0-9_]+$/.test(o) ? o.replace(/^OUTCOME_/, "").replace(/_/g, " ").toLowerCase() : o
 }
 
 export function ListaCampanas({
   campanas,
   elegidas,
   titulo = "Tus campañas",
+  unidad = "campañas",
+  pestanas,
 }: {
   campanas: FilaCampana[]
   elegidas: string[]
-  /** Cambia segun el nivel: campañas de la cuenta, o conjuntos de lo marcado. */
+  /** Cambia segun el nivel: Campañas, Conjuntos o Anuncios. */
   titulo?: string
+  /** Como se llama una fila en plural, para los textos de buscar y de lista vacia. */
+  unidad?: string
+  /** Los botones de nivel, que se pintan dentro de la cabecera de la tabla. */
+  pestanas?: ReactNode
 }) {
   const [busqueda, setBusqueda] = useState("")
   const [orden, setOrden] = useState<{ id: string; desc: boolean }>({ id: "spend", desc: true })
   const [pagina, setPagina] = useState(0)
+
+  // Al cambiar de nivel la lista es otra: quedarse en la pagina 3 enseñaria una pagina en
+  // blanco si el nivel nuevo tiene menos filas.
+  useEffect(() => {
+    setPagina(0)
+  }, [titulo])
 
   const columnas = useMemo(
     () => elegidas.map((id) => metricaPorId(id)).filter((m): m is Metrica => Boolean(m)),
@@ -123,13 +146,16 @@ export function ListaCampanas({
   if (campanas.length === 0) {
     return (
       <section className="rounded-lg border border-border bg-card">
+        {/* Las pestañas van tambien aqui: sin ellas, quedarte sin datos en un nivel te
+            dejaria encerrado sin poder volver a otro. */}
+        {pestanas && <div className="border-b border-border p-4">{pestanas}</div>}
         <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 px-6 py-10 text-center">
           <h3 className="text-[17px] font-semibold text-foreground">
-            No hay campañas en este periodo
+            No hay {unidad} en este periodo
           </h3>
           <p className="max-w-[38ch] text-[15px] text-muted-foreground">
-            Cambia las fechas de arriba para ver otro rango, o comprueba en Facebook que las
-            campañas estuvieron activas.
+            Cambia las fechas de arriba para ver otro rango, o comprueba en Facebook que
+            estuvieron activas.
           </p>
         </div>
       </section>
@@ -139,6 +165,7 @@ export function ListaCampanas({
   return (
     <section className="rounded-lg border border-border bg-card">
       <header className="flex flex-col gap-3 border-b border-border p-4">
+        {pestanas}
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h3 className="text-[17px] font-semibold text-foreground">{titulo}</h3>
           <span className="text-sm text-muted-foreground tabular-nums">
@@ -154,7 +181,7 @@ export function ListaCampanas({
               setBusqueda(e.target.value)
               setPagina(0)
             }}
-            placeholder="Buscar campaña"
+            placeholder={`Buscar en ${unidad}`}
             inputMode="search"
             enterKeyHint="search"
             className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-base text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring md:h-9 md:text-sm"

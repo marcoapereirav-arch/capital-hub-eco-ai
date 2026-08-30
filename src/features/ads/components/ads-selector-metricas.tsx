@@ -286,11 +286,6 @@ function FilaMetrica({
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-[15px] font-medium text-foreground">{m.nombre}</span>
-            {m.destacada && (
-              <span className="rounded-sm bg-brand/15 px-1.5 py-0.5 text-sm text-brand">
-                la que pediste
-              </span>
-            )}
             {m.grupo === "avanzada" && (
               <span className="rounded-sm bg-muted px-1.5 py-0.5 text-sm text-muted-foreground">
                 hoy sin datos

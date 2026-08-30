@@ -5,7 +5,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import { PeriodFilter, type PeriodRange } from "@/components/ui/period-filter"
 import { cn } from "@/lib/utils"
 import { metricaPorId, type Metrica } from "@/lib/meta/metricas"
-import type { FilaCampana, FilaConjunto, FilaDesglose } from "@/lib/meta/panel"
+import type { FilaAnuncio, FilaCampana, FilaConjunto, FilaDesglose } from "@/lib/meta/panel"
 import { Embudo, ETIQUETA_PLATAFORMA, Evolucion } from "./ads-graficos"
 import { Anillos, Desglose, Medidor, PorDiaDeSemana, Reparto } from "./ads-graficos-reparto"
 import { ListaCampanas, pintaValor } from "./ads-campanas"
@@ -35,6 +35,7 @@ type Respuesta =
       dias: { fecha: string; gasto: number; leads: number; clicsSalientes: number }[]
       campanas: FilaCampana[]
       conjuntos: FilaConjunto[]
+      anuncios: FilaAnuncio[]
       plataformas: FilaDesglose[]
       edades: FilaDesglose[]
       moneda: string
@@ -42,6 +43,22 @@ type Respuesta =
   | { ok: false; error: string; sinPermiso: boolean }
 
 const fmtEur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
+
+/**
+ * A que altura de la campaña estas mirando.
+ *
+ * Antes esto no se elegia: el panel lo decidia solo mirando si habia campañas marcadas, y
+ * los anuncios no existian en ningun sitio. Marco, 2026-08-28: "quiero tambien seleccionar
+ * los conjuntos que quiero ver internamente con estas metricas... un filtro mas para
+ * conjuntos y tambien un filtro mas para anuncios".
+ */
+type Nivel = "campanas" | "conjuntos" | "anuncios"
+
+const NIVELES: { id: Nivel; etiqueta: string; singular: string }[] = [
+  { id: "campanas", etiqueta: "Campañas", singular: "campañas" },
+  { id: "conjuntos", etiqueta: "Conjuntos", singular: "conjuntos" },
+  { id: "anuncios", etiqueta: "Anuncios", singular: "anuncios" },
+]
 
 function aFecha(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
@@ -58,8 +75,10 @@ export function AdsPanel() {
   const [datos, setDatos] = useState<Respuesta | null>(null)
   const [cargando, setCargando] = useState(false)
   const [elegidas, setElegidas] = useState<string[]>([])
-  // Que campanas o conjuntos estan marcados. Vacio = la cuenta entera.
-  const [alcance, setAlcance] = useState<Alcance>({ campanas: [], conjuntos: [] })
+  // Que campanas, conjuntos o anuncios estan marcados. Vacio = la cuenta entera.
+  const [alcance, setAlcance] = useState<Alcance>({ campanas: [], conjuntos: [], anuncios: [] })
+  // A que altura se mira la tabla y el reparto. Se elige a mano, no se deduce.
+  const [nivel, setNivel] = useState<Nivel>("campanas")
 
   // Las metricas guardadas se leen tras montar: `localStorage` no existe en el servidor y
   // leerlo en el primer pintado haria que la pantalla salte de unas columnas a otras.
@@ -74,6 +93,7 @@ export function AdsPanel() {
     const q = new URLSearchParams({ from: aFecha(rango.from), to: aFecha(rango.to) })
     if (alcance.campanas.length) q.set("campanas", alcance.campanas.join(","))
     if (alcance.conjuntos.length) q.set("conjuntos", alcance.conjuntos.join(","))
+    if (alcance.anuncios.length) q.set("anuncios", alcance.anuncios.join(","))
     fetch(`/api/admin/ads/panel?${q}`)
       .then((r) => r.json())
       .then((j) => {
@@ -95,18 +115,40 @@ export function AdsPanel() {
     rango?.to.getTime(),
     alcance.campanas.join(","),
     alcance.conjuntos.join(","),
+    alcance.anuncios.join(","),
   ])
 
-  // Cuando hay campanas marcadas, el reparto y la tabla bajan un nivel: se enseñan sus
-  // conjuntos. Si no, la lista entera de campanas.
-  const marcadas = alcance.campanas.length > 0
-  const porciones = datos?.ok
-    ? (marcadas ? datos.conjuntos : datos.campanas).map((c) => ({
-        clave: c.id,
-        nombre: c.nombre,
-        valor: c.valores.spend ?? 0,
-      }))
-    : []
+  // Las filas del nivel que se este mirando, ya con su linea de contexto: un conjunto se
+  // entiende con su campana al lado, y un anuncio con su conjunto. Sin eso, dieciseis
+  // anuncios que empiezan igual son dieciseis lineas indistinguibles.
+  const filas: { id: string; nombre: string; objetivo: string; valores: Record<string, number> }[] =
+    !datos?.ok
+      ? []
+      : nivel === "anuncios"
+        ? datos.anuncios.map((a) => ({
+            id: a.id,
+            nombre: a.nombre,
+            objetivo: a.conjuntoNombre,
+            valores: a.valores,
+          }))
+        : nivel === "conjuntos"
+          ? datos.conjuntos.map((c) => ({
+              id: c.id,
+              nombre: c.nombre,
+              objetivo: c.campanaNombre,
+              valores: c.valores,
+            }))
+          : datos.campanas
+
+  // Esto NO es una lista que se pinte: es la entrada del rosco de reparto, que se queda
+  // con las cinco primeras y agrupa el resto en "otras". La lista que SI se pinta es la
+  // tabla de abajo, y esa va de 20 en 20 dentro de `ListaCampanas`.
+  const porciones: { clave: string; nombre: string; valor: number }[] = []
+  for (const f of filas) {
+    porciones.push({ clave: f.id, nombre: f.nombre, valor: f.valores.spend ?? 0 })
+  }
+
+  const etiquetaNivel = NIVELES.find((n) => n.id === nivel)?.singular ?? "campañas"
 
   const cpl = datos?.ok ? costePorLead(datos.totales) : 0
   const cplAntes = datos?.ok ? costePorLead(datos.anteriores) : 0
@@ -118,6 +160,7 @@ export function AdsPanel() {
         <SelectorAlcance
           campanas={datos?.ok ? datos.campanas : []}
           conjuntos={datos?.ok ? datos.conjuntos : []}
+          anuncios={datos?.ok ? datos.anuncios : []}
           valor={alcance}
           onCambio={setAlcance}
         />
@@ -147,21 +190,23 @@ export function AdsPanel() {
             <div className="lg:col-span-2">
               <Evolucion dias={datos.dias} />
             </div>
-            <Reparto porciones={porciones} unidad={marcadas ? "conjuntos" : "campañas"} />
+            <Reparto porciones={porciones} unidad={etiquetaNivel} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Embudo
               pasos={[
+                // Los cuatro escalones se llaman como en Facebook. Antes ponia "Cargaron
+                // la pagina" y "Leads", que no existen con ese nombre en ningun sitio.
                 { nombre: "Impresiones", valor: datos.embudo.impresiones },
                 { nombre: "Clics salientes únicos", valor: datos.embudo.clicsSalientes },
-                { nombre: "Cargaron la página", valor: datos.embudo.visitasWeb },
-                { nombre: "Leads", valor: datos.embudo.leads },
+                { nombre: "Visitas a la página de destino", valor: datos.embudo.visitasWeb },
+                { nombre: "Clientes potenciales", valor: datos.embudo.leads },
               ]}
             />
             {cpl > 0 && (
               <Medidor
-                titulo="Cuánto cuesta un lead"
+                titulo="Coste por cliente potencial"
                 valor={cpl}
                 referencia={cplAntes > 0 ? cplAntes : null}
                 pieReferencia={
@@ -191,20 +236,23 @@ export function AdsPanel() {
             <PorDiaDeSemana dias={datos.dias} />
           </div>
 
-          {marcadas ? (
-            <ListaCampanas
-              titulo="Conjuntos de lo que has marcado"
-              campanas={datos.conjuntos.map((c) => ({
-                id: c.id,
-                nombre: c.nombre,
-                objetivo: c.campanaNombre,
-                valores: c.valores,
-              }))}
-              elegidas={elegidas}
-            />
-          ) : (
-            <ListaCampanas titulo="Campañas" campanas={datos.campanas} elegidas={elegidas} />
-          )}
+          <ListaCampanas
+            titulo={NIVELES.find((n) => n.id === nivel)?.etiqueta ?? "Campañas"}
+            campanas={filas}
+            elegidas={elegidas}
+            unidad={etiquetaNivel}
+            pestanas={
+              <PestanasNivel
+                valor={nivel}
+                onCambio={setNivel}
+                cuentas={{
+                  campanas: datos.campanas.length,
+                  conjuntos: datos.conjuntos.length,
+                  anuncios: datos.anuncios.length,
+                }}
+              />
+            }
+          />
         </>
       )}
 
@@ -218,6 +266,58 @@ export function AdsPanel() {
 }
 
 /* ───────────────────────── piezas ───────────────────────── */
+
+/**
+ * A que altura miras: campañas, conjuntos o anuncios.
+ *
+ * Va DENTRO de la cabecera de la tabla, no suelto en la barra de arriba, porque es lo que
+ * manda sobre esa tabla y sobre el rosco del reparto. Con el numero al lado se ve de un
+ * vistazo cuantas filas hay en cada nivel antes de cambiar.
+ *
+ * Es una fila de botones, no un desplegable: son tres opciones y caben. Un desplegable
+ * esconderia lo que hay detras y obligaria a dos toques.
+ */
+function PestanasNivel({
+  valor,
+  onCambio,
+  cuentas,
+}: {
+  valor: Nivel
+  onCambio: (n: Nivel) => void
+  cuentas: Record<Nivel, number>
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="A qué altura quieres ver los números"
+      className="flex w-full gap-1 overflow-x-auto rounded-lg border border-border bg-background p-1"
+    >
+      {NIVELES.map((n) => {
+        const activa = n.id === valor
+        return (
+          <button
+            key={n.id}
+            type="button"
+            role="tab"
+            aria-selected={activa}
+            onClick={() => onCambio(n.id)}
+            className={cn(
+              "flex h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[15px] font-medium transition-colors md:h-9 md:text-sm",
+              activa
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground active:bg-muted md:hover:text-foreground"
+            )}
+          >
+            {n.etiqueta}
+            <span className={cn("tabular-nums", activa ? "opacity-70" : "text-muted-foreground")}>
+              {cuentas[n.id]}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 /**
  * La fila de numeros grandes.
@@ -238,10 +338,11 @@ function FilaNumeros({
   dias: { fecha: string; gasto: number; leads: number }[]
   elegidas: string[]
 }) {
+  // SIN recorte. Antes habia un `.slice(0, 5)` y elegir nueve metricas enseñaba cinco:
+  // el selector decia "(9)" y la pantalla mentia. Se ven todas las que se marquen.
   const metricas = elegidas
     .map((id) => metricaPorId(id))
     .filter((m): m is Metrica => Boolean(m))
-    .slice(0, 5)
 
   if (metricas.length === 0) return null
 
@@ -256,9 +357,9 @@ function FilaNumeros({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-      {/* El degradado de las mini lineas se declara UNA vez: cinco copias del mismo id
-          serian cinco identificadores repetidos en la pagina. */}
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {/* El degradado de las mini lineas se declara UNA vez: una copia por tarjeta serian
+          identificadores repetidos en la pagina. */}
       <svg width="0" height="0" className="absolute" aria-hidden>
         <defs>
           <linearGradient id="chispa-relleno" x1="0" y1="0" x2="0" y2="1">
@@ -274,8 +375,8 @@ function FilaNumeros({
         const cambio = antes > 0 ? ((ahora - antes) / antes) * 100 : null
         // En un coste, bajar es bueno. En el resto, subir es bueno.
         const menosEsMejor = m.id.startsWith("cost_per") || m.id === "cpc" || m.id === "cpm"
-        // Con cinco metricas, en el telefono la ultima se quedaba sola a media fila con un
-        // hueco al lado. Ocupa las dos columnas y la fila cierra.
+        // En el telefono van de dos en dos: si el total es impar, la ultima se quedaba
+        // sola a media fila con un hueco al lado. Ocupa las dos columnas y la fila cierra.
         const huerfana = metricas.length % 2 === 1 && i === metricas.length - 1
         return (
           <div
